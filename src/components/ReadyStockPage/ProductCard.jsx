@@ -1,0 +1,262 @@
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faHeart as solidHeart,
+  faHeart as regularHeart,
+  faCartShopping,
+  faHandshake,
+  faBell,
+  faXmark,
+} from "@fortawesome/free-solid-svg-icons";
+
+const ProductCard = ({ product, viewMode = "grid" }) => {
+  const navigate = useNavigate();
+
+  const {
+    id,
+    name,
+    description,
+    price,
+    originalPrice,
+    discount,
+    moq,
+    stockStatus,
+    stockCount,
+    imageUrl,
+    isFavorite,
+    isOutOfStock,
+  } = product;
+
+  const getStatusBadgeClass = () => {
+    switch (stockStatus) {
+      case "In Stock":
+        return "bg-green-100 text-green-800";
+      case "Low Stock":
+        return "bg-yellow-100 text-yellow-800";
+      case "Out of Stock":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const handleProductClick = (e) => {
+    // Don't navigate if the click was on a button
+    if (e.target.tagName === "BUTTON" || e.target.closest("button")) {
+      return;
+    }
+    navigate(`/product/${id}`);
+  };
+
+  if (viewMode === "list") {
+    return (
+      <tr
+        className="hover:bg-gray-50 cursor-pointer"
+        onClick={handleProductClick}
+      >
+        <td className="px-3 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
+          <div className="flex items-center min-w-[200px]">
+            <img
+              className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg mr-4"
+              src={imageUrl}
+              alt={name}
+            />
+            <div className="min-w-0">
+              <div className="text-base sm:text-lg font-bold text-gray-900 truncate">
+                {name}
+              </div>
+              <div className="text-xs sm:text-sm text-gray-600 mt-1 truncate">
+                {description.split("•")[1]?.trim()}
+              </div>
+              <div className="flex items-center mt-1 sm:mt-2">
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass()}`}
+                >
+                  {stockStatus}
+                </span>
+              </div>
+            </div>
+          </div>
+        </td>
+        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
+          <div className="text-sm text-gray-900 font-medium truncate">
+            {description.split("•")[0]?.trim()}
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500 truncate">
+            Grade A+
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500 truncate">
+            Unlocked
+          </div>
+        </td>
+        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
+          <div className="text-base sm:text-lg font-bold text-gray-900">
+            ${price}
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500 line-through">
+            ${originalPrice}
+          </div>
+          <span className="text-xs text-green-600 font-medium">
+            Save ${discount}
+          </span>
+        </td>
+        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
+          <div
+            className={`text-sm font-medium ${
+              stockStatus === "In Stock"
+                ? "text-green-600"
+                : stockStatus === "Low Stock"
+                ? "text-yellow-600"
+                : "text-red-600"
+            }`}
+          >
+            {stockCount} units
+          </div>
+          <div className="text-xs text-gray-500">
+            {stockStatus === "Low Stock" ? "Low stock" : "Available"}
+          </div>
+        </td>
+        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
+          <div className="text-sm font-medium text-gray-900">{moq} units</div>
+          <div className="text-xs text-gray-500">Minimum</div>
+        </td>
+        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
+          <div className="flex space-x-1 sm:space-x-2">
+            {isOutOfStock ? (
+              <button
+                disabled
+                className="bg-gray-300 text-gray-500 p-1 sm:p-2 rounded-lg cursor-not-allowed"
+              >
+                <FontAwesomeIcon
+                  icon={faXmark}
+                  className="text-sm sm:text-base"
+                />
+              </button>
+            ) : (
+              <button className="bg-[#0071E0] text-white p-1 sm:p-2 rounded-lg hover:bg-blue-600">
+                <FontAwesomeIcon
+                  icon={faCartShopping}
+                  className="text-sm sm:text-base"
+                />
+              </button>
+            )}
+            {isOutOfStock ? (
+              <button className="border border-gray-300 text-gray-700 p-1 sm:p-2 rounded-lg hover:bg-gray-50">
+                <FontAwesomeIcon
+                  icon={faBell}
+                  className="text-sm sm:text-base"
+                />
+              </button>
+            ) : (
+              <button className="border border-gray-300 text-gray-700 p-1 sm:p-2 rounded-lg hover:bg-gray-50">
+                <FontAwesomeIcon
+                  icon={faHandshake}
+                  className="text-sm sm:text-base"
+                />
+              </button>
+            )}
+          </div>
+        </td>
+      </tr>
+    );
+  }
+
+  // Default grid view
+  return (
+    <div
+      className="bg-white rounded-[18px] shadow-[2px_4px_12px_#00000014] hover:shadow-[6px_8px_24px_#00000026] transition-shadow duration-200 h-full flex flex-col cursor-pointer"
+      onClick={handleProductClick}
+    >
+      <div className="relative flex-1">
+        <img
+          className="w-full h-40 sm:h-48 object-cover rounded-t-[18px]"
+          src={imageUrl}
+          alt={name}
+        />
+        <div className="absolute top-2 right-2">
+          <button
+            className="p-2 bg-white rounded-full cursor-pointer shadow-md text-gray-400 hover:text-red-500 w-10 h-10 flex items-center justify-center"
+            onClick={(e) => {
+              e.stopPropagation();
+              // Handle favorite toggle here
+            }}
+          >
+            <FontAwesomeIcon
+              icon={isFavorite ? solidHeart : regularHeart}
+              className="text-sm sm:text-base"
+            />
+          </button>
+        </div>
+        <div className="absolute top-2 left-2">
+          <span
+            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass()}`}
+          >
+            {stockStatus}
+          </span>
+        </div>
+      </div>
+
+      <div className="p-3 sm:p-4">
+        <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-1 truncate">
+          {name}
+        </h3>
+        <p className="text-xs sm:text-sm text-gray-600 mb-2 truncate">
+          {description}
+        </p>
+
+        <div className="flex items-center mb-2">
+          <span className="text-base sm:text-lg font-bold text-gray-900">
+            ${price}
+          </span>
+          <span className="ml-2 text-xs sm:text-sm text-gray-500 line-through">
+            ${originalPrice}
+          </span>
+          <span className="ml-2 text-xs text-green-600 font-medium">
+            Save ${discount}
+          </span>
+        </div>
+
+        <div className="text-xs text-gray-500 mb-3">
+          MOQ: {moq} units • {stockCount} available
+        </div>
+
+        <div className="flex space-x-2">
+          {isOutOfStock ? (
+            <>
+              <button
+                className="flex-1 bg-gray-300 text-gray-500 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium cursor-not-allowed"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Out of Stock
+              </button>
+              <button
+                className="flex-1 border border-gray-300 text-gray-700 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium hover:bg-gray-50 cursor-pointer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Notify Me
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                className="flex-1 bg-[#0071E0] text-white py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium hover:bg-blue-600 cursor-pointer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Buy Now
+              </button>
+              <button
+                className="flex-1 border border-gray-300 text-gray-700 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium hover:bg-gray-50 cursor-pointer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Add to Cart
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ProductCard;
