@@ -1,0 +1,200 @@
+import React, { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faCartShopping,
+  faTimes,
+  faPlus,
+  faMinus,
+  faBox,
+  faDollarSign,
+} from "@fortawesome/free-solid-svg-icons";
+
+const AddToCartPopup = ({ product, onClose }) => {
+  const { name, price, imageUrl, moq, stockCount } = product;
+
+  // Ensure moq and stockCount are valid numbers, default to 1 and Infinity if invalid
+  const validMoq = isNaN(parseInt(moq)) ? 1 : parseInt(moq);
+  const validStockCount = isNaN(parseInt(stockCount)) ? Infinity : parseInt(stockCount);
+  const [quantity, setQuantity] = useState(validMoq);
+
+  // Ensure price is a valid number, default to 0 if invalid
+  const validPrice = isNaN(parseFloat(price)) ? 0 : parseFloat(price);
+
+  const handleQuantityChange = (value) => {
+    // Convert value to a number and ensure it's valid
+    const newValue = isNaN(parseInt(value)) ? validMoq : parseInt(value);
+    // Only update if within valid range
+    if (newValue >= validMoq && newValue <= validStockCount) {
+      setQuantity(newValue);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    // If input is empty, reset to moq
+    if (value === "") {
+      setQuantity(validMoq);
+      return;
+    }
+    const parsedValue = parseInt(value, 10);
+    handleQuantityChange(parsedValue);
+  };
+
+  const handleConfirm = () => {
+    console.log(`Added ${quantity} units of ${name} to cart`);
+    onClose();
+  };
+
+  // Calculate totalPrice with safeguards
+  const totalPrice = (validPrice * quantity).toFixed(2);
+
+  return (
+    <div
+      className="fixed inset-0 flex items-center justify-center bg-black/60 z-50 transition-opacity duration-300 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl max-w-lg w-full transform transition-all duration-300 scale-100 hover:scale-[1.01]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex justify-between items-center p-6 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
+              <FontAwesomeIcon
+                icon={faCartShopping}
+                className="w-5 h-5 text-blue-600"
+              />
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-900">
+              Add to Cart
+            </h2>
+          </div>
+          <button
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors duration-200"
+            onClick={onClose}
+          >
+            <FontAwesomeIcon icon={faTimes} className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+
+        {/* Product Info */}
+        <div className="p-6 space-y-6">
+          <div className="flex gap-4">
+            <div className="flex-shrink-0">
+              <img
+                className="w-24 h-24 object-cover rounded-xl shadow-sm border border-gray-100" 
+                src={imageUrl || "https://via.placeholder.com/96"}
+                alt={name || "Product"}
+              />
+            </div>
+            <div className="flex-1 space-y-2">
+              <h3 className="text-xl font-semibold text-gray-900 leading-tight">
+                {name || "Unnamed Product"}
+              </h3>
+              <div className="flex items-center gap-2 text-2xl font-bold text-gray-900">
+                <FontAwesomeIcon
+                  icon={faDollarSign}
+                  className="w-5 h-5 text-green-600"
+                />
+                {validPrice.toFixed(2)}
+              </div>
+              <div className="flex flex-wrap gap-3 text-sm">
+                <div className="flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-full">
+                  <FontAwesomeIcon icon={faBox} className="w-3 h-3" />
+                  {validStockCount === Infinity ? "Unlimited" : validStockCount} in stock
+                </div>
+                <div className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full">
+                  MOQ: {validMoq} units
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Quantity Selector */}
+          <div className="space-y-3">
+            <label className="block text-sm font-semibold text-gray-700">
+              Select Quantity
+            </label>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => handleQuantityChange(quantity - 1)}
+                disabled={quantity <= validMoq}
+                className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-white"
+              >
+                <FontAwesomeIcon
+                  icon={faMinus}
+                  className="w-4 h-4 text-gray-600"
+                />
+              </button>
+
+              <div className="flex-1 relative">
+                <input
+                  type="number"
+                  value={quantity}
+                  onChange={handleInputChange}
+                  min={validMoq}
+                  max={validStockCount}
+                  className="w-full text-center text-lg font-semibold py-3 px-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all duration-200"
+                />
+                <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-gray-500">
+                  Min: {validMoq} | Max: {validStockCount === Infinity ? "Unlimited" : validStockCount}
+                </div>
+              </div>
+
+              <button
+                onClick={() => handleQuantityChange(quantity + 1)}
+                disabled={quantity >= validStockCount}
+                className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-white"
+              >
+                <FontAwesomeIcon
+                  icon={faPlus}
+                  className="w-4 h-4 text-gray-600"
+                />
+              </button>
+            </div>
+          </div>
+
+          {/* Total Price */}
+          <div className="bg-gray-50 rounded-xl p-4">
+            <div className="flex justify-between items-center">
+              <span className="text-lg font-medium text-gray-700">
+                Total Price:
+              </span>
+              <div className="flex items-center gap-1 text-2xl font-bold text-gray-900">
+                <FontAwesomeIcon
+                  icon={faDollarSign}
+                  className="w-5 h-5 text-green-600"
+                />
+                {totalPrice}
+              </div>
+            </div>
+            <div className="text-sm text-gray-500 mt-1">
+              {quantity} × ${validPrice.toFixed(2)} per unit
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-3 p-6 pt-0">
+          <button
+            className="flex-1 bg-[#0071E0] hover:bg-[#005bb5] cursor-pointer text-white py-3 px-5 rounded-lg font-medium text-base flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+            onClick={handleConfirm}
+          >
+            <FontAwesomeIcon icon={faCartShopping} />
+            Add to Cart
+          </button>
+
+          <button
+            className="px-5 py-3 border border-gray-300 text-gray-700 cursor-pointer rounded-lg font-medium text-base hover:bg-gray-100 transition-all duration-200"
+            onClick={onClose}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AddToCartPopup;

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -9,9 +9,11 @@ import {
   faBell,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
+import AddToCartPopup from "./AddToCartPopup";
 
 const ProductCard = ({ product, viewMode = "grid" }) => {
   const navigate = useNavigate();
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
 
   const {
     id,
@@ -42,127 +44,143 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
   };
 
   const handleProductClick = (e) => {
-    // Don't navigate if the click was on a button
     if (e.target.tagName === "BUTTON" || e.target.closest("button")) {
       return;
     }
     navigate(`/product/${id}`);
   };
 
+  const handleAddToCart = (e) => {
+    e.stopPropagation();
+    if (!isOutOfStock) {
+      setIsPopupOpen(true);
+    }
+  };
+
   if (viewMode === "list") {
     return (
-      <tr
-        className="hover:bg-gray-50 cursor-pointer"
-        onClick={handleProductClick}
-      >
-        <td className="px-3 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
-          <div className="flex items-center min-w-[200px]">
-            <img
-              className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg mr-4"
-              src={imageUrl}
-              alt={name}
-            />
-            <div className="min-w-0">
-              <div className="text-base sm:text-lg font-bold text-gray-900 truncate">
-                {name}
-              </div>
-              <div className="text-xs sm:text-sm text-gray-600 mt-1 truncate">
-                {description.split("•")[1]?.trim()}
-              </div>
-              <div className="flex items-center mt-1 sm:mt-2">
-                <span
-                  className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass()}`}
-                >
-                  {stockStatus}
-                </span>
+      <>
+        <tr
+          className="hover:bg-gray-50 cursor-pointer"
+          onClick={handleProductClick}
+        >
+          <td className="px-3 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
+            <div className="flex items-center min-w-[200px]">
+              <img
+                className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg mr-4"
+                src={imageUrl}
+                alt={name}
+              />
+              <div className="min-w-0">
+                <div className="text-base sm:text-lg font-bold text-gray-900 truncate">
+                  {name}
+                </div>
+                <div className="text-xs sm:text-sm text-gray-600 mt-1 truncate">
+                  {description.split("•")[1]?.trim()}
+                </div>
+                <div className="flex items-center mt-1 sm:mt-2">
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass()}`}
+                  >
+                    {stockStatus}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        </td>
-        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
-          <div className="text-sm text-gray-900 font-medium truncate">
-            {description.split("•")[0]?.trim()}
-          </div>
-          <div className="text-xs sm:text-sm text-gray-500 truncate">
-            Grade A+
-          </div>
-          <div className="text-xs sm:text-sm text-gray-500 truncate">
-            Unlocked
-          </div>
-        </td>
-        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
-          <div className="text-base sm:text-lg font-bold text-gray-900">
-            ${price}
-          </div>
-          <div className="text-xs sm:text-sm text-gray-500 line-through">
-            ${originalPrice}
-          </div>
-          <span className="text-xs text-green-600 font-medium">
-            Save ${discount}
-          </span>
-        </td>
-        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
-          <div
-            className={`text-sm font-medium ${
-              stockStatus === "In Stock"
-                ? "text-green-600"
-                : stockStatus === "Low Stock"
-                ? "text-yellow-600"
-                : "text-red-600"
-            }`}
-          >
-            {stockCount} units
-          </div>
-          <div className="text-xs text-gray-500">
-            {stockStatus === "Low Stock" ? "Low stock" : "Available"}
-          </div>
-        </td>
-        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
-          <div className="text-sm font-medium text-gray-900">{moq} units</div>
-          <div className="text-xs text-gray-500">Minimum</div>
-        </td>
-        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
-          <div className="flex space-x-1 sm:space-x-2">
-            {isOutOfStock ? (
-              <button
-                disabled
-                className="bg-gray-300 text-gray-500 p-1 sm:p-2 rounded-lg cursor-not-allowed"
-              >
-                <FontAwesomeIcon
-                  icon={faXmark}
-                  className="text-sm sm:text-base"
-                />
-              </button>
-            ) : (
-              <button className="bg-[#0071E0] text-white p-1 sm:p-2 rounded-lg hover:bg-blue-600">
-                <FontAwesomeIcon
-                  icon={faCartShopping}
-                  className="text-sm sm:text-base"
-                />
-              </button>
-            )}
-            {isOutOfStock ? (
-              <button className="border border-gray-300 text-gray-700 p-1 sm:p-2 rounded-lg hover:bg-gray-50">
-                <FontAwesomeIcon
-                  icon={faBell}
-                  className="text-sm sm:text-base"
-                />
-              </button>
-            ) : (
-              <button className="border border-gray-300 text-gray-700 p-1 sm:p-2 rounded-lg hover:bg-gray-50">
-                <FontAwesomeIcon
-                  icon={faHandshake}
-                  className="text-sm sm:text-base"
-                />
-              </button>
-            )}
-          </div>
-        </td>
-      </tr>
+          </td>
+          <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
+            <div className="text-sm text-gray-900 font-medium truncate">
+              {description.split("•")[0]?.trim()}
+            </div>
+            <div className="text-xs sm:text-sm text-gray-500 truncate">
+              Grade A+
+            </div>
+            <div className="text-xs sm:text-sm text-gray-500 truncate">
+              Unlocked
+            </div>
+          </td>
+          <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
+            <div className="text-base sm:text-lg font-bold text-gray-900">
+              ${price}
+            </div>
+            <div className="text-xs sm:text-sm text-gray-500 line-through">
+              ${originalPrice}
+            </div>
+            <span className="text-xs text-green-600 font-medium">
+              Save ${discount}
+            </span>
+          </td>
+          <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
+            <div
+              className={`text-sm font-medium ${
+                stockStatus === "In Stock"
+                  ? "text-green-600"
+                  : stockStatus === "Low Stock"
+                  ? "text-yellow-600"
+                  : "text-red-600"
+              }`}
+            >
+              {stockCount} units
+            </div>
+            <div className="text-xs text-gray-500">
+              {stockStatus === "Low Stock" ? "Low stock" : "Available"}
+            </div>
+          </td>
+          <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
+            <div className="text-sm font-medium text-gray-900">{moq} units</div>
+            <div className="text-xs text-gray-500">Minimum</div>
+          </td>
+          <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
+            <div className="flex space-x-1 sm:space-x-2">
+              {isOutOfStock ? (
+                <button
+                  disabled
+                  className="bg-gray-300 text-gray-500 p-1 sm:p-2 rounded-lg cursor-not-allowed"
+                >
+                  <FontAwesomeIcon
+                    icon={faXmark}
+                    className="text-sm sm:text-base"
+                  />
+                </button>
+              ) : (
+                <button
+                  className="bg-[#0071E0] text-white p-1 sm:p-2 rounded-lg hover:bg-blue-600"
+                  onClick={handleAddToCart}
+                >
+                  <FontAwesomeIcon
+                    icon={faCartShopping}
+                    className="text-sm sm:text-base"
+                  />
+                </button>
+              )}
+              {isOutOfStock ? (
+                <button className="border border-gray-300 text-gray-700 p-1 sm:p-2 rounded-lg hover:bg-gray-50">
+                  <FontAwesomeIcon
+                    icon={faBell}
+                    className="text-sm sm:text-base"
+                  />
+                </button>
+              ) : (
+                <button className="border border-gray-300 text-gray-700 p-1 sm:p-2 rounded-lg hover:bg-gray-50">
+                  <FontAwesomeIcon
+                    icon={faHandshake}
+                    className="text-sm sm:text-base"
+                  />
+                </button>
+              )}
+            </div>
+          </td>
+        </tr>
+        {isPopupOpen && (
+          <AddToCartPopup
+            product={product}
+            onClose={() => setIsPopupOpen(false)}
+          />
+        )}
+      </>
     );
   }
 
-  // Default grid view
   return (
     <div
       className="bg-white rounded-[18px] shadow-[2px_4px_12px_#00000014] hover:shadow-[6px_8px_24px_#00000026] transition-shadow duration-200 h-full flex flex-col cursor-pointer"
@@ -240,21 +258,27 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
           ) : (
             <>
               <button
+                className="flex-1 border border-gray-300 text-gray-700 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium hover:bg-gray-50 cursor-pointer"
+                onClick={handleAddToCart}
+              >
+                Add to Cart
+              </button>
+              <button
                 className="flex-1 bg-[#0071E0] text-white py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium hover:bg-blue-600 cursor-pointer"
                 onClick={(e) => e.stopPropagation()}
               >
-                Buy Now
-              </button>
-              <button
-                className="flex-1 border border-gray-300 text-gray-700 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium hover:bg-gray-50 cursor-pointer"
-                onClick={(e) => e.stopPropagation()}
-              >
-                Add to Cart
+                Offer
               </button>
             </>
           )}
         </div>
       </div>
+      {isPopupOpen && (
+        <AddToCartPopup
+          product={product}
+          onClose={() => setIsPopupOpen(false)}
+        />
+      )}
     </div>
   );
 };

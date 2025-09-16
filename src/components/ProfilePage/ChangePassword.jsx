@@ -61,7 +61,7 @@ const ChangePassword = () => {
                 onClick={() => togglePasswordVisibility(key)}
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#0071E0] text-sm"
               >
-                <i className={showPasswords[key] ? "fas fa-eye-slash" : "fas fa-eye"}></i>
+                <i className={showPasswords[key] ?  "fas fa-eye" : "fas fa-eye-slash"}></i>
               </button>
             </div>
           </div>

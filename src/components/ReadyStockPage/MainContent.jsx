@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import ProductCard from "./ProductCard";
 import SideFilter from "../SideFilter";
 import ViewControls from "./ViewControls";
@@ -7,132 +7,100 @@ import {
   faChevronLeft,
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
-
-export const products = [
-  {
-    id: 1,
-    name: "iPhone 15 Pro Max",
-    description: "256GB • Natural Titanium",
-    price: "1,199",
-    originalPrice: "1,299",
-    discount: "100",
-    moq: 5,
-    stockStatus: "In Stock",
-    stockCount: 47,
-    imageUrl:
-      "https://storage.googleapis.com/uxpilot-auth.appspot.com/3c400915fb-5d9209cb32fc1b5f022b.png",
-    isFavorite: false,
-    isOutOfStock: false,
-  },
-  {
-    id: 2,
-    name: "iPhone 15 Pro",
-    description: "128GB • Blue Titanium",
-    price: "999",
-    originalPrice: "1,099",
-    discount: "100",
-    moq: 10,
-    stockStatus: "In Stock",
-    stockCount: 23,
-    imageUrl:
-      "https://storage.googleapis.com/uxpilot-auth.appspot.com/7458ea41c1-3c0cd1e16a04ae2ac69d.png",
-    isFavorite: false,
-    isOutOfStock: false,
-  },
-  {
-    id: 3,
-    name: "iPhone 14 Pro Max",
-    description: "512GB • Deep Purple",
-    price: "1,099",
-    originalPrice: "1,199",
-    discount: "100",
-    moq: 5,
-    stockStatus: "Low Stock",
-    stockCount: 8,
-    imageUrl:
-      "https://storage.googleapis.com/uxpilot-auth.appspot.com/34a3f61667-bbc0c141e671c41ea802.png",
-    isFavorite: false,
-    isOutOfStock: false,
-  },
-  {
-    id: 4,
-    name: "iPhone 15",
-    description: "128GB • Pink",
-    price: "799",
-    originalPrice: "829",
-    discount: "30",
-    moq: 15,
-    stockStatus: "In Stock",
-    stockCount: 156,
-    imageUrl:
-      "https://storage.googleapis.com/uxpilot-auth.appspot.com/001aef7d0a-45c73ca473efa53b8e08.png",
-    isFavorite: true,
-    isOutOfStock: false,
-  },
-  {
-    id: 5,
-    name: "iPhone 14 Pro",
-    description: "256GB • Space Black",
-    price: "899",
-    originalPrice: "999",
-    discount: "100",
-    moq: 10,
-    stockStatus: "In Stock",
-    stockCount: 34,
-    imageUrl:
-      "https://storage.googleapis.com/uxpilot-auth.appspot.com/fda66a3b39-c6ffc867a1f62b5a63ce.png",
-    isFavorite: false,
-    isOutOfStock: false,
-  },
-  {
-    id: 6,
-    name: "iPhone 13 Pro Max",
-    description: "1TB • Sierra Blue",
-    price: "999",
-    originalPrice: "1,099",
-    discount: "100",
-    moq: 5,
-    stockStatus: "Out of Stock",
-    stockCount: 0,
-    imageUrl:
-      "https://storage.googleapis.com/uxpilot-auth.appspot.com/bbd9690792-a8335c5e71b08e74873e.png",
-    isFavorite: false,
-    isOutOfStock: true,
-  },
-  {
-    id: 7,
-    name: "iPhone 15 Plus",
-    description: "128GB • Blue",
-    price: "899",
-    originalPrice: "999",
-    discount: "100",
-    moq: 10,
-    stockStatus: "In Stock",
-    stockCount: 42,
-    imageUrl:
-      "https://storage.googleapis.com/uxpilot-auth.appspot.com/fbb4a94f91-b11a80d38dfa8acea074.png",
-    isFavorite: false,
-    isOutOfStock: false,
-  },
-];
+import { ProductService } from "../../services/products/products.services";
 
 const MainContent = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [viewMode, setViewMode] = useState("grid");
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(6); // You can adjust this number
+  const [itemsPerPage, setItemsPerPage] = useState(9);
+  const [fetchedProducts, setFetchedProducts] = useState([]);
+  const [totalProductsCount, setTotalProductsCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
-  // Get current products
-  const indexOfLastProduct = currentPage * itemsPerPage;
-  const indexOfFirstProduct = indexOfLastProduct - itemsPerPage;
-  const currentProducts = products.slice(
-    indexOfFirstProduct,
-    indexOfLastProduct
-  );
-  const totalPages = Math.ceil(products.length / itemsPerPage);
+  const mapApiProductToUi = (p) => {
+    const id = p._id || p.id;
+    const name = typeof p.skuFamilyId === "object" && p.skuFamilyId?.name ? p.skuFamilyId.name : "Product";
+    const imageUrl = (typeof p.skuFamilyId === "object" && Array.isArray(p.skuFamilyId?.images) && p.skuFamilyId.images[0])
+      ? p.skuFamilyId.images[0]
+      : "https://via.placeholder.com/400x300.png?text=Product";
+    const storage = p.storage || "";
+    const color = p.color || "";
+    const description = [storage, color].filter(Boolean).join(" • ") || (p.specification || "");
+    const priceNumber = Number(p.price) || 0;
+    const price = String(priceNumber);
+    const originalPrice = String(priceNumber > 0 ? priceNumber + 100 : 0);
+    const stock = Number(p.stock) || 0;
+    const stockStatus = stock <= 0 ? "Out of Stock" : stock <= 10 ? "Low Stock" : "In Stock";
 
-  // Change page
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+    return {
+      id,
+      name,
+      description,
+      price,
+      originalPrice,
+      discount: String(Math.max(Number(originalPrice) - Number(price), 0)),
+      moq: Number(p.moq) || 0,
+      stockStatus,
+      stockCount: stock,
+      imageUrl,
+      isFavorite: false,
+      isOutOfStock: stock <= 0,
+    };
+  };
+
+  useEffect(() => {
+    let isCancelled = false;
+    const fetchData = async () => {
+      setIsLoading(true);
+      setHasError(false);
+      try {
+        const res = await ProductService.getProductList(currentPage, itemsPerPage);
+        const payload = res?.data && (res.data.docs || res.data.totalDocs !== undefined) ? res.data : res;
+        const docs = payload?.docs || [];
+        const totalDocs = payload?.totalDocs || 0;
+        const mapped = docs.map(mapApiProductToUi);
+        if (!isCancelled) {
+          setFetchedProducts(mapped);
+          setTotalProductsCount(totalDocs || mapped.length || 0);
+        }
+      } catch (e) {
+        if (!isCancelled) {
+          setHasError(true);
+          setFetchedProducts([]);
+          setTotalProductsCount(0);
+        }
+      } finally {
+        if (!isCancelled) setIsLoading(false);
+      }
+    };
+    fetchData();
+    return () => {
+      isCancelled = true;
+    };
+  }, [currentPage, itemsPerPage]);
+
+  useEffect(() => {
+    // Update page size based on view mode and reset to first page
+    if (viewMode === "grid") {
+      setItemsPerPage(9);
+    } else {
+      setItemsPerPage(10);
+    }
+    setCurrentPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode]);
+
+  const indexOfLastProduct = useMemo(() => currentPage * itemsPerPage, [currentPage, itemsPerPage]);
+  const indexOfFirstProduct = useMemo(() => indexOfLastProduct - itemsPerPage, [indexOfLastProduct, itemsPerPage]);
+  const totalPages = useMemo(() => Math.max(Math.ceil(totalProductsCount / itemsPerPage), 1), [totalProductsCount, itemsPerPage]);
+  const currentProducts = useMemo(() => fetchedProducts, [fetchedProducts]);
+
+  const paginate = (pageNumber) => {
+    if (pageNumber < 1 || pageNumber > totalPages) return;
+    setCurrentPage(pageNumber);
+  };
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -179,16 +147,19 @@ const MainContent = () => {
           <ViewControls
             viewMode={viewMode}
             setViewMode={setViewMode}
-            totalProducts={products.length}
-            showingProducts={`${indexOfFirstProduct + 1}-${Math.min(
-              indexOfLastProduct,
-              products.length
-            )}`}
+            totalProducts={totalProductsCount}
+            showingProducts={`${Math.min(indexOfFirstProduct + 1, totalProductsCount)}-${Math.min(indexOfLastProduct, totalProductsCount)}`}
           />
 
           {viewMode === "grid" ? (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                {isLoading && currentProducts.length === 0 && (
+                  <div className="col-span-3 text-center text-sm text-gray-500">Loading products...</div>
+                )}
+                {!isLoading && currentProducts.length === 0 && (
+                  <div className="col-span-3 text-center text-sm text-gray-500">No products found.</div>
+                )}
                 {currentProducts.map((product) => (
                   <ProductCard
                     key={product.id}
@@ -277,6 +248,11 @@ const MainContent = () => {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
+                      {!isLoading && currentProducts.length === 0 && (
+                        <tr>
+                          <td colSpan={6} className="px-4 py-6 text-center text-sm text-gray-500">No products found.</td>
+                        </tr>
+                      )}
                       {currentProducts.map((product) => (
                         <ProductCard
                           key={product.id}
