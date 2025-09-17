@@ -191,7 +191,7 @@ const SignUpForm = () => {
       {/* Text Overlay */}
       <div className="relative z-10 text-center text-white px-6 max-w-2xl">
         <h2 className="text-2xl md:text-4xl font-bold mb-4">
-          Join the GSM Bidding community
+          Join the xGSM Bidding community
         </h2>
         <p className="text-lg text-indigo-100">
           Create your account to access exclusive deals, trusted sellers, and
