@@ -185,7 +185,7 @@ const ProfilePage = () => {
                   value={profileFormData[key]}
                   onChange={(e) => handleProfileChange(key, e.target.value)}
                   rows="4"
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 text-sm"
                   placeholder={`Enter your ${label.toLowerCase()}`}
                 />
               ) : (
@@ -193,7 +193,7 @@ const ProfilePage = () => {
                   type={type}
                   value={profileFormData[key]}
                   onChange={(e) => handleProfileChange(key, e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 text-sm"
                   placeholder={`Enter your ${label.toLowerCase()}`}
                 />
               )}
@@ -203,7 +203,7 @@ const ProfilePage = () => {
         
         <div className="flex justify-end pt-4">
           <button
-            className="px-6 py-3 bg-[#0071E0] text-white rounded-lg flex items-center space-x-2 hover:bg-[#005BB5] transition-colors duration-200 shadow-sm hover:shadow-md"
+            className="px-6 py-2 bg-[#0071E0] text-white rounded-lg flex items-center space-x-2 hover:bg-[#005BB5] transition-colors duration-200 shadow-sm hover:shadow-md"
           >
             <i className="fas fa-save"></i>
             <span>Save Changes</span>
@@ -228,7 +228,7 @@ const ProfilePage = () => {
           <p className="text-sm text-gray-500 mt-1">Manage your password and account security</p>
         </div>
         
-        <div className="bg-blue-50 rounded-xl p-5 border border-blue-100">
+        {/* <div className="bg-blue-50 rounded-xl p-5 border border-blue-100">
           <h3 className="font-medium mb-3 flex items-center text-[#0071E0] text-sm">
             <i className="fas fa-shield-alt mr-2"></i>
             Password Security Tips
@@ -238,7 +238,7 @@ const ProfilePage = () => {
             <li>Avoid personal information and common dictionary words</li>
             <li>Consider using a password manager for stronger security</li>
           </ul>
-        </div>
+        </div> */}
         
         <div className="space-y-5">
           {passwordFields.map(({ key, label }) => (
@@ -252,15 +252,15 @@ const ProfilePage = () => {
                   type={showPasswords[key] ? "text" : "password"}
                   value={passwords[key]}
                   onChange={(e) => handlePasswordChange(key, e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 pr-12"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 pr-12 text-sm"
                   placeholder={`Enter your ${label.toLowerCase()}`}
                 />
                 <button
                   type="button"
                   onClick={() => togglePasswordVisibility(key)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#0071E0] transition-colors duration-200"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#0071E0] transition-colors duration-200 text-sm"
                 >
-                  <i className={showPasswords[key] ? "fas fa-eye" : "fas fa-eye-slash"}></i>
+                  <i className={showPasswords[key] ? "fas fa-eye" : "fas fa-eye-slash"} ></i>
                 </button>
               </div>
             </div>
@@ -281,7 +281,7 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <ProfileHeader />
+      {/* <ProfileHeader /> */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left sidebar with profile picture and navigation */}
