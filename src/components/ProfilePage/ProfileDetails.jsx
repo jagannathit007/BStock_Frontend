@@ -1,3 +1,4 @@
+// ProfileDetails.jsx - Updated UI
 import React, { useState } from "react";
 
 const ProfileDetails = () => {
@@ -21,17 +22,21 @@ const ProfileDetails = () => {
     { key: "email", label: "Email Address", icon: "fas fa-envelope", type: "email", width: "full" },
     { key: "phone", label: "Phone Number", icon: "fas fa-phone", type: "tel", width: "half" },
     { key: "whatsapp", label: "WhatsApp Number", icon: "fab fa-whatsapp", type: "tel", width: "half" },
-    { key: "bio", label: "Bio", icon: "fas fa-user", type: "textarea", width: "full" },
+    { key: "bio", label: "Bio", icon: "fas fa-user-edit", type: "textarea", width: "full" },
   ];
 
   return (
-    <div className="space-y-5">
-      <h2 className="text-xl font-semibold text-gray-800">Personal Information</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="space-y-6">
+      <div className="pb-4 border-b border-gray-200">
+        <h2 className="text-xl font-semibold text-gray-800">Personal Information</h2>
+        <p className="text-sm text-gray-500 mt-1">Update your personal details and how others see you on the platform</p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {inputFields.map(({ key, label, icon, type, width }) => (
           <div
             key={key}
-            className={`space-y-1 ${width === "full" ? "md:col-span-2" : ""}`}
+            className={`space-y-2 ${width === "full" ? "md:col-span-2" : ""}`}
           >
             <label className="text-sm font-medium text-gray-700 flex items-center">
               <i className={`${icon} w-4 h-4 mr-2`} style={{ color: primaryColor }}></i>
@@ -42,7 +47,7 @@ const ProfileDetails = () => {
                 value={formData[key]}
                 onChange={(e) => handleChange(key, e.target.value)}
                 rows="4"
-                className="w-full px-3 py-2 rounded-md border border-gray-300 focus:border-[#0071E0] focus:ring-1 focus:ring-[#0071E0]/30"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200"
                 placeholder={`Enter your ${label.toLowerCase()}`}
               />
             ) : (
@@ -50,16 +55,17 @@ const ProfileDetails = () => {
                 type={type}
                 value={formData[key]}
                 onChange={(e) => handleChange(key, e.target.value)}
-                className="w-full px-3 py-2 rounded-md border border-gray-300 focus:border-[#0071E0] focus:ring-1 focus:ring-[#0071E0]/30"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200"
                 placeholder={`Enter your ${label.toLowerCase()}`}
               />
             )}
           </div>
         ))}
       </div>
-      <div className="flex justify-end">
+      
+      <div className="flex justify-end pt-4">
         <button
-          className="px-5 py-2 bg-[#0071E0] text-white rounded-md flex items-center space-x-1 hover:bg-[#005BB5] text-sm"
+          className="px-6 py-3 bg-[#0071E0] text-white rounded-lg flex items-center space-x-2 hover:bg-[#005BB5] transition-colors duration-200 shadow-sm hover:shadow-md"
         >
           <i className="fas fa-save"></i>
           <span>Save Changes</span>
