@@ -14,14 +14,45 @@ import {
   faArrowRotateLeft,
   faCheck,
   faXmark,
+  faBell,
+  faCalendarXmark,
 } from "@fortawesome/free-solid-svg-icons";
+import NotifyMePopup from "../NotifyMePopup";
 
 const ProductInfo = ({ product, navigate }) => {
+  // Process product data to ensure proper stock and expiry status
+  const processedProduct = {
+    ...product,
+    stockCount: Number(product.stockCount || product.stock || 0),
+    isOutOfStock: Number(product.stockCount || product.stock || 0) <= 0,
+    isExpired: product.expiryTime ? new Date(product.expiryTime) < new Date() : false,
+    stockStatus: (() => {
+      const stock = Number(product.stockCount || product.stock || 0);
+      const isExpired = product.expiryTime ? new Date(product.expiryTime) < new Date() : false;
+      
+      if (isExpired) return "Expired";
+      if (stock <= 0) return "Out of Stock";
+      if (stock <= 10) return "Low Stock";
+      return "In Stock";
+    })()
+  };
+
+  // Debug log to check values
+  console.log('ProductInfo NotifyMe Debug:', {
+    originalStock: product.stock,
+    processedStock: processedProduct.stockCount,
+    isOutOfStock: processedProduct.isOutOfStock,
+    isExpired: processedProduct.isExpired,
+    expiryTime: product.expiryTime,
+    canNotify: processedProduct.isOutOfStock && !processedProduct.isExpired
+  });
+
   const [selectedColor, setSelectedColor] = useState("Natural Titanium");
   const [selectedStorage, setSelectedStorage] = useState("256GB");
   const [selectedGrade, setSelectedGrade] = useState("A+");
   const [quantity, setQuantity] = useState(5);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
 
   const colors = [
     { name: "Natural Titanium", class: "bg-gray-200" },
@@ -33,15 +64,25 @@ const ProductInfo = ({ product, navigate }) => {
   const storageOptions = ["128GB", "256GB", "512GB", "1TB"];
   const gradeOptions = ["A+", "A", "B", "C"];
 
+  // Check if product can accept notifications (out of stock but not expired)
+  const canNotify = processedProduct.isOutOfStock && !processedProduct.isExpired;
+
   const handleQuantityChange = (amount) => {
     const newQuantity = quantity + amount;
-    if (newQuantity >= product.moq) {
+    if (newQuantity >= processedProduct.moq) {
       setQuantity(newQuantity);
     }
   };
 
+  const handleNotifyMe = (e) => {
+    e.stopPropagation();
+    if (canNotify) {
+      setIsNotifyMePopupOpen(true);
+    }
+  };
+
   const totalAmount = (
-    parseInt(product.price.replace(/,/g, "")) * quantity
+    parseInt(processedProduct.price.toString().replace(/,/g, "")) * quantity
   ).toLocaleString();
 
   return (
@@ -55,7 +96,7 @@ const ProductInfo = ({ product, navigate }) => {
           Home
         </button>
         <span className="mx-2 text-gray-400">/</span>
-        <span className="text-gray-900 font-medium">{product.name}</span>
+        <span className="text-gray-900 font-medium">{processedProduct.name}</span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
@@ -65,15 +106,28 @@ const ProductInfo = ({ product, navigate }) => {
           <div className="relative mb-4">
             <img
               className="w-full h-64 sm:h-[450px] object-cover rounded-xl bg-white border border-gray-200"
-              src={product.mainImage}
-              alt={product.name}
+              src={processedProduct.mainImage || processedProduct.imageUrl}
+              alt={processedProduct.name}
             />
             <div className="absolute top-4 left-4 flex flex-col space-y-2">
               <span className="bg-green-500 text-white text-xs font-medium px-2 py-1 rounded">
                 Verified Seller
               </span>
-              <span className="bg-blue-600 text-white text-xs font-medium px-2 py-1 rounded">
-                {product.stockStatus}
+              <span
+                className={`${
+                  processedProduct.isExpired
+                    ? "bg-gray-100 text-gray-800"
+                    : processedProduct.stockStatus === "In Stock"
+                    ? "bg-green-100 text-green-800"
+                    : processedProduct.stockStatus === "Low Stock"
+                    ? "bg-yellow-100 text-yellow-800"
+                    : "bg-red-100 text-red-800"
+                } text-xs font-medium px-2 py-1 rounded inline-flex items-center`}
+              >
+                {processedProduct.isExpired && (
+                  <FontAwesomeIcon icon={faCalendarXmark} className="w-3 h-3 mr-1" />
+                )}
+                {processedProduct.isExpired ? "Expired" : processedProduct.stockStatus}
               </span>
             </div>
             <button
@@ -91,7 +145,7 @@ const ProductInfo = ({ product, navigate }) => {
 
           {/* Thumbnail Gallery */}
           <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 mb-6">
-            {product.thumbnails.map((thumbnail, index) => (
+            {(processedProduct.thumbnails || [processedProduct.mainImage || processedProduct.imageUrl, processedProduct.mainImage || processedProduct.imageUrl, processedProduct.mainImage || processedProduct.imageUrl, processedProduct.mainImage || processedProduct.imageUrl]).map((thumbnail, index) => (
               <img
                 key={index}
                 className={`w-full h-14 sm:h-16 object-cover rounded-lg bg-white ${
@@ -139,10 +193,10 @@ const ProductInfo = ({ product, navigate }) => {
             <div className="flex items-start justify-between mb-3 sm:mb-4">
               <div>
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">
-                  {product.name}
+                  {processedProduct.name}
                 </h1>
                 <p className="text-sm sm:text-base text-gray-600">
-                  {product.description}
+                  {processedProduct.description}
                 </p>
               </div>
             </div>
@@ -153,13 +207,13 @@ const ProductInfo = ({ product, navigate }) => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-4">
               <div className="mb-2 sm:mb-0">
                 <span className="text-2xl sm:text-3xl font-bold text-gray-900">
-                  ${product.price}
+                  ${processedProduct.price}
                 </span>
                 <span className="text-base sm:text-lg text-gray-500 line-through ml-2 sm:ml-3">
-                  ${product.originalPrice}
+                  ${processedProduct.originalPrice}
                 </span>
                 <span className="bg-green-500 text-white text-xs sm:text-sm font-medium px-2 py-1 rounded ml-2 sm:ml-3">
-                  -{product.discountPercentage}
+                  -{processedProduct.discountPercentage || "15%"}
                 </span>
               </div>
               <div className="text-left sm:text-right">
@@ -177,21 +231,61 @@ const ProductInfo = ({ product, navigate }) => {
                 <div className="flex justify-between items-center">
                   <span className="text-xs sm:text-sm text-gray-600">MOQ</span>
                   <span className="font-semibold text-gray-900 text-sm sm:text-base">
-                    {product.moq} units
+                    {processedProduct.moq} units
                   </span>
                 </div>
               </div>
-              <div className="bg-green-50 rounded-lg p-2 sm:p-3">
+              <div className={`${
+                processedProduct.isExpired 
+                  ? "bg-gray-50" 
+                  : processedProduct.stockCount > 10 
+                  ? "bg-green-50" 
+                  : processedProduct.stockCount > 0 
+                  ? "bg-yellow-50" 
+                  : "bg-red-50"
+              } rounded-lg p-2 sm:p-3`}>
                 <div className="flex justify-between items-center">
                   <span className="text-xs sm:text-sm text-gray-600">
                     Available
                   </span>
-                  <span className="font-semibold text-green-500 text-sm sm:text-base">
-                    {product.stockCount} units
+                  <span className={`font-semibold text-sm sm:text-base ${
+                    processedProduct.isExpired 
+                      ? "text-gray-500" 
+                      : processedProduct.stockCount > 10 
+                      ? "text-green-500" 
+                      : processedProduct.stockCount > 0 
+                      ? "text-yellow-500" 
+                      : "text-red-500"
+                  }`}>
+                    {processedProduct.stockCount} units
                   </span>
                 </div>
               </div>
             </div>
+
+            {/* Show expiry information if product has expiry date */}
+            {processedProduct.expiryTime && (
+              <div className={`p-3 rounded-lg mb-3 ${
+                processedProduct.isExpired 
+                  ? "bg-red-50 border border-red-200" 
+                  : "bg-yellow-50 border border-yellow-200"
+              }`}>
+                <div className="flex items-center">
+                  <FontAwesomeIcon 
+                    icon={faCalendarXmark} 
+                    className={`mr-2 ${processedProduct.isExpired ? "text-red-600" : "text-yellow-600"}`} 
+                  />
+                  <span className={`text-sm ${
+                    processedProduct.isExpired ? "text-red-700" : "text-yellow-700"
+                  }`}>
+                    {processedProduct.isExpired 
+                      ? `Expired on ${new Date(processedProduct.expiryTime).toLocaleDateString()}`
+                      : `Expires on ${new Date(processedProduct.expiryTime).toLocaleDateString()}`
+                    }
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Price Calculator */}
             <div className="border-t pt-3 sm:pt-4">
@@ -201,9 +295,9 @@ const ProductInfo = ({ product, navigate }) => {
                 </span>
                 <div className="flex items-center space-x-2 sm:space-x-3">
                   <button
-                    className="w-7 h-7 sm:w-8 sm:h-8 border border-gray-300 rounded flex items-center justify-center hover:bg-gray-50"
+                    className="w-7 h-7 sm:w-8 sm:h-8 border border-gray-300 rounded flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={() => handleQuantityChange(-1)}
-                    disabled={quantity <= product.moq}
+                    disabled={quantity <= processedProduct.moq || processedProduct.isOutOfStock || processedProduct.isExpired}
                   >
                     <FontAwesomeIcon icon={faXmark} className="text-xs" />
                   </button>
@@ -211,8 +305,9 @@ const ProductInfo = ({ product, navigate }) => {
                     {quantity}
                   </span>
                   <button
-                    className="w-7 h-7 sm:w-8 sm:h-8 border border-gray-300 rounded flex items-center justify-center hover:bg-gray-50"
+                    className="w-7 h-7 sm:w-8 sm:h-8 border border-gray-300 rounded flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={() => handleQuantityChange(1)}
+                    disabled={processedProduct.isOutOfStock || processedProduct.isExpired}
                   >
                     <FontAwesomeIcon icon={faCheck} className="text-xs" />
                   </button>
@@ -231,7 +326,12 @@ const ProductInfo = ({ product, navigate }) => {
               Key Highlights
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              {product.features.map((feature, index) => (
+              {(processedProduct.features || [
+                { icon: faMicrochip, color: "text-blue-600", text: "Latest Processor" },
+                { icon: faCamera, color: "text-purple-600", text: "Pro Camera System" },
+                { icon: faShieldHalved, color: "text-green-600", text: "1 Year Warranty" },
+                { icon: faTruckFast, color: "text-orange-600", text: "Fast Delivery" }
+              ]).map((feature, index) => (
                 <div key={index} className="flex items-center">
                   <FontAwesomeIcon
                     icon={feature.icon}
@@ -254,12 +354,17 @@ const ProductInfo = ({ product, navigate }) => {
                 {storageOptions.map((storage) => (
                   <button
                     key={storage}
-                    className={`px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg text-xs sm:text-sm ${
+                    className={`px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg text-xs sm:text-sm transition-all ${
                       selectedStorage === storage
                         ? "border-2 border-blue-600 bg-blue-50 text-blue-600 font-medium"
                         : "border border-gray-300 hover:border-blue-600"
+                    } ${
+                      (processedProduct.isOutOfStock || processedProduct.isExpired) 
+                        ? "opacity-50 cursor-not-allowed" 
+                        : "cursor-pointer"
                     }`}
                     onClick={() => setSelectedStorage(storage)}
+                    disabled={processedProduct.isOutOfStock || processedProduct.isExpired}
                   >
                     {storage}
                   </button>
@@ -282,8 +387,12 @@ const ProductInfo = ({ product, navigate }) => {
                       selectedColor === color.name
                         ? "border-blue-600"
                         : "border-transparent"
-                    } cursor-pointer relative`}
-                    onClick={() => setSelectedColor(color.name)}
+                    } cursor-pointer relative ${
+                      (processedProduct.isOutOfStock || processedProduct.isExpired)
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    }`}
+                    onClick={() => !processedProduct.isOutOfStock && !processedProduct.isExpired && setSelectedColor(color.name)}
                     title={color.name}
                   >
                     {selectedColor === color.name && (
@@ -311,12 +420,17 @@ const ProductInfo = ({ product, navigate }) => {
                 {gradeOptions.map((grade) => (
                   <button
                     key={grade}
-                    className={`px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg text-xs sm:text-sm ${
+                    className={`px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg text-xs sm:text-sm transition-all ${
                       selectedGrade === grade
                         ? "border-2 border-blue-600 bg-blue-50 text-blue-600 font-medium"
                         : "border border-gray-300 hover:border-blue-600"
+                    } ${
+                      (processedProduct.isOutOfStock || processedProduct.isExpired) 
+                        ? "opacity-50 cursor-not-allowed" 
+                        : "cursor-pointer"
                     }`}
                     onClick={() => setSelectedGrade(grade)}
+                    disabled={processedProduct.isOutOfStock || processedProduct.isExpired}
                   >
                     {grade}
                   </button>
@@ -327,14 +441,56 @@ const ProductInfo = ({ product, navigate }) => {
 
           {/* Action Buttons */}
           <div className="space-y-2 sm:space-y-3">
-            <button className="w-full bg-orange-500 text-white py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-orange-600 transition-colors flex items-center justify-center">
-              <FontAwesomeIcon icon={faCartShopping} className="mr-2" />
-              Add to Cart
-            </button>
-            <button className="w-full bg-blue-600 text-white py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center">
-              <FontAwesomeIcon icon={faBolt} className="mr-2" />
-              Buy Now
-            </button>
+            {processedProduct.isExpired ? (
+              <>
+                <button
+                  className="w-full bg-gray-300 text-gray-500 py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium cursor-not-allowed flex items-center justify-center"
+                  disabled
+                >
+                  <FontAwesomeIcon icon={faCalendarXmark} className="mr-2" />
+                  Expired
+                </button>
+                <button
+                  className="w-full bg-gray-300 text-gray-500 py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium cursor-not-allowed flex items-center justify-center"
+                  disabled
+                >
+                  <FontAwesomeIcon icon={faXmark} className="mr-2" />
+                  Unavailable
+                </button>
+              </>
+            ) : processedProduct.isOutOfStock ? (
+              <>
+                <button
+                  className="w-full bg-gray-300 text-gray-500 py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium cursor-not-allowed flex items-center justify-center"
+                  disabled
+                >
+                  <FontAwesomeIcon icon={faXmark} className="mr-2" />
+                  Out of Stock
+                </button>
+                <button
+                  className="w-full border border-gray-300 text-gray-700 py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-gray-50 cursor-pointer flex items-center justify-center transition-colors"
+                  onClick={handleNotifyMe}
+                >
+                  <FontAwesomeIcon icon={faBell} className="mr-2" />
+                  Notify Me When Available
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  className="w-full bg-orange-500 text-white py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-orange-600 transition-colors flex items-center justify-center"
+                >
+                  <FontAwesomeIcon icon={faCartShopping} className="mr-2" />
+                  Add to Cart
+                </button>
+                <button
+                  className="w-full bg-blue-600 text-white py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center"
+                >
+                  <FontAwesomeIcon icon={faBolt} className="mr-2" />
+                  Buy Now
+                </button>
+              </>
+            )}
           </div>
 
           {/* Additional Info */}
@@ -367,6 +523,14 @@ const ProductInfo = ({ product, navigate }) => {
           </div>
         </div>
       </div>
+
+      {/* Notify Me Popup */}
+      {isNotifyMePopupOpen && (
+        <NotifyMePopup
+          product={processedProduct}
+          onClose={() => setIsNotifyMePopupOpen(false)}
+        />
+      )}
     </div>
   );
 };
