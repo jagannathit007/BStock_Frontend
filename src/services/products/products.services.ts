@@ -102,7 +102,7 @@ export class ProductService {
   static getProductList = async (page: number, limit: number, search?: string): Promise<ListResponse> => {
     const baseUrl = env.baseUrl;
     const adminRoute = env.adminRoute;
-    const url = `${baseUrl}/api/${adminRoute}/product/list`;
+    const url = `${baseUrl}/api/customer/get-product-list`;
 
     const body: any = { page, limit };
     if (search) {

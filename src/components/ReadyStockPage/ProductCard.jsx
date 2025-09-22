@@ -10,6 +10,7 @@ import {
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import AddToCartPopup from "./AddToCartPopup";
+import axios from "axios"; // Import Axios directly
 
 const ProductCard = ({ product, viewMode = "grid" }) => {
   const navigate = useNavigate();
@@ -54,6 +55,30 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
     e.stopPropagation();
     if (!isOutOfStock) {
       setIsPopupOpen(true);
+    }
+  };
+
+  // Handle popup close and refresh cart count
+  const handlePopupClose = async () => {
+    setIsPopupOpen(false);
+    // Refresh cart count
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.post(
+        "http://localhost:3200/api/customer/cart/count",
+        {},
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token ? `Bearer ${token}` : "",
+          },
+        }
+      );
+      if (response.data.success) {
+        console.log(`Cart count updated: ${response.data.data.count}`);
+      }
+    } catch (error) {
+      console.error("Refresh cart count error:", error);
     }
   };
 
@@ -174,7 +199,7 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
         {isPopupOpen && (
           <AddToCartPopup
             product={product}
-            onClose={() => setIsPopupOpen(false)}
+            onClose={handlePopupClose}
           />
         )}
       </>
@@ -276,7 +301,7 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
       {isPopupOpen && (
         <AddToCartPopup
           product={product}
-          onClose={() => setIsPopupOpen(false)}
+          onClose={handlePopupClose}
         />
       )}
     </div>

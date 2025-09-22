@@ -7,7 +7,7 @@ import {
   faChevronLeft,
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
-import { ProductService } from "../../services/products/products.services";
+import axios from "axios"; // Import Axios directly
 
 const MainContent = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -56,20 +56,37 @@ const MainContent = () => {
       setIsLoading(true);
       setHasError(false);
       try {
-        const res = await ProductService.getProductList(currentPage, itemsPerPage);
-        const payload = res?.data && (res.data.docs || res.data.totalDocs !== undefined) ? res.data : res;
-        const docs = payload?.docs || [];
-        const totalDocs = payload?.totalDocs || 0;
-        const mapped = docs.map(mapApiProductToUi);
+        const response = await axios.get("http://localhost:3200/api/customer/get-product-list", {
+          params: {
+            page: currentPage,
+            limit: itemsPerPage,
+          },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: localStorage.getItem("token") ? `Bearer ${localStorage.getItem("token")}` : "",
+          },
+        });
+
         if (!isCancelled) {
-          setFetchedProducts(mapped);
-          setTotalProductsCount(totalDocs || mapped.length || 0);
+          if (response.data.success) {
+            const payload = response.data.data;
+            const docs = payload?.docs || [];
+            const totalDocs = payload?.totalDocs || 0;
+            const mapped = docs.map(mapApiProductToUi);
+            setFetchedProducts(mapped);
+            setTotalProductsCount(totalDocs || mapped.length || 0);
+          } else {
+            setHasError(true);
+            setFetchedProducts([]);
+            setTotalProductsCount(0);
+          }
         }
       } catch (e) {
         if (!isCancelled) {
           setHasError(true);
           setFetchedProducts([]);
           setTotalProductsCount(0);
+          console.error("Fetch products error:", e);
         }
       } finally {
         if (!isCancelled) setIsLoading(false);
@@ -89,7 +106,6 @@ const MainContent = () => {
       setItemsPerPage(10);
     }
     setCurrentPage(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode]);
 
   const indexOfLastProduct = useMemo(() => currentPage * itemsPerPage, [currentPage, itemsPerPage]);

@@ -51,6 +51,7 @@ import "./App.css";
 import ProductDetails from "./components/ReadyStockPage/ProductDetails";
 import BiddingContent from "./components/BiddingPage/BiddingContent";
 import ProfilePage from "./pages/ProfilePage";
+import CartPage from "./components/ReadyStockPage/CartPage";
 // import FlashDealsPage from "./components/FlashDealsPage/FlashDealsPage";
 // import WatchlistPage from "./components/WatchlistPage/WatchlistPage";
 
@@ -63,6 +64,7 @@ const App = () => {
         <Routes>
           <Route path="/" element={<MainContent />} />
           <Route path="/product/:id" element={<ProductDetails />} />
+          <Route path="/cart" element={<CartPage />} />
           <Route path="/bidding" element={<BiddingContent />} />
           {/* <Route path="/flash-deals" element={<FlashDealsPage />} />
           <Route path="/watchlist" element={<WatchlistPage />} /> */}
