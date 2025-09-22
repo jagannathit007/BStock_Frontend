@@ -9,19 +9,14 @@ import {
   faShieldHalved,
   faMobileAlt,
 } from "@fortawesome/free-solid-svg-icons";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import ForgotPasswordModal from "./ForgotPasswordModal";
-// import { Link } from "react-router-dom";
-// Mock Link component for demo
-// const Link = ({ to, children, className }) => (
-//   <a href={to} className={className} onClick={(e) => e.preventDefault()}>
-//     {children}
-//   </a>
-// );
 import { jwtDecode } from "jwt-decode";
+import ForgotPasswordModal from "./ForgotPasswordModal";
+import { AuthService } from "../services/auth/auth.services";
 
 const LoginForm = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -41,13 +36,15 @@ const LoginForm = () => {
     document.body.appendChild(script);
 
     return () => {
-      document.body.removeChild(script);
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
     };
   }, []);
 
   const initializeGoogleSignIn = () => {
     if (window.google) {
-      google.accounts.id.initialize({
+      window.google.accounts.id.initialize({
         client_id:
           "695873248784-k6f8fjsvj0u76e82u40qu8ishcbnrabd.apps.googleusercontent.com",
         callback: handleGoogleResponse,
@@ -56,7 +53,7 @@ const LoginForm = () => {
 
       const googleSignInDiv = document.getElementById("googleSignInDiv");
       if (googleSignInDiv) {
-        google.accounts.id.renderButton(googleSignInDiv, {
+        window.google.accounts.id.renderButton(googleSignInDiv, {
           theme: "outline",
           size: "large",
           width: "100%",
@@ -64,7 +61,7 @@ const LoginForm = () => {
           shape: "pill",
         });
 
-        google.accounts.id.prompt((notification) => {
+        window.google.accounts.id.prompt((notification) => {
           if (notification.isNotDisplayed() || notification.isSkipped()) {
             // Try next time or use fallback
           }
@@ -80,26 +77,67 @@ const LoginForm = () => {
       const userData = jwtDecode(response.credential);
       console.log("Google User:", userData);
 
-      setTimeout(() => {
-        console.log("Google login successful", userData);
-        setGoogleLoading(false);
-      }, 1500);
+      const loginData = {
+        email: userData.email || "",
+        socialId: userData.sub, // Google user ID
+        platformName: "google",
+      };
+
+      const res = await AuthService.login(loginData);
+      if (res.data && res.data.token) {
+        localStorage.setItem("token", res.data.token);
+        if (rememberMe) {
+          localStorage.setItem("rememberMe", "true");
+          localStorage.setItem("email", email);
+        } else {
+          localStorage.removeItem("rememberMe");
+          localStorage.removeItem("email");
+        }
+        navigate("/");
+      }
     } catch (err) {
       console.error("Google login failed:", err);
-      setError("Google login failed. Please try again.");
+      setError(err.message || "Google login failed. Please try again.");
+    } finally {
       setGoogleLoading(false);
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-    console.log({ email, password, rememberMe });
 
-    setTimeout(() => {
+    // Basic validation
+    if (!email || !password) {
+      setError("Please enter both email and password");
       setIsLoading(false);
-    }, 2000);
+      return;
+    }
+
+    const loginData = {
+      email: email.trim().toLowerCase(),
+      password,
+    };
+
+    try {
+      const res = await AuthService.login(loginData);
+      if (res.data && res.data.token) {
+        localStorage.setItem("token", res.data.token);
+        if (rememberMe) {
+          localStorage.setItem("rememberMe", "true");
+          localStorage.setItem("email", email);
+        } else {
+          localStorage.removeItem("rememberMe");
+          localStorage.removeItem("email");
+        }
+        navigate("/");
+      }
+    } catch (err) {
+      setError(err.message || "Login failed");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
@@ -149,17 +187,12 @@ const LoginForm = () => {
   // Right side image section for bedding ecommerce
   const ImageSection = () => (
     <div className="relative w-full h-screen bg-indigo-600 flex items-center justify-center">
-      {/* Background Image */}
       <img
         src="./images/login.png"
         alt="Premium Bedding Collection"
         className="absolute inset-0 w-full h-full object-cover"
       />
-
-      {/* Overlay for readability */}
       <div className="absolute inset-0 bg-black/50"></div>
-
-      {/* Text Overlay */}
       <div className="relative z-10 text-center text-white px-6 max-w-2xl">
         <h2 className="text-2xl md:text-4xl font-bold mb-4">
           xGMS Access the best deals, anytime.
@@ -175,7 +208,6 @@ const LoginForm = () => {
   return (
     <>
       <div className="min-h-screen flex bg-white fixed inset-0 overflow-auto">
-        {/* Left Side - Login Form */}
         <div className="flex-1 flex items-start justify-center px-4 sm:px-4 lg:px-6 bg-white overflow-y-auto py-12">
           {showLoginForm && (
             <motion.div
@@ -184,19 +216,18 @@ const LoginForm = () => {
               initial="hidden"
               animate="visible"
             >
-              {/* Logo */}
               <motion.div className="text-left" variants={childVariants}>
                 <motion.div
                   className="inline-flex items-center space-x-3 mb-6"
                   variants={logoVariants}
                 >
                   {/* <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
-              <FontAwesomeIcon
-                icon={faMobileAlt}
-                className="text-white text-lg"
-              />
-            </div>
-            <span className="text-2xl font-bold text-gray-900">GSM Bidding</span> */}
+                    <FontAwesomeIcon
+                      icon={faMobileAlt}
+                      className="text-white text-lg"
+                    />
+                  </div>
+                  <span className="text-2xl font-bold text-gray-900">GSM Bidding</span> */}
                 </motion.div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
                   Welcome back !
@@ -220,7 +251,6 @@ const LoginForm = () => {
                 onSubmit={handleSubmit}
                 variants={childVariants}
               >
-                {/* Email */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Email <span className="text-red-500">*</span>
@@ -235,7 +265,10 @@ const LoginForm = () => {
                     <input
                       type="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setError("");
+                      }}
                       className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white text-sm"
                       placeholder="Enter your mail address"
                       required
@@ -243,7 +276,6 @@ const LoginForm = () => {
                   </div>
                 </div>
 
-                {/* Password */}
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Password <span className="text-red-500">*</span>
@@ -258,7 +290,10 @@ const LoginForm = () => {
                     <input
                       type={showPassword ? "text" : "password"}
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setError("");
+                      }}
                       className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white text-sm"
                       placeholder="Enter password"
                       required
@@ -276,7 +311,6 @@ const LoginForm = () => {
                   </div>
                 </div>
 
-                {/* Remember & Forgot */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <input
@@ -297,7 +331,6 @@ const LoginForm = () => {
                   </span>
                 </div>
 
-                {/* Sign In Button */}
                 <motion.button
                   type="submit"
                   className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium focus:ring-4 focus:ring-indigo-300 flex items-center justify-center disabled:opacity-70"
@@ -315,7 +348,6 @@ const LoginForm = () => {
                   )}
                 </motion.button>
 
-                {/* Divider */}
                 <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-gray-200"></div>
@@ -327,7 +359,6 @@ const LoginForm = () => {
                   </div>
                 </div>
 
-                {/* Google Sign-In */}
                 <div className="w-full">
                   {googleLoading ? (
                     <div className="flex justify-center items-center py-3 bg-gray-50 rounded-lg border">
@@ -345,7 +376,6 @@ const LoginForm = () => {
                 </div>
               </motion.form>
 
-              {/* Sign Up */}
               <motion.div className="text-center" variants={childVariants}>
                 <p className="text-gray-600 text-sm font-medium">
                   Don't have an account?{" "}
@@ -358,7 +388,6 @@ const LoginForm = () => {
                 </p>
               </motion.div>
 
-              {/* Security */}
               <motion.div className="text-center" variants={childVariants}>
                 <p className="text-xs text-gray-500 flex items-center justify-center font-medium">
                   <FontAwesomeIcon
@@ -372,12 +401,10 @@ const LoginForm = () => {
           )}
         </div>
 
-        {/* Right Side - Bedding Image */}
         <div className="hidden lg:flex flex-1 relative">
           <ImageSection />
         </div>
 
-        {/* Forgot Password Modal */}
         <ForgotPasswordModal
           isOpen={showForgotPasswordModal}
           onClose={handleCloseModal}

@@ -44,6 +44,65 @@ export interface ImportResponse {
     imported: string;
   };
 }
+export interface NotificationRequest {
+  productId: string;
+  email: string;
+  phone?: string;
+}
+
+export interface Notification {
+  _id?: string;
+  productId: string;
+  email: string;
+  phone?: string;
+  notificationType: string;
+  status: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface NotificationResponse {
+  status: number;
+  message: string;
+  data?: Notification;
+}
+
+export interface NotificationListResponse {
+  status: number;
+  message: string;
+  data: {
+    docs: Notification[];
+    totalDocs: number;
+    limit: number;
+    totalPages: number;
+    page: number;
+    pagingCounter: number;
+    hasPrevPage: boolean;
+    hasNextPage: boolean;
+    prevPage: number | null;
+    nextPage: number | null;
+  };
+}
+
+export interface NotificationStatsResponse {
+  status: number;
+  message: string;
+  data: {
+    totalNotifications: number;
+    activeNotifications: number;
+    triggeredNotifications: number;
+    pendingNotifications: number;
+  };
+}
+
+export interface UserPreferences {
+  email: string;
+  emailNotifications: boolean;
+  smsNotifications: boolean;
+  frequency: 'immediate' | 'daily' | 'weekly';
+  categories: string[];
+}
+
 
 export class ProductService {
   // Create a new product
@@ -212,4 +271,56 @@ export class ProductService {
   //     throw new Error(errorMessage);
   //   }
   // };
+
+
+  // Add this method to your ProductService class
+
+static createNotification = async (notificationData: NotificationRequest): Promise<NotificationResponse> => {
+  const baseUrl = env.baseUrl;
+  const adminRoute = env.adminRoute;
+  const url = `${baseUrl}/api/${adminRoute}/notification/create`;
+
+  try {
+    // Validate required fields
+    if (!notificationData.productId || !notificationData.email) {
+      throw new Error('Product ID and email are required');
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(notificationData.email)) {
+      throw new Error('Please enter a valid email address');
+    }
+
+    // Validate phone format if provided
+    if (notificationData.phone && !/^[\+]?[1-9][\d]{0,15}$/.test(notificationData.phone.replace(/\s/g, ''))) {
+      throw new Error('Please enter a valid phone number');
+    }
+
+    // Prepare the payload
+    const payload = {
+      productId: notificationData.productId,
+      email: notificationData.email.trim().toLowerCase(),
+      phone: notificationData.phone ? notificationData.phone.trim() : undefined,
+      notificationType: 'stock_alert',
+      status: 'active',
+      createdAt: new Date().toISOString(),
+    };
+
+    const res = await api.post(url, payload);
+    
+    // Check response status
+    if (res.data?.status && res.data.status !== 200) {
+      throw new Error(res.data?.message || 'Failed to create notification');
+    }
+
+    toastHelper.showTost(res.data.message || 'Notification created successfully!', 'success');
+    return res.data;
+  } catch (err: any) {
+    const errorMessage = err.response?.data?.message || err.message || 'Failed to create notification';
+    toastHelper.showTost(errorMessage, 'error');
+    throw new Error(errorMessage);
+  }
+};
+
 }

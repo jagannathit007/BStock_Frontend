@@ -8,12 +8,15 @@ import {
   faHandshake,
   faBell,
   faXmark,
+  faCalendarXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import AddToCartPopup from "./AddToCartPopup";
+import NotifyMePopup from "./NotifyMePopup";
 
 const ProductCard = ({ product, viewMode = "grid" }) => {
   const navigate = useNavigate();
-  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
+  const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
 
   const {
     id,
@@ -28,9 +31,17 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
     imageUrl,
     isFavorite,
     isOutOfStock,
+    expiryTime,
+    isExpired,
   } = product;
 
+  // Check if product can accept notifications (out of stock but not expired)
+  const canNotify = isOutOfStock && !isExpired;
+
   const getStatusBadgeClass = () => {
+    if (isExpired) {
+      return "bg-gray-100 text-gray-800";
+    }
     switch (stockStatus) {
       case "In Stock":
         return "bg-green-100 text-green-800";
@@ -43,6 +54,13 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
     }
   };
 
+  const getDisplayStatus = () => {
+    if (isExpired) {
+      return "Expired";
+    }
+    return stockStatus;
+  };
+
   const handleProductClick = (e) => {
     if (e.target.tagName === "BUTTON" || e.target.closest("button")) {
       return;
@@ -52,8 +70,15 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
 
   const handleAddToCart = (e) => {
     e.stopPropagation();
-    if (!isOutOfStock) {
-      setIsPopupOpen(true);
+    if (!isOutOfStock && !isExpired) {
+      setIsAddToCartPopupOpen(true);
+    }
+  };
+
+  const handleNotifyMe = (e) => {
+    e.stopPropagation();
+    if (canNotify) {
+      setIsNotifyMePopupOpen(true);
     }
   };
 
@@ -82,7 +107,10 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
                   <span
                     className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass()}`}
                   >
-                    {stockStatus}
+                    {isExpired && (
+                      <FontAwesomeIcon icon={faCalendarXmark} className="w-3 h-3 mr-1" />
+                    )}
+                    {getDisplayStatus()}
                   </span>
                 </div>
               </div>
@@ -123,7 +151,7 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
               {stockCount} units
             </div>
             <div className="text-xs text-gray-500">
-              {stockStatus === "Low Stock" ? "Low stock" : "Available"}
+              {isExpired ? "Expired" : stockStatus === "Low Stock" ? "Low stock" : "Available"}
             </div>
           </td>
           <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
@@ -132,7 +160,17 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
           </td>
           <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
             <div className="flex space-x-1 sm:space-x-2">
-              {isOutOfStock ? (
+              {isExpired ? (
+                <button
+                  disabled
+                  className="bg-gray-300 text-gray-500 p-1 sm:p-2 rounded-lg cursor-not-allowed"
+                >
+                  <FontAwesomeIcon
+                    icon={faCalendarXmark}
+                    className="text-sm sm:text-base"
+                  />
+                </button>
+              ) : isOutOfStock ? (
                 <button
                   disabled
                   className="bg-gray-300 text-gray-500 p-1 sm:p-2 rounded-lg cursor-not-allowed"
@@ -153,17 +191,31 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
                   />
                 </button>
               )}
-              {isOutOfStock ? (
-                <button className="border border-gray-300 text-gray-700 p-1 sm:p-2 rounded-lg hover:bg-gray-50">
+              
+              {canNotify ? (
+                <button 
+                  className="border border-gray-300 text-gray-700 p-1 sm:p-2 rounded-lg hover:bg-gray-50"
+                  onClick={handleNotifyMe}
+                >
                   <FontAwesomeIcon
                     icon={faBell}
                     className="text-sm sm:text-base"
                   />
                 </button>
-              ) : (
+              ) : !isExpired && !isOutOfStock ? (
                 <button className="border border-gray-300 text-gray-700 p-1 sm:p-2 rounded-lg hover:bg-gray-50">
                   <FontAwesomeIcon
                     icon={faHandshake}
+                    className="text-sm sm:text-base"
+                  />
+                </button>
+              ) : (
+                <button
+                  disabled
+                  className="bg-gray-200 text-gray-400 p-1 sm:p-2 rounded-lg cursor-not-allowed"
+                >
+                  <FontAwesomeIcon
+                    icon={faXmark}
                     className="text-sm sm:text-base"
                   />
                 </button>
@@ -171,10 +223,16 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
             </div>
           </td>
         </tr>
-        {isPopupOpen && (
+        {isAddToCartPopupOpen && (
           <AddToCartPopup
             product={product}
-            onClose={() => setIsPopupOpen(false)}
+            onClose={() => setIsAddToCartPopupOpen(false)}
+          />
+        )}
+        {isNotifyMePopupOpen && (
+          <NotifyMePopup
+            product={product}
+            onClose={() => setIsNotifyMePopupOpen(false)}
           />
         )}
       </>
@@ -210,7 +268,10 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
           <span
             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass()}`}
           >
-            {stockStatus}
+            {isExpired && (
+              <FontAwesomeIcon icon={faCalendarXmark} className="w-3 h-3 mr-1" />
+            )}
+            {getDisplayStatus()}
           </span>
         </div>
       </div>
@@ -237,10 +298,29 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
 
         <div className="text-xs text-gray-500 mb-3">
           MOQ: {moq} units • {stockCount} available
+          {isExpired && (
+            <span className="ml-2 text-red-500">• Expired</span>
+          )}
         </div>
 
         <div className="flex space-x-2">
-          {isOutOfStock ? (
+          {isExpired ? (
+            <>
+              <button
+                className="flex-1 bg-gray-300 text-gray-500 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium cursor-not-allowed"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <FontAwesomeIcon icon={faCalendarXmark} className="mr-1" />
+                Expired
+              </button>
+              <button
+                className="flex-1 bg-gray-200 text-gray-400 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium cursor-not-allowed"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Unavailable
+              </button>
+            </>
+          ) : isOutOfStock ? (
             <>
               <button
                 className="flex-1 bg-gray-300 text-gray-500 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium cursor-not-allowed"
@@ -250,8 +330,9 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
               </button>
               <button
                 className="flex-1 border border-gray-300 text-gray-700 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium hover:bg-gray-50 cursor-pointer"
-                onClick={(e) => e.stopPropagation()}
+                onClick={handleNotifyMe}
               >
+                <FontAwesomeIcon icon={faBell} className="mr-1" />
                 Notify Me
               </button>
             </>
@@ -273,10 +354,16 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
           )}
         </div>
       </div>
-      {isPopupOpen && (
+      {isAddToCartPopupOpen && (
         <AddToCartPopup
           product={product}
-          onClose={() => setIsPopupOpen(false)}
+          onClose={() => setIsAddToCartPopupOpen(false)}
+        />
+      )}
+      {isNotifyMePopupOpen && (
+        <NotifyMePopup
+          product={product}
+          onClose={() => setIsNotifyMePopupOpen(false)}
         />
       )}
     </div>
