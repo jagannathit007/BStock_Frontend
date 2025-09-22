@@ -58,7 +58,7 @@ const Header = () => {
   const handleLogout = () => {
     console.log("User logged out");
     setIsDropdownOpen(false);
-    // navigate("/login");
+    navigate("/login");
   };
 
   const handleProfileNavigation = () => {

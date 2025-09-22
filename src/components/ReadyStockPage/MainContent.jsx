@@ -33,6 +33,10 @@ const MainContent = () => {
     const originalPrice = String(priceNumber > 0 ? priceNumber + 100 : 0);
     const stock = Number(p.stock) || 0;
     const stockStatus = stock <= 0 ? "Out of Stock" : stock <= 10 ? "Low Stock" : "In Stock";
+    // Add expiry logic
+    const expiryTime = p.expiryTime;
+    const isExpired = expiryTime ? new Date(expiryTime) < new Date() : false;
+
 
     return {
       id,
@@ -47,6 +51,9 @@ const MainContent = () => {
       imageUrl,
       isFavorite: false,
       isOutOfStock: stock <= 0,
+      expiryTime, // Add expiry time to the mapped object
+      isExpired, // Add expiry status to the mapped object
+
     };
   };
 

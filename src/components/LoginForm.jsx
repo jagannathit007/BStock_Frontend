@@ -9,12 +9,14 @@ import {
   faShieldHalved,
   faMobileAlt,
 } from "@fortawesome/free-solid-svg-icons";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import ForgotPasswordModal from "./ForgotPasswordModal";
-import { Link } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
+import ForgotPasswordModal from "./ForgotPasswordModal";
+import { AuthService } from "../services/auth/auth.services";
 
-const LoginForm = () => {
+const LoginForm = ({ onLogin }) => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -34,13 +36,15 @@ const LoginForm = () => {
     document.body.appendChild(script);
 
     return () => {
-      document.body.removeChild(script);
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
     };
   }, []);
 
   const initializeGoogleSignIn = () => {
     if (window.google) {
-      google.accounts.id.initialize({
+      window.google.accounts.id.initialize({
         client_id:
           "695873248784-k6f8fjsvj0u76e82u40qu8ishcbnrabd.apps.googleusercontent.com",
         callback: handleGoogleResponse,
@@ -49,7 +53,7 @@ const LoginForm = () => {
 
       const googleSignInDiv = document.getElementById("googleSignInDiv");
       if (googleSignInDiv) {
-        google.accounts.id.renderButton(googleSignInDiv, {
+        window.google.accounts.id.renderButton(googleSignInDiv, {
           theme: "outline",
           size: "large",
           width: "100%",
@@ -57,8 +61,7 @@ const LoginForm = () => {
           shape: "pill",
         });
 
-        // Optional: Show One Tap UI
-        google.accounts.id.prompt((notification) => {
+        window.google.accounts.id.prompt((notification) => {
           if (notification.isNotDisplayed() || notification.isSkipped()) {
             // Try next time or use fallback
           }
@@ -74,38 +77,71 @@ const LoginForm = () => {
       const userData = jwtDecode(response.credential);
       console.log("Google User:", userData);
 
-      // Here you would typically send the credential to your backend
-      // const res = await fetch('/api/auth/google', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ credential: response.credential })
-      // });
-      // const data = await res.json();
+      const loginData = {
+        email: userData.email || "",
+        socialId: userData.sub, // Google user ID
+        platformName: "google",
+      };
 
-      // For demo, we'll just log and simulate success
-      setTimeout(() => {
-        console.log("Google login successful", userData);
-        setGoogleLoading(false);
-        // Redirect or update state as needed
-      }, 1500);
+      const res = await AuthService.login(loginData);
+      if (res.data && res.data.token) {
+        localStorage.setItem("token", res.data.token);
+        if (rememberMe) {
+          localStorage.setItem("rememberMe", "true");
+          localStorage.setItem("email", email);
+        } else {
+          localStorage.removeItem("rememberMe");
+          localStorage.removeItem("email");
+        }
+        localStorage.setItem("isLoggedIn", "true");
+        if (onLogin) onLogin();
+        navigate("/");
+      }
     } catch (err) {
       console.error("Google login failed:", err);
-      setError("Google login failed. Please try again.");
+      setError(err.message || "Google login failed. Please try again.");
+    } finally {
       setGoogleLoading(false);
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-    console.log({ email, password, rememberMe });
 
-    // Simulate API call
-    setTimeout(() => {
+    // Basic validation
+    if (!email || !password) {
+      setError("Please enter both email and password");
       setIsLoading(false);
-      // Handle successful login or show error
-    }, 2000);
+      return;
+    }
+
+    const loginData = {
+      email: email.trim().toLowerCase(),
+      password,
+    };
+
+    try {
+      const res = await AuthService.login(loginData);
+      if (res.data && res.data.token) {
+        localStorage.setItem("token", res.data.token);
+        if (rememberMe) {
+          localStorage.setItem("rememberMe", "true");
+          localStorage.setItem("email", email);
+        } else {
+          localStorage.removeItem("rememberMe");
+          localStorage.removeItem("email");
+        }
+        localStorage.setItem("isLoggedIn", "true");
+        if (onLogin) onLogin();
+        navigate("/");
+      }
+    } catch (err) {
+      setError(err.message || "Login failed");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
@@ -136,11 +172,11 @@ const LoginForm = () => {
 
   const buttonVariants = {
     hover: {
-      scale: 1.05,
-      boxShadow: "0px 4px 20px rgba(59, 130, 246, 0.3)",
+      scale: 1.02,
+      boxShadow: "0px 8px 25px rgba(79, 70, 229, 0.3)",
       transition: { duration: 0.3 },
     },
-    tap: { scale: 0.95 },
+    tap: { scale: 0.98 },
   };
 
   const logoVariants = {
@@ -152,95 +188,118 @@ const LoginForm = () => {
     },
   };
 
+  // Right side image section for bedding ecommerce
+  const ImageSection = () => (
+    <div className="relative w-full h-screen bg-indigo-600 flex items-center justify-center">
+      <img
+        src="./images/login.png"
+        alt="Premium Bedding Collection"
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+      <div className="absolute inset-0 bg-black/50"></div>
+      <div className="relative z-10 text-center text-white px-6 max-w-2xl">
+        <h2 className="text-2xl md:text-4xl font-bold mb-4">
+          xGMS Access the best deals, anytime.
+        </h2>
+        <p className="text-lg text-indigo-100">
+          Log in to discover exclusive deals, trusted sellers, and unbeatable
+          prices—all in one place.
+        </p>
+      </div>
+    </div>
+  );
+
   return (
     <>
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-        {/* Background Blobs */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-          <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-          <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
-        </div>
-
-        {showLoginForm && (
-          <motion.div
-            className="max-w-md w-full"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {/* Logo */}
-            <motion.div className="text-center mb-8" variants={childVariants}>
-              <motion.div
-                className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full mb-4 shadow-lg"
-                variants={logoVariants}
-              >
-                <FontAwesomeIcon
-                  icon={faMobileAlt}
-                  className="text-white text-3xl"
-                />
-              </motion.div>
-              <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
-                GSM Bidding
-              </h1>
-              <p className="text-gray-600 mt-2 font-medium">
-                Unlock the best deals on premium phones
-              </p>
-            </motion.div>
-
-            {/* Card */}
+      <div className="min-h-screen flex bg-white fixed inset-0 overflow-auto">
+        <div className="flex-1 flex items-start justify-center px-4 sm:px-4 lg:px-6 bg-white overflow-y-auto py-12">
+          {showLoginForm && (
             <motion.div
-              className="bg-white rounded-3xl shadow-2xl p-8 border border-blue-100"
-              variants={childVariants}
+              className="max-w-md w-full space-y-8 px-4 sm:px-6"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
             >
+              <motion.div className="text-left" variants={childVariants}>
+                <motion.div
+                  className="inline-flex items-center space-x-3 mb-6"
+                  variants={logoVariants}
+                >
+                  {/* <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+                    <FontAwesomeIcon
+                      icon={faMobileAlt}
+                      className="text-white text-lg"
+                    />
+                  </div>
+                  <span className="text-2xl font-bold text-gray-900">GSM Bidding</span> */}
+                </motion.div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  Welcome back !
+                </h1>
+                <p className="text-gray-600">
+                  Enter to get unlimited access to data & information.
+                </p>
+              </motion.div>
+
               {error && (
-                <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+                <motion.div
+                  className="p-4 bg-red-50 text-red-600 rounded-lg text-sm border border-red-100"
+                  variants={childVariants}
+                >
                   {error}
-                </div>
+                </motion.div>
               )}
 
-              <form className="space-y-6" onSubmit={handleSubmit}>
-                {/* Email */}
-                <motion.div className="space-y-2" variants={childVariants}>
+              <motion.form
+                className="space-y-6"
+                onSubmit={handleSubmit}
+                variants={childVariants}
+              >
+                <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Email Address
+                    Email <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <FontAwesomeIcon
                         icon={faEnvelope}
-                        className="text-blue-400"
+                        className="text-indigo-400 text-sm"
                       />
                     </div>
                     <input
                       type="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50/50"
-                      placeholder="Enter your email"
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setError("");
+                      }}
+                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white text-sm"
+                      placeholder="Enter your mail address"
                       required
                     />
                   </div>
-                </motion.div>
+                </div>
 
-                {/* Password */}
-                <motion.div className="space-y-2" variants={childVariants}>
+                <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
-                    Password
+                    Password <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <FontAwesomeIcon
                         icon={faLock}
-                        className="text-blue-400"
+                        className="text-indigo-400 text-sm"
                       />
                     </div>
                     <input
                       type={showPassword ? "text" : "password"}
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="block w-full pl-10 pr-12 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50/50"
-                      placeholder="Enter your password"
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setError("");
+                      }}
+                      className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white text-sm"
+                      placeholder="Enter password"
                       required
                     />
                     <button
@@ -250,23 +309,19 @@ const LoginForm = () => {
                     >
                       <FontAwesomeIcon
                         icon={showPassword ? faEyeSlash : faEye}
-                        className="text-gray-400 hover:text-blue-600"
+                        className="text-gray-400 hover:text-indigo-600 text-sm"
                       />
                     </button>
                   </div>
-                </motion.div>
+                </div>
 
-                {/* Remember & Forgot */}
-                <motion.div
-                  className="flex items-center justify-between"
-                  variants={childVariants}
-                >
+                <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <input
                       type="checkbox"
                       checked={rememberMe}
                       onChange={(e) => setRememberMe(e.target.checked)}
-                      className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                      className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                     />
                     <label className="ml-2 block text-sm text-gray-700">
                       Remember me
@@ -274,22 +329,21 @@ const LoginForm = () => {
                   </div>
                   <span
                     onClick={handleForgotPassword}
-                    className="text-sm text-blue-600 hover:text-blue-800 font-medium cursor-pointer"
+                    className="text-sm text-indigo-600 hover:text-indigo-800 font-medium cursor-pointer"
                   >
-                    Forgot password?
+                    Forgot your password ?
                   </span>
-                </motion.div>
+                </div>
 
-                {/* Sign In Button */}
                 <motion.button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-xl font-medium focus:ring-4 focus:ring-blue-300 flex items-center justify-center shadow-md"
+                  className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium focus:ring-4 focus:ring-indigo-300 flex items-center justify-center disabled:opacity-70"
                   disabled={isLoading}
                   variants={buttonVariants}
                   whileHover="hover"
                   whileTap="tap"
                 >
-                  <span className={isLoading ? "mr-2" : ""}>Sign In</span>
+                  <span className={isLoading ? "mr-2" : ""}>Log In</span>
                   {isLoading && (
                     <FontAwesomeIcon
                       icon={faSpinner}
@@ -298,60 +352,63 @@ const LoginForm = () => {
                   )}
                 </motion.button>
 
-                {/* Divider */}
-                <motion.div className="relative my-6" variants={childVariants}>
+                <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-gray-200"></div>
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-3 bg-white text-gray-500 font-medium">
-                      Or continue with
+                    <span className="px-3 bg-white text-gray-500">
+                      Or, Login with
                     </span>
                   </div>
-                </motion.div>
+                </div>
 
-                {/* Google Sign-In */}
-                <div id="googleSignInDiv" className="w-full">
-                  {googleLoading && (
-                    <div className="flex justify-center items-center py-3">
+                <div className="w-full">
+                  {googleLoading ? (
+                    <div className="flex justify-center items-center py-3 bg-gray-50 rounded-lg border">
                       <FontAwesomeIcon
                         icon={faSpinner}
-                        className="animate-spin text-blue-600 mr-2"
+                        className="animate-spin text-indigo-600 mr-2"
                       />
-                      <span>Signing in with Google...</span>
+                      <span className="text-gray-700">
+                        Signing in with Google...
+                      </span>
                     </div>
+                  ) : (
+                    <div id="googleSignInDiv" className="w-full"></div>
                   )}
                 </div>
-              </form>
+              </motion.form>
 
-              {/* Sign Up */}
-              <motion.div className="mt-8 text-center" variants={childVariants}>
-                <p className="text-gray-600 font-medium">
-                  Don't have an account?
+              <motion.div className="text-center" variants={childVariants}>
+                <p className="text-gray-600 text-sm font-medium">
+                  Don't have an account?{" "}
                   <Link
                     to="/signup"
-                    className="text-blue-600 hover:text-blue-800 font-semibold ml-1"
+                    className="text-indigo-600 hover:text-indigo-800 font-semibold"
                   >
-                    Create business account
+                    Register here
                   </Link>
                 </p>
               </motion.div>
-            </motion.div>
 
-            {/* Security */}
-            <motion.div className="mt-6 text-center" variants={childVariants}>
-              <p className="text-xs text-gray-500 flex items-center justify-center font-medium">
-                <FontAwesomeIcon
-                  icon={faShieldHalved}
-                  className="mr-2 text-blue-500 animate-pulse"
-                />
-                Your business data is protected with enterprise-grade security
-              </p>
+              <motion.div className="text-center" variants={childVariants}>
+                <p className="text-xs text-gray-500 flex items-center justify-center font-medium">
+                  <FontAwesomeIcon
+                    icon={faShieldHalved}
+                    className="mr-2 text-indigo-500"
+                  />
+                  Your business data is protected with enterprise-grade security
+                </p>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
+          )}
+        </div>
 
-        {/* Forgot Password Modal */}
+        <div className="hidden lg:flex flex-1 relative">
+          <ImageSection />
+        </div>
+
         <ForgotPasswordModal
           isOpen={showForgotPasswordModal}
           onClose={handleCloseModal}
@@ -361,33 +418,6 @@ const LoginForm = () => {
           }}
         />
       </div>
-
-      {/* Blob animation */}
-      <style jsx>{`
-        @keyframes blob {
-          0% {
-            transform: translate(0px, 0px) scale(1);
-          }
-          33% {
-            transform: translate(30px, -50px) scale(1.1);
-          }
-          66% {
-            transform: translate(-20px, 20px) scale(0.9);
-          }
-          100% {
-            transform: translate(0px, 0px) scale(1);
-          }
-        }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-      `}</style>
     </>
   );
 };
