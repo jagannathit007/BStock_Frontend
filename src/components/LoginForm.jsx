@@ -15,7 +15,7 @@ import { jwtDecode } from "jwt-decode";
 import ForgotPasswordModal from "./ForgotPasswordModal";
 import { AuthService } from "../services/auth/auth.services";
 
-const LoginForm = () => {
+const LoginForm = ({ onLogin }) => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -93,6 +93,8 @@ const LoginForm = () => {
           localStorage.removeItem("rememberMe");
           localStorage.removeItem("email");
         }
+        localStorage.setItem("isLoggedIn", "true");
+        if (onLogin) onLogin();
         navigate("/");
       }
     } catch (err) {
@@ -131,6 +133,8 @@ const LoginForm = () => {
           localStorage.removeItem("rememberMe");
           localStorage.removeItem("email");
         }
+        localStorage.setItem("isLoggedIn", "true");
+        if (onLogin) onLogin();
         navigate("/");
       }
     } catch (err) {
