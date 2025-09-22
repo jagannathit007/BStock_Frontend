@@ -24,9 +24,10 @@ const VerifyEmail = () => {
         const res = await AuthService.verifyEmail(token);
         if (res.data && res.data.token) {
           localStorage.setItem("token", res.data.token);
+          localStorage.setItem("isLoggedIn", "true");
           setSuccess(true);
           // Redirect after 2 seconds
-          setTimeout(() => navigate("/dashboard"), 2000);
+          setTimeout(() => navigate("/"), 1500);
         } else {
           setError("Verification failed. Please try again.");
         }
@@ -74,12 +75,12 @@ const VerifyEmail = () => {
           <>
             <FontAwesomeIcon icon={faCheckCircle} className="text-green-600 text-6xl mb-4" />
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Email Verified Successfully!</h1>
-            <p className="text-gray-600 mb-6">Your account is now active. Redirecting to dashboard...</p>
+            <p className="text-gray-600 mb-6">Your account is now active. Redirecting to home...</p>
             <Link
-              to="/dashboard"
+              to="/"
               className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
             >
-              Go to Dashboard
+              Go to Home
             </Link>
           </>
         ) : (

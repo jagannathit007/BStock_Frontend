@@ -1,41 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner, faCheckCircle, faExclamationCircle } from "@fortawesome/free-solid-svg-icons";
 import { AuthService } from "../services/auth/auth.services";
 
 const VerifyEmail = () => {
-  const { token } = useParams();
-  const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
+  const [isLoading] = useState(false);
 
-  useEffect(() => {
-    const verify = async () => {
-      if (!token) {
-        setError("No verification token provided");
-        setIsLoading(false);
-        return;
-      }
-      try {
-        const res = await AuthService.verifyEmail(token);
-        if (res.data && res.data.token) {
-          localStorage.setItem("token", res.data.token);
-          setSuccess(true);
-          setTimeout(() => navigate("/dashboard"), 2000);
-        } else {
-          setError("Verification failed. Please try again.");
-        }
-      } catch (err) {
-        setError(err.message || "Email verification failed. The link may be invalid or expired.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    verify();
-  }, [token, navigate]);
+  useEffect(() => {}, []);
 
   // Animation variants to match SignUpForm and LoginForm
   const containerVariants = {
@@ -60,57 +33,31 @@ const VerifyEmail = () => {
         initial="hidden"
         animate="visible"
       >
-        {isLoading ? (
-          <motion.div variants={childVariants}>
-            <FontAwesomeIcon
-              icon={faSpinner}
-              className="animate-spin text-indigo-600 text-4xl mb-4"
-            />
-            <p className="text-gray-700 text-lg">Verifying your email...</p>
-          </motion.div>
-        ) : success ? (
-          <motion.div variants={childVariants}>
-            <FontAwesomeIcon
-              icon={faCheckCircle}
-              className="text-green-600 text-4xl mb-4"
-            />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Email Verified Successfully!
-            </h1>
-            <p className="text-gray-600 text-sm">
-              Your account is now active. Redirecting to dashboard...
-            </p>
+        <motion.div variants={childVariants}>
+          <FontAwesomeIcon
+            icon={faSpinner}
+            className="animate-spin text-indigo-600 text-4xl mb-4"
+          />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Check your email</h1>
+          <p className="text-gray-600 text-sm mb-4">
+            We sent a verification link to your email. Click the link to verify
+            your account. This page will not auto-verify.
+          </p>
+          <div className="space-y-4">
             <Link
-              to="/dashboard"
-              className="mt-4 inline-block bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+              to="/login"
+              className="inline-block w-full bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
             >
-              Go to Dashboard
+              Back to Login
             </Link>
-          </motion.div>
-        ) : (
-          <motion.div variants={childVariants}>
-            <FontAwesomeIcon
-              icon={faExclamationCircle}
-              className="text-red-600 text-4xl mb-4"
-            />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Verification Failed</h1>
-            <p className="text-red-600 text-sm mb-4">{error}</p>
-            <div className="space-y-4">
-              <Link
-                to="/login"
-                className="inline-block w-full bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
-              >
-                Back to Login
+            <p className="text-sm text-gray-600">
+              Need a new verification link?{" "}
+              <Link to="/signup" className="text-indigo-600 hover:text-indigo-800 font-medium">
+                Sign Up Again
               </Link>
-              <p className="text-sm text-gray-600">
-                Need a new verification link?{" "}
-                <Link to="/signup" className="text-indigo-600 hover:text-indigo-800 font-medium">
-                  Sign Up Again
-                </Link>
-              </p>
-            </div>
-          </motion.div>
-        )}
+            </p>
+          </div>
+        </motion.div>
       </motion.div>
     </div>
   );

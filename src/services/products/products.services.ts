@@ -273,54 +273,20 @@ export class ProductService {
   // };
 
 
-  // Add this method to your ProductService class
+  // Create a new notification request
+  static createNotification = async (notificationData: NotificationRequest): Promise<NotificationResponse> => {
+    const baseUrl = env.baseUrl;
+    const adminRoute = env.adminRoute;
+    const url = `${baseUrl}/api/${adminRoute}/notification/create`;
 
-static createNotification = async (notificationData: NotificationRequest): Promise<NotificationResponse> => {
-  const baseUrl = env.baseUrl;
-  const adminRoute = env.adminRoute;
-  const url = `${baseUrl}/api/${adminRoute}/notification/create`;
-
-  try {
-    // Validate required fields
-    if (!notificationData.productId || !notificationData.email) {
-      throw new Error('Product ID and email are required');
+    try {
+      const res = await api.post(url, notificationData);
+      toastHelper.showTost(res.data.message || 'Notification created successfully!', 'success');
+      return res.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to create notification';
+      toastHelper.showTost(errorMessage, 'error');
+      throw new Error(errorMessage);
     }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(notificationData.email)) {
-      throw new Error('Please enter a valid email address');
-    }
-
-    // Validate phone format if provided
-    if (notificationData.phone && !/^[\+]?[1-9][\d]{0,15}$/.test(notificationData.phone.replace(/\s/g, ''))) {
-      throw new Error('Please enter a valid phone number');
-    }
-
-    // Prepare the payload
-    const payload = {
-      productId: notificationData.productId,
-      email: notificationData.email.trim().toLowerCase(),
-      phone: notificationData.phone ? notificationData.phone.trim() : undefined,
-      notificationType: 'stock_alert',
-      status: 'active',
-      createdAt: new Date().toISOString(),
-    };
-
-    const res = await api.post(url, payload);
-    
-    // Check response status
-    if (res.data?.status && res.data.status !== 200) {
-      throw new Error(res.data?.message || 'Failed to create notification');
-    }
-
-    toastHelper.showTost(res.data.message || 'Notification created successfully!', 'success');
-    return res.data;
-  } catch (err: any) {
-    const errorMessage = err.response?.data?.message || err.message || 'Failed to create notification';
-    toastHelper.showTost(errorMessage, 'error');
-    throw new Error(errorMessage);
-  }
-};
-
+  };
 }
