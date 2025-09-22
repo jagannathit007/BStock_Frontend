@@ -24,6 +24,19 @@ const ProfilePage = () => {
     new: false,
     confirm: false,
   });
+  
+  // Business Profile State
+  const [businessFormData, setBusinessFormData] = useState({
+    businessName: "",
+    country: "",
+    address: "",
+    businessLogo: null,
+    certificate: null,
+  });
+  const [businessPreviews, setBusinessPreviews] = useState({
+    businessLogo: null,
+    certificate: null,
+  });
 
   // Profile Picture Upload Handler
   const handleImageChange = (e) => {
@@ -44,6 +57,26 @@ const ProfilePage = () => {
   // Password Change Handler
   const handlePasswordChange = (field, value) => {
     setPasswords((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Business Profile Handler
+  const handleBusinessChange = (field, value) => {
+    setBusinessFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Business File Upload Handler
+  const handleBusinessFileChange = (field, file) => {
+    setBusinessFormData((prev) => ({ ...prev, [field]: file }));
+    
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setBusinessPreviews((prev) => ({ ...prev, [field]: event.target.result }));
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setBusinessPreviews((prev) => ({ ...prev, [field]: null }));
+    }
   };
 
   const togglePasswordVisibility = (field) => {
@@ -122,6 +155,7 @@ const ProfilePage = () => {
   const ProfileNavigation = () => {
     const navItems = [
       { id: "profile", label: "Profile Information", icon: "fas fa-user" },
+      { id: "business", label: "Business Profile", icon: "fas fa-building" },
       { id: "password", label: "Security Settings", icon: "fas fa-lock" },
     ];
 
@@ -213,6 +247,182 @@ const ProfilePage = () => {
     );
   };
 
+  // Business Profile Component
+  const BusinessProfile = () => {
+    const countries = [
+      "United States", "Canada", "United Kingdom", "Australia", "Germany", "France", "Italy", "Spain", "Netherlands", "India", "Japan", "China", "Brazil", "Mexico", "South Africa"
+    ];
+
+    return (
+      <div className="space-y-6">
+        <div className="pb-4 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-800">Business Information</h2>
+          <p className="text-sm text-gray-500 mt-1">Manage your business details and credentials</p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Business Name */}
+          <div className="md:col-span-2 space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <i className="fas fa-building w-4 h-4 mr-2" style={{ color: "#0071E0" }}></i>
+              Business Name
+            </label>
+            <input
+              type="text"
+              value={businessFormData.businessName}
+              onChange={(e) => handleBusinessChange("businessName", e.target.value)}
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 text-sm"
+              placeholder="Enter your business name"
+            />
+          </div>
+
+          {/* Country */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <i className="fas fa-globe w-4 h-4 mr-2" style={{ color: "#0071E0" }}></i>
+              Country
+            </label>
+            <select
+              value={businessFormData.country}
+              onChange={(e) => handleBusinessChange("country", e.target.value)}
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 text-sm"
+            >
+              <option value="">Select your country</option>
+              {countries.map((country) => (
+                <option key={country} value={country}>
+                  {country}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Address */}
+          <div className="md:col-span-2 space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <i className="fas fa-map-marker-alt w-4 h-4 mr-2" style={{ color: "#0071E0" }}></i>
+              Business Address <span className="text-gray-400 ml-1">(Optional)</span>
+            </label>
+            <textarea
+              value={businessFormData.address}
+              onChange={(e) => handleBusinessChange("address", e.target.value)}
+              rows="3"
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 text-sm"
+              placeholder="Enter your business address"
+            />
+          </div>
+
+          {/* Business Logo Upload */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <i className="fas fa-image w-4 h-4 mr-2" style={{ color: "#0071E0" }}></i>
+              Business Logo <span className="text-gray-400 ml-1">(Optional)</span>
+            </label>
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3">
+                <label className="cursor-pointer px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-sm">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleBusinessFileChange("businessLogo", e.target.files[0])}
+                    className="hidden"
+                  />
+                  <i className="fas fa-upload mr-2"></i>
+                  Choose Logo
+                </label>
+                {businessFormData.businessLogo && (
+                  <span className="text-sm text-gray-600">{businessFormData.businessLogo.name}</span>
+                )}
+              </div>
+              {businessPreviews.businessLogo && (
+                <div className="mt-3">
+                  <div className="relative inline-block">
+                    <img
+                      src={businessPreviews.businessLogo}
+                      alt="Business Logo Preview"
+                      className="w-24 h-24 object-cover rounded-lg border border-gray-200 shadow-sm"
+                    />
+                    <button
+                      onClick={() => {
+                        setBusinessFormData(prev => ({ ...prev, businessLogo: null }));
+                        setBusinessPreviews(prev => ({ ...prev, businessLogo: null }));
+                      }}
+                      className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors duration-200 text-xs"
+                    >
+                      <i className="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Certificate Upload */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <i className="fas fa-certificate w-4 h-4 mr-2" style={{ color: "#0071E0" }}></i>
+              Business Certificate <span className="text-gray-400 ml-1">(Optional)</span>
+            </label>
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3">
+                <label className="cursor-pointer px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-sm">
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                    onChange={(e) => handleBusinessFileChange("certificate", e.target.files[0])}
+                    className="hidden"
+                  />
+                  <i className="fas fa-upload mr-2"></i>
+                  Choose Certificate
+                </label>
+                {businessFormData.certificate && (
+                  <span className="text-sm text-gray-600">{businessFormData.certificate.name}</span>
+                )}
+              </div>
+              {businessPreviews.certificate && businessFormData.certificate && (
+                <div className="mt-3">
+                  <div className="relative inline-block">
+                    {businessFormData.certificate.type.startsWith('image/') ? (
+                      <img
+                        src={businessPreviews.certificate}
+                        alt="Certificate Preview"
+                        className="w-32 h-24 object-cover rounded-lg border border-gray-200 shadow-sm"
+                      />
+                    ) : (
+                      <div className="w-32 h-24 bg-gray-100 rounded-lg border border-gray-200 shadow-sm flex flex-col items-center justify-center">
+                        <i className="fas fa-file-alt text-2xl text-gray-400 mb-1"></i>
+                        <span className="text-xs text-gray-500 text-center px-1">
+                          {businessFormData.certificate.name.split('.').pop().toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => {
+                        setBusinessFormData(prev => ({ ...prev, certificate: null }));
+                        setBusinessPreviews(prev => ({ ...prev, certificate: null }));
+                      }}
+                      className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors duration-200 text-xs"
+                    >
+                      <i className="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex justify-end pt-4">
+          <button
+            className="px-6 py-2 bg-[#0071E0] text-white rounded-lg flex items-center space-x-2 hover:bg-[#005BB5] transition-colors duration-200 shadow-sm hover:shadow-md"
+          >
+            <i className="fas fa-save"></i>
+            <span>Save Business Profile</span>
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   // Change Password Component
   const ChangePassword = () => {
     const passwordFields = [
@@ -297,6 +507,7 @@ const ProfilePage = () => {
           <div className="w-full lg:w-3/4">
             <div className="bg-white rounded-xl shadow-sm p-6">
               {activeTab === "profile" && <ProfileDetails />}
+              {activeTab === "business" && <BusinessProfile />}
               {activeTab === "password" && <ChangePassword />}
             </div>
           </div>
