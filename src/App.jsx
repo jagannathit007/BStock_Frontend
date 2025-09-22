@@ -15,6 +15,7 @@ import LoginForm from "./components/LoginForm";
 import SignUpForm from "./components/SignUpForm";
 import VerifyEmailPrompt from "./components/VerifyEmailPrompt";
 import VerifyEmail from "./components/VerifyEmail";
+import CartPage from "./components/ReadyStockPage/CartPage";
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(
@@ -79,6 +80,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <BiddingContent />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/cart"
+            element={
+              <ProtectedRoute>
+                <CartPage />
               </ProtectedRoute>
             }
           />

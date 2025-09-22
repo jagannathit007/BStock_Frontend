@@ -8,22 +8,22 @@ import {
   faBox,
   faDollarSign,
 } from "@fortawesome/free-solid-svg-icons";
+import CartService from "../../services/cart/cart.services";
 
 const AddToCartPopup = ({ product, onClose }) => {
-  const { name, price, imageUrl, moq, stockCount } = product;
+  const { id, name, price, imageUrl, moq, stockCount, description } = product;
 
   // Ensure moq and stockCount are valid numbers, default to 1 and Infinity if invalid
   const validMoq = isNaN(parseInt(moq)) ? 1 : parseInt(moq);
   const validStockCount = isNaN(parseInt(stockCount)) ? Infinity : parseInt(stockCount);
   const [quantity, setQuantity] = useState(validMoq);
+  const [error, setError] = useState(null);
 
   // Ensure price is a valid number, default to 0 if invalid
   const validPrice = isNaN(parseFloat(price)) ? 0 : parseFloat(price);
 
   const handleQuantityChange = (value) => {
-    // Convert value to a number and ensure it's valid
     const newValue = isNaN(parseInt(value)) ? validMoq : parseInt(value);
-    // Only update if within valid range
     if (newValue >= validMoq && newValue <= validStockCount) {
       setQuantity(newValue);
     }
@@ -31,7 +31,6 @@ const AddToCartPopup = ({ product, onClose }) => {
 
   const handleInputChange = (e) => {
     const value = e.target.value;
-    // If input is empty, reset to moq
     if (value === "") {
       setQuantity(validMoq);
       return;
@@ -40,12 +39,22 @@ const AddToCartPopup = ({ product, onClose }) => {
     handleQuantityChange(parsedValue);
   };
 
-  const handleConfirm = () => {
-    console.log(`Added ${quantity} units of ${name} to cart`);
-    onClose();
+  const handleConfirm = async () => {
+    try {
+      setError(null);
+      const res = await CartService.add(id, quantity);
+      const ok = res?.success === true || res?.status === 200;
+      if (ok) {
+        onClose();
+      } else {
+        setError(res?.message || "Failed to add to cart");
+      }
+    } catch (error) {
+      setError(error.response?.data?.message || error.message || "An error occurred");
+      console.error("Add to cart error:", error);
+    }
   };
 
-  // Calculate totalPrice with safeguards
   const totalPrice = (validPrice * quantity).toFixed(2);
 
   return (
@@ -80,10 +89,15 @@ const AddToCartPopup = ({ product, onClose }) => {
 
         {/* Product Info */}
         <div className="p-6 space-y-6">
+          {error && (
+            <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
           <div className="flex gap-4">
             <div className="flex-shrink-0">
               <img
-                className="w-24 h-24 object-cover rounded-xl shadow-sm border border-gray-100" 
+                className="w-24 h-24 object-cover rounded-xl shadow-sm border border-gray-100"
                 src={imageUrl || "https://via.placeholder.com/96"}
                 alt={name || "Product"}
               />
