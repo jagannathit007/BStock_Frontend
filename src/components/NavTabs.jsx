@@ -6,7 +6,7 @@ const NavTabs = () => {
   const location = useLocation();
 
   const tabs = [
-    { id: "ready-stock", name: "Ready Stock", path: "/" },
+    { id: "ready-stock", name: "Ready Stock", path: "/ready-stock" },
     { id: "flash-deals", name: "Flash Deals", path: "/flash-deals" },
     { id: "bidding", name: "Bidding", path: "/bidding" },
     { id: "watchlist", name: "Watchlist", path: "/watchlist" },
@@ -20,7 +20,7 @@ const NavTabs = () => {
       (tab) => tab.path !== "/" && currentPath.startsWith(tab.path)
     );
     if (startsWithMatch) return startsWithMatch.name;
-    if (currentPath === "/") return "Ready Stock";
+    if (currentPath === "/ready-stock") return "Ready Stock";
     return null;
   };
 

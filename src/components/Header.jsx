@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
+import { env } from "../utils/env";
 import { useNavigate } from "react-router-dom";
 
-const Header = () => {
+const Header = ({ onLogout }) => {
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -24,15 +25,69 @@ const Header = () => {
   };
 
   const handleLogout = () => {
-    console.log("User logged out");
     setIsDropdownOpen(false);
-    navigate("/login");
+    if (onLogout) {
+      onLogout();
+    } else {
+      navigate("/login");
+    }
   };
 
   const handleProfileNavigation = () => {
     navigate("/profile");
     setIsDropdownOpen(false);
   };
+
+  const toAbsoluteUrl = (p) => {
+    if (!p || typeof p !== 'string') return null;
+    const normalized = p.replace(/\\/g, '/');
+    if (/^https?:\/\//i.test(normalized)) return normalized;
+    return `${env.baseUrl}/${normalized.replace(/^\//, '')}`;
+  };
+
+  const [avatarUrl, setAvatarUrl] = useState(() => {
+    try {
+      const storedDirect = localStorage.getItem('profileImageUrl');
+      if (storedDirect) return storedDirect;
+      const raw = localStorage.getItem('user');
+      if (raw) {
+        const user = JSON.parse(raw);
+        const url = toAbsoluteUrl(user?.profileImage || user?.avatar);
+        if (url) return url;
+      }
+    } catch {}
+    return "";
+  });
+
+  useEffect(() => {
+    const applyAvatar = () => {
+      const storedDirect = localStorage.getItem('profileImageUrl');
+      if (storedDirect) {
+        setAvatarUrl(storedDirect);
+        return;
+      }
+      try {
+        const raw = localStorage.getItem('user');
+        if (raw) {
+          const user = JSON.parse(raw);
+          const url = toAbsoluteUrl(user?.profileImage || user?.avatar);
+          if (url) {
+            setAvatarUrl(url);
+            return;
+          }
+        }
+      } catch {}
+      setAvatarUrl("");
+    };
+    applyAvatar();
+    const onStorage = (e) => {
+      if (e.key === 'profileImageUrl' || e.key === 'user') {
+        applyAvatar();
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   return (
     <>
@@ -111,11 +166,15 @@ const Header = () => {
                   className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 rounded-lg p-1 transition-colors duration-200"
                   onClick={handleProfileClick}
                 >
-                  <img
-                    src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg"
-                    alt="Profile"
-                    className="w-8 h-8 rounded-full border-2 border-gray-200"
-                  />
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt="Profile"
+                      className="w-8 h-8 rounded-full border-2 border-gray-200 object-cover"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full border-2 border-gray-200 bg-gray-200" />
+                  )}
                 </div>
 
                 {isDropdownOpen && (

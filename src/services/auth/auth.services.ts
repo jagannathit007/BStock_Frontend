@@ -19,6 +19,24 @@ export interface AuthResponse {
   };
 }
 
+export interface ProfileData {
+  businessName?: string;
+  country?: string;
+  address?: string;
+  name?: string;
+  email?: string;
+  mobileNumber?: string;
+  logo?: File | string | null;
+  certificate?: File | string | null;
+  profileImage?: File | string | null;
+}
+
+export interface ProfileResponse<T = any> {
+  status: number;
+  message: string;
+  data?: T;
+}
+
 export interface RegisterRequest {
   name: string;
   email: string;
@@ -77,6 +95,62 @@ export class AuthService {
       return res.data;
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Failed to login';
+      toastHelper.showTost(errorMessage, 'error');
+      throw new Error(errorMessage);
+    }
+  };
+
+  // Get profile (POST as per backend)
+  static getProfile = async (): Promise<ProfileResponse<ProfileData>> => {
+    const baseUrl = env.baseUrl;
+    const url = `${baseUrl}/api/customer/get-profile`;
+    try {
+      const res = await api.post(url, {});
+      return res.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to load profile';
+      toastHelper.showTost(errorMessage, 'error');
+      throw new Error(errorMessage);
+    }
+  };
+
+  // Update profile (multipart)
+  static updateProfile = async (payload: ProfileData): Promise<ProfileResponse> => {
+    const baseUrl = env.baseUrl;
+    const url = `${baseUrl}/api/customer/update-profile`;
+
+    const form = new FormData();
+    if (payload.businessName !== undefined) form.append('businessName', String(payload.businessName));
+    if (payload.country !== undefined) form.append('country', String(payload.country));
+    if (payload.address !== undefined) form.append('address', String(payload.address));
+    if (payload.name !== undefined) form.append('name', String(payload.name));
+    if (payload.email !== undefined) form.append('email', String(payload.email));
+    if (payload.mobileNumber !== undefined) form.append('mobileNumber', String(payload.mobileNumber));
+
+    if (payload.logo instanceof File) {
+      form.append('logo', payload.logo);
+    } else if (typeof payload.logo === 'string') {
+      form.append('logo', payload.logo);
+    }
+
+    if (payload.certificate instanceof File) {
+      form.append('certificate', payload.certificate);
+    } else if (typeof payload.certificate === 'string') {
+      form.append('certificate', payload.certificate);
+    }
+
+    if (payload.profileImage instanceof File) {
+      form.append('profileImage', payload.profileImage);
+    } else if (typeof payload.profileImage === 'string') {
+      form.append('profileImage', payload.profileImage);
+    }
+
+    try {
+      const res = await api.post(url, form, { headers: { 'Content-Type': 'multipart/form-data' } });
+      toastHelper.showTost(res.data?.message || 'Profile updated successfully', 'success');
+      return res.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to update profile';
       toastHelper.showTost(errorMessage, 'error');
       throw new Error(errorMessage);
     }
