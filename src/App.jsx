@@ -54,6 +54,7 @@ const App = () => {
           <Route path="/signup" element={<SignUpForm />} />{" "}
           <Route path="/verify-email" element={<VerifyEmailPrompt />} />
           <Route path="/api/customer/verify-email/:token" element={<VerifyEmail />} />
+          <Route path="/customer/:token" element={<VerifyEmail />} />
           {/* <Route path="/dashboard" element={<Dashboard />} /> */}
           {/* Add this route */}
           {/* Protected Routes */}
