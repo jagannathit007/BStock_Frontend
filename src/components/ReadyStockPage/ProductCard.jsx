@@ -11,12 +11,13 @@ import {
   faCalendarXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import AddToCartPopup from "./AddToCartPopup";
+import NotifyMePopup from "./NotifyMePopup";
 import CartService from "../../services/cart/cart.services";
 
 const ProductCard = ({ product, viewMode = "grid" }) => {
   const navigate = useNavigate();
   const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
-  // const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
+  const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
 
   const {
     id,
@@ -78,7 +79,7 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
   const handleNotifyMe = (e) => {
     e.stopPropagation();
     if (canNotify) {
-      console.log('Notify Me clicked');
+      setIsNotifyMePopupOpen(true);
     }
   };
 
@@ -363,6 +364,16 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
         <AddToCartPopup
           product={product}
           onClose={handlePopupClose}
+        />
+      )}
+      {isNotifyMePopupOpen && (
+        <NotifyMePopup
+          product={{
+            ...product,
+            isExpired: Boolean(isExpired),
+            expiryTime: product.expiryTime,
+          }}
+          onClose={() => setIsNotifyMePopupOpen(false)}
         />
       )}
     </div>
