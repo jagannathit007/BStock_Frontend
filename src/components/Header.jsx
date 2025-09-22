@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios"; // Import Axios directly
+import { useNavigate, useLocation } from "react-router-dom";
+import CartService from "../services/cart/cart.services";
 
 const Header = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [cartItemCount, setCartItemCount] = useState(0);
   const dropdownRef = useRef(null);
@@ -11,22 +12,8 @@ const Header = () => {
   // Fetch cart count
   const fetchCartCount = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.post(
-        "http://localhost:3200/api/customer/cart/count",
-        {},
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-        }
-      );
-      if (response.data.success) {
-        setCartItemCount(response.data.data.count || 0);
-      } else {
-        setCartItemCount(0);
-      }
+      const count = await CartService.count();
+      setCartItemCount(count || 0);
     } catch (error) {
       console.error("Fetch cart count error:", error);
       setCartItemCount(0);
@@ -37,6 +24,11 @@ const Header = () => {
   useEffect(() => {
     fetchCartCount();
   }, []);
+
+  // Refresh count on route change
+  useEffect(() => {
+    fetchCartCount();
+  }, [location.pathname]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
