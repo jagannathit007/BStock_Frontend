@@ -11,12 +11,12 @@ import {
   faCalendarXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import AddToCartPopup from "./AddToCartPopup";
-import axios from "axios"; // Import Axios directly
+import CartService from "../../services/cart/cart.services";
 
 const ProductCard = ({ product, viewMode = "grid" }) => {
   const navigate = useNavigate();
   const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
-  const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
+  // const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
 
   const {
     id,
@@ -31,7 +31,7 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
     imageUrl,
     isFavorite,
     isOutOfStock,
-    expiryTime,
+    // expiryTime,
     isExpired,
   } = product;
 
@@ -78,29 +78,16 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
   const handleNotifyMe = (e) => {
     e.stopPropagation();
     if (canNotify) {
-      setIsNotifyMePopupOpen(true);
+      console.log('Notify Me clicked');
     }
   };
 
   // Handle popup close and refresh cart count
   const handlePopupClose = async () => {
-    setIsPopupOpen(false);
-    // Refresh cart count
+    setIsAddToCartPopupOpen(false);
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.post(
-        "http://localhost:3200/api/customer/cart/count",
-        {},
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-        }
-      );
-      if (response.data.success) {
-        console.log(`Cart count updated: ${response.data.data.count}`);
-      }
+      const count = await CartService.count();
+      console.log(`Cart count updated: ${count}`);
     } catch (error) {
       console.error("Refresh cart count error:", error);
     }

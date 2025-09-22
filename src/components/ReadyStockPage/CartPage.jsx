@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCartShopping, faPlus, faMinus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
-import axios from "axios"; // Import Axios directly
+import CartService from "../../services/cart/cart.services";
 
 const CartPage = () => {
   const navigate = useNavigate();
@@ -37,39 +37,29 @@ const CartPage = () => {
   };
 
   // Fetch cart items
-  const fetchCart = async () => {
+  const fetchCart = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const token = localStorage.getItem("token");
-      const response = await axios.post(
-        "http://localhost:3200/api/customer/cart/get",
-        { page: 1, limit: 10 },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-        }
-      );
-      if (response.data.success) {
-        const items = response.data.data.docs.map(mapCartItemToUi);
+      const response = await CartService.list(1, 10);
+      if (response.status === 200) {
+        const items = (response.data?.docs || []).map(mapCartItemToUi);
         setCartItems(items);
       } else {
-        setError(response.data.message || "Failed to fetch cart");
+        setError(response.message || "Failed to fetch cart");
       }
     } catch (error) {
-      setError(error.response?.data?.message || "An error occurred while fetching cart");
+      setError(error.response?.data?.message || error.message || "An error occurred while fetching cart");
       console.error("Fetch cart error:", error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   // Load cart on mount
   useEffect(() => {
     fetchCart();
-  }, []);
+  }, [fetchCart]);
 
   // Handle quantity change
   const handleQuantityChange = async (id, newQuantity) => {
@@ -78,32 +68,19 @@ const CartPage = () => {
       const item = cartItems.find((item) => item.id === id);
       if (!item) return;
 
-      const token = localStorage.getItem("token");
-      const response = await axios.post(
-        "http://localhost:3200/api/cart/customer/update-quantity",
-        {
-          productId: id,
-          quantity: newQuantity,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-        }
-      );
+      const response = await CartService.updateQuantity(id, newQuantity);
 
-      if (response.data.success) {
+      if (response?.success || response?.status === 200) {
         setCartItems((prevItems) =>
           prevItems.map((item) =>
             item.id === id ? { ...item, quantity: newQuantity } : item
           )
         );
       } else {
-        setError(response.data.message || "Failed to update quantity");
+        setError(response?.message || "Failed to update quantity");
       }
     } catch (error) {
-      setError(error.response?.data?.message || "An error occurred while updating quantity");
+      setError(error.response?.data?.message || error.message || "An error occurred while updating quantity");
       console.error("Update quantity error:", error);
     }
   };
@@ -112,24 +89,14 @@ const CartPage = () => {
   const handleRemoveItem = async (id) => {
     try {
       setError(null);
-      const token = localStorage.getItem("token");
-      const response = await axios.post(
-        "http://localhost:3200/api/customer/cart/remove",
-        { productId: id },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-        }
-      );
-      if (response.data.success) {
+      const response = await CartService.remove(id);
+      if (response?.success || response?.status === 200) {
         setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
       } else {
-        setError(response.data.message || "Failed to remove item");
+        setError(response?.message || "Failed to remove item");
       }
     } catch (error) {
-      setError(error.response?.data?.message || "An error occurred while removing item");
+      setError(error.response?.data?.message || error.message || "An error occurred while removing item");
       console.error("Remove item error:", error);
     }
   };
@@ -138,24 +105,14 @@ const CartPage = () => {
   const handleClearCart = async () => {
     try {
       setError(null);
-      const token = localStorage.getItem("token");
-      const response = await axios.post(
-        "http://localhost:3200/api/customer/cart/clear",
-        {},
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-        }
-      );
-      if (response.data.success) {
+      const response = await CartService.clear();
+      if (response?.success || response?.status === 200) {
         setCartItems([]);
       } else {
-        setError(response.data.message || "Failed to clear cart");
+        setError(response?.message || "Failed to clear cart");
       }
     } catch (error) {
-      setError(error.response?.data?.message || "An error occurred while clearing cart");
+      setError(error.response?.data?.message || error.message || "An error occurred while clearing cart");
       console.error("Clear cart error:", error);
     }
   };

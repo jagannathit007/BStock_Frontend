@@ -8,7 +8,7 @@ import {
   faBox,
   faDollarSign,
 } from "@fortawesome/free-solid-svg-icons";
-import axios from "axios"; // Import Axios directly
+import CartService from "../../services/cart/cart.services";
 
 const AddToCartPopup = ({ product, onClose }) => {
   const { id, name, price, imageUrl, moq, stockCount, description } = product;
@@ -42,29 +42,15 @@ const AddToCartPopup = ({ product, onClose }) => {
   const handleConfirm = async () => {
     try {
       setError(null);
-      const token = localStorage.getItem("token");
-      const response = await axios.post(
-        "http://localhost:3200/api/customer/cart/add",
-        {
-          productId: id,
-          quantity,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-        }
-      );
-
-      if (response.data.success) {
-        console.log(`Added ${quantity} units of ${name} to cart`);
+      const res = await CartService.add(id, quantity);
+      const ok = res?.success === true || res?.status === 200;
+      if (ok) {
         onClose();
       } else {
-        setError(response.data.message || "Failed to add to cart");
+        setError(res?.message || "Failed to add to cart");
       }
     } catch (error) {
-      setError(error.response?.data?.message || "An error occurred");
+      setError(error.response?.data?.message || error.message || "An error occurred");
       console.error("Add to cart error:", error);
     }
   };

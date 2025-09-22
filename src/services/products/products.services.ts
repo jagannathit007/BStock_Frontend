@@ -158,25 +158,25 @@ export class ProductService {
   };
 
   // Get product list with pagination and search
-  static getProductList = async (page: number, limit: number, search?: string): Promise<ListResponse> => {
-    const baseUrl = env.baseUrl;
-    const adminRoute = env.adminRoute;
-    const url = `${baseUrl}/api/customer/get-product-list`;
+  // static getProductList = async (page: number, limit: number, search?: string): Promise<ListResponse> => {
+  //   const baseUrl = env.baseUrl;
+  //   const adminRoute = env.adminRoute;
+  //   const url = `${baseUrl}/api/customer/get-product-list`;
 
-    const body: any = { page, limit };
-    if (search) {
-      body.search = search;
-    }
+  //   const body: any = { page, limit };
+  //   if (search) {
+  //     body.search = search;
+  //   }
 
-    try {
-      const res = await api.post(url, body);
-      return res.data;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to fetch Products';
-      toastHelper.showTost(errorMessage, 'error');
-      throw new Error(errorMessage);
-    }
-  };
+  //   try {
+  //     const res = await api.post(url, body);
+  //     return res.data;
+  //   } catch (err: any) {
+  //     const errorMessage = err.response?.data?.message || 'Failed to fetch Products';
+  //     toastHelper.showTost(errorMessage, 'error');
+  //     throw new Error(errorMessage);
+  //   }
+  // };
 
   // Get a single product by ID
   static getProductById = async (id: string): Promise<Product> => {

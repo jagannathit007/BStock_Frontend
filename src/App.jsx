@@ -82,6 +82,14 @@ const App = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/cart"
+            element={
+              <ProtectedRoute>
+                <CartPage />
+              </ProtectedRoute>
+            }
+          />
           {/* Redirect to login if no matching route */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
