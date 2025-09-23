@@ -31,7 +31,6 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
     imageUrl,
     isFavorite,
     isOutOfStock,
-    // expiryTime,
     isExpired,
   } = product;
 
@@ -107,7 +106,7 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
             <div className="flex items-center min-w-[200px]">
               <img
                 className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg mr-4"
-                src={imageUrl}
+                src={`${import.meta.env.VITE_BASE_URL}/${imageUrl}`}
                 alt={name}
               />
               <div className="min-w-0">
@@ -255,7 +254,7 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
       <div className="relative flex-1">
         <img
           className="w-full h-40 sm:h-48 object-cover rounded-t-[18px]"
-          src={imageUrl}
+          src={`${import.meta.env.VITE_BASE_URL}/${imageUrl}`}
           alt={name}
         />
         <div className="absolute top-2 right-2">

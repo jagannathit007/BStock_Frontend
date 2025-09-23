@@ -98,7 +98,7 @@ const AddToCartPopup = ({ product, onClose }) => {
             <div className="flex-shrink-0">
               <img
                 className="w-24 h-24 object-cover rounded-xl shadow-sm border border-gray-100"
-                src={imageUrl || "https://via.placeholder.com/96"}
+                src={`${import.meta.env.VITE_BASE_URL}/${imageUrl}`}
                 alt={name || "Product"}
               />
             </div>
