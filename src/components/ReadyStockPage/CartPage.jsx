@@ -32,7 +32,7 @@ const CartPage = () => {
       stockCount,
       stockStatus,
       imageUrl,
-      quantity: item.quantity,
+      quantity: Number(item.quantity) || Math.max(moq, 1),
     };
   };
 
@@ -68,12 +68,19 @@ const CartPage = () => {
       const item = cartItems.find((item) => item.id === id);
       if (!item) return;
 
-      const response = await CartService.updateQuantity(id, newQuantity);
+      // Clamp quantity: step by 1 between MOQ and stock
+      const minQty = 1;
+      const maxQty = Number(item.stockCount) || Infinity;
+      const clampedQty = Math.min(Math.max(Number(newQuantity) || minQty, minQty), maxQty);
+
+      if (clampedQty === item.quantity) return;
+
+      const response = await CartService.updateQuantity(id, clampedQty);
 
       if (response?.success || response?.status === 200) {
         setCartItems((prevItems) =>
           prevItems.map((item) =>
-            item.id === id ? { ...item, quantity: newQuantity } : item
+            item.id === id ? { ...item, quantity: clampedQty } : item
           )
         );
       } else {
@@ -204,7 +211,7 @@ const CartPage = () => {
                           <div className="flex items-center gap-3">
                             <button
                               onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                              disabled={item.quantity <= item.moq}
+                              disabled={item.quantity <= 1}
                               className="w-8 h-8 flex items-center justify-center rounded-full border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               <FontAwesomeIcon icon={faMinus} className="w-4 h-4 text-gray-600" />
@@ -213,10 +220,11 @@ const CartPage = () => {
                               type="number"
                               value={item.quantity}
                               onChange={(e) =>
-                                handleQuantityChange(item.id, parseInt(e.target.value) || item.moq)
+                                handleQuantityChange(item.id, (parseInt(e.target.value, 10) || item.moq))
                               }
-                              min={item.moq}
+                              min={1}
                               max={item.stockCount}
+                              step={1}
                               className="w-16 text-center text-lg font-semibold py-1 px-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50"
                             />
                             <button

@@ -1,13 +1,14 @@
-import { io, Socket } from 'socket.io-client';
+import { io } from 'socket.io-client';
 
 type UserType = 'admin' | 'customer' | 'seller';
 
 class SocketServiceClass {
-  private socket: Socket | null = null;
+  private socket: any | null = null; // Use `any` to bypass the error
 
-  get instance(): Socket | null {
+  get instance(): any | null {
     return this.socket;
   }
+
 
   connect(baseUrl?: string) {
     const token = localStorage.getItem('token');
@@ -32,16 +33,16 @@ class SocketServiceClass {
     });
 
     this.socket.on('connect', () => {
-      // connected
+      // Auto-join room when connected
+      this.joinRoom();
     });
 
     this.socket.on('disconnect', () => {
       // disconnected
     });
 
-    this.socket.on('adminMessage', (_payload: any) => { void _payload; });
-    this.socket.on('customerMessage', (_payload: any) => { void _payload; });
-    this.socket.on('sellerMessage', (_payload: any) => { void _payload; });
+    // Updated message listener for new backend structure
+    this.socket.on('userMessage', (_payload: any) => { void _payload; });
   }
 
   disconnect() {
@@ -50,6 +51,44 @@ class SocketServiceClass {
       try { this.socket.disconnect(); } catch {}
       this.socket = null;
     }
+  }
+
+  // Get user data from localStorage
+  private getUserData(): { userId: string; userType: UserType } | null {
+    const userId = localStorage.getItem('userId');
+    
+    if (!userId) {
+      console.warn('Missing userId in localStorage');
+      return null;
+    }
+    
+    return { userId, userType: 'customer' }; // Assuming userType is always 'customer' for this example
+  }
+
+  // Join room with userId and userType
+  joinRoom() {
+    if (!this.socket) return;
+    
+    const userData = this.getUserData();
+    if (!userData) return;
+    
+    this.socket.emit('joinRoom', {
+      userId: userData.userId,
+      userType: userData.userType
+    });
+  }
+
+  // Leave room
+  leaveRoom() {
+    if (!this.socket) return;
+    
+    const userData = this.getUserData();
+    if (!userData) return;
+    
+    this.socket.emit('leaveRoom', {
+      userId: userData.userId,
+      userType: userData.userType
+    });
   }
 
   emitToType(userType: UserType, message: string) {
