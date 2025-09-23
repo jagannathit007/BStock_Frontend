@@ -11,13 +11,12 @@ import {
   faCalendarXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import AddToCartPopup from "./AddToCartPopup";
-import NotifyMePopup from "./NotifyMePopup";
+import { ProductService } from "../../services/products/products.services";
 import CartService from "../../services/cart/cart.services";
 
 const ProductCard = ({ product, viewMode = "grid" }) => {
   const navigate = useNavigate();
   const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
-  const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
 
   const {
     id,
@@ -76,10 +75,13 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
     }
   };
 
-  const handleNotifyMe = (e) => {
+  const handleNotifyMe = async (e) => {
     e.stopPropagation();
-    if (canNotify) {
-      setIsNotifyMePopupOpen(true);
+    if (!canNotify) return;
+    try {
+      await ProductService.createNotification({ productId: id, notifyType: 'stock_alert' });
+    } catch (err) {
+      // errors are toasted in service
     }
   };
 
@@ -366,16 +368,7 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
           onClose={handlePopupClose}
         />
       )}
-      {isNotifyMePopupOpen && (
-        <NotifyMePopup
-          product={{
-            ...product,
-            isExpired: Boolean(isExpired),
-            expiryTime: product.expiryTime,
-          }}
-          onClose={() => setIsNotifyMePopupOpen(false)}
-        />
-      )}
+      {/* NotifyMePopup removed - direct API call on button click */}
     </div>
   );
 };

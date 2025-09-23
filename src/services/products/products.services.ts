@@ -46,8 +46,7 @@ export interface ImportResponse {
 }
 export interface NotificationRequest {
   productId: string;
-  email: string;
-  phone?: string;
+  notifyType: 'stock_alert' | 'price_alert';
 }
 
 export interface Notification {

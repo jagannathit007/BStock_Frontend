@@ -16,15 +16,15 @@ import countriesData from "../data/countries.json";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { jwtDecode } from "jwt-decode";
-import { AuthService} from '../services/auth/auth.services'
+import { AuthService } from '../services/auth/auth.services'
 
 const SignUpForm = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
-    phone: "",
-    phoneCode: "+1",
+    mobileNumber: "", // Changed from phone to mobileNumber
+    phoneCode: "+1", // Temporary field for phone code selection
     whatsapp: "",
     whatsappCode: "+1",
     password: "",
@@ -112,15 +112,27 @@ const SignUpForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    if (name === "mobileNumber") {
+      // Combine phoneCode with mobileNumber when updating
+      setFormData((prev) => ({
+        ...prev,
+        [name]: `${prev.phoneCode}${value.replace(/[^0-9]/g, '')}`, // Ensure only digits are appended
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
     if (error) setError(null); // Clear error on input change
   };
 
   const handlePhoneCodeChange = (code) => {
-    setFormData((prev) => ({ ...prev, phoneCode: code }));
+    setFormData((prev) => ({
+      ...prev,
+      phoneCode: code,
+      mobileNumber: `${code}${prev.mobileNumber.replace(/^\+\d+/, '') || ''}`, // Update mobileNumber with new code
+    }));
     setShowPhoneDropdown(false);
   };
 
@@ -151,6 +163,7 @@ const SignUpForm = () => {
       name: formData.fullName.trim(),
       email: formData.email.trim().toLowerCase(),
       password: formData.password,
+      // mobileNumber: formData.mobileNumber, 
     };
 
     try {
@@ -242,20 +255,6 @@ const SignUpForm = () => {
         >
           {/* Logo */}
           <motion.div className="text-left" variants={childVariants}>
-            {/* <motion.div
-              className="inline-flex items-center space-x-3 mb-6"
-              variants={logoVariants}
-            >
-              <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
-                <FontAwesomeIcon
-                  icon={faStore}
-                  className="text-white text-lg"
-                />
-              </div>
-              <span className="text-2xl font-bold text-gray-900">
-                GSM Bidding
-              </span>
-            </motion.div> */}
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Create your account !
             </h1>
@@ -387,9 +386,9 @@ const SignUpForm = () => {
                   <div className="relative flex-1">
                     <input
                       type="tel"
-                      id="phone"
-                      name="phone"
-                      value={formData.phone}
+                      id="mobileNumber"
+                      name="mobileNumber"
+                      value={formData.mobileNumber.replace(formData.phoneCode, '') || ''} // Display without phoneCode
                       onChange={handleChange}
                       className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white"
                       placeholder="Phone number"

@@ -17,7 +17,7 @@ import {
   faBell,
   faCalendarXmark,
 } from "@fortawesome/free-solid-svg-icons";
-import NotifyMePopup from "../NotifyMePopup";
+import { ProductService } from "../../../services/products/products.services";
 
 const ProductInfo = ({ product, navigate }) => {
   // Process product data to ensure proper stock and expiry status
@@ -52,7 +52,7 @@ const ProductInfo = ({ product, navigate }) => {
   const [selectedGrade, setSelectedGrade] = useState("A+");
   const [quantity, setQuantity] = useState(5);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
+  
 
   const colors = [
     { name: "Natural Titanium", class: "bg-gray-200" },
@@ -74,10 +74,13 @@ const ProductInfo = ({ product, navigate }) => {
     }
   };
 
-  const handleNotifyMe = (e) => {
+  const handleNotifyMe = async (e) => {
     e.stopPropagation();
-    if (canNotify) {
-      setIsNotifyMePopupOpen(true);
+    if (!canNotify) return;
+    try {
+      await ProductService.createNotification({ productId: processedProduct.id, notifyType: 'stock_alert' });
+    } catch (err) {
+      // errors are toasted in service
     }
   };
 
@@ -524,13 +527,7 @@ const ProductInfo = ({ product, navigate }) => {
         </div>
       </div>
 
-      {/* Notify Me Popup */}
-      {isNotifyMePopupOpen && (
-        <NotifyMePopup
-          product={processedProduct}
-          onClose={() => setIsNotifyMePopupOpen(false)}
-        />
-      )}
+      {/* NotifyMePopup removed - direct API call on button click */}
     </div>
   );
 };
