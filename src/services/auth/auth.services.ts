@@ -73,6 +73,7 @@ export class AuthService {
 
     try {
       const res = await api.post(url, loginData);
+      localStorage.setItem('userId', res.data.data?.customer?._id || '');
       toastHelper.showTost(res.data.message || 'Login successful!', 'success');
       return res.data;
     } catch (err: any) {
