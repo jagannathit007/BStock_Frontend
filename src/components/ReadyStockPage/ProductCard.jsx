@@ -12,6 +12,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import AddToCartPopup from "./AddToCartPopup";
 import CartService from "../../services/cart/cart.services";
+import { ProductService } from "../../services/products/products.services";
 
 const ProductCard = ({ product, viewMode = "grid" }) => {
   const navigate = useNavigate();
@@ -68,10 +69,27 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
     navigate(`/product/${id}`);
   };
 
-  const handleAddToCart = (e) => {
+  const handleAddToCart = async (e) => {
     e.stopPropagation();
-    if (!isOutOfStock && !isExpired) {
-      setIsAddToCartPopupOpen(true);
+    if (isOutOfStock || isExpired) return;
+
+    try {
+      const customerId = localStorage.getItem('userId') || '';
+      if (!customerId) {
+        return navigate('/signin');
+      }
+
+      const resp = await ProductService.getBusinessApprovalStatus(customerId);
+      const isApproved = resp?.data?.isApproved ?? resp?.isApproved ?? false;
+
+      if (isApproved) {
+        setIsAddToCartPopupOpen(true);
+      } else {
+        // If not approved, redirect to profile or show message; here navigate to profile
+        navigate('/profile');
+      }
+    } catch (error) {
+      console.error('Business approval check failed:', error);
     }
   };
 
