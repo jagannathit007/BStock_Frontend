@@ -9,6 +9,12 @@ export const env = {
     if (!value) throw new Error('VITE_ADMIN_ROUTE is not defined');
     return value as string;
   },
+
+  get customerRoute(): string {
+    const value = (import.meta as any).env?.VITE_CUSTOMER_ROUTE ?? (globalThis as any).VITE_CUSTOMER_ROUTE;
+    if (!value) throw new Error('VITE_CUSTOMER_ROUTE is not defined');
+    return value as string;
+  },
 };
 
 

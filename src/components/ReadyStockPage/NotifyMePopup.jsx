@@ -79,13 +79,13 @@ const NotifyMePopup = ({ product, onClose }) => {
     setError("");
 
     try {
-      const notificationData = {
-        productId: id,
-        email: formData.email.trim(),
-        phone: formData.phone.trim() || undefined,
-      };
+      // const notificationData = {
+      //   productId: id,
+      //   email: formData.email.trim(),
+      //   phone: formData.phone.trim() || undefined,
+      // };
 
-      await ProductService.createNotification(notificationData);
+      await ProductService.createNotification();
       setIsSuccess(true);
 
       // Auto close after 2 seconds on success

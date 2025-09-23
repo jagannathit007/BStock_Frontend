@@ -16,6 +16,7 @@ const MainContent = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [filters, setFilters] = useState({}); // Store filter values from SideFilter
+  const [refreshTick, setRefreshTick] = useState(false);
 
   const mapApiProductToUi = (p) => {
     const id = p._id || p.id || "";
@@ -48,6 +49,7 @@ const MainContent = () => {
       isOutOfStock: stock <= 0,
       isExpired,
       expiryTime,
+      notify: Boolean(p.notify),
     };
   };
 
@@ -99,7 +101,7 @@ useEffect(() => {
   };
   fetchData();
   return () => controller.abort();
-}, [currentPage, itemsPerPage, filters]);
+}, [currentPage, itemsPerPage, filters, refreshTick]);
 
   useEffect(() => {
     setItemsPerPage(viewMode === "grid" ? 9 : 10);
@@ -109,6 +111,10 @@ useEffect(() => {
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
     setCurrentPage(1); // Reset to first page on filter change
+  };
+
+  const handleRefresh = () => {
+    setRefreshTick((prev) => !prev);
   };
 
   const indexOfLastProduct = useMemo(() => currentPage * itemsPerPage, [currentPage, itemsPerPage]);
@@ -182,7 +188,7 @@ useEffect(() => {
                   <div className="col-span-3 text-center text-sm text-gray-500">No products found.</div>
                 )}
                 {currentProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} viewMode={viewMode} />
+                  <ProductCard key={product.id} product={product} viewMode={viewMode} onRefresh={handleRefresh} />
                 ))}
               </div>
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHeart as solidHeart,
@@ -15,11 +15,12 @@ import {
   faCheck,
   faXmark,
   faBell,
+  faBellSlash,
   faCalendarXmark,
 } from "@fortawesome/free-solid-svg-icons";
-import NotifyMePopup from "../NotifyMePopup";
+import { ProductService } from "../../../services/products/products.services";
 
-const ProductInfo = ({ product, navigate }) => {
+const ProductInfo = ({ product, navigate, onRefresh }) => {
   // Process product data to ensure proper stock and expiry status
   const processedProduct = {
     ...product,
@@ -52,7 +53,7 @@ const ProductInfo = ({ product, navigate }) => {
   const [selectedGrade, setSelectedGrade] = useState("A+");
   const [quantity, setQuantity] = useState(5);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
+  const [notify, setNotify] = useState(Boolean(product?.notify));
 
   const colors = [
     { name: "Natural Titanium", class: "bg-gray-200" },
@@ -67,6 +68,10 @@ const ProductInfo = ({ product, navigate }) => {
   // Check if product can accept notifications (out of stock but not expired)
   const canNotify = processedProduct.isOutOfStock && !processedProduct.isExpired;
 
+  useEffect(() => {
+    setNotify(Boolean(product?.notify));
+  }, [product?.notify]);
+
   const handleQuantityChange = (amount) => {
     const newQuantity = quantity + amount;
     if (newQuantity >= processedProduct.moq) {
@@ -74,10 +79,33 @@ const ProductInfo = ({ product, navigate }) => {
     }
   };
 
-  const handleNotifyMe = (e) => {
+  const handleNotifyToggle = async (e, nextValue) => {
     e.stopPropagation();
-    if (canNotify) {
-      setIsNotifyMePopupOpen(true);
+    if (!canNotify) return;
+
+    const productId = processedProduct.id || processedProduct._id;
+
+    try {
+      await ProductService.createNotification({ 
+        productId: productId, 
+        notifyType: 'stock_alert', 
+        notify: nextValue 
+      });
+      setNotify(nextValue);
+      // Refresh from backend to mirror latest notify using get-product API
+      try {
+        const refreshed = await ProductService.getProductByIdPost(productId);
+        if (refreshed && typeof refreshed.notify !== 'undefined') {
+          setNotify(Boolean(refreshed.notify));
+        }
+      } catch (refreshErr) {
+        // ignore refresh error; UI already updated optimistically
+      }
+      if (typeof onRefresh === 'function') {
+        onRefresh();
+      }
+    } catch (err) {
+      // errors are toasted in service
     }
   };
 
@@ -467,13 +495,25 @@ const ProductInfo = ({ product, navigate }) => {
                   <FontAwesomeIcon icon={faXmark} className="mr-2" />
                   Out of Stock
                 </button>
-                <button
-                  className="w-full border border-gray-300 text-gray-700 py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-gray-50 cursor-pointer flex items-center justify-center transition-colors"
-                  onClick={handleNotifyMe}
-                >
-                  <FontAwesomeIcon icon={faBell} className="mr-2" />
-                  Notify Me When Available
-                </button>
+                {notify ? (
+                  <button
+                    className="w-full border border-red-300 text-red-700 bg-red-50 py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-red-100 cursor-pointer flex items-center justify-center transition-colors duration-200"
+                    onClick={(ev) => handleNotifyToggle(ev, false)}
+                    title="Turn off notifications"
+                  >
+                    <FontAwesomeIcon icon={faBellSlash} className="mr-2" />
+                    Turn Off Notifications
+                  </button>
+                ) : (
+                  <button
+                    className="w-full border border-blue-300 text-blue-700 bg-blue-50 py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-blue-100 cursor-pointer flex items-center justify-center transition-colors duration-200"
+                    onClick={(ev) => handleNotifyToggle(ev, true)}
+                    title="Notify me when back in stock"
+                  >
+                    <FontAwesomeIcon icon={faBell} className="mr-2" />
+                    Notify Me When Available
+                  </button>
+                )}
               </>
             ) : (
               <>
@@ -523,14 +563,6 @@ const ProductInfo = ({ product, navigate }) => {
           </div>
         </div>
       </div>
-
-      {/* Notify Me Popup */}
-      {isNotifyMePopupOpen && (
-        <NotifyMePopup
-          product={processedProduct}
-          onClose={() => setIsNotifyMePopupOpen(false)}
-        />
-      )}
     </div>
   );
 };
