@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -9,6 +9,7 @@ import {
   faBell,
   faXmark,
   faCalendarXmark,
+  faBellSlash,
 } from "@fortawesome/free-solid-svg-icons";
 import AddToCartPopup from "./AddToCartPopup";
 import { ProductService } from "../../services/products/products.services";
@@ -17,6 +18,11 @@ import CartService from "../../services/cart/cart.services";
 const ProductCard = ({ product, viewMode = "grid" }) => {
   const navigate = useNavigate();
   const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
+  const [notify, setNotify] = useState(Boolean(product?.notify));
+
+  useEffect(() => {
+    setNotify(Boolean(product?.notify));
+  }, [product?.notify]);
 
   const {
     id,
@@ -74,11 +80,19 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
     }
   };
 
-  const handleNotifyMe = async (e) => {
+  const handleNotifyToggle = async (e, nextValue) => {
     e.stopPropagation();
     if (!canNotify) return;
+
+    const productId = id || product?._id;
+
     try {
-      await ProductService.createNotification({ productId: id, notifyType: 'stock_alert', notify: true });
+      await ProductService.createNotification({ 
+        productId: productId, 
+        notifyType: 'stock_alert', 
+        notify: nextValue 
+      });
+      setNotify(nextValue);
     } catch (err) {
       // errors are toasted in service
     }
@@ -206,15 +220,25 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
               )}
               
               {canNotify ? (
-                <button 
-                  className="border border-gray-300 text-gray-700 p-1 sm:p-2 rounded-lg hover:bg-gray-50"
-                  onClick={handleNotifyMe}
-                >
-                  <FontAwesomeIcon
-                    icon={faBell}
-                    className="text-sm sm:text-base"
-                  />
-                </button>
+                notify ? (
+                  <button
+                    className="border border-red-300 text-red-700 bg-red-50 p-1 sm:p-2 rounded-lg hover:bg-red-100 transition-colors duration-200"
+                    onClick={(ev) => handleNotifyToggle(ev, false)}
+                    title="Turn off notifications"
+                  >
+                    <FontAwesomeIcon icon={faBellSlash} className="text-sm sm:text-base mr-1" />
+                    <span className="hidden sm:inline text-xs font-medium">Off</span>
+                  </button>
+                ) : (
+                  <button 
+                    className="border border-blue-300 text-blue-700 bg-blue-50 p-1 sm:p-2 rounded-lg hover:bg-blue-100 transition-colors duration-200"
+                    onClick={(ev) => handleNotifyToggle(ev, true)}
+                    title="Notify me when back in stock"
+                  >
+                    <FontAwesomeIcon icon={faBell} className="text-sm sm:text-base mr-1" />
+                    <span className="hidden sm:inline text-xs font-medium">Notify</span>
+                  </button>
+                )
               ) : !isExpired && !isOutOfStock ? (
                 <button className="border border-gray-300 text-gray-700 p-1 sm:p-2 rounded-lg hover:bg-gray-50">
                   <FontAwesomeIcon
@@ -329,19 +353,31 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
             </>
           ) : isOutOfStock ? (
             <>
-              <button
+              {/* <button
                 className="flex-1 bg-gray-300 text-gray-500 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium cursor-not-allowed"
                 onClick={(e) => e.stopPropagation()}
               >
                 Out of Stock
-              </button>
-              <button
-                className="flex-1 border border-gray-300 text-gray-700 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium hover:bg-gray-50 cursor-pointer"
-                onClick={handleNotifyMe}
-              >
-                <FontAwesomeIcon icon={faBell} className="mr-1" />
-                Notify Me
-              </button>
+              </button> */}
+              {notify ? (
+                <button
+                  className="flex-1 border border-red-300 text-red-700 bg-red-50 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium hover:bg-red-100 cursor-pointer transition-colors duration-200 flex items-center justify-center"
+                  onClick={(ev) => handleNotifyToggle(ev, false)}
+                  title="Turn off notifications for notifying me when back in stock"
+                >
+                  <FontAwesomeIcon icon={faBellSlash} className="mr-1" />
+                  Turn Off
+                </button>
+              ) : (
+                <button
+                  className="flex-1 border border-blue-300 text-blue-700 bg-blue-50 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium hover:bg-blue-100 cursor-pointer transition-colors duration-200 flex items-center justify-center"
+                  onClick={(ev) => handleNotifyToggle(ev, true)}
+                  title="Notify me when back in stock"
+                >
+                  <FontAwesomeIcon icon={faBell} className="mr-1" />
+                  Notify Me
+                </button>
+              )}
             </>
           ) : (
             <>
@@ -367,7 +403,6 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
           onClose={handlePopupClose}
         />
       )}
-      {/* NotifyMePopup removed - direct API call on button click */}
     </div>
   );
 };

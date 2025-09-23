@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHeart as solidHeart,
@@ -15,6 +15,7 @@ import {
   faCheck,
   faXmark,
   faBell,
+  faBellSlash,
   faCalendarXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { ProductService } from "../../../services/products/products.services";
@@ -52,7 +53,7 @@ const ProductInfo = ({ product, navigate }) => {
   const [selectedGrade, setSelectedGrade] = useState("A+");
   const [quantity, setQuantity] = useState(5);
   const [isFavorite, setIsFavorite] = useState(false);
-  
+  const [notify, setNotify] = useState(Boolean(product?.notify));
 
   const colors = [
     { name: "Natural Titanium", class: "bg-gray-200" },
@@ -67,6 +68,10 @@ const ProductInfo = ({ product, navigate }) => {
   // Check if product can accept notifications (out of stock but not expired)
   const canNotify = processedProduct.isOutOfStock && !processedProduct.isExpired;
 
+  useEffect(() => {
+    setNotify(Boolean(product?.notify));
+  }, [product?.notify]);
+
   const handleQuantityChange = (amount) => {
     const newQuantity = quantity + amount;
     if (newQuantity >= processedProduct.moq) {
@@ -74,11 +79,19 @@ const ProductInfo = ({ product, navigate }) => {
     }
   };
 
-  const handleNotifyMe = async (e) => {
+  const handleNotifyToggle = async (e, nextValue) => {
     e.stopPropagation();
     if (!canNotify) return;
+
+    const productId = processedProduct.id || processedProduct._id;
+
     try {
-      await ProductService.createNotification({ productId: processedProduct.id, notifyType: 'stock_alert', notify: true });
+      await ProductService.createNotification({ 
+        productId: productId, 
+        notifyType: 'stock_alert', 
+        notify: nextValue 
+      });
+      setNotify(nextValue);
     } catch (err) {
       // errors are toasted in service
     }
@@ -470,13 +483,25 @@ const ProductInfo = ({ product, navigate }) => {
                   <FontAwesomeIcon icon={faXmark} className="mr-2" />
                   Out of Stock
                 </button>
-                <button
-                  className="w-full border border-gray-300 text-gray-700 py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-gray-50 cursor-pointer flex items-center justify-center transition-colors"
-                  onClick={handleNotifyMe}
-                >
-                  <FontAwesomeIcon icon={faBell} className="mr-2" />
-                  Notify Me When Available
-                </button>
+                {notify ? (
+                  <button
+                    className="w-full border border-red-300 text-red-700 bg-red-50 py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-red-100 cursor-pointer flex items-center justify-center transition-colors duration-200"
+                    onClick={(ev) => handleNotifyToggle(ev, false)}
+                    title="Turn off notifications"
+                  >
+                    <FontAwesomeIcon icon={faBellSlash} className="mr-2" />
+                    Turn Off Notifications
+                  </button>
+                ) : (
+                  <button
+                    className="w-full border border-blue-300 text-blue-700 bg-blue-50 py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-blue-100 cursor-pointer flex items-center justify-center transition-colors duration-200"
+                    onClick={(ev) => handleNotifyToggle(ev, true)}
+                    title="Notify me when back in stock"
+                  >
+                    <FontAwesomeIcon icon={faBell} className="mr-2" />
+                    Notify Me When Available
+                  </button>
+                )}
               </>
             ) : (
               <>
@@ -526,8 +551,6 @@ const ProductInfo = ({ product, navigate }) => {
           </div>
         </div>
       </div>
-
-      {/* NotifyMePopup removed - direct API call on button click */}
     </div>
   );
 };
