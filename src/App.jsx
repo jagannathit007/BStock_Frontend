@@ -16,6 +16,7 @@ import SignUpForm from "./components/SignUpForm";
 import VerifyEmailPrompt from "./components/VerifyEmailPrompt";
 import VerifyEmail from "./components/VerifyEmail";
 import CartPage from "./components/ReadyStockPage/CartPage";
+import ProfilePage from "./pages/ProfilePage";
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(
@@ -60,12 +61,25 @@ const App = () => {
           {/* Add this route */}
           {/* Protected Routes */}
           <Route
-            path="/"
+            path="/ready-stock"
             element={
               <ProtectedRoute>
                 <MainContent />
               </ProtectedRoute>
             }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          {/* Redirect root to appropriate page */}
+          <Route
+            path="/"
+            element={<Navigate to={isLoggedIn ? "/ready-stock" : "/login"} replace />}
           />
           <Route
             path="/product/:id"

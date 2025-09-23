@@ -95,7 +95,7 @@ const LoginForm = ({ onLogin }) => {
         }
         localStorage.setItem("isLoggedIn", "true");
         if (onLogin) onLogin();
-        navigate("/");
+        navigate("/ready-stock");
       }
     } catch (err) {
       console.error("Google login failed:", err);
@@ -135,7 +135,7 @@ const LoginForm = ({ onLogin }) => {
         }
         localStorage.setItem("isLoggedIn", "true");
         if (onLogin) onLogin();
-        navigate("/");
+        navigate("/ready-stock");
       }
     } catch (err) {
       setError(err.message || "Login failed");
