@@ -51,51 +51,55 @@ const MainContent = () => {
     };
   };
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const fetchData = async () => {
-      setIsLoading(true);
-      setErrorMessage(null);
-      try {
-        const response = await axios.get("http://localhost:3200/api/customer/get-product-list", {
-          params: {
-            page: currentPage,
-            limit: itemsPerPage,
-            ...filters, // Include filter parameters
-          },
+useEffect(() => {
+  const controller = new AbortController();
+  const fetchData = async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    try {
+      const baseUrl = import.meta.env.VITE_BASE_URL || "http://localhost:3200"; // Fallback URL
+      const response = await axios.post(
+        `${baseUrl}/api/customer/get-product-list`,
+        {
+          page: currentPage,
+          limit: itemsPerPage,
+          search: filters.search || "", // Include search term from filters, default to empty string
+          ...filters, // Include other filter parameters
+        },
+        {
           headers: {
             "Content-Type": "application/json",
             Authorization: localStorage.getItem("token") ? `Bearer ${localStorage.getItem("token")}` : "",
           },
           signal: controller.signal,
-        });
-        
-        if (response.data.status=== 200) {
-          const payload = response.data.data;
-          const docs = payload?.docs || [];
-          const totalDocs = Number(payload?.totalDocs) || 0; // Ensure totalDocs is a number
-          const mapped = docs.map(mapApiProductToUi);
-          setFetchedProducts(mapped);
-          setTotalProductsCount(totalDocs);
-        } else {
-          setErrorMessage("Failed to fetch products.");
-          setFetchedProducts([]);
-          setTotalProductsCount(0);
         }
-      } catch (e) {
-        if (e.name !== "AbortError") {
-          // setErrorMessage("An error occurred while fetching products. Please try again.");
-          setFetchedProducts([]);
-          setTotalProductsCount(0);
-          console.error("Fetch products error:", e);
-        }
-      } finally {
-        setIsLoading(false);
+      );
+
+      if (response.data.status === 200) {
+        const payload = response.data.data;
+        const docs = payload?.docs || [];
+        const totalDocs = Number(payload?.totalDocs) || 0; // Ensure totalDocs is a number
+        const mapped = docs.map(mapApiProductToUi);
+        setFetchedProducts(mapped);
+        setTotalProductsCount(totalDocs);
+      } else {
+        setErrorMessage("Failed to fetch products.");
+        setFetchedProducts([]);
+        setTotalProductsCount(0);
       }
-    };
-    fetchData();
-    return () => controller.abort();
-  }, [currentPage, itemsPerPage, filters]);
+    } catch (e) {
+      if (e.name !== "AbortError") {
+        setFetchedProducts([]);
+        setTotalProductsCount(0);
+        console.error("Fetch products error:", e);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  fetchData();
+  return () => controller.abort();
+}, [currentPage, itemsPerPage, filters]);
 
   useEffect(() => {
     setItemsPerPage(viewMode === "grid" ? 9 : 10);
