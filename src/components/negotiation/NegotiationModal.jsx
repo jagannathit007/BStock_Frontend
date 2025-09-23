@@ -396,7 +396,7 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
 
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Message (Optional)
+                  Message
                 </label>
                 <textarea
                   value={responseData.message}
