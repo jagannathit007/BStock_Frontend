@@ -79,10 +79,11 @@ const ProductDetails = () => {
         stockCount: stock,
         stockStatus,
         expiryTime: p.expiryTime || "",
+        notify: Boolean(p.notify),
       };
     };
 
-    const fetchProduct = async () => {
+    const refreshProduct = async () => {
       setLoading(true);
       try {
         const res = await ProductService.getProductById(id);
@@ -98,7 +99,12 @@ const ProductDetails = () => {
         if (!isCancelled) setLoading(false);
       }
     };
-    if (id) fetchProduct();
+
+    if (id) {
+      refreshProduct();
+    }
+
+    // store on window for passing to child via prop? We'll pass inline function
     return () => {
       isCancelled = true;
     };
@@ -117,7 +123,43 @@ const ProductDetails = () => {
 
   return (
     <>
-      <ProductInfo product={product} navigate={navigate} />
+      <ProductInfo
+        product={product}
+        navigate={navigate}
+        onRefresh={async () => {
+          try {
+            const res = await ProductService.getProductById(product.id);
+            const priceNumber = Number(res.price) || 0;
+            const originalPriceNumber = priceNumber > 0 ? priceNumber + 100 : 0;
+            const images = typeof res.skuFamilyId === "object" && Array.isArray(res.skuFamilyId?.images) ? res.skuFamilyId.images : [];
+            const stock = Number(res.stock) || 0;
+            const stockStatus = stock <= 0 ? "Out of Stock" : stock <= 10 ? "Low Stock" : "In Stock";
+            setProduct({
+              id: res._id || res.id,
+              name: typeof res.skuFamilyId === "object" && res.skuFamilyId?.name ? res.skuFamilyId.name : "Product",
+              description: [res.storage || "", res.color || ""].filter(Boolean).join(" • ") || (res.specification || ""),
+              price: String(priceNumber),
+              originalPrice: String(originalPriceNumber),
+              discountPercentage: originalPriceNumber > 0 ? Math.round(((originalPriceNumber - priceNumber) / originalPriceNumber) * 100) + "%" : "0%",
+              mainImage: images[0] || "https://via.placeholder.com/800x600.png?text=Product",
+              thumbnails: images.length ? images.slice(0, 4) : new Array(4).fill(images[0] || "https://via.placeholder.com/200.png?text=Product"),
+              features: [
+                { icon: faMicrochip, color: "text-blue-600", text: res.specification || "High performance" },
+                { icon: faCamera, color: "text-purple-600", text: "Advanced Camera" },
+                { icon: faShieldHalved, color: "text-green-600", text: "12 Month Warranty" },
+                { icon: faTruckFast, color: "text-orange-600", text: "2-3 Days Shipping" },
+              ],
+              moq: Number(res.moq) || 0,
+              stockCount: stock,
+              stockStatus,
+              expiryTime: res.expiryTime || "",
+              notify: Boolean(res.notify),
+            });
+          } catch (_) {
+            // ignore
+          }
+        }}
+      />
       <ProductSpecs />
     </>
   );

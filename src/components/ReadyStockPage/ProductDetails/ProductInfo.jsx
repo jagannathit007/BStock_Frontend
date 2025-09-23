@@ -92,6 +92,15 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
         notify: nextValue 
       });
       setNotify(nextValue);
+      // Refresh from backend to mirror latest notify using get-product API
+      try {
+        const refreshed = await ProductService.getProductByIdPost(productId);
+        if (refreshed && typeof refreshed.notify !== 'undefined') {
+          setNotify(Boolean(refreshed.notify));
+        }
+      } catch (refreshErr) {
+        // ignore refresh error; UI already updated optimistically
+      }
       if (typeof onRefresh === 'function') {
         onRefresh();
       }
