@@ -20,7 +20,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { ProductService } from "../../../services/products/products.services";
 
-const ProductInfo = ({ product, navigate }) => {
+const ProductInfo = ({ product, navigate, onRefresh }) => {
   // Process product data to ensure proper stock and expiry status
   const processedProduct = {
     ...product,
@@ -92,6 +92,9 @@ const ProductInfo = ({ product, navigate }) => {
         notify: nextValue 
       });
       setNotify(nextValue);
+      if (typeof onRefresh === 'function') {
+        onRefresh();
+      }
     } catch (err) {
       // errors are toasted in service
     }

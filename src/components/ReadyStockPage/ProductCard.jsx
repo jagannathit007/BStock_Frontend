@@ -15,7 +15,7 @@ import AddToCartPopup from "./AddToCartPopup";
 import { ProductService } from "../../services/products/products.services";
 import CartService from "../../services/cart/cart.services";
 
-const ProductCard = ({ product, viewMode = "grid" }) => {
+const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
   const navigate = useNavigate();
   const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
   const [notify, setNotify] = useState(Boolean(product?.notify));
@@ -41,7 +41,10 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
   } = product;
 
   // Check if product can accept notifications (out of stock but not expired)
-  const canNotify = isOutOfStock && !isExpired;
+  const derivedOutOfStock = typeof isOutOfStock === 'boolean'
+    ? isOutOfStock
+    : Number(product?.stockCount ?? product?.stock ?? 0) <= 0;
+  const canNotify = derivedOutOfStock && !isExpired;
 
   const getStatusBadgeClass = () => {
     if (isExpired) {
@@ -93,6 +96,9 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
         notify: nextValue 
       });
       setNotify(nextValue);
+      if (typeof onRefresh === 'function') {
+        onRefresh();
+      }
     } catch (err) {
       // errors are toasted in service
     }
