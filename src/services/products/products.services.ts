@@ -129,4 +129,20 @@ static getProductById = async (id: string): Promise<Product> => {
       throw new Error(errorMessage);
     }
   };
+
+  // Check business approval status for a customer
+  static getBusinessApprovalStatus = async (customerId: string): Promise<any> => {
+    const baseUrl = env.baseUrl;
+    const url = `${baseUrl}/api/customer/getBusinessApprovalStatus`;
+
+    try {
+      const res = await api.post(url, { customerId });
+      return res.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to fetch business approval status';
+      toastHelper.showTost(errorMessage, 'error');
+      throw new Error(errorMessage);
+    }
+  };
+
 }
