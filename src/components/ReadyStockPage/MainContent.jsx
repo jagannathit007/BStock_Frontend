@@ -3,7 +3,10 @@ import ProductCard from "./ProductCard";
 import SideFilter from "../SideFilter";
 import ViewControls from "./ViewControls";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
+import {
+  faChevronLeft,
+  faChevronRight,
+} from "@fortawesome/free-solid-svg-icons";
 import axios from "axios";
 
 const MainContent = () => {
@@ -20,16 +23,22 @@ const MainContent = () => {
   const mapApiProductToUi = (p) => {
     const id = p._id || p.id || "";
     const name = p.skuFamilyId?.name || p.specification || "Product";
-    const imageUrl = p.skuFamilyId?.images?.[0] || "https://via.placeholder.com/400x300.png?text=Product";
+    const imageUrl =
+      p.skuFamilyId?.images?.[0] ||
+      "https://via.placeholder.com/400x300.png?text=Product";
     const storage = p.storage || "";
     const color = p.color || "";
     const ram = p.ram || "";
-    const description = [storage, color, ram].filter(Boolean).join(" • ") || p.specification || "";
+    const description =
+      [storage, color, ram].filter(Boolean).join(" • ") ||
+      p.specification ||
+      "";
     const priceNumber = Number(p.price) || 0;
     const price = priceNumber.toFixed(2);
     const originalPrice = (priceNumber > 0 ? priceNumber + 100 : 0).toFixed(2);
     const stock = Number(p.stock) || 0;
-    const stockStatus = stock <= 0 ? "Out of Stock" : stock <= 10 ? "Low Stock" : "In Stock";
+    const stockStatus =
+      stock <= 0 ? "Out of Stock" : stock <= 10 ? "Low Stock" : "In Stock";
     const expiryTime = p.expiryTime;
     const isExpired = expiryTime ? new Date(expiryTime) < new Date() : false;
 
@@ -44,62 +53,65 @@ const MainContent = () => {
       stockStatus,
       stockCount: stock,
       imageUrl,
-      isFavorite: false,
+      isFavorite: p.WishList || false, // Map backend WishList field to isFavorite
       isOutOfStock: stock <= 0,
       isExpired,
       expiryTime,
     };
   };
 
-useEffect(() => {
-  const controller = new AbortController();
-  const fetchData = async () => {
-    setIsLoading(true);
-    setErrorMessage(null);
-    try {
-      const baseUrl = import.meta.env.VITE_BASE_URL || "http://localhost:3200"; // Fallback URL
-      const response = await axios.post(
-        `${baseUrl}/api/customer/get-product-list`,
-        {
-          page: currentPage,
-          limit: itemsPerPage,
-          search: filters.search || "", // Include search term from filters, default to empty string
-          ...filters, // Include other filter parameters
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: localStorage.getItem("token") ? `Bearer ${localStorage.getItem("token")}` : "",
+  useEffect(() => {
+    const controller = new AbortController();
+    const fetchData = async () => {
+      setIsLoading(true);
+      setErrorMessage(null);
+      try {
+        const baseUrl =
+          import.meta.env.VITE_BASE_URL || "http://localhost:3200"; // Fallback URL
+        const response = await axios.post(
+          `${baseUrl}/api/customer/get-product-list`,
+          {
+            page: currentPage,
+            limit: itemsPerPage,
+            search: filters.search || "", // Include search term from filters, default to empty string
+            ...filters, // Include other filter parameters
           },
-          signal: controller.signal,
-        }
-      );
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: localStorage.getItem("token")
+                ? `Bearer ${localStorage.getItem("token")}`
+                : "",
+            },
+            signal: controller.signal,
+          }
+        );
 
-      if (response.data.status === 200) {
-        const payload = response.data.data;
-        const docs = payload?.docs || [];
-        const totalDocs = Number(payload?.totalDocs) || 0; // Ensure totalDocs is a number
-        const mapped = docs.map(mapApiProductToUi);
-        setFetchedProducts(mapped);
-        setTotalProductsCount(totalDocs);
-      } else {
-        setErrorMessage("Failed to fetch products.");
-        setFetchedProducts([]);
-        setTotalProductsCount(0);
+        if (response.data.status === 200) {
+          const payload = response.data.data;
+          const docs = payload?.docs || [];
+          const totalDocs = Number(payload?.totalDocs) || 0; // Ensure totalDocs is a number
+          const mapped = docs.map(mapApiProductToUi);
+          setFetchedProducts(mapped);
+          setTotalProductsCount(totalDocs);
+        } else {
+          setErrorMessage("Failed to fetch products.");
+          setFetchedProducts([]);
+          setTotalProductsCount(0);
+        }
+      } catch (e) {
+        if (e.name !== "AbortError") {
+          setFetchedProducts([]);
+          setTotalProductsCount(0);
+          console.error("Fetch products error:", e);
+        }
+      } finally {
+        setIsLoading(false);
       }
-    } catch (e) {
-      if (e.name !== "AbortError") {
-        setFetchedProducts([]);
-        setTotalProductsCount(0);
-        console.error("Fetch products error:", e);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  fetchData();
-  return () => controller.abort();
-}, [currentPage, itemsPerPage, filters]);
+    };
+    fetchData();
+    return () => controller.abort();
+  }, [currentPage, itemsPerPage, filters]);
 
   useEffect(() => {
     setItemsPerPage(viewMode === "grid" ? 9 : 10);
@@ -111,9 +123,18 @@ useEffect(() => {
     setCurrentPage(1); // Reset to first page on filter change
   };
 
-  const indexOfLastProduct = useMemo(() => currentPage * itemsPerPage, [currentPage, itemsPerPage]);
-  const indexOfFirstProduct = useMemo(() => indexOfLastProduct - itemsPerPage, [indexOfLastProduct, itemsPerPage]);
-  const totalPages = useMemo(() => Math.max(Math.ceil(totalProductsCount / itemsPerPage), 1), [totalProductsCount, itemsPerPage]);
+  const indexOfLastProduct = useMemo(
+    () => currentPage * itemsPerPage,
+    [currentPage, itemsPerPage]
+  );
+  const indexOfFirstProduct = useMemo(
+    () => indexOfLastProduct - itemsPerPage,
+    [indexOfLastProduct, itemsPerPage]
+  );
+  const totalPages = useMemo(
+    () => Math.max(Math.ceil(totalProductsCount / itemsPerPage), 1),
+    [totalProductsCount, itemsPerPage]
+  );
   const currentProducts = useMemo(() => fetchedProducts, [fetchedProducts]);
 
   const paginate = (pageNumber) => {
@@ -131,7 +152,10 @@ useEffect(() => {
               onClick={() => setShowMobileFilters(false)}
             ></div>
             <div className="absolute left-0 top-0 h-full w-72 bg-white z-50 overflow-y-auto">
-              <SideFilter onClose={() => setShowMobileFilters(false)} onFilterChange={handleFilterChange} />
+              <SideFilter
+                onClose={() => setShowMobileFilters(false)}
+                onFilterChange={handleFilterChange}
+              />
               <button
                 className="w-full bg-[#0071E0] text-white py-3 px-4 text-sm font-medium lg:hidden"
                 onClick={() => setShowMobileFilters(false)}
@@ -158,7 +182,11 @@ useEffect(() => {
               className="w-full bg-white border border-gray-300 rounded-lg py-2 px-4 text-sm font-medium flex items-center justify-center"
               onClick={() => setShowMobileFilters(true)}
             >
-              <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 512 512">
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="currentColor"
+                viewBox="0 0 512 512"
+              >
                 <path d="M3.9 54.9C10.5 40.9 24.5 32 40 32H472c15.5 0 29.5 8.9 36.1 22.9s4.6 30.5-5.2 42.5L320 320.9V448c0 12.1-6.8 23.2-17.7 28.6s-23.8 4.3-33.5-3l-64-48c-8.1-6-12.8-15.5-12.8-25.6V320.9L9 97.3C-.7 85.4-2.8 68.8 3.9 54.9z" />
               </svg>
               Filters
@@ -169,20 +197,31 @@ useEffect(() => {
             viewMode={viewMode}
             setViewMode={setViewMode}
             totalProducts={totalProductsCount}
-            showingProducts={`${Math.min(indexOfFirstProduct + 1, totalProductsCount)}-${Math.min(indexOfLastProduct, totalProductsCount)}`}
+            showingProducts={`${Math.min(
+              indexOfFirstProduct + 1,
+              totalProductsCount
+            )}-${Math.min(indexOfLastProduct, totalProductsCount)}`}
           />
 
           {viewMode === "grid" ? (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {isLoading && currentProducts.length === 0 && (
-                  <div className="col-span-3 text-center text-sm text-gray-500">Loading products...</div>
+                  <div className="col-span-3 text-center text-sm text-gray-500">
+                    Loading products...
+                  </div>
                 )}
                 {!isLoading && currentProducts.length === 0 && (
-                  <div className="col-span-3 text-center text-sm text-gray-500">No products found.</div>
+                  <div className="col-span-3 text-center text-sm text-gray-500">
+                    No products found.
+                  </div>
                 )}
                 {currentProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} viewMode={viewMode} />
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    viewMode={viewMode}
+                  />
                 ))}
               </div>
 
@@ -191,7 +230,9 @@ useEffect(() => {
                   onClick={() => paginate(currentPage - 1)}
                   disabled={currentPage === 1}
                   className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg ${
-                    currentPage === 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-700 hover:bg-gray-100"
+                    currentPage === 1
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
                   <FontAwesomeIcon icon={faChevronLeft} className="mr-2" />
@@ -199,17 +240,21 @@ useEffect(() => {
                 </button>
 
                 <div className="hidden md:flex space-x-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
-                    <button
-                      key={number}
-                      onClick={() => paginate(number)}
-                      className={`px-4 py-2 text-sm font-medium rounded-lg ${
-                        currentPage === number ? "bg-[#0071E0] text-white" : "text-gray-700 hover:bg-gray-100"
-                      }`}
-                    >
-                      {number}
-                    </button>
-                  ))}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (number) => (
+                      <button
+                        key={number}
+                        onClick={() => paginate(number)}
+                        className={`px-4 py-2 text-sm font-medium rounded-lg ${
+                          currentPage === number
+                            ? "bg-[#0071E0] text-white"
+                            : "text-gray-700 hover:bg-gray-100"
+                        }`}
+                      >
+                        {number}
+                      </button>
+                    )
+                  )}
                 </div>
 
                 <div className="md:hidden text-sm text-gray-700">
@@ -220,7 +265,9 @@ useEffect(() => {
                   onClick={() => paginate(currentPage + 1)}
                   disabled={currentPage === totalPages}
                   className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg ${
-                    currentPage === totalPages ? "text-gray-400 cursor-not-allowed" : "text-gray-700 hover:bg-gray-100"
+                    currentPage === totalPages
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
                   Next
@@ -258,53 +305,30 @@ useEffect(() => {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {isLoading && currentProducts.length === 0 && (
                         <tr>
-                          <td colSpan={6} className="px-4 py-6 text-center text-sm text-gray-500">
+                          <td
+                            colSpan={6}
+                            className="px-4 py-6 text-center text-sm text-gray-500"
+                          >
                             Loading products...
                           </td>
                         </tr>
                       )}
                       {!isLoading && currentProducts.length === 0 && (
                         <tr>
-                          <td colSpan={6} className="px-4 py-6 text-center text-sm text-gray-500">
+                          <td
+                            colSpan={6}
+                            className="px-4 py-6 text-center text-sm text-gray-500"
+                          >
                             No products found.
                           </td>
                         </tr>
                       )}
                       {currentProducts.map((product) => (
-                        <tr key={product.id}>
-                          <td className="px-4 py-4 sm:px-6 sm:py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <img
-                                src={product.imageUrl}
-                                alt={product.name}
-                                className="h-10 w-10 rounded-md object-cover"
-                              />
-                              <span className="ml-3 text-sm font-medium">{product.name}</span>
-                            </div>
-                          </td>
-                          <td className="px-4 py-4 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">
-                            {product.description}
-                          </td>
-                          <td className="px-4 py-4 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">
-                            ${product.price}
-                            {product.discount > 0 && (
-                              <span className="ml-2 text-xs text-gray-400 line-through">
-                                ${product.originalPrice}
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-4 py-4 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">
-                            {product.stockStatus} ({product.stockCount})
-                          </td>
-                          <td className="px-4 py-4 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">
-                            {product.moq}
-                          </td>
-                          <td className="px-4 py-4 sm:px-6 sm:py-4 whitespace-nowrap text-sm">
-                            <button className="text-[#0071E0] hover:text-[#005BB5]">
-                              Add to Cart
-                            </button>
-                          </td>
-                        </tr>
+                        <ProductCard
+                          key={product.id}
+                          product={product}
+                          viewMode={viewMode}
+                        />
                       ))}
                     </tbody>
                   </table>
@@ -316,7 +340,9 @@ useEffect(() => {
                   onClick={() => paginate(currentPage - 1)}
                   disabled={currentPage === 1}
                   className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg ${
-                    currentPage === 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-700 hover:bg-gray-100"
+                    currentPage === 1
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
                   <FontAwesomeIcon icon={faChevronLeft} className="mr-2" />
@@ -324,17 +350,21 @@ useEffect(() => {
                 </button>
 
                 <div className="hidden md:flex space-x-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
-                    <button
-                      key={number}
-                      onClick={() => paginate(number)}
-                      className={`px-4 py-2 text-sm font-medium rounded-lg ${
-                        currentPage === number ? "bg-[#0071E0] text-white" : "text-gray-700 hover:bg-gray-100"
-                      }`}
-                    >
-                      {number}
-                    </button>
-                  ))}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (number) => (
+                      <button
+                        key={number}
+                        onClick={() => paginate(number)}
+                        className={`px-4 py-2 text-sm font-medium rounded-lg ${
+                          currentPage === number
+                            ? "bg-[#0071E0] text-white"
+                            : "text-gray-700 hover:bg-gray-100"
+                        }`}
+                      >
+                        {number}
+                      </button>
+                    )
+                  )}
                 </div>
 
                 <div className="md:hidden text-sm text-gray-700">
@@ -345,7 +375,9 @@ useEffect(() => {
                   onClick={() => paginate(currentPage + 1)}
                   disabled={currentPage === totalPages}
                   className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg ${
-                    currentPage === totalPages ? "text-gray-400 cursor-not-allowed" : "text-gray-700 hover:bg-gray-100"
+                    currentPage === totalPages
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
                   Next

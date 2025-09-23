@@ -19,6 +19,7 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
   const navigate = useNavigate();
   const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
   const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(product.isFavorite); // Initialize with product's isFavorite
 
   const {
     id,
@@ -31,7 +32,6 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
     stockStatus,
     stockCount,
     imageUrl,
-    isFavorite,
     isOutOfStock,
     isExpired,
   } = product;
@@ -78,18 +78,9 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
       if (!customerId) {
         return navigate('/signin');
       }
-
-      const resp = await ProductService.getBusinessApprovalStatus(customerId);
-      const isApproved = resp?.data?.isApproved ?? resp?.isApproved ?? false;
-
-      if (isApproved) {
-        setIsAddToCartPopupOpen(true);
-      } else {
-        // If not approved, redirect to profile or show message; here navigate to profile
-        navigate('/profile');
-      }
+      setIsAddToCartPopupOpen(true);
     } catch (error) {
-      console.error('Business approval check failed:', error);
+      console.error('Error in add to cart:', error);
     }
   };
 
@@ -97,6 +88,18 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
     e.stopPropagation();
     if (canNotify) {
       setIsNotifyMePopupOpen(true);
+    }
+  };
+
+  // Handle wishlist toggle
+  const handleToggleWishlist = async (e) => {
+    e.stopPropagation();
+    try {
+      const newWishlistStatus = !isFavorite;
+      await ProductService.toggleWishlist({ productId: id, wishlist: newWishlistStatus });
+      setIsFavorite(newWishlistStatus); // Update local state
+    } catch (error) {
+      console.error('Failed to toggle wishlist:', error);
     }
   };
 
@@ -249,6 +252,17 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
                   />
                 </button>
               )}
+              <button
+                className={`p-1 sm:p-2 rounded-lg ${
+                  isFavorite ? 'text-red-500' : 'text-gray-400'
+                } hover:text-red-500`}
+                onClick={handleToggleWishlist}
+              >
+                <FontAwesomeIcon
+                  icon={isFavorite ? solidHeart : regularHeart}
+                  className="text-sm sm:text-base"
+                />
+              </button>
             </div>
           </td>
         </tr>
@@ -256,6 +270,16 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
           <AddToCartPopup
             product={product}
             onClose={handlePopupClose}
+          />
+        )}
+        {isNotifyMePopupOpen && (
+          <NotifyMePopup
+            product={{
+              ...product,
+              isExpired: Boolean(isExpired),
+              expiryTime: product.expiryTime,
+            }}
+            onClose={() => setIsNotifyMePopupOpen(false)}
           />
         )}
       </>
@@ -275,11 +299,10 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
         />
         <div className="absolute top-2 right-2">
           <button
-            className="p-2 bg-white rounded-full cursor-pointer shadow-md text-gray-400 hover:text-red-500 w-10 h-10 flex items-center justify-center"
-            onClick={(e) => {
-              e.stopPropagation();
-              // Handle favorite toggle here
-            }}
+            className={`p-2 bg-white rounded-full cursor-pointer shadow-md ${
+              isFavorite ? 'text-red-500' : 'text-gray-400'
+            } hover:text-red-500 w-10 h-10 flex items-center justify-center`}
+            onClick={handleToggleWishlist}
           >
             <FontAwesomeIcon
               icon={isFavorite ? solidHeart : regularHeart}
