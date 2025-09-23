@@ -218,12 +218,14 @@ const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSa
   );
 };
 
-const ChangePassword = ({ passwords, showPasswords, onChange, onToggle }) => (
+const ChangePassword = ({ passwords, showPasswords, onChange, onToggle, onSubmit, userEmail }) => (
   <div className="space-y-6">
     <div className="pb-4 border-b border-gray-200">
       <h2 className="text-xl font-semibold text-gray-800">Security Settings</h2>
       <p className="text-sm text-gray-500 mt-1">Manage your password and account security</p>
     </div>
+    {/* Hidden username to help browser autofill associate account */}
+    <input type="email" name="username" autoComplete="username" value={userEmail || ''} readOnly style={{ display: 'none' }} />
     <div className="space-y-5">
       {[{ key: "current", label: "Current Password" }, { key: "new", label: "New Password" }, { key: "confirm", label: "Confirm New Password" }].map(({ key, label }) => (
         <div key={key} className="space-y-2">
@@ -232,7 +234,18 @@ const ChangePassword = ({ passwords, showPasswords, onChange, onToggle }) => (
             {label}
           </label>
           <div className="relative">
-            <input type={showPasswords[key] ? "text" : "password"} value={passwords[key]} onChange={(e) => onChange(key, e.target.value)} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 pr-12 text-sm" placeholder={`Enter your ${label.toLowerCase()}`} />
+            <input
+              type={showPasswords[key] ? "text" : "password"}
+              name={key === 'current' ? 'current-password' : key === 'new' ? 'new-password' : 'new-password-confirm'}
+              autoComplete={key === 'current' ? 'current-password' : 'new-password'}
+              value={passwords[key]}
+              onChange={(e) => onChange(key, e.target.value)}
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 pr-12 text-sm"
+              placeholder={`Enter your ${label.toLowerCase()}`}
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+            />
             <button type="button" onClick={() => onToggle(key)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#0071E0] transition-colors duration-200 text-sm">
               <i className={showPasswords[key] ? "fas fa-eye" : "fas fa-eye-slash"}></i>
             </button>
@@ -241,7 +254,7 @@ const ChangePassword = ({ passwords, showPasswords, onChange, onToggle }) => (
       ))}
     </div>
     <div className="flex justify-end pt-4">
-      <button className="px-6 py-3 bg-[#0071E0] text-white rounded-lg flex items-center space-x-2 hover:bg-[#005BB5] transition-colors duration-200 shadow-sm hover:shadow-md">
+      <button onClick={onSubmit} className="px-6 py-3 bg-[#0071E0] text-white rounded-lg flex items-center space-x-2 hover:bg-[#005BB5] transition-colors duration-200 shadow-sm hover:shadow-md">
         <i className="fas fa-lock"></i>
         <span>Update Password</span>
       </button>
@@ -443,6 +456,32 @@ const ProfilePage = () => {
     setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
+  const handleChangePassword = async () => {
+    const currentPassword = passwords.current?.trim();
+    const newPassword = passwords.new?.trim();
+    const confirmPassword = passwords.confirm?.trim();
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toastHelper.showTost('Please fill all password fields', 'error');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toastHelper.showTost('New password and confirm password do not match', 'error');
+      return;
+    }
+    if (currentPassword === newPassword) {
+      toastHelper.showTost('New password must be different from current password', 'error');
+      return;
+    }
+
+    try {
+      await AuthService.changePassword({ currentPassword, newPassword });
+      setPasswords({ current: '', new: '', confirm: '' });
+    } catch (e) {
+      // Error already handled via toast in service
+    }
+  };
+
   const onChangeProfileField = (key, value) => handleProfileChange(key, value);
   const onChangeBusinessField = (key, value) => handleBusinessChange(key, value);
   const onChangeBusinessFile = (key, file) => handleBusinessFileChange(key, file);
@@ -471,7 +510,7 @@ const ProfilePage = () => {
                 <BusinessProfile formData={businessFormData} previews={businessPreviews} onChangeField={onChangeBusinessField} onChangeFile={onChangeBusinessFile} onSave={handleSaveBusiness} />
               )}
               {activeTab === "password" && (
-                <ChangePassword passwords={passwords} showPasswords={showPasswords} onChange={handlePasswordChange} onToggle={togglePasswordVisibility} />
+                <ChangePassword passwords={passwords} showPasswords={showPasswords} onChange={handlePasswordChange} onToggle={togglePasswordVisibility} onSubmit={handleChangePassword} userEmail={profileFormData.email} />
               )}
             </div>
           </div>

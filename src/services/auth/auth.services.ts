@@ -52,6 +52,11 @@ export interface LoginRequest {
   platformName?: string;
 }
 
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export class AuthService {
   // Register a new user
   static register = async (userData: RegisterRequest): Promise<AuthResponse> => {
@@ -152,6 +157,24 @@ export class AuthService {
       return res.data;
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Failed to update profile';
+      toastHelper.showTost(errorMessage, 'error');
+      throw new Error(errorMessage);
+    }
+  };
+
+  // Change password
+  static changePassword = async (
+    payload: ChangePasswordRequest
+  ): Promise<ProfileResponse> => {
+    const baseUrl = env.baseUrl;
+    const url = `${baseUrl}/api/customer/change-Password`;
+
+    try {
+      const res = await api.post(url, payload);
+      toastHelper.showTost(res.data?.message || 'Password changed successfully', 'success');
+      return res.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to change password';
       toastHelper.showTost(errorMessage, 'error');
       throw new Error(errorMessage);
     }
