@@ -47,6 +47,7 @@ export interface ImportResponse {
 export interface NotificationRequest {
   productId: string;
   notifyType: 'stock_alert' | 'price_alert';
+  notify: boolean;
 }
 
 export interface Notification {
@@ -275,8 +276,8 @@ export class ProductService {
   // Create a new notification request
   static createNotification = async (notificationData: NotificationRequest): Promise<NotificationResponse> => {
     const baseUrl = env.baseUrl;
-    const adminRoute = env.adminRoute;
-    const url = `${baseUrl}/api/${adminRoute}/notification/create`;
+    const customerRoute = env.customerRoute;
+    const url = `${baseUrl}/api/${customerRoute}/notify/me`;
 
     try {
       const res = await api.post(url, notificationData);

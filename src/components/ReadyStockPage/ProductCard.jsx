@@ -79,7 +79,7 @@ const ProductCard = ({ product, viewMode = "grid" }) => {
     e.stopPropagation();
     if (!canNotify) return;
     try {
-      await ProductService.createNotification({ productId: id, notifyType: 'stock_alert' });
+      await ProductService.createNotification({ productId: id, notifyType: 'stock_alert', notify: true });
     } catch (err) {
       // errors are toasted in service
     }

@@ -78,7 +78,7 @@ const ProductInfo = ({ product, navigate }) => {
     e.stopPropagation();
     if (!canNotify) return;
     try {
-      await ProductService.createNotification({ productId: processedProduct.id, notifyType: 'stock_alert' });
+      await ProductService.createNotification({ productId: processedProduct.id, notifyType: 'stock_alert', notify: true });
     } catch (err) {
       // errors are toasted in service
     }
