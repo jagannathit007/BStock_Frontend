@@ -108,7 +108,7 @@ const ProfileDetails = ({ formData, onChange, onSave }) => {
   );
 };
 
-const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSave, isApproved }) => {
+const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSave, status }) => {
   const countries = [
     "United States", "Canada", "United Kingdom", "Australia", "Germany", "France", "Italy", "Spain", "Netherlands", "India", "Japan", "China", "Brazil", "Mexico", "South Africa"
   ];
@@ -121,11 +121,23 @@ const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSa
         <h2 className="text-xl font-semibold text-gray-800">Business Information</h2>
         <p className="text-sm text-gray-500 mt-1">Manage your business details and credentials</p>
       </div>
-      {isApproved === true && (
-        <div className="flex items-center space-x-2 text-green-700 bg-green-50 border border-green-200 rounded-lg p-3">
-          <i className="fas fa-check-circle"></i>
-          <span className="text-sm font-medium">Business account verified</span>
-        </div>
+      {status && (
+        status === 'Approved' ? (
+          <div className="flex items-center space-x-2 text-green-700 bg-green-50 border border-green-200 rounded-lg p-3">
+            <i className="fas fa-check-circle"></i>
+            <span className="text-sm font-medium">Business account verified</span>
+          </div>
+        ) : status === 'Rejected' ? (
+          <div className="flex items-center space-x-2 text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
+            <i className="fas fa-times-circle"></i>
+            <span className="text-sm font-medium">Business verification rejected. Please update details and resubmit.</span>
+          </div>
+        ) : (
+          <div className="flex items-center space-x-2 text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <i className="fas fa-clock"></i>
+            <span className="text-sm font-medium">Business verification pending. We will notify you once reviewed.</span>
+          </div>
+        )
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div className="md:col-span-2 space-y-2">
@@ -299,7 +311,7 @@ const ProfilePage = () => {
     businessLogo: null,
     certificate: null,
   });
-  const [businessApproved, setBusinessApproved] = useState(null);
+  const [businessStatus, setBusinessStatus] = useState(null);
 
   // Profile Picture Upload Handler
   const handleImageChange = (e) => {
@@ -329,8 +341,18 @@ const ProfilePage = () => {
       const address = business?.address ?? business?.businessAddress ?? '';
       const logo = toAbsoluteUrl(business?.logo ?? business?.businessLogo ?? null);
       const certificate = toAbsoluteUrl(business?.certificate ?? business?.businessCertificate ?? null);
-      const isApproved = business?.isApproved ?? null;
-      return { name, email, mobileNumber, profileImage, business: { businessName, country, address, logo, certificate, isApproved } };
+      // Normalize status: prefer `status`, fallback to legacy boolean `isApproved`
+      const rawStatus = business?.status ?? null;
+      let normalizedStatus = null;
+      if (typeof rawStatus === 'string') {
+        const s = rawStatus.trim().toLowerCase();
+        if (s === 'approved') normalizedStatus = 'Approved';
+        else if (s === 'rejected') normalizedStatus = 'Rejected';
+        else if (s === 'pending') normalizedStatus = 'Pending';
+      } else if (typeof business?.isApproved === 'boolean') {
+        normalizedStatus = business.isApproved ? 'Approved' : 'Rejected';
+      }
+      return { name, email, mobileNumber, profileImage, business: { businessName, country, address, logo, certificate, status: normalizedStatus } };
     };
     const loadProfile = async () => {
       try {
@@ -353,7 +375,7 @@ const ProfilePage = () => {
           businessLogo: typeof normalized.business.logo === 'string' ? normalized.business.logo : null,
           certificate: typeof normalized.business.certificate === 'string' ? normalized.business.certificate : null,
         });
-        setBusinessApproved(normalized.business.isApproved ?? null);
+        setBusinessStatus(normalized.business.status ?? null);
         if (typeof normalized.profileImage === 'string') {
           setProfileImage(normalized.profileImage);
           try { localStorage.setItem('profileImageUrl', normalized.profileImage); } catch {}
@@ -426,7 +448,19 @@ const ProfilePage = () => {
             ? (business?.certificate ?? business?.businessCertificate)
             : prev.certificate,
         }));
-        setBusinessApproved(business?.isApproved ?? null);
+        {
+          const rawStatus = business?.status ?? null;
+          let normalizedStatus = null;
+          if (typeof rawStatus === 'string') {
+            const s = rawStatus.trim().toLowerCase();
+            if (s === 'approved') normalizedStatus = 'Approved';
+            else if (s === 'rejected') normalizedStatus = 'Rejected';
+            else if (s === 'pending') normalizedStatus = 'Pending';
+          } else if (typeof business?.isApproved === 'boolean') {
+            normalizedStatus = business.isApproved ? 'Approved' : 'Rejected';
+          }
+          setBusinessStatus(normalizedStatus);
+        }
       } catch {}
     } catch (e) {}
   };
@@ -517,7 +551,7 @@ const ProfilePage = () => {
                 <ProfileDetails formData={profileFormData} onChange={onChangeProfileField} onSave={handleSaveProfile} />
               )}
               {activeTab === "business" && (
-                <BusinessProfile formData={businessFormData} previews={businessPreviews} onChangeField={onChangeBusinessField} onChangeFile={onChangeBusinessFile} onSave={handleSaveBusiness} isApproved={businessApproved} />
+                <BusinessProfile formData={businessFormData} previews={businessPreviews} onChangeField={onChangeBusinessField} onChangeFile={onChangeBusinessFile} onSave={handleSaveBusiness} status={businessStatus} />
               )}
               {activeTab === "password" && (
                 <ChangePassword passwords={passwords} showPasswords={showPasswords} onChange={handlePasswordChange} onToggle={togglePasswordVisibility} onSubmit={handleChangePassword} userEmail={profileFormData.email} />
