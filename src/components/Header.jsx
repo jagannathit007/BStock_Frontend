@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import CartService from "../services/cart/cart.services";
 import { env } from "../utils/env";
-import { useNavigate } from "react-router-dom";
 
 const Header = ({ onLogout }) => {
   const navigate = useNavigate();
