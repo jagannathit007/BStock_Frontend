@@ -1,13 +1,16 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { Handshake } from "lucide-react";
 import CartService from "../services/cart/cart.services";
 import { env } from "../utils/env";
+import NegotiationModal from "./negotiation/NegotiationModal";
 
 const Header = ({ onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [cartItemCount, setCartItemCount] = useState(0);
+  const [isNegotiationModalOpen, setIsNegotiationModalOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   // Fetch cart count
@@ -64,6 +67,10 @@ const Header = ({ onLogout }) => {
 
   const handleCartClick = () => {
     navigate("/cart");
+  };
+
+  const handleNegotiationClick = () => {
+    setIsNegotiationModalOpen(true);
   };
 
   const toAbsoluteUrl = (p) => {
@@ -177,6 +184,13 @@ const Header = ({ onLogout }) => {
               </div>
               <button
                 className="p-2 text-gray-600 hover:text-gray-900 relative"
+                onClick={handleNegotiationClick}
+                title="My Negotiations"
+              >
+                <Handshake className="h-5 w-5" />
+              </button>
+              <button
+                className="p-2 text-gray-600 hover:text-gray-900 relative"
                 onClick={handleCartClick}
               >
                 <svg
@@ -252,6 +266,13 @@ const Header = ({ onLogout }) => {
           }
         `}</style>
       </header>
+
+      {/* Negotiation Modal */}
+      <NegotiationModal
+        isOpen={isNegotiationModalOpen}
+        onClose={() => setIsNegotiationModalOpen(false)}
+        userType="customer"
+      />
     </>
   );
 };

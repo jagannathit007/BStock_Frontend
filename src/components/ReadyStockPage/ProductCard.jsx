@@ -12,13 +12,14 @@ import {
   faBellSlash,
 } from "@fortawesome/free-solid-svg-icons";
 import AddToCartPopup from "./AddToCartPopup";
-import { ProductService } from "../../services/products/products.services";
 import CartService from "../../services/cart/cart.services";
 import { ProductService } from "../../services/products/products.services";
 
 const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
   const navigate = useNavigate();
   const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
+  const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(product.isFavorite); // Initialize with product's isFavorite
   const [notify, setNotify] = useState(Boolean(product?.notify));
 
   useEffect(() => {
@@ -36,7 +37,6 @@ const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
     stockStatus,
     stockCount,
     imageUrl,
-    isFavorite,
     isOutOfStock,
     isExpired,
   } = product;
@@ -86,18 +86,9 @@ const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
       if (!customerId) {
         return navigate('/signin');
       }
-
-      const resp = await ProductService.getBusinessApprovalStatus(customerId);
-      const isApproved = resp?.data?.isApproved ?? resp?.isApproved ?? false;
-
-      if (isApproved) {
-        setIsAddToCartPopupOpen(true);
-      } else {
-        // If not approved, redirect to profile or show message; here navigate to profile
-        navigate('/profile');
-      }
+      setIsAddToCartPopupOpen(true);
     } catch (error) {
-      console.error('Business approval check failed:', error);
+      console.error('Error in add to cart:', error);
     }
   };
 
@@ -117,8 +108,22 @@ const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
       if (typeof onRefresh === 'function') {
         onRefresh();
       }
-    } catch (err) {
+    } 
+    catch (err) {
+      console.error('Notification toggle error:', err);
       // errors are toasted in service
+    }
+  };
+
+  // Handle wishlist toggle
+  const handleToggleWishlist = async (e) => {
+    e.stopPropagation();
+    try {
+      const newWishlistStatus = !isFavorite;
+      await ProductService.toggleWishlist({ productId: id, wishlist: newWishlistStatus });
+      setIsFavorite(newWishlistStatus); // Update local state
+    } catch (error) {
+      console.error('Failed to toggle wishlist:', error);
     }
   };
 
@@ -281,6 +286,17 @@ const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
                   />
                 </button>
               )}
+              <button
+                className={`p-1 sm:p-2 rounded-lg ${
+                  isFavorite ? 'text-red-500' : 'text-gray-400'
+                } hover:text-red-500`}
+                onClick={handleToggleWishlist}
+              >
+                <FontAwesomeIcon
+                  icon={isFavorite ? solidHeart : regularHeart}
+                  className="text-sm sm:text-base"
+                />
+              </button>
             </div>
           </td>
         </tr>
@@ -288,6 +304,16 @@ const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
           <AddToCartPopup
             product={product}
             onClose={handlePopupClose}
+          />
+        )}
+        {isNotifyMePopupOpen && (
+          <NotifyMePopup
+            product={{
+              ...product,
+              isExpired: Boolean(isExpired),
+              expiryTime: product.expiryTime,
+            }}
+            onClose={() => setIsNotifyMePopupOpen(false)}
           />
         )}
       </>
@@ -307,11 +333,10 @@ const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
         />
         <div className="absolute top-2 right-2">
           <button
-            className="p-2 bg-white rounded-full cursor-pointer shadow-md text-gray-400 hover:text-red-500 w-10 h-10 flex items-center justify-center"
-            onClick={(e) => {
-              e.stopPropagation();
-              // Handle favorite toggle here
-            }}
+            className={`p-2 bg-white rounded-full cursor-pointer shadow-md ${
+              isFavorite ? 'text-red-500' : 'text-gray-400'
+            } hover:text-red-500 w-10 h-10 flex items-center justify-center`}
+            onClick={handleToggleWishlist}
           >
             <FontAwesomeIcon
               icon={isFavorite ? solidHeart : regularHeart}
