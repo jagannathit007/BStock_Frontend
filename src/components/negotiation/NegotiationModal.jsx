@@ -463,9 +463,9 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
                               </span>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <span className="text-sm text-gray-600">From:</span>
+                              <span className="text-sm text-gray-600">Accepted By:</span>
                               <span className="font-medium text-gray-900">
-                                {individualNegotiation.FromUserType}
+                                {individualNegotiation.toUserType === 'Admin' ? 'Admin' : 'You'}
                               </span>
                             </div>
                           </div>
