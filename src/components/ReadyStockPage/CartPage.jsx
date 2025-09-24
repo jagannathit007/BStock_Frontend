@@ -3,16 +3,31 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCartShopping, faPlus, faMinus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
 import CartService from "../../services/cart/cart.services";
+import OrderService from "../../services/order/order.services";
 
 const CartPage = () => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showCheckoutForm, setShowCheckoutForm] = useState(false);
+  const [billingAddress, setBillingAddress] = useState({
+    address: "",
+    city: "",
+    postalCode: "",
+    country: "",
+  });
+  const [shippingAddress, setShippingAddress] = useState({
+    address: "",
+    city: "",
+    postalCode: "",
+    country: "",
+  });
 
   // Map backend cart item to frontend format
   const mapCartItemToUi = (item) => {
     const id = item.productId;
+    const skuFamilyId = item.skuFamilyId?._id || item.productId; // Fallback to productId if skuFamilyId is missing
     const name = item.skuFamilyId?.name || "Product";
     const imageUrl = item.skuFamilyId?.images?.[0] || "https://via.placeholder.com/400x300.png?text=Product";
     const storage = item.storage || "";
@@ -25,6 +40,7 @@ const CartPage = () => {
 
     return {
       id,
+      skuFamilyId,
       name,
       description,
       price,
@@ -68,7 +84,6 @@ const CartPage = () => {
       const item = cartItems.find((item) => item.id === id);
       if (!item) return;
 
-      // Clamp quantity: step by 1 between MOQ and stock
       const minQty = 1;
       const maxQty = Number(item.stockCount) || Infinity;
       const clampedQty = Math.min(Math.max(Number(newQuantity) || minQty, minQty), maxQty);
@@ -121,6 +136,77 @@ const CartPage = () => {
     } catch (error) {
       setError(error.response?.data?.message || error.message || "An error occurred while clearing cart");
       console.error("Clear cart error:", error);
+    }
+  };
+
+  // Handle address input changes
+  const handleAddressChange = (type, field, value) => {
+    if (type === "billing") {
+      setBillingAddress((prev) => ({ ...prev, [field]: value }));
+    } else {
+      setShippingAddress((prev) => ({ ...prev, [field]: value }));
+    }
+  };
+
+  // Validate addresses
+  const validateAddresses = () => {
+    const requiredFields = ["address", "city", "postalCode", "country"];
+    for (const field of requiredFields) {
+      if (!billingAddress[field] || !shippingAddress[field]) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  // Handle checkout
+  const handleCheckout = async (e) => {
+    e.preventDefault();
+    if (!validateAddresses()) {
+      setError("Please fill in all address fields");
+      return;
+    }
+    if (cartItems.length === 0) {
+      setError("Cannot place an order with an empty cart");
+      return;
+    }
+
+    try {
+      setError(null);
+      setIsLoading(true);
+
+      const orderData = {
+        cartItems: cartItems.map((item) => ({
+          productId: item.id,
+          skuFamilyId: item.skuFamilyId,
+          quantity: Number(item.quantity),
+          price: Number(item.price),
+        })),
+        billingAddress,
+        shippingAddress,
+      };
+
+      console.log("Order data being sent:", orderData);
+
+      const response = await OrderService.createOrder(orderData);
+
+      if (response?.success || response?.status === 200) {
+        setCartItems([]);
+        navigate("/order", { state: { order: response.data } });
+      } else {
+        setError(response?.message || "Failed to create order");
+      }
+    } catch (error) {
+      console.error("Create order error:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      const errorMessage = error.response?.data?.errors?.map((e) => e.message).join(', ') || error.response?.data?.message || "An error occurred while creating order";
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+      setShowCheckoutForm(false);
     }
   };
 
@@ -220,7 +306,7 @@ const CartPage = () => {
                               type="number"
                               value={item.quantity}
                               onChange={(e) =>
-                                handleQuantityChange(item.id, (parseInt(e.target.value, 10) || item.moq))
+                                handleQuantityChange(item.id, parseInt(e.target.value, 10) || item.moq)
                               }
                               min={1}
                               max={item.stockCount}
@@ -256,26 +342,124 @@ const CartPage = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex justify-between items-center">
-              <div>
-                <div className="text-lg font-medium text-gray-700">Total:</div>
-                <div className="text-2xl font-bold text-gray-900">${totalPrice}</div>
+            {showCheckoutForm ? (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Checkout</h2>
+                <form onSubmit={handleCheckout} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-700 mb-2">Billing Address</h3>
+                    <div className="space-y-4">
+                      <input
+                        type="text"
+                        placeholder="Address (e.g., 123 Main St, Apt 4B)"
+                        value={billingAddress.address}
+                        onChange={(e) => handleAddressChange("billing", "address", e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-lg"
+                        required
+                      />
+                      <input
+                        type="text"
+                        placeholder="City"
+                        value={billingAddress.city}
+                        onChange={(e) => handleAddressChange("billing", "city", e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-lg"
+                        required
+                      />
+                      <input
+                        type="text"
+                        placeholder="Postal Code"
+                        value={billingAddress.postalCode}
+                        onChange={(e) => handleAddressChange("billing", "postalCode", e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-lg"
+                        required
+                      />
+                      <input
+                        type="text"
+                        placeholder="Country"
+                        value={billingAddress.country}
+                        onChange={(e) => handleAddressChange("billing", "country", e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-lg"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-700 mb-2">Shipping Address</h3>
+                    <div className="space-y-4">
+                      <input
+                        type="text"
+                        placeholder="Address (e.g., 123 Main St, Apt 4B)"
+                        value={shippingAddress.address}
+                        onChange={(e) => handleAddressChange("shipping", "address", e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-lg"
+                        required
+                      />
+                      <input
+                        type="text"
+                        placeholder="City"
+                        value={shippingAddress.city}
+                        onChange={(e) => handleAddressChange("shipping", "city", e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-lg"
+                        required
+                      />
+                      <input
+                        type="text"
+                        placeholder="Postal Code"
+                        value={shippingAddress.postalCode}
+                        onChange={(e) => handleAddressChange("shipping", "postalCode", e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-lg"
+                        required
+                      />
+                      <input
+                        type="text"
+                        placeholder="Country"
+                        value={shippingAddress.country}
+                        onChange={(e) => handleAddressChange("shipping", "country", e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-lg"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="md:col-span-2 flex justify-end gap-3">
+                    <button
+                      type="button"
+                      className="bg-gray-500 text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-600 transition-all duration-200"
+                      onClick={() => setShowCheckoutForm(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="bg-[#0071E0] text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-600 transition-all duration-200"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? "Processing..." : "Place Order"}
+                    </button>
+                  </div>
+                </form>
               </div>
-              <div className="flex gap-3">
-                <button
-                  className="bg-red-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-red-700 transition-all duration-200"
-                  onClick={handleClearCart}
-                >
-                  Clear Cart
-                </button>
-                <button
-                  className="bg-[#0071E0] text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-600 transition-all duration-200"
-                  onClick={() => console.log("Proceed to checkout")}
-                >
-                  Proceed to Checkout
-                </button>
+            ) : (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex justify-between items-center">
+                <div>
+                  <div className="text-lg font-medium text-gray-700">Total:</div>
+                  <div className="text-2xl font-bold text-gray-900">${totalPrice}</div>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    className="bg-red-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-red-700 transition-all duration-200"
+                    onClick={handleClearCart}
+                  >
+                    Clear Cart
+                  </button>
+                  <button
+                    className="bg-[#0071E0] text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-600 transition-all duration-200"
+                    onClick={() => setShowCheckoutForm(true)}
+                  >
+                    Proceed to Checkout
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </>
         )}
       </div>

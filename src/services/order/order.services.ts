@@ -1,0 +1,99 @@
+import api from '../api/api';
+import toastHelper from '../../utils/toastHelper';
+
+export interface OrderItem {
+  productId: string;
+  skuFamilyId: string;
+  quantity: number;
+  price: number;
+}
+
+export interface Address {
+  address: string;
+  city: string;
+  postalCode: string;
+  country: string;
+}
+
+export interface CreateOrderRequest {
+  cartItems: OrderItem[];
+  billingAddress: Address;
+  shippingAddress: Address;
+}
+
+export interface Order {
+  _id: string;
+  customerId: string;
+  cartItems: Array<{
+    productId: { _id: string; name: string; price: number };
+    skuFamilyId: { _id: string; name: string };
+    quantity: number;
+    price: number;
+  }>;
+  billingAddress: Address;
+  shippingAddress: Address;
+  status: string;
+  totalAmount: number;
+  createdAt: string;
+}
+
+export interface OrderListResponse {
+  status?: number;
+  success?: boolean;
+  message?: string;
+  data?: {
+    docs: Order[];
+    totalDocs: number;
+    page: number;
+    limit: number;
+  };
+}
+
+export interface CreateOrderResponse {
+  status?: number;
+  success?: boolean;
+  message?: string;
+  data?: any;
+}
+
+export class OrderService {
+  static async createOrder(orderData: CreateOrderRequest): Promise<CreateOrderResponse> {
+    try {
+      const res = await api.post('/api/customer/order/create', orderData);
+      const ok = res.data?.success === true || res.data?.status === 200;
+      toastHelper.showTost(res.data?.message || (ok ? 'Order created successfully' : 'Failed to create order'), ok ? 'success' : 'error');
+      return res.data;
+    } catch (err: any) {
+      console.error("OrderService createOrder error:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
+      const msg = err.response?.data?.errors?.map((e: any) => e.message).join(', ') || err.response?.data?.message || 'Failed to create order';
+      toastHelper.showTost(msg, 'error');
+      throw err;
+    }
+  }
+
+  static async listOrders(page: number = 1, limit: number = 10, status?: string): Promise<OrderListResponse> {
+    try {
+      const res = await api.post('/api/customer/order/list', { page, limit, status });
+      const ok = res.data?.success === true || res.data?.status === 200;
+      if (!ok) {
+        toastHelper.showTost(res.data?.message || 'Failed to fetch orders', 'error');
+      }
+      return res.data;
+    } catch (err: any) {
+      console.error("OrderService listOrders error:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
+      const msg = err.response?.data?.message || 'Failed to fetch orders';
+      toastHelper.showTost(msg, 'error');
+      throw err;
+    }
+  }
+}
+
+export default OrderService;

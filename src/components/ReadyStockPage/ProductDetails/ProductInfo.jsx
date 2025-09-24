@@ -17,8 +17,11 @@ import {
   faBell,
   faBellSlash,
   faCalendarXmark,
+  faHandshake,
 } from "@fortawesome/free-solid-svg-icons";
 import { ProductService } from "../../../services/products/products.services";
+import NotifyMePopup from "../NotifyMePopup";
+import BiddingForm from "../../negotiation/BiddingForm";
 
 const ProductInfo = ({ product, navigate, onRefresh }) => {
   // Process product data to ensure proper stock and expiry status
@@ -38,15 +41,15 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
     })()
   };
 
-  // Debug log to check values
-  console.log('ProductInfo NotifyMe Debug:', {
-    originalStock: product.stock,
-    processedStock: processedProduct.stockCount,
-    isOutOfStock: processedProduct.isOutOfStock,
-    isExpired: processedProduct.isExpired,
-    expiryTime: product.expiryTime,
-    canNotify: processedProduct.isOutOfStock && !processedProduct.isExpired
-  });
+  // // Debug log to check values
+  // console.log('ProductInfo NotifyMe Debug:', {
+  //   originalStock: product.stock,
+  //   processedStock: processedProduct.stockCount,
+  //   isOutOfStock: processedProduct.isOutOfStock,
+  //   isExpired: processedProduct.isExpired,
+  //   expiryTime: product.expiryTime,
+  //   canNotify: processedProduct.isOutOfStock && !processedProduct.isExpired
+  // });
 
   const [selectedColor, setSelectedColor] = useState("Natural Titanium");
   const [selectedStorage, setSelectedStorage] = useState("256GB");
@@ -54,6 +57,8 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
   const [quantity, setQuantity] = useState(5);
   const [isFavorite, setIsFavorite] = useState(false);
   const [notify, setNotify] = useState(Boolean(product?.notify));
+  const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
+  const [isBiddingFormOpen, setIsBiddingFormOpen] = useState(false);
 
   const colors = [
     { name: "Natural Titanium", class: "bg-gray-200" },
@@ -107,6 +112,16 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
     } catch (err) {
       // errors are toasted in service
     }
+  };
+
+  const handleBiddingClick = (e) => {
+    e.stopPropagation();
+    setIsBiddingFormOpen(true);
+  };
+
+  const handleBiddingSuccess = () => {
+    // Refresh the page or show success message
+    console.log('Bid submitted successfully');
   };
 
   const totalAmount = (
@@ -529,6 +544,13 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
                   <FontAwesomeIcon icon={faBolt} className="mr-2" />
                   Buy Now
                 </button>
+                <button
+                  onClick={handleBiddingClick}
+                  className="w-full bg-purple-600 text-white py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center"
+                >
+                  <FontAwesomeIcon icon={faHandshake} className="mr-2" />
+                  Make a Bid
+                </button>
               </>
             )}
           </div>
@@ -563,6 +585,24 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
           </div>
         </div>
       </div>
+
+      {/* Notify Me Popup */}
+      {isNotifyMePopupOpen && (
+        <NotifyMePopup
+          product={processedProduct}
+          onClose={() => setIsNotifyMePopupOpen(false)}
+        />
+      )}
+
+      {/* Bidding Form */}
+      {isBiddingFormOpen && (
+        <BiddingForm
+          product={processedProduct}
+          isOpen={isBiddingFormOpen}
+          onClose={() => setIsBiddingFormOpen(false)}
+          onSuccess={handleBiddingSuccess}
+        />
+      )}
     </div>
   );
 };

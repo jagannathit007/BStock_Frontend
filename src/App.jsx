@@ -17,6 +17,7 @@ import VerifyEmailPrompt from "./components/VerifyEmailPrompt";
 import VerifyEmail from "./components/VerifyEmail";
 import CartPage from "./components/ReadyStockPage/CartPage";
 import ProfilePage from "./pages/ProfilePage";
+import Order from "./components/Order";
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(
@@ -102,6 +103,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <CartPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/order"
+            element={
+              <ProtectedRoute>
+                <Order />
               </ProtectedRoute>
             }
           />

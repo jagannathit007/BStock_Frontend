@@ -17,7 +17,8 @@ export interface Product {
   moq: number | string;
   isNegotiable: boolean;
   isFlashDeal: string;
-  expiryTime: string; 
+  expiryTime: string;
+  wishList?: boolean; // Added wishList field as per backend update
 }
 
 export interface ProductResponse {
@@ -33,6 +34,7 @@ export interface ImportResponse {
     imported: string;
   };
 }
+
 export interface NotificationRequest {
   productId: string;
   notifyType: 'stock_alert' | 'price_alert';
@@ -92,10 +94,22 @@ export interface UserPreferences {
   categories: string[];
 }
 
+export interface WishlistToggleRequest {
+  productId: string;
+  wishlist: boolean;
+}
+
+export interface WishlistToggleResponse {
+  status: number;
+  message: string;
+  data: {
+    productId: string;
+    wishlist: boolean;
+  };
+}
 
 export class ProductService {
-
-static getProductById = async (id: string): Promise<Product> => {
+  static getProductById = async (id: string): Promise<Product> => {
     const baseUrl = env.baseUrl;
     const url = `${baseUrl}/api/customer/get-product`;
 
@@ -112,7 +126,6 @@ static getProductById = async (id: string): Promise<Product> => {
     }
   };
 
-
   // Create a new notification request
   static createNotification = async (notificationData: NotificationRequest): Promise<NotificationResponse> => {
     const baseUrl = env.baseUrl;
@@ -125,6 +138,22 @@ static getProductById = async (id: string): Promise<Product> => {
       return res.data;
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Failed to create notification';
+      toastHelper.showTost(errorMessage, 'error');
+      throw new Error(errorMessage);
+    }
+  };
+
+  // Toggle wishlist status for a product
+  static toggleWishlist = async (wishlistData: WishlistToggleRequest): Promise<WishlistToggleResponse> => {
+    const baseUrl = env.baseUrl;
+    const url = `${baseUrl}/api/customer/toggle-wishlist`;
+
+    try {
+      const res = await api.post(url, wishlistData);
+      toastHelper.showTost(res.data.message || `Product ${wishlistData.wishlist ? 'added to' : 'removed from'} wishlist!`, 'success');
+      return res.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to toggle wishlist';
       toastHelper.showTost(errorMessage, 'error');
       throw new Error(errorMessage);
     }
