@@ -476,6 +476,23 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
                             </div>
                           )}
                         </div>
+                        
+                        {/* Action Button for Accepted Orders */}
+                        <div className="flex flex-col space-y-2 ml-4">
+                          <button
+                            onClick={() => {
+                              // Navigate to product details page
+                              const productId = typeof individualNegotiation.productId === 'string' 
+                                ? individualNegotiation.productId 
+                                : individualNegotiation.productId._id;
+                              window.location.href = `/product/${productId}`;
+                            }}
+                            className="px-4 py-2 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-2"
+                          >
+                            <Package className="w-4 h-4" />
+                            <span>Buy Now</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );
