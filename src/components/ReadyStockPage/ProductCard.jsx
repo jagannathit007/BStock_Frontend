@@ -1,3 +1,4 @@
+// Updated ProductCard
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -15,7 +16,13 @@ import AddToCartPopup from "./AddToCartPopup";
 import CartService from "../../services/cart/cart.services";
 import { ProductService } from "../../services/products/products.services";
 
-const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
+const ProductCard = ({
+  product,
+  viewMode = "grid",
+  onRefresh,
+  onWishlistChange,
+  isInModal = false,
+}) => {
   const navigate = useNavigate();
   const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
   const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
@@ -25,6 +32,10 @@ const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
   useEffect(() => {
     setNotify(Boolean(product?.notify));
   }, [product?.notify]);
+
+  useEffect(() => {
+    setIsFavorite(product.isFavorite);
+  }, [product.isFavorite]);
 
   const {
     id,
@@ -42,9 +53,10 @@ const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
   } = product;
 
   // Check if product can accept notifications (out of stock but not expired)
-  const derivedOutOfStock = typeof isOutOfStock === 'boolean'
-    ? isOutOfStock
-    : Number(product?.stockCount ?? product?.stock ?? 0) <= 0;
+  const derivedOutOfStock =
+    typeof isOutOfStock === "boolean"
+      ? isOutOfStock
+      : Number(product?.stockCount ?? product?.stock ?? 0) <= 0;
   const canNotify = derivedOutOfStock && !isExpired;
 
   const getStatusBadgeClass = () => {
@@ -82,13 +94,13 @@ const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
     if (isOutOfStock || isExpired) return;
 
     try {
-      const customerId = localStorage.getItem('userId') || '';
+      const customerId = localStorage.getItem("userId") || "";
       if (!customerId) {
-        return navigate('/signin');
+        return navigate("/signin");
       }
       setIsAddToCartPopupOpen(true);
     } catch (error) {
-      console.error('Error in add to cart:', error);
+      console.error("Error in add to cart:", error);
     }
   };
 
@@ -99,18 +111,17 @@ const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
     const productId = id || product?._id;
 
     try {
-      await ProductService.createNotification({ 
-        productId: productId, 
-        notifyType: 'stock_alert', 
-        notify: nextValue 
+      await ProductService.createNotification({
+        productId: productId,
+        notifyType: "stock_alert",
+        notify: nextValue,
       });
       setNotify(nextValue);
-      if (typeof onRefresh === 'function') {
+      if (typeof onRefresh === "function") {
         onRefresh();
       }
-    } 
-    catch (err) {
-      console.error('Notification toggle error:', err);
+    } catch (err) {
+      console.error("Notification toggle error:", err);
       // errors are toasted in service
     }
   };
@@ -120,10 +131,21 @@ const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
     e.stopPropagation();
     try {
       const newWishlistStatus = !isFavorite;
-      await ProductService.toggleWishlist({ productId: id, wishlist: newWishlistStatus });
+      await ProductService.toggleWishlist({
+        productId: id,
+        wishlist: newWishlistStatus,
+      });
       setIsFavorite(newWishlistStatus); // Update local state
+      if (onWishlistChange) {
+        onWishlistChange(id, newWishlistStatus); // Call callback with productId and new status
+      }
+      if (onRefresh) {
+        onRefresh(); // Refresh listing if prop is provided
+      }
+      // Dispatch event for cross-component sync
+      window.dispatchEvent(new Event("wishlistUpdated"));
     } catch (error) {
-      console.error('Failed to toggle wishlist:', error);
+      console.error("Failed to toggle wishlist:", error);
     }
   };
 
@@ -143,7 +165,7 @@ const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
       <>
         <tr
           className="hover:bg-gray-50 cursor-pointer"
-          onClick={handleProductClick}
+          onClick={!isInModal ? handleProductClick : undefined}
         >
           <td className="px-3 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
             <div className="flex items-center min-w-[200px]">
@@ -164,7 +186,10 @@ const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
                     className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass()}`}
                   >
                     {isExpired && (
-                      <FontAwesomeIcon icon={faCalendarXmark} className="w-3 h-3 mr-1" />
+                      <FontAwesomeIcon
+                        icon={faCalendarXmark}
+                        className="w-3 h-3 mr-1"
+                      />
                     )}
                     {getDisplayStatus()}
                   </span>
@@ -207,7 +232,11 @@ const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
               {stockCount} units
             </div>
             <div className="text-xs text-gray-500">
-              {isExpired ? "Expired" : stockStatus === "Low Stock" ? "Low stock" : "Available"}
+              {isExpired
+                ? "Expired"
+                : stockStatus === "Low Stock"
+                ? "Low stock"
+                : "Available"}
             </div>
           </td>
           <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
@@ -247,7 +276,7 @@ const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
                   />
                 </button>
               )}
-              
+
               {canNotify ? (
                 notify ? (
                   <button
@@ -255,17 +284,27 @@ const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
                     onClick={(ev) => handleNotifyToggle(ev, false)}
                     title="Turn off notifications"
                   >
-                    <FontAwesomeIcon icon={faBellSlash} className="text-sm sm:text-base mr-1" />
-                    <span className="hidden sm:inline text-xs font-medium">Off</span>
+                    <FontAwesomeIcon
+                      icon={faBellSlash}
+                      className="text-sm sm:text-base mr-1"
+                    />
+                    <span className="hidden sm:inline text-xs font-medium">
+                      Off
+                    </span>
                   </button>
                 ) : (
-                  <button 
+                  <button
                     className="border border-blue-300 text-blue-700 bg-blue-50 p-1 sm:p-2 rounded-lg hover:bg-blue-100 transition-colors duration-200"
                     onClick={(ev) => handleNotifyToggle(ev, true)}
                     title="Notify me when back in stock"
                   >
-                    <FontAwesomeIcon icon={faBell} className="text-sm sm:text-base mr-1" />
-                    <span className="hidden sm:inline text-xs font-medium">Notify</span>
+                    <FontAwesomeIcon
+                      icon={faBell}
+                      className="text-sm sm:text-base mr-1"
+                    />
+                    <span className="hidden sm:inline text-xs font-medium">
+                      Notify
+                    </span>
                   </button>
                 )
               ) : !isExpired && !isOutOfStock ? (
@@ -288,7 +327,7 @@ const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
               )}
               <button
                 className={`p-1 sm:p-2 rounded-lg ${
-                  isFavorite ? 'text-red-500' : 'text-gray-400'
+                  isFavorite ? "text-red-500" : "text-gray-400"
                 } hover:text-red-500`}
                 onClick={handleToggleWishlist}
               >
@@ -301,10 +340,7 @@ const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
           </td>
         </tr>
         {isAddToCartPopupOpen && (
-          <AddToCartPopup
-            product={product}
-            onClose={handlePopupClose}
-          />
+          <AddToCartPopup product={product} onClose={handlePopupClose} />
         )}
         {isNotifyMePopupOpen && (
           <NotifyMePopup
@@ -323,7 +359,7 @@ const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
   return (
     <div
       className="bg-white rounded-[18px] shadow-[2px_4px_12px_#00000014] hover:shadow-[6px_8px_24px_#00000026] transition-shadow duration-200 h-full flex flex-col cursor-pointer"
-      onClick={handleProductClick}
+      onClick={!isInModal ? handleProductClick : undefined}
     >
       <div className="relative flex-1">
         <img
@@ -334,7 +370,7 @@ const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
         <div className="absolute top-2 right-2">
           <button
             className={`p-2 bg-white rounded-full cursor-pointer shadow-md ${
-              isFavorite ? 'text-red-500' : 'text-gray-400'
+              isFavorite ? "text-red-500" : "text-gray-400"
             } hover:text-red-500 w-10 h-10 flex items-center justify-center`}
             onClick={handleToggleWishlist}
           >
@@ -349,7 +385,10 @@ const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass()}`}
           >
             {isExpired && (
-              <FontAwesomeIcon icon={faCalendarXmark} className="w-3 h-3 mr-1" />
+              <FontAwesomeIcon
+                icon={faCalendarXmark}
+                className="w-3 h-3 mr-1"
+              />
             )}
             {getDisplayStatus()}
           </span>
@@ -378,9 +417,7 @@ const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
 
         <div className="text-xs text-gray-500 mb-3">
           MOQ: {moq} units • {stockCount} available
-          {isExpired && (
-            <span className="ml-2 text-red-500">• Expired</span>
-          )}
+          {isExpired && <span className="ml-2 text-red-500">• Expired</span>}
         </div>
 
         <div className="flex space-x-2">
@@ -402,12 +439,6 @@ const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
             </>
           ) : isOutOfStock ? (
             <>
-              {/* <button
-                className="flex-1 bg-gray-300 text-gray-500 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium cursor-not-allowed"
-                onClick={(e) => e.stopPropagation()}
-              >
-                Out of Stock
-              </button> */}
               {notify ? (
                 <button
                   className="flex-1 border border-red-300 text-red-700 bg-red-50 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium hover:bg-red-100 cursor-pointer transition-colors duration-200 flex items-center justify-center"
@@ -447,10 +478,7 @@ const ProductCard = ({ product, viewMode = "grid", onRefresh }) => {
         </div>
       </div>
       {isAddToCartPopupOpen && (
-        <AddToCartPopup
-          product={product}
-          onClose={handlePopupClose}
-        />
+        <AddToCartPopup product={product} onClose={handlePopupClose} />
       )}
     </div>
   );

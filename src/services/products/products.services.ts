@@ -1,6 +1,6 @@
-import toastHelper from '../../utils/toastHelper';
-import api from '../api/api';
-import { env } from '../../utils/env';
+import toastHelper from "../../utils/toastHelper";
+import api from "../api/api";
+import { env } from "../../utils/env";
 
 export interface Product {
   _id?: string;
@@ -18,7 +18,7 @@ export interface Product {
   isNegotiable: boolean;
   isFlashDeal: string;
   expiryTime: string;
-  wishList?: boolean; // Added wishList field as per backend update
+  WishList?: boolean; // Added wishList field as per backend update
 }
 
 export interface ProductResponse {
@@ -37,7 +37,7 @@ export interface ImportResponse {
 
 export interface NotificationRequest {
   productId: string;
-  notifyType: 'stock_alert' | 'price_alert';
+  notifyType: "stock_alert" | "price_alert";
   notify: boolean;
 }
 
@@ -90,7 +90,7 @@ export interface UserPreferences {
   email: string;
   emailNotifications: boolean;
   smsNotifications: boolean;
-  frequency: 'immediate' | 'daily' | 'weekly';
+  frequency: "immediate" | "daily" | "weekly";
   categories: string[];
 }
 
@@ -116,45 +116,104 @@ export class ProductService {
     try {
       const res = await api.post(url, { id });
       if (res.data?.data === null) {
-        throw new Error(res.data?.message || 'Failed to fetch Product');
+        throw new Error(res.data?.message || "Failed to fetch Product");
       }
       return res.data.data; // Return the Product with populated skuFamilyId
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to fetch Product';
-      toastHelper.showTost(errorMessage, 'error');
+      const errorMessage =
+        err.response?.data?.message || "Failed to fetch Product";
+      toastHelper.showTost(errorMessage, "error");
       throw new Error(errorMessage);
     }
   };
 
   // Create a new notification request
-  static createNotification = async (notificationData: NotificationRequest): Promise<NotificationResponse> => {
+  static createNotification = async (
+    notificationData: NotificationRequest
+  ): Promise<NotificationResponse> => {
     const baseUrl = env.baseUrl;
     const customerRoute = env.customerRoute;
     const url = `${baseUrl}/api/${customerRoute}/notify/me`;
 
     try {
       const res = await api.post(url, notificationData);
-      toastHelper.showTost(res.data.message || 'Notification created successfully!', 'success');
+      toastHelper.showTost(
+        res.data.message || "Notification created successfully!",
+        "success"
+      );
       return res.data;
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to create notification';
-      toastHelper.showTost(errorMessage, 'error');
+      const errorMessage =
+        err.response?.data?.message || "Failed to create notification";
+      toastHelper.showTost(errorMessage, "error");
       throw new Error(errorMessage);
     }
   };
 
   // Toggle wishlist status for a product
-  static toggleWishlist = async (wishlistData: WishlistToggleRequest): Promise<WishlistToggleResponse> => {
+  static toggleWishlist = async (
+    wishlistData: WishlistToggleRequest
+  ): Promise<WishlistToggleResponse> => {
     const baseUrl = env.baseUrl;
     const url = `${baseUrl}/api/customer/toggle-wishlist`;
 
     try {
       const res = await api.post(url, wishlistData);
-      toastHelper.showTost(res.data.message || `Product ${wishlistData.wishlist ? 'added to' : 'removed from'} wishlist!`, 'success');
+      toastHelper.showTost(
+        res.data.message ||
+          `Product ${
+            wishlistData.wishlist ? "added to" : "removed from"
+          } wishlist!`,
+        "success"
+      );
       return res.data;
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to toggle wishlist';
-      toastHelper.showTost(errorMessage, 'error');
+      const errorMessage =
+        err.response?.data?.message || "Failed to toggle wishlist";
+      toastHelper.showTost(errorMessage, "error");
+      throw new Error(errorMessage);
+    }
+  };
+
+  // NEW: Remove from wishlist (convenience method)
+  static removeFromWishlist = async (
+    productId: string
+  ): Promise<WishlistToggleResponse> => {
+    return await this.toggleWishlist({
+      productId,
+      wishlist: false,
+    });
+  };
+
+  // NEW: Fetch wishlist with pagination
+  static getWishlist = async (
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{
+    docs: Product[];
+    totalDocs: number;
+    limit: number;
+    totalPages: number;
+    page: number;
+    pagingCounter: number;
+    hasPrevPage: boolean;
+    hasNextPage: boolean;
+    prevPage: number | null;
+    nextPage: number | null;
+  }> => {
+    const baseUrl = env.baseUrl;
+    const url = `${baseUrl}/api/customer/get-wishlist`;
+
+    try {
+      const res = await api.post(url, { page, limit });
+      if (res.data.status !== 200) {
+        throw new Error(res.data.message || "Failed to fetch wishlist");
+      }
+      return res.data.data;
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.message || "Failed to fetch wishlist";
+      toastHelper.showTost(errorMessage, "error");
       throw new Error(errorMessage);
     }
   };

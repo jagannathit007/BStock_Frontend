@@ -1,3 +1,4 @@
+// Updated ProductInfo
 import React, { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -23,40 +24,40 @@ import { ProductService } from "../../../services/products/products.services";
 import NotifyMePopup from "../NotifyMePopup";
 import BiddingForm from "../../negotiation/BiddingForm";
 
-const ProductInfo = ({ product, navigate, onRefresh }) => {
+const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
+  const [currentProduct, setCurrentProduct] = useState(initialProduct);
   // Process product data to ensure proper stock and expiry status
   const processedProduct = {
-    ...product,
-    stockCount: Number(product.stockCount || product.stock || 0),
-    isOutOfStock: Number(product.stockCount || product.stock || 0) <= 0,
-    isExpired: product.expiryTime ? new Date(product.expiryTime) < new Date() : false,
+    ...currentProduct,
+    stockCount: Number(currentProduct.stockCount || currentProduct.stock || 0),
+    isOutOfStock:
+      Number(currentProduct.stockCount || currentProduct.stock || 0) <= 0,
+    isExpired: currentProduct.expiryTime
+      ? new Date(currentProduct.expiryTime) < new Date()
+      : false,
     stockStatus: (() => {
-      const stock = Number(product.stockCount || product.stock || 0);
-      const isExpired = product.expiryTime ? new Date(product.expiryTime) < new Date() : false;
-      
+      const stock = Number(
+        currentProduct.stockCount || currentProduct.stock || 0
+      );
+      const isExpired = currentProduct.expiryTime
+        ? new Date(currentProduct.expiryTime) < new Date()
+        : false;
+
       if (isExpired) return "Expired";
       if (stock <= 0) return "Out of Stock";
       if (stock <= 10) return "Low Stock";
       return "In Stock";
-    })()
+    })(),
   };
-
-  // // Debug log to check values
-  // console.log('ProductInfo NotifyMe Debug:', {
-  //   originalStock: product.stock,
-  //   processedStock: processedProduct.stockCount,
-  //   isOutOfStock: processedProduct.isOutOfStock,
-  //   isExpired: processedProduct.isExpired,
-  //   expiryTime: product.expiryTime,
-  //   canNotify: processedProduct.isOutOfStock && !processedProduct.isExpired
-  // });
 
   const [selectedColor, setSelectedColor] = useState("Natural Titanium");
   const [selectedStorage, setSelectedStorage] = useState("256GB");
   const [selectedGrade, setSelectedGrade] = useState("A+");
   const [quantity, setQuantity] = useState(5);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [notify, setNotify] = useState(Boolean(product?.notify));
+  const [isFavorite, setIsFavorite] = useState(
+    processedProduct.wishList || false
+  );
+  const [notify, setNotify] = useState(Boolean(currentProduct?.notify));
   const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
   const [isBiddingFormOpen, setIsBiddingFormOpen] = useState(false);
 
@@ -71,11 +72,38 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
   const gradeOptions = ["A+", "A", "B", "C"];
 
   // Check if product can accept notifications (out of stock but not expired)
-  const canNotify = processedProduct.isOutOfStock && !processedProduct.isExpired;
+  const canNotify =
+    processedProduct.isOutOfStock && !processedProduct.isExpired;
 
   useEffect(() => {
-    setNotify(Boolean(product?.notify));
-  }, [product?.notify]);
+    setCurrentProduct(initialProduct);
+  }, [initialProduct]);
+
+  useEffect(() => {
+    setNotify(Boolean(currentProduct?.notify));
+    setIsFavorite(currentProduct.wishList || false);
+  }, [currentProduct]);
+
+  // Add event listener for wishlist updates
+  useEffect(() => {
+    const handleWishlistUpdate = async () => {
+      try {
+        const refreshed = await ProductService.getProductById(
+          processedProduct.id
+        );
+        setCurrentProduct(refreshed);
+      } catch (error) {
+        console.error("Failed to refresh product:", error);
+      }
+      if (typeof onRefresh === "function") {
+        onRefresh();
+      }
+    };
+    window.addEventListener("wishlistUpdated", handleWishlistUpdate);
+    return () => {
+      window.removeEventListener("wishlistUpdated", handleWishlistUpdate);
+    };
+  }, [processedProduct.id, onRefresh]);
 
   const handleQuantityChange = (amount) => {
     const newQuantity = quantity + amount;
@@ -91,26 +119,40 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
     const productId = processedProduct.id || processedProduct._id;
 
     try {
-      await ProductService.createNotification({ 
-        productId: productId, 
-        notifyType: 'stock_alert', 
-        notify: nextValue 
+      await ProductService.createNotification({
+        productId: productId,
+        notifyType: "stock_alert",
+        notify: nextValue,
       });
       setNotify(nextValue);
-      // Refresh from backend to mirror latest notify using get-product API
+      // Refresh from backend
       try {
-        const refreshed = await ProductService.getProductByIdPost(productId);
-        if (refreshed && typeof refreshed.notify !== 'undefined') {
-          setNotify(Boolean(refreshed.notify));
-        }
+        const refreshed = await ProductService.getProductById(productId);
+        setCurrentProduct(refreshed);
       } catch (refreshErr) {
-        // ignore refresh error; UI already updated optimistically
+        // ignore
       }
-      if (typeof onRefresh === 'function') {
+      if (typeof onRefresh === "function") {
         onRefresh();
       }
     } catch (err) {
-      // errors are toasted in service
+      // errors toasted
+    }
+  };
+
+  const handleToggleWishlist = async (e) => {
+    e.stopPropagation();
+    const newWishlistStatus = !isFavorite;
+    setIsFavorite(newWishlistStatus); // Optimistic update
+    try {
+      await ProductService.toggleWishlist({
+        productId: processedProduct._id || processedProduct.id,
+        wishlist: newWishlistStatus,
+      });
+      window.dispatchEvent(new Event("wishlistUpdated"));
+    } catch (error) {
+      console.error("Failed to toggle wishlist:", error);
+      setIsFavorite(!newWishlistStatus); // Revert on error
     }
   };
 
@@ -120,8 +162,7 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
   };
 
   const handleBiddingSuccess = () => {
-    // Refresh the page or show success message
-    console.log('Bid submitted successfully');
+    console.log("Bid submitted successfully");
   };
 
   const totalAmount = (
@@ -130,7 +171,7 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-      {/* Breadcrumb Navigation */}
+      {/* Breadcrumb */}
       <div className="mb-4 md:mb-6 flex items-center text-sm cursor-pointer mt-3">
         <button
           onClick={() => navigate("/")}
@@ -139,11 +180,13 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
           Home
         </button>
         <span className="mx-2 text-gray-400">/</span>
-        <span className="text-gray-900 font-medium">{processedProduct.name}</span>
+        <span className="text-gray-900 font-medium">
+          {processedProduct.name}
+        </span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-        {/* Left Column - Images & Gallery */}
+        {/* Left Column */}
         <div className="lg:col-span-5">
           {/* Main Image */}
           <div className="relative mb-4">
@@ -168,14 +211,19 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
                 } text-xs font-medium px-2 py-1 rounded inline-flex items-center`}
               >
                 {processedProduct.isExpired && (
-                  <FontAwesomeIcon icon={faCalendarXmark} className="w-3 h-3 mr-1" />
+                  <FontAwesomeIcon
+                    icon={faCalendarXmark}
+                    className="w-3 h-3 mr-1"
+                  />
                 )}
-                {processedProduct.isExpired ? "Expired" : processedProduct.stockStatus}
+                {processedProduct.isExpired
+                  ? "Expired"
+                  : processedProduct.stockStatus}
               </span>
             </div>
             <button
               className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-lg hover:bg-gray-50"
-              onClick={() => setIsFavorite(!isFavorite)}
+              onClick={handleToggleWishlist}
             >
               <FontAwesomeIcon
                 icon={isFavorite ? solidHeart : regularHeart}
@@ -186,9 +234,16 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
             </button>
           </div>
 
-          {/* Thumbnail Gallery */}
+          {/* Thumbnails */}
           <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 mb-6">
-            {(processedProduct.thumbnails || [processedProduct.mainImage || processedProduct.imageUrl, processedProduct.mainImage || processedProduct.imageUrl, processedProduct.mainImage || processedProduct.imageUrl, processedProduct.mainImage || processedProduct.imageUrl]).map((thumbnail, index) => (
+            {(
+              processedProduct.thumbnails || [
+                processedProduct.mainImage || processedProduct.imageUrl,
+                processedProduct.mainImage || processedProduct.imageUrl,
+                processedProduct.mainImage || processedProduct.imageUrl,
+                processedProduct.mainImage || processedProduct.imageUrl,
+              ]
+            ).map((thumbnail, index) => (
               <img
                 key={index}
                 className={`w-full h-14 sm:h-16 object-cover rounded-lg bg-white ${
@@ -229,9 +284,9 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
           </div>
         </div>
 
-        {/* Right Column - Product Details */}
+        {/* Right Column */}
         <div className="lg:col-span-7">
-          {/* Product Header */}
+          {/* Header */}
           <div className="mb-4 sm:mb-6">
             <div className="flex items-start justify-between mb-3 sm:mb-4">
               <div>
@@ -278,59 +333,74 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
                   </span>
                 </div>
               </div>
-              <div className={`${
-                processedProduct.isExpired 
-                  ? "bg-gray-50" 
-                  : processedProduct.stockCount > 10 
-                  ? "bg-green-50" 
-                  : processedProduct.stockCount > 0 
-                  ? "bg-yellow-50" 
-                  : "bg-red-50"
-              } rounded-lg p-2 sm:p-3`}>
+              <div
+                className={`${
+                  processedProduct.isExpired
+                    ? "bg-gray-50"
+                    : processedProduct.stockCount > 10
+                    ? "bg-green-50"
+                    : processedProduct.stockCount > 0
+                    ? "bg-yellow-50"
+                    : "bg-red-50"
+                } rounded-lg p-2 sm:p-3`}
+              >
                 <div className="flex justify-between items-center">
                   <span className="text-xs sm:text-sm text-gray-600">
                     Available
                   </span>
-                  <span className={`font-semibold text-sm sm:text-base ${
-                    processedProduct.isExpired 
-                      ? "text-gray-500" 
-                      : processedProduct.stockCount > 10 
-                      ? "text-green-500" 
-                      : processedProduct.stockCount > 0 
-                      ? "text-yellow-500" 
-                      : "text-red-500"
-                  }`}>
+                  <span
+                    className={`font-semibold text-sm sm:text-base ${
+                      processedProduct.isExpired
+                        ? "text-gray-500"
+                        : processedProduct.stockCount > 10
+                        ? "text-green-500"
+                        : processedProduct.stockCount > 0
+                        ? "text-yellow-500"
+                        : "text-red-500"
+                    }`}
+                  >
                     {processedProduct.stockCount} units
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Show expiry information if product has expiry date */}
             {processedProduct.expiryTime && (
-              <div className={`p-3 rounded-lg mb-3 ${
-                processedProduct.isExpired 
-                  ? "bg-red-50 border border-red-200" 
-                  : "bg-yellow-50 border border-yellow-200"
-              }`}>
+              <div
+                className={`p-3 rounded-lg mb-3 ${
+                  processedProduct.isExpired
+                    ? "bg-red-50 border border-red-200"
+                    : "bg-yellow-50 border border-yellow-200"
+                }`}
+              >
                 <div className="flex items-center">
-                  <FontAwesomeIcon 
-                    icon={faCalendarXmark} 
-                    className={`mr-2 ${processedProduct.isExpired ? "text-red-600" : "text-yellow-600"}`} 
+                  <FontAwesomeIcon
+                    icon={faCalendarXmark}
+                    className={`mr-2 ${
+                      processedProduct.isExpired
+                        ? "text-red-600"
+                        : "text-yellow-600"
+                    }`}
                   />
-                  <span className={`text-sm ${
-                    processedProduct.isExpired ? "text-red-700" : "text-yellow-700"
-                  }`}>
-                    {processedProduct.isExpired 
-                      ? `Expired on ${new Date(processedProduct.expiryTime).toLocaleDateString()}`
-                      : `Expires on ${new Date(processedProduct.expiryTime).toLocaleDateString()}`
-                    }
+                  <span
+                    className={`text-sm ${
+                      processedProduct.isExpired
+                        ? "text-red-700"
+                        : "text-yellow-700"
+                    }`}
+                  >
+                    {processedProduct.isExpired
+                      ? `Expired on ${new Date(
+                          processedProduct.expiryTime
+                        ).toLocaleDateString()}`
+                      : `Expires on ${new Date(
+                          processedProduct.expiryTime
+                        ).toLocaleDateString()}`}
                   </span>
                 </div>
               </div>
             )}
 
-            {/* Price Calculator */}
             <div className="border-t pt-3 sm:pt-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs sm:text-sm text-gray-600">
@@ -340,7 +410,11 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
                   <button
                     className="w-7 h-7 sm:w-8 sm:h-8 border border-gray-300 rounded flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={() => handleQuantityChange(-1)}
-                    disabled={quantity <= processedProduct.moq || processedProduct.isOutOfStock || processedProduct.isExpired}
+                    disabled={
+                      quantity <= processedProduct.moq ||
+                      processedProduct.isOutOfStock ||
+                      processedProduct.isExpired
+                    }
                   >
                     <FontAwesomeIcon icon={faXmark} className="text-xs" />
                   </button>
@@ -350,7 +424,10 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
                   <button
                     className="w-7 h-7 sm:w-8 sm:h-8 border border-gray-300 rounded flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={() => handleQuantityChange(1)}
-                    disabled={processedProduct.isOutOfStock || processedProduct.isExpired}
+                    disabled={
+                      processedProduct.isOutOfStock ||
+                      processedProduct.isExpired
+                    }
                   >
                     <FontAwesomeIcon icon={faCheck} className="text-xs" />
                   </button>
@@ -369,12 +446,30 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
               Key Highlights
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              {(processedProduct.features || [
-                { icon: faMicrochip, color: "text-blue-600", text: "Latest Processor" },
-                { icon: faCamera, color: "text-purple-600", text: "Pro Camera System" },
-                { icon: faShieldHalved, color: "text-green-600", text: "1 Year Warranty" },
-                { icon: faTruckFast, color: "text-orange-600", text: "Fast Delivery" }
-              ]).map((feature, index) => (
+              {(
+                processedProduct.features || [
+                  {
+                    icon: faMicrochip,
+                    color: "text-blue-600",
+                    text: "Latest Processor",
+                  },
+                  {
+                    icon: faCamera,
+                    color: "text-purple-600",
+                    text: "Pro Camera System",
+                  },
+                  {
+                    icon: faShieldHalved,
+                    color: "text-green-600",
+                    text: "1 Year Warranty",
+                  },
+                  {
+                    icon: faTruckFast,
+                    color: "text-orange-600",
+                    text: "Fast Delivery",
+                  },
+                ]
+              ).map((feature, index) => (
                 <div key={index} className="flex items-center">
                   <FontAwesomeIcon
                     icon={feature.icon}
@@ -386,9 +481,8 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
             </div>
           </div>
 
-          {/* Configuration Options */}
+          {/* Configuration */}
           <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
-            {/* Storage */}
             <div>
               <h4 className="font-medium text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">
                 Storage Options
@@ -402,12 +496,16 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
                         ? "border-2 border-blue-600 bg-blue-50 text-blue-600 font-medium"
                         : "border border-gray-300 hover:border-blue-600"
                     } ${
-                      (processedProduct.isOutOfStock || processedProduct.isExpired) 
-                        ? "opacity-50 cursor-not-allowed" 
+                      processedProduct.isOutOfStock ||
+                      processedProduct.isExpired
+                        ? "opacity-50 cursor-not-allowed"
                         : "cursor-pointer"
                     }`}
                     onClick={() => setSelectedStorage(storage)}
-                    disabled={processedProduct.isOutOfStock || processedProduct.isExpired}
+                    disabled={
+                      processedProduct.isOutOfStock ||
+                      processedProduct.isExpired
+                    }
                   >
                     {storage}
                   </button>
@@ -415,7 +513,6 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
               </div>
             </div>
 
-            {/* Color */}
             <div>
               <h4 className="font-medium text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">
                 Color Options
@@ -431,11 +528,16 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
                         ? "border-blue-600"
                         : "border-transparent"
                     } cursor-pointer relative ${
-                      (processedProduct.isOutOfStock || processedProduct.isExpired)
+                      processedProduct.isOutOfStock ||
+                      processedProduct.isExpired
                         ? "opacity-50 cursor-not-allowed"
                         : ""
                     }`}
-                    onClick={() => !processedProduct.isOutOfStock && !processedProduct.isExpired && setSelectedColor(color.name)}
+                    onClick={() =>
+                      !processedProduct.isOutOfStock &&
+                      !processedProduct.isExpired &&
+                      setSelectedColor(color.name)
+                    }
                     title={color.name}
                   >
                     {selectedColor === color.name && (
@@ -454,7 +556,6 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
               </div>
             </div>
 
-            {/* Grade */}
             <div>
               <h4 className="font-medium text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">
                 Grade Options
@@ -468,12 +569,16 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
                         ? "border-2 border-blue-600 bg-blue-50 text-blue-600 font-medium"
                         : "border border-gray-300 hover:border-blue-600"
                     } ${
-                      (processedProduct.isOutOfStock || processedProduct.isExpired) 
-                        ? "opacity-50 cursor-not-allowed" 
+                      processedProduct.isOutOfStock ||
+                      processedProduct.isExpired
+                        ? "opacity-50 cursor-not-allowed"
                         : "cursor-pointer"
                     }`}
                     onClick={() => setSelectedGrade(grade)}
-                    disabled={processedProduct.isOutOfStock || processedProduct.isExpired}
+                    disabled={
+                      processedProduct.isOutOfStock ||
+                      processedProduct.isExpired
+                    }
                   >
                     {grade}
                   </button>
@@ -482,7 +587,7 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {/* Actions */}
           <div className="space-y-2 sm:space-y-3">
             {processedProduct.isExpired ? (
               <>
@@ -532,15 +637,11 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
               </>
             ) : (
               <>
-                <button
-                  className="w-full bg-orange-500 text-white py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-orange-600 transition-colors flex items-center justify-center"
-                >
+                <button className="w-full bg-orange-500 text-white py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-orange-600 transition-colors flex items-center justify-center">
                   <FontAwesomeIcon icon={faCartShopping} className="mr-2" />
                   Add to Cart
                 </button>
-                <button
-                  className="w-full bg-blue-600 text-white py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center"
-                >
+                <button className="w-full bg-blue-600 text-white py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center">
                   <FontAwesomeIcon icon={faBolt} className="mr-2" />
                   Buy Now
                 </button>
@@ -586,7 +687,6 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
         </div>
       </div>
 
-      {/* Notify Me Popup */}
       {isNotifyMePopupOpen && (
         <NotifyMePopup
           product={processedProduct}
@@ -594,7 +694,6 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
         />
       )}
 
-      {/* Bidding Form */}
       {isBiddingFormOpen && (
         <BiddingForm
           product={processedProduct}
