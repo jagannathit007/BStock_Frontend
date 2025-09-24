@@ -304,7 +304,7 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
                               </span>
                               {negotiationGroup.status === 'accepted' && negotiationGroup.acceptedBy && (
                                 <span className="text-sm text-gray-600">
-                                  Accepted by: {negotiationGroup.acceptedBy}
+                                  Accepted by: {negotiationGroup.acceptedBy == 'Admin' ? 'Admin' : 'You'}
                                 </span>
                               )}
                             </div>
