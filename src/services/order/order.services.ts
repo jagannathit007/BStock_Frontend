@@ -56,6 +56,13 @@ export interface CreateOrderResponse {
   data?: any;
 }
 
+export interface CancelOrderResponse {
+  status?: number;
+  success?: boolean;
+  message?: string;
+  data?: any;
+}
+
 export class OrderService {
   static async createOrder(orderData: CreateOrderRequest): Promise<CreateOrderResponse> {
     try {
@@ -90,6 +97,24 @@ export class OrderService {
         status: err.response?.status,
       });
       const msg = err.response?.data?.message || 'Failed to fetch orders';
+      toastHelper.showTost(msg, 'error');
+      throw err;
+    }
+  }
+
+  static async cancelOrder(orderId: string): Promise<CancelOrderResponse> {
+    try {
+      const res = await api.post('/api/customer/order/cancel', { orderId });
+      const ok = res.data?.success === true || res.data?.status === 200;
+      toastHelper.showTost(res.data?.message || (ok ? 'Order cancellation requested successfully' : 'Failed to cancel order'), ok ? 'success' : 'error');
+      return res.data;
+    } catch (err: any) {
+      console.error("OrderService cancelOrder error:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
+      const msg = err.response?.data?.message || 'Failed to cancel order';
       toastHelper.showTost(msg, 'error');
       throw err;
     }

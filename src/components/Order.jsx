@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faShoppingBag } from "@fortawesome/free-solid-svg-icons";
+import { faShoppingBag, faTimes } from "@fortawesome/free-solid-svg-icons";
 import OrderService from "../services/order/order.services";
 
 const Order = () => {
@@ -10,6 +10,7 @@ const Order = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [statusFilter, setStatusFilter] = useState("");
+  const [cancellingOrderId, setCancellingOrderId] = useState(null);
 
   // Fetch orders
   const fetchOrders = useCallback(async () => {
@@ -30,6 +31,21 @@ const Order = () => {
       setIsLoading(false);
     }
   }, [page, statusFilter]);
+
+  // Handle order cancellation
+  const handleCancelOrder = async (orderId) => {
+    if (window.confirm("Are you sure you want to cancel this order?")) {
+      try {
+        setCancellingOrderId(orderId);
+        await OrderService.cancelOrder(orderId);
+        await fetchOrders(); // Refresh orders after cancellation
+      } catch (error) {
+        console.error("Cancel order error:", error);
+      } finally {
+        setCancellingOrderId(null);
+      }
+    }
+  };
 
   // Load orders on mount and when page or status changes
   useEffect(() => {
@@ -115,6 +131,9 @@ const Order = () => {
                       <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                         Status
                       </th>
+                      <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -144,6 +163,20 @@ const Order = () => {
                         </td>
                         <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
                           <div className="text-sm capitalize text-gray-600">{order.status}</div>
+                        </td>
+                        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
+                          {['request', 'accepted'].includes(order.status) && (
+                            <button
+                              onClick={() => handleCancelOrder(order._id)}
+                              disabled={cancellingOrderId === order._id}
+                              className={`text-sm text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 ${
+                                cancellingOrderId === order._id ? 'animate-pulse' : ''
+                              }`}
+                            >
+                              <FontAwesomeIcon icon={faTimes} className="w-4 h-4" />
+                              Cancel
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
