@@ -12,17 +12,24 @@ import CartService from "../../services/cart/cart.services";
 
 const AddToCartPopup = ({ product, onClose }) => {
   const { id, name, price, imageUrl, moq, stockCount, description } = product;
+  const purchaseType = (product?.purchaseType || '').toLowerCase();
+  const isFullPurchase = purchaseType === 'full';
 
   // Ensure moq and stockCount are valid numbers, default to 1 and Infinity if invalid
   const validMoq = isNaN(parseInt(moq)) ? 1 : parseInt(moq);
   const validStockCount = isNaN(parseInt(stockCount)) ? Infinity : parseInt(stockCount);
-  const [quantity, setQuantity] = useState(validMoq);
+  const [quantity, setQuantity] = useState(isFullPurchase ? validStockCount : validMoq);
   const [error, setError] = useState(null);
 
   // Ensure price is a valid number, default to 0 if invalid
   const validPrice = isNaN(parseFloat(price)) ? 0 : parseFloat(price);
 
   const handleQuantityChange = (value) => {
+    if (isFullPurchase) {
+      // Lock quantity for full purchase
+      setQuantity(validStockCount);
+      return;
+    }
     const newValue = isNaN(parseInt(value)) ? validMoq : parseInt(value);
     if (newValue >= validMoq && newValue <= validStockCount) {
       setQuantity(newValue);
@@ -30,6 +37,11 @@ const AddToCartPopup = ({ product, onClose }) => {
   };
 
   const handleInputChange = (e) => {
+    if (isFullPurchase) {
+      // Ignore manual edits for full purchase
+      setQuantity(validStockCount);
+      return;
+    }
     const value = e.target.value;
     if (value === "") {
       setQuantity(validMoq);
@@ -106,6 +118,11 @@ const AddToCartPopup = ({ product, onClose }) => {
               <h3 className="text-xl font-semibold text-gray-900 leading-tight">
                 {name || "Unnamed Product"}
               </h3>
+              {purchaseType && (
+                <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${isFullPurchase ? 'bg-purple-50 text-purple-700' : 'bg-blue-50 text-blue-700'}`}>
+                  Purchase: {isFullPurchase ? 'Full' : 'Partial'}
+                </div>
+              )}
               <div className="flex items-center gap-2 text-2xl font-bold text-gray-900">
                 <FontAwesomeIcon
                   icon={faDollarSign}
@@ -128,12 +145,12 @@ const AddToCartPopup = ({ product, onClose }) => {
           {/* Quantity Selector */}
           <div className="space-y-3">
             <label className="block text-sm font-semibold text-gray-700">
-              Select Quantity
+              {isFullPurchase ? 'Quantity (locked to full stock)' : 'Select Quantity'}
             </label>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => handleQuantityChange(quantity - 1)}
-                disabled={quantity <= validMoq}
+                disabled={isFullPurchase || quantity <= validMoq}
                 className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-white"
               >
                 <FontAwesomeIcon
@@ -147,18 +164,22 @@ const AddToCartPopup = ({ product, onClose }) => {
                   type="number"
                   value={quantity}
                   onChange={handleInputChange}
-                  min={validMoq}
+                  min={isFullPurchase ? validStockCount : validMoq}
                   max={validStockCount}
-                  className="w-full text-center text-lg font-semibold py-3 px-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all duration-200"
+                  readOnly={isFullPurchase}
+                  disabled={isFullPurchase}
+                  className={`w-full text-center text-lg font-semibold py-3 px-4 border-2 rounded-xl focus:outline-none transition-all duration-200 ${isFullPurchase ? 'border-gray-200 bg-gray-50 text-gray-500' : 'border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50'}`}
                 />
-                <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-gray-500">
-                  Min: {validMoq} | Max: {validStockCount === Infinity ? "Unlimited" : validStockCount}
+                <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs text-gray-500 px-1">
+                  {isFullPurchase
+                    ? 'Full purchase'
+                    : `Min: ${validMoq} | Max: ${validStockCount === Infinity ? 'Unlimited' : validStockCount}`}
                 </div>
               </div>
 
               <button
                 onClick={() => handleQuantityChange(quantity + 1)}
-                disabled={quantity >= validStockCount}
+                disabled={isFullPurchase || quantity >= validStockCount}
                 className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-white"
               >
                 <FontAwesomeIcon

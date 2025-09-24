@@ -52,6 +52,12 @@ const ProductCard = ({
     isExpired,
   } = product;
 
+  // Derive purchase type label for display
+  const purchaseType = product?.purchaseType;
+  const purchaseTypeLabel = purchaseType
+    ? (purchaseType.toLowerCase() === 'partial' ? 'Partial' : purchaseType.toLowerCase() === 'full' ? 'Full' : purchaseType)
+    : null;
+
   // Check if product can accept notifications (out of stock but not expired)
   const derivedOutOfStock =
     typeof isOutOfStock === "boolean"
@@ -207,6 +213,11 @@ const ProductCard = ({
             <div className="text-xs sm:text-sm text-gray-500 truncate">
               Unlocked
             </div>
+            {purchaseTypeLabel && (
+              <div className="text-xs sm:text-sm text-gray-700 truncate">
+                Purchase: {purchaseTypeLabel}
+              </div>
+            )}
           </td>
           <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
             <div className="text-base sm:text-lg font-bold text-gray-900">
@@ -418,6 +429,12 @@ const ProductCard = ({
         <div className="text-xs text-gray-500 mb-3">
           MOQ: {moq} units • {stockCount} available
           {isExpired && <span className="ml-2 text-red-500">• Expired</span>}
+          {purchaseTypeLabel && (
+            <span className="ml-2">• Purchase: {purchaseTypeLabel}</span>
+          )}
+          {isExpired && (
+            <span className="ml-2 text-red-500">• Expired</span>
+          )}
         </div>
 
         <div className="flex space-x-2">
