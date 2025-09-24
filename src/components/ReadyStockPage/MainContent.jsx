@@ -19,6 +19,7 @@ const MainContent = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [filters, setFilters] = useState({}); // Store filter values from SideFilter
+  const [refreshTick, setRefreshTick] = useState(false);
 
   const mapApiProductToUi = (p) => {
     const id = p._id || p.id || "";
@@ -57,6 +58,7 @@ const MainContent = () => {
       isOutOfStock: stock <= 0,
       isExpired,
       expiryTime,
+      notify: Boolean(p.notify),
     };
   };
 
@@ -108,10 +110,10 @@ const MainContent = () => {
       } finally {
         setIsLoading(false);
       }
-    };
-    fetchData();
-    return () => controller.abort();
-  }, [currentPage, itemsPerPage, filters]);
+};
+  fetchData();
+  return () => controller.abort();
+}, [currentPage, itemsPerPage, filters, refreshTick]);
 
   useEffect(() => {
     setItemsPerPage(viewMode === "grid" ? 9 : 10);
@@ -123,18 +125,13 @@ const MainContent = () => {
     setCurrentPage(1); // Reset to first page on filter change
   };
 
-  const indexOfLastProduct = useMemo(
-    () => currentPage * itemsPerPage,
-    [currentPage, itemsPerPage]
-  );
-  const indexOfFirstProduct = useMemo(
-    () => indexOfLastProduct - itemsPerPage,
-    [indexOfLastProduct, itemsPerPage]
-  );
-  const totalPages = useMemo(
-    () => Math.max(Math.ceil(totalProductsCount / itemsPerPage), 1),
-    [totalProductsCount, itemsPerPage]
-  );
+  const handleRefresh = () => {
+    setRefreshTick((prev) => !prev);
+  };
+
+  const indexOfLastProduct = useMemo(() => currentPage * itemsPerPage, [currentPage, itemsPerPage]);
+  const indexOfFirstProduct = useMemo(() => indexOfLastProduct - itemsPerPage, [indexOfLastProduct, itemsPerPage]);
+  const totalPages = useMemo(() => Math.max(Math.ceil(totalProductsCount / itemsPerPage), 1), [totalProductsCount, itemsPerPage]);
   const currentProducts = useMemo(() => fetchedProducts, [fetchedProducts]);
 
   const paginate = (pageNumber) => {
@@ -217,11 +214,7 @@ const MainContent = () => {
                   </div>
                 )}
                 {currentProducts.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    viewMode={viewMode}
-                  />
+                  <ProductCard key={product.id} product={product} viewMode={viewMode} onRefresh={handleRefresh} />
                 ))}
               </div>
 
