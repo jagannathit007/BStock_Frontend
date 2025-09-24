@@ -75,32 +75,31 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
     }
   };
 
-  // Check if there's a newer negotiation for the same product
+  // Check if there's a newer negotiation for the same bid
   const hasNewerNegotiation = (currentNegotiation) => {
     if (!negotiations || negotiations.length === 0) return false;
     
     return negotiations.some(negotiation => {
-      // Same product, different negotiation, newer timestamp
-      return negotiation.productId._id === currentNegotiation.productId._id &&
+      // Same bid, different negotiation, newer timestamp
+      return negotiation.bidId === currentNegotiation.bidId &&
              negotiation._id !== currentNegotiation._id &&
              new Date(negotiation.createdAt) > new Date(currentNegotiation.createdAt) &&
              negotiation.status === 'negotiation';
     });
   };
 
-  // Check if any negotiation for the same product has been accepted
+  // Check if any negotiation for the same bid has been accepted
   const hasAcceptedNegotiation = (currentNegotiation) => {
     // Check in active negotiations
     const hasAcceptedInActive = negotiations && negotiations.some(negotiation => {
-      return negotiation.productId._id === currentNegotiation.productId._id &&
+      return negotiation.bidId === currentNegotiation.bidId &&
              negotiation._id !== currentNegotiation._id &&
              negotiation.status === 'accepted';
     });
 
     // Check in accepted negotiations
     const hasAcceptedInAccepted = acceptedNegotiations && acceptedNegotiations.some(negotiation => {
-      return negotiation.productId._id === currentNegotiation.productId._id &&
-             negotiation._id !== currentNegotiation._id &&
+      return negotiation.bidId === currentNegotiation.bidId &&
              negotiation.status === 'accepted';
     });
 
@@ -108,7 +107,7 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
   };
 
   const canRespond = (negotiation) => {
-    // If any negotiation for the same product has been accepted, don't allow responding
+    // If any negotiation for the same bid has been accepted, don't allow responding
     if (hasAcceptedNegotiation(negotiation)) {
       return false;
     }
@@ -122,12 +121,12 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
   };
 
   const canAccept = (negotiation) => {
-    // If any negotiation for the same product has been accepted, don't allow accepting
+    // If any negotiation for the same bid has been accepted, don't allow accepting
     if (hasAcceptedNegotiation(negotiation)) {
       return false;
     }
 
-    // If there's a newer negotiation for the same product, don't allow accepting old ones
+    // If there's a newer negotiation for the same bid, don't allow accepting old ones
     if (hasNewerNegotiation(negotiation)) {
       return false;
     }

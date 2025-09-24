@@ -13,6 +13,7 @@ export interface Negotiation {
       name: string;
     };
   };
+  bidId: string;
   fromUserId: string | {
     _id: string;
     firstName: string;
