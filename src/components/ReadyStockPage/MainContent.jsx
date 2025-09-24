@@ -59,6 +59,7 @@ const MainContent = () => {
       isExpired,
       expiryTime,
       notify: Boolean(p.notify),
+      purchaseType: p.purchaseType || null,
     };
   };
 
