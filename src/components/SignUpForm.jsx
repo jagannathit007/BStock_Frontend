@@ -163,7 +163,8 @@ const SignUpForm = () => {
       name: formData.fullName.trim(),
       email: formData.email.trim().toLowerCase(),
       password: formData.password,
-      // mobileNumber: formData.mobileNumber, 
+      mobileNumber: formData.mobileNumber,
+      whatsappNumber: `${formData.whatsappCode}${(formData.whatsapp || '').replace(/[^0-9]/g, '')}`,
     };
 
     try {
