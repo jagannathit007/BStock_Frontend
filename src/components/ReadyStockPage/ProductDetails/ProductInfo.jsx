@@ -188,149 +188,35 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   ).toLocaleString();
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-      {/* Breadcrumb */}
-      <div className="mb-4 md:mb-6 flex items-center text-sm cursor-pointer mt-3">
-        <button
-          onClick={() => navigate("/")}
-          className="text-gray-600 hover:text-blue-600 transition-colors cursor-pointer"
-        >
-          Home
-        </button>
-        <span className="mx-2 text-gray-400">/</span>
-        <span className="text-gray-900 font-medium">
-          {processedProduct.name}
-        </span>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-        {/* Left Column - Image */}
-        <div className="lg:col-span-5">
-          <div className="relative mb-4">
-            <img
-              className="w-full h-64 sm:h-[450px] object-cover rounded-xl bg-white border border-gray-200"
-              src={imageError ? iphoneImage : processedProduct.mainImage}
-              alt={processedProduct.name}
-              onError={handleImageError}
-            />
-            <div className="absolute top-4 left-4 flex flex-col space-y-2">
-              {processedProduct.isVerified && (
-                <span className="bg-green-500 text-white text-xs font-medium px-2 py-1 rounded">
-                  Verified Seller
-                </span>
-              )}
-              {processedProduct.isFlashDeal && (
-                <span className="bg-orange-500 text-white text-xs font-medium px-2 py-1 rounded">
-                  Flash Deal
-                </span>
-              )}
-              <span
-                className={`${
-                  processedProduct.isExpired
-                    ? "bg-gray-100 text-gray-800"
-                    : processedProduct.stockStatus === "In Stock"
-                    ? "bg-green-100 text-green-800"
-                    : processedProduct.stockStatus === "Low Stock"
-                    ? "bg-yellow-100 text-yellow-800"
-                    : "bg-red-100 text-red-800"
-                } text-xs font-medium px-2 py-1 rounded inline-flex items-center`}
-              >
-                {processedProduct.isExpired && (
-                  <FontAwesomeIcon
-                    icon={faCalendarXmark}
-                    className="w-3 h-3 mr-1"
-                  />
-                )}
-                {processedProduct.isExpired
-                  ? "Expired"
-                  : processedProduct.stockStatus}
-              </span>
-            </div>
-            <button
-              className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-lg hover:bg-gray-50"
-              onClick={handleToggleWishlist}
-            >
-              <FontAwesomeIcon
-                icon={isFavorite ? solidHeart : regularHeart}
-                className={`text-sm ${
-                  isFavorite ? "text-red-500" : "text-gray-600"
-                }`}
-              />
-            </button>
-          </div>
-        </div>
-
-        {/* Right Column */}
-        <div className="lg:col-span-7">
-          {/* Header */}
-          <div className="mb-4 sm:mb-6">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">
-              {processedProduct.name}
-            </h1>
-            <p className="text-sm sm:text-base text-gray-600">
-              {processedProduct.description}
-            </p>
-          </div>
-
-          {/* Price Section */}
-          <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200 mb-4 sm:mb-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-4">
-              <div className="mb-2 sm:mb-0">
-                <span className="text-2xl sm:text-3xl font-bold text-gray-900">
-                  ${processedProduct.price}
-                </span>
-                {processedProduct.originalPrice && (
-                  <>
-                    <span className="text-base sm:text-lg text-gray-500 line-through ml-2 sm:ml-3">
-                      ${processedProduct.originalPrice}
-                    </span>
-                    <span className="bg-green-500 text-white text-xs sm:text-sm font-medium px-2 py-1 rounded ml-2 sm:ml-3">
-                      -{processedProduct.discountPercentage}
-                    </span>
-                  </>
-                )}
-              </div>
-              <div className="text-left sm:text-right">
-                <p className="text-xs sm:text-sm text-gray-600">Price per unit</p>
-                <p className="text-xs text-gray-500">Bulk discounts available</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
-              <div className="bg-gray-50 rounded-lg p-2 sm:p-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs sm:text-sm text-gray-600">MOQ</span>
-                  <span className="font-semibold text-gray-900 text-sm sm:text-base">
-                    {processedProduct.moq} units
-                  </span>
-                </div>
-              </div>
-              <div
-                className={`${
-                  processedProduct.isExpired
-                    ? "bg-gray-50"
-                    : processedProduct.stockCount > 10
-                    ? "bg-green-50"
-                    : processedProduct.stockCount > 0
-                    ? "bg-yellow-50"
-                    : "bg-red-50"
-                } rounded-lg p-2 sm:p-3`}
-              >
-                <div className="flex justify-between items-center">
-                  <span className="text-xs sm:text-sm text-gray-600">Available</span>
-                  <span
-                    className={`font-semibold text-sm sm:text-base ${
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+          {/* Enhanced Left Column - Image */}
+          <div className="xl:col-span-6">
+            <div className="relative group">
+              <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 overflow-hidden">
+                <img
+                  className="w-full h-96 lg:h-[500px] object-cover rounded-xl hover:scale-105 transition-transform duration-500"
+                  src={imageError ? iphoneImage : processedProduct.mainImage}
+                  alt={processedProduct.name}
+                  onError={handleImageError}
+                />
+                
+                {/* Enhanced Status Badges */}
+                <div className="absolute top-8 left-8 flex flex-col space-y-3">
+                  <div
+                    className={`px-3 py-1 rounded-full text-sm font-medium ${
                       processedProduct.isExpired
-                        ? "text-gray-500"
+                        ? "bg-gray-100 text-gray-500"
                         : processedProduct.stockCount > 10
-                        ? "text-green-500"
+                        ? "bg-green-100 text-green-500"
                         : processedProduct.stockCount > 0
-                        ? "text-yellow-500"
-                        : "text-red-500"
+                        ? "bg-yellow-100 text-yellow-500"
+                        : "bg-red-100 text-red-500"
                     }`}
                   >
                     {processedProduct.stockCount} units
-                  </span>
+                  </div>
                 </div>
               </div>
             </div>
