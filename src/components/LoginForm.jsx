@@ -71,78 +71,102 @@ const LoginForm = ({ onLogin }) => {
   };
 
   const handleGoogleResponse = async (response) => {
-    setGoogleLoading(true);
-    setError("");
-    try {
-      const userData = jwtDecode(response.credential);
-      console.log("Google User:", userData);
-
-      const loginData = {
-        email: userData.email || "",
-        socialId: userData.sub, // Google user ID
-        platformName: "google",
-      };
-
-      const res = await AuthService.login(loginData);
-      if (res.data && res.data.token) {
-        localStorage.setItem("token", res.data.token);
-        if (rememberMe) {
-          localStorage.setItem("rememberMe", "true");
-          localStorage.setItem("email", email);
-        } else {
-          localStorage.removeItem("rememberMe");
-          localStorage.removeItem("email");
-        }
-        localStorage.setItem("isLoggedIn", "true");
-        if (onLogin) onLogin();
-        navigate("/ready-stock");
-      }
-    } catch (err) {
-      console.error("Google login failed:", err);
-      setError(err.message || "Google login failed. Please try again.");
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
-
-    // Basic validation
-    if (!email || !password) {
-      setError("Please enter both email and password");
-      setIsLoading(false);
-      return;
-    }
+  setGoogleLoading(true);
+  setError("");
+  try {
+    const userData = jwtDecode(response.credential);
+    console.log("Google User:", userData);
 
     const loginData = {
-      email: email.trim().toLowerCase(),
-      password,
+      email: userData.email || "",
+      socialId: userData.sub, // Google user ID
+      platformName: "google",
     };
 
-    try {
-      const res = await AuthService.login(loginData);
-      if (res.data && res.data.token) {
-        localStorage.setItem("token", res.data.token);
-        if (rememberMe) {
-          localStorage.setItem("rememberMe", "true");
-          localStorage.setItem("email", email);
-        } else {
-          localStorage.removeItem("rememberMe");
-          localStorage.removeItem("email");
+    const res = await AuthService.login(loginData);
+    if (res.data && res.data.token) {
+      localStorage.setItem("token", res.data.token);
+      
+      // Save customer data to localStorage
+      if (res.data.customer) {
+        localStorage.setItem("user", JSON.stringify(res.data.customer));
+        
+        // Save profile image URL separately if available
+        if (res.data.customer.profileImage || res.data.customer.avatar) {
+          const profileImage = res.data.customer.profileImage || res.data.customer.avatar;
+          localStorage.setItem("profileImageUrl", profileImage);
         }
-        localStorage.setItem("isLoggedIn", "true");
-        if (onLogin) onLogin();
-        navigate("/ready-stock");
       }
-    } catch (err) {
-      setError(err.message || "Login failed");
-    } finally {
-      setIsLoading(false);
+      
+      if (rememberMe) {
+        localStorage.setItem("rememberMe", "true");
+        localStorage.setItem("email", email);
+      } else {
+        localStorage.removeItem("rememberMe");
+        localStorage.removeItem("email");
+      }
+      localStorage.setItem("isLoggedIn", "true");
+      if (onLogin) onLogin();
+      navigate("/ready-stock");
     }
+  } catch (err) {
+    console.error("Google login failed:", err);
+    setError(err.message || "Google login failed. Please try again.");
+  } finally {
+    setGoogleLoading(false);
+  }
+};
+
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError("");
+
+  // Basic validation
+  if (!email || !password) {
+    setError("Please enter both email and password");
+    setIsLoading(false);
+    return;
+  }
+
+  const loginData = {
+    email: email.trim().toLowerCase(),
+    password,
   };
+
+  try {
+    const res = await AuthService.login(loginData);
+    if (res.data && res.data.token) {
+      localStorage.setItem("token", res.data.token);
+      
+      // Save customer data to localStorage
+      if (res.data.customer) {
+        localStorage.setItem("user", JSON.stringify(res.data.customer));
+        
+        // Save profile image URL separately if available
+        if (res.data.customer.profileImage || res.data.customer.avatar) {
+          const profileImage = res.data.customer.profileImage || res.data.customer.avatar;
+          localStorage.setItem("profileImageUrl", profileImage);
+        }
+      }
+      
+      if (rememberMe) {
+        localStorage.setItem("rememberMe", "true");
+        localStorage.setItem("email", email);
+      } else {
+        localStorage.removeItem("rememberMe");
+        localStorage.removeItem("email");
+      }
+      localStorage.setItem("isLoggedIn", "true");
+      if (onLogin) onLogin();
+      navigate("/ready-stock");
+    }
+  } catch (err) {
+    setError(err.message || "Login failed");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
