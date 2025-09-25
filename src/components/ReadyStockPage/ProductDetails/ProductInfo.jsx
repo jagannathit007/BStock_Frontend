@@ -68,32 +68,144 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       : currentProduct.networkBands || "",
   };
 
-  const canNotify = processedProduct.isOutOfStock && !processedProduct.isExpired;
+  const [selectedColor, setSelectedColor] = useState("Natural Titanium");
+  const [selectedStorage, setSelectedStorage] = useState("256GB");
+  const [selectedGrade, setSelectedGrade] = useState("A+");
+  const [quantity, setQuantity] = useState(5);
+  // Initialize with proper fallback checking
+  const [isFavorite, setIsFavorite] = useState(() => {
+    const initialWishlistStatus =
+      initialProduct?.WishList ||
+      initialProduct?.wishList ||
+      initialProduct?.isFavorite ||
+      false;
+    console.log("ProductInfo - Initial state setup:", {
+      WishList: initialProduct?.WishList,
+      wishList: initialProduct?.wishList,
+      isFavorite: initialProduct?.isFavorite,
+      finalStatus: initialWishlistStatus,
+    });
+    return initialWishlistStatus;
+  });
+  const [notify, setNotify] = useState(Boolean(currentProduct?.notify));
+  const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
+  const [isBiddingFormOpen, setIsBiddingFormOpen] = useState(false);
+
+  const colors = [
+    { name: "Natural Titanium", class: "bg-gray-200" },
+    { name: "Blue", class: "bg-blue-600" },
+    { name: "Black", class: "bg-black" },
+    { name: "White", class: "bg-white border-2 border-gray-300" },
+  ];
+
+  const storageOptions = ["128GB", "256GB", "512GB", "1TB"];
+  const gradeOptions = ["A+", "A", "B", "C"];
+
+  // Check if product can accept notifications (out of stock but not expired)
+  const canNotify =
+    processedProduct.isOutOfStock && !processedProduct.isExpired;
 
   useEffect(() => {
-    setCurrentProduct(initialProduct);
-    setQuantity(initialProduct.moq || 5);
-    setIsFavorite(initialProduct.wishList || false);
-    setNotify(Boolean(initialProduct.notify));
+    const fetchFreshProductData = async () => {
+      try {
+        const productId = initialProduct._id || initialProduct.id;
+        if (productId) {
+          console.log(
+            "ProductInfo - Fetching fresh product data for ID:",
+            productId
+          );
+          const freshProduct = await ProductService.getProductById(productId);
+          console.log("ProductInfo - Fresh product from API:", freshProduct);
+          setCurrentProduct(freshProduct);
+
+          // Set wishlist status from fresh API data
+          const wishlistStatus =
+            freshProduct.WishList || freshProduct.wishList || false;
+          console.log(
+            "ProductInfo - Setting wishlist status from fresh data:",
+            wishlistStatus
+          );
+          setIsFavorite(wishlistStatus);
+        } else {
+          // Fallback to initial product data
+          setCurrentProduct(initialProduct);
+          const wishlistStatus =
+            initialProduct.WishList ||
+            initialProduct.wishList ||
+            initialProduct.isFavorite ||
+            false;
+          console.log("ProductInfo - Using initial product data:", {
+            WishList: initialProduct.WishList,
+            wishList: initialProduct.wishList,
+            isFavorite: initialProduct.isFavorite,
+            finalWishlistStatus: wishlistStatus,
+            productId: initialProduct._id || initialProduct.id,
+            fullProductKeys: Object.keys(initialProduct),
+          });
+          setIsFavorite(wishlistStatus);
+        }
+      } catch (error) {
+        console.error("ProductInfo - Error fetching fresh product:", error);
+        // Fallback to initial product data
+        setCurrentProduct(initialProduct);
+        const wishlistStatus =
+          initialProduct.WishList ||
+          initialProduct.wishList ||
+          initialProduct.isFavorite ||
+          false;
+        setIsFavorite(wishlistStatus);
+      }
+    };
+
+    fetchFreshProductData();
   }, [initialProduct]);
 
   useEffect(() => {
-    const handleWishlistUpdate = async () => {
-      try {
-        const refreshed = await ProductService.getProductById(processedProduct.id);
-        setCurrentProduct(refreshed);
-        if (typeof onRefresh === "function") {
-          onRefresh();
+    setNotify(Boolean(currentProduct?.notify));
+    // Check all possible wishlist fields from the backend
+    const wishlistStatus =
+      currentProduct.WishList ||
+      currentProduct.wishList ||
+      currentProduct.isFavorite ||
+      false;
+    console.log("ProductInfo - Current product updated:", {
+      WishList: currentProduct.WishList,
+      wishList: currentProduct.wishList,
+      isFavorite: currentProduct.isFavorite,
+      finalWishlistStatus: wishlistStatus,
+      productId: currentProduct._id || currentProduct.id,
+    });
+    setIsFavorite(wishlistStatus);
+  }, [currentProduct]);
+
+  // Listen for wishlist updates from other components
+  useEffect(() => {
+    const handleWishlistUpdate = async (event) => {
+      const productId = processedProduct.id || processedProduct._id;
+
+      if (event.detail && event.detail.productId === productId) {
+        // Update from event detail
+        setIsFavorite(event.detail.isWishlisted);
+      } else if (!event.detail || !event.detail.productId) {
+        // General wishlist update - refresh product data
+        try {
+          const refreshed = await ProductService.getProductById(productId);
+          setCurrentProduct(refreshed);
+        } catch (error) {
+          console.error("Failed to refresh product:", error);
         }
-      } catch (error) {
-        console.error("Failed to refresh product:", error);
+      }
+
+      if (typeof onRefresh === "function") {
+        onRefresh();
       }
     };
+
     window.addEventListener("wishlistUpdated", handleWishlistUpdate);
     return () => {
       window.removeEventListener("wishlistUpdated", handleWishlistUpdate);
     };
-  }, [processedProduct.id, onRefresh]);
+  }, [processedProduct.id, processedProduct._id, onRefresh]);
 
   const handleQuantityChange = (amount) => {
     const newQuantity = quantity + amount;
@@ -115,6 +227,8 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
         notify: nextValue,
       });
       setNotify(nextValue);
+
+      // Refresh from backend
       try {
         const refreshed = await ProductService.getProductById(productId);
         setCurrentProduct(refreshed);
@@ -122,25 +236,34 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
           onRefresh();
         }
       } catch (refreshErr) {
-        // ignore
+        // ignore refresh error
+      }
+
+      if (typeof onRefresh === "function") {
+        onRefresh();
       }
     } catch (err) {
-      // errors toasted
+      console.error("Notification toggle error:", err);
+      // errors are toasted in service
     }
   };
 
   const handleToggleWishlist = async (e) => {
     e.stopPropagation();
+    const productId = processedProduct._id || processedProduct.id;
     const newWishlistStatus = !isFavorite;
+
+    // Optimistic update
     setIsFavorite(newWishlistStatus);
+
     try {
       await ProductService.toggleWishlist({
-        productId: processedProduct.id || processedProduct._id,
+        productId: productId,
         wishlist: newWishlistStatus,
       });
-      window.dispatchEvent(new Event("wishlistUpdated"));
     } catch (error) {
       console.error("Failed to toggle wishlist:", error);
+      // Revert optimistic update on error
       setIsFavorite(!newWishlistStatus);
     }
   };

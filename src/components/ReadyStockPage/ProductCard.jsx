@@ -28,7 +28,7 @@ const ProductCard = ({
   const navigate = useNavigate();
   const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
   const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(product.isFavorite);
+  const [isFavorite, setIsFavorite] = useState(product.isFavorite || false); // Initialize with product's isFavorite
   const [notify, setNotify] = useState(Boolean(product?.notify));
   const [imageError, setImageError] = useState(false);
 
@@ -37,12 +37,25 @@ const ProductCard = ({
   }, [product?.notify]);
 
   useEffect(() => {
-    setIsFavorite(product.isFavorite);
+    setIsFavorite(product.isFavorite || false);
   }, [product.isFavorite]);
 
+  // Listen for wishlist updates from other components
   useEffect(() => {
-    setImageError(false);
-  }, [product.id, product.imageUrl]);
+    const handleWishlistUpdate = (event) => {
+      if (
+        event.detail &&
+        event.detail.productId === (product.id || product._id)
+      ) {
+        setIsFavorite(event.detail.isWishlisted);
+      }
+    };
+
+    window.addEventListener("wishlistUpdated", handleWishlistUpdate);
+    return () => {
+      window.removeEventListener("wishlistUpdated", handleWishlistUpdate);
+    };
+  }, [product.id, product._id]);
 
   const {
     id,
@@ -189,22 +202,27 @@ const ProductCard = ({
 
   const handleToggleWishlist = async (e) => {
     e.stopPropagation();
+    const productId = id || product._id;
+
     try {
       const newWishlistStatus = !isFavorite;
+      setIsFavorite(newWishlistStatus); // Optimistic update
+
       await ProductService.toggleWishlist({
-        productId: id,
+        productId: productId,
         wishlist: newWishlistStatus,
       });
-      setIsFavorite(newWishlistStatus);
+
       if (onWishlistChange) {
-        onWishlistChange(id, newWishlistStatus);
+        onWishlistChange(productId, newWishlistStatus);
       }
       if (onRefresh) {
         onRefresh();
       }
-      window.dispatchEvent(new Event("wishlistUpdated"));
     } catch (error) {
       console.error("Failed to toggle wishlist:", error);
+      // Revert optimistic update on error
+      setIsFavorite(!newWishlistStatus);
     }
   };
 
@@ -459,9 +477,6 @@ const ProductCard = ({
           <br />
           {purchaseTypeLabel && (
             <span className="">• Purchase: {purchaseTypeLabel}</span>
-          )}
-          {isExpired && (
-            <span className="ml-2 text-red-500">• Expired</span>
           )}
         </div>
 

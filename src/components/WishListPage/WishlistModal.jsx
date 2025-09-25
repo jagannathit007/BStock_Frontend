@@ -1,4 +1,3 @@
-// WishlistModal (no changes needed, provided for completeness)
 import React, { useEffect, useState } from "react";
 import { ProductService } from "../../services/products/products.services";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -61,7 +60,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
       stockStatus,
       stockCount: stock,
       imageUrl,
-      isFavorite: true,
+      isFavorite: true, // Always true in wishlist
       isOutOfStock: stock <= 0,
       isExpired,
       expiryTime,
@@ -103,12 +102,23 @@ const WishlistModal = ({ isOpen, onClose }) => {
     }
   }, [currentPage]);
 
+  // Listen for wishlist updates from other components
   useEffect(() => {
-    const handleWishlistUpdate = () => {
+    const handleWishlistUpdate = (event) => {
       if (isOpen) {
-        fetchWishlist(currentPage);
+        // If a product was removed from wishlist, remove it from the current view
+        if (event.detail && !event.detail.isWishlisted) {
+          setProducts((prev) =>
+            prev.filter((p) => p.id !== event.detail.productId)
+          );
+          setTotalProductsCount((prev) => Math.max(0, prev - 1));
+        } else {
+          // If a product was added to wishlist, refresh the current page
+          fetchWishlist(currentPage);
+        }
       }
     };
+
     window.addEventListener("wishlistUpdated", handleWishlistUpdate);
     return () => {
       window.removeEventListener("wishlistUpdated", handleWishlistUpdate);
@@ -118,15 +128,18 @@ const WishlistModal = ({ isOpen, onClose }) => {
   const handleWishlistChange = async (productId, newStatus) => {
     if (!newStatus) {
       try {
+        // Optimistic update - remove from UI immediately
+        setProducts((prev) => prev.filter((p) => p.id !== productId));
+        setTotalProductsCount((prev) => Math.max(0, prev - 1));
+
         await ProductService.toggleWishlist({
           productId,
           wishlist: false,
         });
-        setProducts((prev) => prev.filter((p) => p.id !== productId));
-        setTotalProductsCount((prev) => prev - 1);
-        window.dispatchEvent(new Event("wishlistUpdated"));
       } catch (error) {
         console.error("Failed to remove from wishlist:", error);
+        // Revert optimistic update on error
+        fetchWishlist(currentPage);
       }
     }
   };

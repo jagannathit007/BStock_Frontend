@@ -119,7 +119,10 @@ export class ProductService {
       if (res.data?.data === null) {
         throw new Error(res.data?.message || "Failed to fetch Product");
       }
-      return res.data.data; // Return the Product with populated skuFamilyId
+
+  
+
+      return res.data.data; // Return the Product with populated skuFamilyId and WishList status
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message || "Failed to fetch Product";
@@ -167,6 +170,17 @@ export class ProductService {
           } wishlist!`,
         "success"
       );
+
+      // Dispatch wishlist updated event for cross-component synchronization
+      window.dispatchEvent(
+        new CustomEvent("wishlistUpdated", {
+          detail: {
+            productId: wishlistData.productId,
+            isWishlisted: wishlistData.wishlist,
+          },
+        })
+      );
+
       return res.data;
     } catch (err: any) {
       const errorMessage =

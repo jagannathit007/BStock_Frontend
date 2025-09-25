@@ -125,9 +125,23 @@ const MainContent = () => {
     setCurrentPage(1);
   }, [viewMode]);
 
+  // Listen for wishlist updates from other components
   useEffect(() => {
-    const handleWishlistUpdate = () => {
-      setRefreshTick((prev) => !prev);
+    const handleWishlistUpdate = (event) => {
+      if (event.detail && event.detail.productId) {
+        // Update the specific product in the list
+        setFetchedProducts((prevProducts) =>
+          prevProducts.map((product) =>
+            product.id === event.detail.productId ||
+            product._id === event.detail.productId
+              ? { ...product, isFavorite: event.detail.isWishlisted }
+              : product
+          )
+        );
+      } else {
+        // Fallback: refresh all products if no specific productId
+        setRefreshTick((prev) => !prev);
+      }
     };
     window.addEventListener("wishlistUpdated", handleWishlistUpdate);
     return () => {
@@ -198,6 +212,30 @@ const MainContent = () => {
     setIsBiddingFormOpen(false);
     setSelectedProduct(null);
   };
+
+  const handleWishlistChange = (productId, newStatus) => {
+    // Update local state immediately
+    setFetchedProducts((prevProducts) =>
+      prevProducts.map((product) =>
+        product.id === productId || product._id === productId
+          ? { ...product, isFavorite: newStatus }
+          : product
+      )
+    );
+  };
+
+  const indexOfLastProduct = useMemo(
+    () => currentPage * itemsPerPage,
+    [currentPage, itemsPerPage]
+  );
+  const indexOfFirstProduct = useMemo(
+    () => indexOfLastProduct - itemsPerPage,
+    [indexOfLastProduct, itemsPerPage]
+  );
+  const totalPages = useMemo(
+    () => Math.max(Math.ceil(totalProductsCount / itemsPerPage), 1),
+    [totalProductsCount, itemsPerPage]
+  );
 
   // Handle successful bid submission
   const handleBidSuccess = () => {
@@ -302,6 +340,7 @@ const MainContent = () => {
                     viewMode={viewMode}
                     onRefresh={handleRefresh}
                     onOpenBiddingForm={handleOpenBiddingForm} // Pass handler
+                    onWishlistChange={handleWishlistChange}
                   />
                 ))}
               </div>
@@ -410,6 +449,7 @@ const MainContent = () => {
                           product={product}
                           viewMode={viewMode}
                           onRefresh={handleRefresh}
+                          onWishlistChange={handleWishlistChange}
                           onOpenBiddingForm={handleOpenBiddingForm} // Pass handler
                         />
                       ))}
