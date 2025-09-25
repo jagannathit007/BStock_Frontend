@@ -1,3 +1,6 @@
+// Updated MainContent
+// Note: Added event listener for 'wishlistUpdated' to trigger refreshTick for automatic sync when wishlist changes elsewhere (e.g., from modal).
+
 import React, { useEffect, useMemo, useState } from "react";
 import ProductCard from "./ProductCard";
 import SideFilter from "../SideFilter";
@@ -111,15 +114,26 @@ const MainContent = () => {
       } finally {
         setIsLoading(false);
       }
-};
-  fetchData();
-  return () => controller.abort();
-}, [currentPage, itemsPerPage, filters, refreshTick]);
+    };
+    fetchData();
+    return () => controller.abort();
+  }, [currentPage, itemsPerPage, filters, refreshTick]);
 
   useEffect(() => {
     setItemsPerPage(viewMode === "grid" ? 9 : 10);
     setCurrentPage(1);
   }, [viewMode]);
+
+  // Add event listener for wishlist updates from other components
+  useEffect(() => {
+    const handleWishlistUpdate = () => {
+      setRefreshTick((prev) => !prev);
+    };
+    window.addEventListener('wishlistUpdated', handleWishlistUpdate);
+    return () => {
+      window.removeEventListener('wishlistUpdated', handleWishlistUpdate);
+    };
+  }, []);
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
@@ -322,6 +336,7 @@ const MainContent = () => {
                           key={product.id}
                           product={product}
                           viewMode={viewMode}
+                          onRefresh={handleRefresh}
                         />
                       ))}
                     </tbody>

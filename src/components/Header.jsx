@@ -4,6 +4,7 @@ import { Handshake } from "lucide-react";
 import CartService from "../services/cart/cart.services";
 import { env } from "../utils/env";
 import NegotiationModal from "./negotiation/NegotiationModal";
+import WishlistModal from "./WishListPage/WishListModal";
 
 const Header = ({ onLogout }) => {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ const Header = ({ onLogout }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [cartItemCount, setCartItemCount] = useState(0);
   const [isNegotiationModalOpen, setIsNegotiationModalOpen] = useState(false);
+  const [isWishlistModalOpen, setIsWishlistModalOpen] = useState(false); // <-- NEW STATE
   const dropdownRef = useRef(null);
 
   // Fetch cart count
@@ -24,12 +26,10 @@ const Header = ({ onLogout }) => {
     }
   };
 
-  // Load cart count on mount
   useEffect(() => {
     fetchCartCount();
   }, []);
 
-  // Refresh count on route change
   useEffect(() => {
     fetchCartCount();
   }, [location.pathname]);
@@ -40,7 +40,6 @@ const Header = ({ onLogout }) => {
         setIsDropdownOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -73,18 +72,22 @@ const Header = ({ onLogout }) => {
     setIsNegotiationModalOpen(true);
   };
 
+  const handleWishlistClick = () => {
+    setIsWishlistModalOpen(true);
+  };
+
   const toAbsoluteUrl = (p) => {
-    if (!p || typeof p !== 'string') return null;
-    const normalized = p.replace(/\\/g, '/');
+    if (!p || typeof p !== "string") return null;
+    const normalized = p.replace(/\\/g, "/");
     if (/^https?:\/\//i.test(normalized)) return normalized;
-    return `${env.baseUrl}/${normalized.replace(/^\//, '')}`;
+    return `${env.baseUrl}/${normalized.replace(/^\//, "")}`;
   };
 
   const [avatarUrl, setAvatarUrl] = useState(() => {
     try {
-      const storedDirect = localStorage.getItem('profileImageUrl');
+      const storedDirect = localStorage.getItem("profileImageUrl");
       if (storedDirect) return storedDirect;
-      const raw = localStorage.getItem('user');
+      const raw = localStorage.getItem("user");
       if (raw) {
         const user = JSON.parse(raw);
         const url = toAbsoluteUrl(user?.profileImage || user?.avatar);
@@ -107,13 +110,13 @@ const Header = ({ onLogout }) => {
 
   useEffect(() => {
     const applyAvatar = () => {
-      const storedDirect = localStorage.getItem('profileImageUrl');
+      const storedDirect = localStorage.getItem("profileImageUrl");
       if (storedDirect) {
         setAvatarUrl(storedDirect);
         return;
       }
       try {
-        const raw = localStorage.getItem('user');
+        const raw = localStorage.getItem("user");
         if (raw) {
           const user = JSON.parse(raw);
           const url = toAbsoluteUrl(user?.profileImage || user?.avatar);
@@ -141,7 +144,7 @@ const Header = ({ onLogout }) => {
 
     // Listen for storage events from other tabs/windows
     const onStorage = (e) => {
-      if (e.key === 'profileImageUrl' || e.key === 'user') {
+      if (e.key === "profileImageUrl" || e.key === "user") {
         applyAvatar();
         applyUserName();
       }
@@ -185,7 +188,7 @@ const Header = ({ onLogout }) => {
       <header className="bg-[#fff] shadow-sm border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-4 lg:px-6">
           <div className="flex justify-between items-center h-16">
-            {/* Logo - Always visible */}
+            {/* Logo */}
             <div className="flex items-center flex-shrink-0">
               <div className="inline-flex items-center justify-center w-10 h-10 bg-[#0071E0] rounded-lg mr-3">
                 <svg
@@ -201,6 +204,7 @@ const Header = ({ onLogout }) => {
               </h1>
             </div>
 
+            {/* Search bar */}
             <div className="flex-1 mx-4 max-w-2xl">
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -220,7 +224,9 @@ const Header = ({ onLogout }) => {
               </div>
             </div>
 
+            {/* Right Side */}
             <div className="flex items-center space-x-2 sm:space-x-4">
+              {/* Wallet Info */}
               <div className="hidden sm:flex items-center space-x-2">
                 <svg
                   className="h-5 w-5 text-gray-600"
@@ -233,6 +239,8 @@ const Header = ({ onLogout }) => {
                   $2,450.00
                 </span>
               </div>
+
+              {/* Negotiations */}
               <button
                 className="p-2 text-gray-600 hover:text-gray-900 relative"
                 onClick={handleNegotiationClick}
@@ -240,6 +248,17 @@ const Header = ({ onLogout }) => {
               >
                 <Handshake className="h-5 w-5" />
               </button>
+
+              {/* Wishlist */}
+              <button
+                className="p-2 text-gray-600 hover:text-gray-900 relative"
+                onClick={handleWishlistClick}
+                title="My Wishlist"
+              >
+                <i className="fas fa-heart h-5 w-5"></i>
+              </button>
+
+              {/* Cart */}
               <button
                 className="p-2 text-gray-600 hover:text-gray-900 relative"
                 onClick={handleCartClick}
@@ -258,6 +277,7 @@ const Header = ({ onLogout }) => {
                 )}
               </button>
 
+              {/* Profile Dropdown */}
               <div className="relative" ref={dropdownRef}>
                 <div
                   className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 rounded-lg p-1 transition-colors duration-200"
@@ -327,6 +347,12 @@ const Header = ({ onLogout }) => {
         isOpen={isNegotiationModalOpen}
         onClose={() => setIsNegotiationModalOpen(false)}
         userType="customer"
+      />
+
+      {/* Wishlist Modal */}
+      <WishlistModal
+        isOpen={isWishlistModalOpen}
+        onClose={() => setIsWishlistModalOpen(false)}
       />
     </>
   );

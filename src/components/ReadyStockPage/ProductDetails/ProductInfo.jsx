@@ -5,77 +5,77 @@ import {
   faHeart as regularHeart,
   faCartShopping,
   faBolt,
-  faCube,
-  faMicrochip,
-  faCamera,
-  faShieldHalved,
-  faTruckFast,
-  faTruck,
-  faArrowRotateLeft,
-  faCheck,
-  faXmark,
-  faBell,
-  faBellSlash,
   faCalendarXmark,
   faHandshake,
+  faBell,
+  faBellSlash,
+  faXmark,
+  faCheck,
 } from "@fortawesome/free-solid-svg-icons";
 import { ProductService } from "../../../services/products/products.services";
 import NotifyMePopup from "../NotifyMePopup";
 import BiddingForm from "../../negotiation/BiddingForm";
 
-const ProductInfo = ({ product, navigate, onRefresh }) => {
-  // Process product data to ensure proper stock and expiry status
+const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
+  const [currentProduct, setCurrentProduct] = useState(initialProduct);
+  const [quantity, setQuantity] = useState(initialProduct.moq || 5);
+  const [isFavorite, setIsFavorite] = useState(initialProduct.wishList || false);
+  const [notify, setNotify] = useState(Boolean(initialProduct.notify));
+  const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
+  const [isBiddingFormOpen, setIsBiddingFormOpen] = useState(false);
+
+  // Process product data
   const processedProduct = {
-    ...product,
-    stockCount: Number(product.stockCount || product.stock || 0),
-    isOutOfStock: Number(product.stockCount || product.stock || 0) <= 0,
-    isExpired: product.expiryTime ? new Date(product.expiryTime) < new Date() : false,
+    ...currentProduct,
+    stockCount: Number(currentProduct.stock || 0),
+    isOutOfStock: Number(currentProduct.stock || 0) <= 0,
+    isExpired: currentProduct.expiryTime
+      ? new Date(currentProduct.expiryTime) < new Date()
+      : false,
     stockStatus: (() => {
-      const stock = Number(product.stockCount || product.stock || 0);
-      const isExpired = product.expiryTime ? new Date(product.expiryTime) < new Date() : false;
-      
+      const stock = Number(currentProduct.stock || 0);
+      const isExpired = currentProduct.expiryTime
+        ? new Date(currentProduct.expiryTime) < new Date()
+        : false;
       if (isExpired) return "Expired";
       if (stock <= 0) return "Out of Stock";
       if (stock <= 10) return "Low Stock";
       return "In Stock";
-    })()
+    })(),
+    colorVariant: Array.isArray(currentProduct.colorVariant)
+      ? currentProduct.colorVariant.join(", ")
+      : currentProduct.colorVariant || "",
+    networkBands: Array.isArray(currentProduct.networkBands)
+      ? currentProduct.networkBands.join(", ")
+      : currentProduct.networkBands || "",
   };
 
-  // // Debug log to check values
-  // console.log('ProductInfo NotifyMe Debug:', {
-  //   originalStock: product.stock,
-  //   processedStock: processedProduct.stockCount,
-  //   isOutOfStock: processedProduct.isOutOfStock,
-  //   isExpired: processedProduct.isExpired,
-  //   expiryTime: product.expiryTime,
-  //   canNotify: processedProduct.isOutOfStock && !processedProduct.isExpired
-  // });
-
-  const [selectedColor, setSelectedColor] = useState("Natural Titanium");
-  const [selectedStorage, setSelectedStorage] = useState("256GB");
-  const [selectedGrade, setSelectedGrade] = useState("A+");
-  const [quantity, setQuantity] = useState(5);
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [notify, setNotify] = useState(Boolean(product?.notify));
-  const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
-  const [isBiddingFormOpen, setIsBiddingFormOpen] = useState(false);
-
-  const colors = [
-    { name: "Natural Titanium", class: "bg-gray-200" },
-    { name: "Blue", class: "bg-blue-600" },
-    { name: "Black", class: "bg-black" },
-    { name: "White", class: "bg-white border-2 border-gray-300" },
-  ];
-
-  const storageOptions = ["128GB", "256GB", "512GB", "1TB"];
-  const gradeOptions = ["A+", "A", "B", "C"];
-
-  // Check if product can accept notifications (out of stock but not expired)
   const canNotify = processedProduct.isOutOfStock && !processedProduct.isExpired;
 
   useEffect(() => {
-    setNotify(Boolean(product?.notify));
-  }, [product?.notify]);
+    setCurrentProduct(initialProduct);
+    setQuantity(initialProduct.moq || 5);
+    setIsFavorite(initialProduct.wishList || false);
+    setNotify(Boolean(initialProduct.notify));
+  }, [initialProduct]);
+
+  useEffect(() => {
+    const handleWishlistUpdate = async () => {
+      try {
+        const refreshed = await ProductService.getProductById(processedProduct.id);
+        setCurrentProduct(refreshed);
+        if (typeof onRefresh === "function") {
+          onRefresh();
+        }
+      } catch (error) {
+        console.error("Failed to refresh product:", error);
+      }
+    };
+    window.addEventListener("wishlistUpdated", handleWishlistUpdate);
+    return () => {
+      window.removeEventListener("wishlistUpdated", handleWishlistUpdate);
+    };
+  }, [processedProduct.id, onRefresh]);
 
   const handleQuantityChange = (amount) => {
     const newQuantity = quantity + amount;
@@ -91,26 +91,39 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
     const productId = processedProduct.id || processedProduct._id;
 
     try {
-      await ProductService.createNotification({ 
-        productId: productId, 
-        notifyType: 'stock_alert', 
-        notify: nextValue 
+      await ProductService.createNotification({
+        productId: productId,
+        notifyType: "stock_alert",
+        notify: nextValue,
       });
       setNotify(nextValue);
-      // Refresh from backend to mirror latest notify using get-product API
       try {
-        const refreshed = await ProductService.getProductByIdPost(productId);
-        if (refreshed && typeof refreshed.notify !== 'undefined') {
-          setNotify(Boolean(refreshed.notify));
+        const refreshed = await ProductService.getProductById(productId);
+        setCurrentProduct(refreshed);
+        if (typeof onRefresh === "function") {
+          onRefresh();
         }
       } catch (refreshErr) {
-        // ignore refresh error; UI already updated optimistically
-      }
-      if (typeof onRefresh === 'function') {
-        onRefresh();
+        // ignore
       }
     } catch (err) {
-      // errors are toasted in service
+      // errors toasted
+    }
+  };
+
+  const handleToggleWishlist = async (e) => {
+    e.stopPropagation();
+    const newWishlistStatus = !isFavorite;
+    setIsFavorite(newWishlistStatus);
+    try {
+      await ProductService.toggleWishlist({
+        productId: processedProduct.id || processedProduct._id,
+        wishlist: newWishlistStatus,
+      });
+      window.dispatchEvent(new Event("wishlistUpdated"));
+    } catch (error) {
+      console.error("Failed to toggle wishlist:", error);
+      setIsFavorite(!newWishlistStatus);
     }
   };
 
@@ -120,8 +133,7 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
   };
 
   const handleBiddingSuccess = () => {
-    // Refresh the page or show success message
-    console.log('Bid submitted successfully');
+    console.log("Bid submitted successfully");
   };
 
   const totalAmount = (
@@ -130,7 +142,7 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-      {/* Breadcrumb Navigation */}
+      {/* Breadcrumb */}
       <div className="mb-4 md:mb-6 flex items-center text-sm cursor-pointer mt-3">
         <button
           onClick={() => navigate("/")}
@@ -139,23 +151,31 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
           Home
         </button>
         <span className="mx-2 text-gray-400">/</span>
-        <span className="text-gray-900 font-medium">{processedProduct.name}</span>
+        <span className="text-gray-900 font-medium">
+          {processedProduct.name}
+        </span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-        {/* Left Column - Images & Gallery */}
+        {/* Left Column - Image */}
         <div className="lg:col-span-5">
-          {/* Main Image */}
           <div className="relative mb-4">
             <img
               className="w-full h-64 sm:h-[450px] object-cover rounded-xl bg-white border border-gray-200"
-              src={processedProduct.mainImage || processedProduct.imageUrl}
+              src={processedProduct.mainImage}
               alt={processedProduct.name}
             />
             <div className="absolute top-4 left-4 flex flex-col space-y-2">
-              <span className="bg-green-500 text-white text-xs font-medium px-2 py-1 rounded">
-                Verified Seller
-              </span>
+              {processedProduct.isVerified && (
+                <span className="bg-green-500 text-white text-xs font-medium px-2 py-1 rounded">
+                  Verified Seller
+                </span>
+              )}
+              {processedProduct.isFlashDeal && (
+                <span className="bg-orange-500 text-white text-xs font-medium px-2 py-1 rounded">
+                  Flash Deal
+                </span>
+              )}
               <span
                 className={`${
                   processedProduct.isExpired
@@ -168,14 +188,19 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
                 } text-xs font-medium px-2 py-1 rounded inline-flex items-center`}
               >
                 {processedProduct.isExpired && (
-                  <FontAwesomeIcon icon={faCalendarXmark} className="w-3 h-3 mr-1" />
+                  <FontAwesomeIcon
+                    icon={faCalendarXmark}
+                    className="w-3 h-3 mr-1"
+                  />
                 )}
-                {processedProduct.isExpired ? "Expired" : processedProduct.stockStatus}
+                {processedProduct.isExpired
+                  ? "Expired"
+                  : processedProduct.stockStatus}
               </span>
             </div>
             <button
               className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-lg hover:bg-gray-50"
-              onClick={() => setIsFavorite(!isFavorite)}
+              onClick={handleToggleWishlist}
             >
               <FontAwesomeIcon
                 icon={isFavorite ? solidHeart : regularHeart}
@@ -185,64 +210,18 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
               />
             </button>
           </div>
-
-          {/* Thumbnail Gallery */}
-          <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 mb-6">
-            {(processedProduct.thumbnails || [processedProduct.mainImage || processedProduct.imageUrl, processedProduct.mainImage || processedProduct.imageUrl, processedProduct.mainImage || processedProduct.imageUrl, processedProduct.mainImage || processedProduct.imageUrl]).map((thumbnail, index) => (
-              <img
-                key={index}
-                className={`w-full h-14 sm:h-16 object-cover rounded-lg bg-white ${
-                  index === 0
-                    ? "border-2 border-blue-600"
-                    : "border border-gray-200"
-                } cursor-pointer hover:border-blue-600`}
-                src={thumbnail}
-                alt={`View ${index + 1}`}
-              />
-            ))}
-            <div className="w-full h-14 sm:h-16 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center cursor-pointer hover:bg-gray-200">
-              <span className="text-xs text-gray-600">+5 More</span>
-            </div>
-          </div>
-
-          {/* Virtual Tour */}
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-3 sm:p-4 border border-blue-200">
-            <div className="flex flex-col sm:flex-row items-center justify-between">
-              <div className="flex items-center mb-2 sm:mb-0">
-                <FontAwesomeIcon
-                  icon={faCube}
-                  className="text-blue-600 text-lg mr-3"
-                />
-                <div>
-                  <h4 className="font-semibold text-gray-900 text-sm sm:text-base">
-                    360° Product View
-                  </h4>
-                  <p className="text-xs sm:text-sm text-gray-600">
-                    Interactive product exploration
-                  </p>
-                </div>
-              </div>
-              <button className="bg-blue-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-medium hover:bg-blue-700 w-full sm:w-auto">
-                Launch
-              </button>
-            </div>
-          </div>
         </div>
 
-        {/* Right Column - Product Details */}
+        {/* Right Column */}
         <div className="lg:col-span-7">
-          {/* Product Header */}
+          {/* Header */}
           <div className="mb-4 sm:mb-6">
-            <div className="flex items-start justify-between mb-3 sm:mb-4">
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">
-                  {processedProduct.name}
-                </h1>
-                <p className="text-sm sm:text-base text-gray-600">
-                  {processedProduct.description}
-                </p>
-              </div>
-            </div>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">
+              {processedProduct.name}
+            </h1>
+            <p className="text-sm sm:text-base text-gray-600">
+              {processedProduct.description}
+            </p>
           </div>
 
           {/* Price Section */}
@@ -252,20 +231,20 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
                 <span className="text-2xl sm:text-3xl font-bold text-gray-900">
                   ${processedProduct.price}
                 </span>
-                <span className="text-base sm:text-lg text-gray-500 line-through ml-2 sm:ml-3">
-                  ${processedProduct.originalPrice}
-                </span>
-                <span className="bg-green-500 text-white text-xs sm:text-sm font-medium px-2 py-1 rounded ml-2 sm:ml-3">
-                  -{processedProduct.discountPercentage || "15%"}
-                </span>
+                {processedProduct.originalPrice && (
+                  <>
+                    <span className="text-base sm:text-lg text-gray-500 line-through ml-2 sm:ml-3">
+                      ${processedProduct.originalPrice}
+                    </span>
+                    <span className="bg-green-500 text-white text-xs sm:text-sm font-medium px-2 py-1 rounded ml-2 sm:ml-3">
+                      -{processedProduct.discountPercentage}
+                    </span>
+                  </>
+                )}
               </div>
               <div className="text-left sm:text-right">
-                <p className="text-xs sm:text-sm text-gray-600">
-                  Price per unit
-                </p>
-                <p className="text-xs text-gray-500">
-                  Bulk discounts available
-                </p>
+                <p className="text-xs sm:text-sm text-gray-600">Price per unit</p>
+                <p className="text-xs text-gray-500">Bulk discounts available</p>
               </div>
             </div>
 
@@ -278,69 +257,80 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
                   </span>
                 </div>
               </div>
-              <div className={`${
-                processedProduct.isExpired 
-                  ? "bg-gray-50" 
-                  : processedProduct.stockCount > 10 
-                  ? "bg-green-50" 
-                  : processedProduct.stockCount > 0 
-                  ? "bg-yellow-50" 
-                  : "bg-red-50"
-              } rounded-lg p-2 sm:p-3`}>
+              <div
+                className={`${
+                  processedProduct.isExpired
+                    ? "bg-gray-50"
+                    : processedProduct.stockCount > 10
+                    ? "bg-green-50"
+                    : processedProduct.stockCount > 0
+                    ? "bg-yellow-50"
+                    : "bg-red-50"
+                } rounded-lg p-2 sm:p-3`}
+              >
                 <div className="flex justify-between items-center">
-                  <span className="text-xs sm:text-sm text-gray-600">
-                    Available
-                  </span>
-                  <span className={`font-semibold text-sm sm:text-base ${
-                    processedProduct.isExpired 
-                      ? "text-gray-500" 
-                      : processedProduct.stockCount > 10 
-                      ? "text-green-500" 
-                      : processedProduct.stockCount > 0 
-                      ? "text-yellow-500" 
-                      : "text-red-500"
-                  }`}>
+                  <span className="text-xs sm:text-sm text-gray-600">Available</span>
+                  <span
+                    className={`font-semibold text-sm sm:text-base ${
+                      processedProduct.isExpired
+                        ? "text-gray-500"
+                        : processedProduct.stockCount > 10
+                        ? "text-green-500"
+                        : processedProduct.stockCount > 0
+                        ? "text-yellow-500"
+                        : "text-red-500"
+                    }`}
+                  >
                     {processedProduct.stockCount} units
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Show expiry information if product has expiry date */}
             {processedProduct.expiryTime && (
-              <div className={`p-3 rounded-lg mb-3 ${
-                processedProduct.isExpired 
-                  ? "bg-red-50 border border-red-200" 
-                  : "bg-yellow-50 border border-yellow-200"
-              }`}>
+              <div
+                className={`p-3 rounded-lg mb-3 ${
+                  processedProduct.isExpired
+                    ? "bg-red-50 border border-red-200"
+                    : "bg-yellow-50 border border-yellow-200"
+                }`}
+              >
                 <div className="flex items-center">
-                  <FontAwesomeIcon 
-                    icon={faCalendarXmark} 
-                    className={`mr-2 ${processedProduct.isExpired ? "text-red-600" : "text-yellow-600"}`} 
+                  <FontAwesomeIcon
+                    icon={faCalendarXmark}
+                    className={`mr-2 ${
+                      processedProduct.isExpired ? "text-red-600" : "text-yellow-600"
+                    }`}
                   />
-                  <span className={`text-sm ${
-                    processedProduct.isExpired ? "text-red-700" : "text-yellow-700"
-                  }`}>
-                    {processedProduct.isExpired 
-                      ? `Expired on ${new Date(processedProduct.expiryTime).toLocaleDateString()}`
-                      : `Expires on ${new Date(processedProduct.expiryTime).toLocaleDateString()}`
-                    }
+                  <span
+                    className={`text-sm ${
+                      processedProduct.isExpired ? "text-red-700" : "text-yellow-700"
+                    }`}
+                  >
+                    {processedProduct.isExpired
+                      ? `Expired on ${new Date(
+                          processedProduct.expiryTime
+                        ).toLocaleDateString()}`
+                      : `Expires on ${new Date(
+                          processedProduct.expiryTime
+                        ).toLocaleDateString()}`}
                   </span>
                 </div>
               </div>
             )}
 
-            {/* Price Calculator */}
             <div className="border-t pt-3 sm:pt-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs sm:text-sm text-gray-600">
-                  Quantity
-                </span>
+                <span className="text-xs sm:text-sm text-gray-600">Quantity</span>
                 <div className="flex items-center space-x-2 sm:space-x-3">
                   <button
                     className="w-7 h-7 sm:w-8 sm:h-8 border border-gray-300 rounded flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={() => handleQuantityChange(-1)}
-                    disabled={quantity <= processedProduct.moq || processedProduct.isOutOfStock || processedProduct.isExpired}
+                    disabled={
+                      quantity <= processedProduct.moq ||
+                      processedProduct.isOutOfStock ||
+                      processedProduct.isExpired
+                    }
                   >
                     <FontAwesomeIcon icon={faXmark} className="text-xs" />
                   </button>
@@ -363,126 +353,134 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
             </div>
           </div>
 
-          {/* Key Features */}
+          {/* Product Details Section */}
           <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200 mb-4 sm:mb-6">
-            <h3 className="font-semibold text-gray-900 mb-3 sm:mb-4">
-              Key Highlights
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              {(processedProduct.features || [
-                { icon: faMicrochip, color: "text-blue-600", text: "Latest Processor" },
-                { icon: faCamera, color: "text-purple-600", text: "Pro Camera System" },
-                { icon: faShieldHalved, color: "text-green-600", text: "1 Year Warranty" },
-                { icon: faTruckFast, color: "text-orange-600", text: "Fast Delivery" }
-              ]).map((feature, index) => (
-                <div key={index} className="flex items-center">
-                  <FontAwesomeIcon
-                    icon={feature.icon}
-                    className={`${feature.color} mr-2 sm:mr-3 text-sm sm:text-base`}
-                  />
-                  <span className="text-xs sm:text-sm">{feature.text}</span>
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">
+              Product Details
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {processedProduct.brand && (
+                <div>
+                  <p className="text-sm text-gray-600">Brand</p>
+                  <p className="text-base font-medium text-gray-900">{processedProduct.brand}</p>
                 </div>
-              ))}
+              )}
+              {processedProduct.code && (
+                <div>
+                  <p className="text-sm text-gray-600">Product Code</p>
+                  <p className="text-base font-medium text-gray-900">{processedProduct.code}</p>
+                </div>
+              )}
+              {processedProduct.color && (
+                <div>
+                  <p className="text-sm text-gray-600">Color</p>
+                  <p className="text-base font-medium text-gray-900">{processedProduct.color}</p>
+                </div>
+              )}
+              {processedProduct.colorVariant && (
+                <div>
+                  <p className="text-sm text-gray-600">Color Variants</p>
+                  <p className="text-base font-medium text-gray-900">{processedProduct.colorVariant}</p>
+                </div>
+              )}
+              {processedProduct.storage && (
+                <div>
+                  <p className="text-sm text-gray-600">Storage</p>
+                  <p className="text-base font-medium text-gray-900">{processedProduct.storage}</p>
+                </div>
+              )}
+              {processedProduct.ram && (
+                <div>
+                  <p className="text-sm text-gray-600">RAM</p>
+                  <p className="text-base font-medium text-gray-900">{processedProduct.ram}</p>
+                </div>
+              )}
+              {processedProduct.condition && (
+                <div>
+                  <p className="text-sm text-gray-600">Condition</p>
+                  <p className="text-base font-medium text-gray-900">{processedProduct.condition}</p>
+                </div>
+              )}
+              {processedProduct.simType && (
+                <div>
+                  <p className="text-sm text-gray-600">SIM Type</p>
+                  <p className="text-base font-medium text-gray-900">{processedProduct.simType}</p>
+                </div>
+              )}
+              {processedProduct.country && (
+                <div>
+                  <p className="text-sm text-gray-600">Country</p>
+                  <p className="text-base font-medium text-gray-900">{processedProduct.country}</p>
+                </div>
+              )}
+              {processedProduct.countryVariant && (
+                <div>
+                  <p className="text-sm text-gray-600">Country Variant</p>
+                  <p className="text-base font-medium text-gray-900">{processedProduct.countryVariant}</p>
+                </div>
+              )}
+              {processedProduct.networkBands && (
+                <div>
+                  <p className="text-sm text-gray-600">Network Bands</p>
+                  <p className="text-base font-medium text-gray-900">{processedProduct.networkBands}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-sm text-gray-600">Negotiable</p>
+                <p className="text-base font-medium text-gray-900">
+                  {processedProduct.isNegotiable ? "Yes" : "No"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Purchase Type</p>
+                <p className="text-base font-medium text-gray-900">{processedProduct.purchaseType}</p>
+              </div>
+              {processedProduct.createdAt && (
+                <div>
+                  <p className="text-sm text-gray-600">Created At</p>
+                  <p className="text-base font-medium text-gray-900">
+                    {new Date(processedProduct.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+              )}
+              {processedProduct.updatedAt && (
+                <div>
+                  <p className="text-sm text-gray-600">Updated At</p>
+                  <p className="text-base font-medium text-gray-900">
+                    {new Date(processedProduct.updatedAt).toLocaleDateString()}
+                  </p>
+                </div>
+              )}
+              {processedProduct.status && (
+                <div>
+                  <p className="text-sm text-gray-600">Status</p>
+                  <p className="text-base font-medium text-gray-900">{processedProduct.status}</p>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Configuration Options */}
-          <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
-            {/* Storage */}
-            <div>
-              <h4 className="font-medium text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">
-                Storage Options
-              </h4>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {storageOptions.map((storage) => (
-                  <button
-                    key={storage}
-                    className={`px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg text-xs sm:text-sm transition-all ${
-                      selectedStorage === storage
-                        ? "border-2 border-blue-600 bg-blue-50 text-blue-600 font-medium"
-                        : "border border-gray-300 hover:border-blue-600"
-                    } ${
-                      (processedProduct.isOutOfStock || processedProduct.isExpired) 
-                        ? "opacity-50 cursor-not-allowed" 
-                        : "cursor-pointer"
-                    }`}
-                    onClick={() => setSelectedStorage(storage)}
-                    disabled={processedProduct.isOutOfStock || processedProduct.isExpired}
-                  >
-                    {storage}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Color */}
-            <div>
-              <h4 className="font-medium text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">
-                Color Options
-              </h4>
-              <div className="flex items-center space-x-2 sm:space-x-3">
-                {colors.map((color) => (
-                  <div
-                    key={color.name}
-                    className={`w-8 h-8 sm:w-10 sm:h-10 ${
-                      color.class
-                    } rounded-full border-2 ${
-                      selectedColor === color.name
-                        ? "border-blue-600"
-                        : "border-transparent"
-                    } cursor-pointer relative ${
-                      (processedProduct.isOutOfStock || processedProduct.isExpired)
-                        ? "opacity-50 cursor-not-allowed"
-                        : ""
-                    }`}
-                    onClick={() => !processedProduct.isOutOfStock && !processedProduct.isExpired && setSelectedColor(color.name)}
-                    title={color.name}
-                  >
-                    {selectedColor === color.name && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <FontAwesomeIcon
-                          icon={faCheck}
-                          className="text-blue-600 text-xs sm:text-sm"
-                        />
-                      </div>
-                    )}
+          {/* Features Section */}
+          {processedProduct.features && processedProduct.features.length > 0 && (
+            <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-200 mb-4 sm:mb-6">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">
+                Key Features
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {processedProduct.features.map((feature, index) => (
+                  <div key={index} className="flex items-center">
+                    <FontAwesomeIcon
+                      icon={feature.icon}
+                      className={`mr-2 ${feature.color}`}
+                    />
+                    <span className="text-base text-gray-900">{feature.text}</span>
                   </div>
                 ))}
-                <span className="text-xs sm:text-sm text-gray-600 ml-1 sm:ml-2">
-                  {selectedColor}
-                </span>
               </div>
             </div>
+          )}
 
-            {/* Grade */}
-            <div>
-              <h4 className="font-medium text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">
-                Grade Options
-              </h4>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {gradeOptions.map((grade) => (
-                  <button
-                    key={grade}
-                    className={`px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg text-xs sm:text-sm transition-all ${
-                      selectedGrade === grade
-                        ? "border-2 border-blue-600 bg-blue-50 text-blue-600 font-medium"
-                        : "border border-gray-300 hover:border-blue-600"
-                    } ${
-                      (processedProduct.isOutOfStock || processedProduct.isExpired) 
-                        ? "opacity-50 cursor-not-allowed" 
-                        : "cursor-pointer"
-                    }`}
-                    onClick={() => setSelectedGrade(grade)}
-                    disabled={processedProduct.isOutOfStock || processedProduct.isExpired}
-                  >
-                    {grade}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
+          {/* Actions */}
           <div className="space-y-2 sm:space-y-3">
             {processedProduct.isExpired ? (
               <>
@@ -532,61 +530,29 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
               </>
             ) : (
               <>
-                <button
-                  className="w-full bg-orange-500 text-white py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-orange-600 transition-colors flex items-center justify-center"
-                >
+                <button className="w-full bg-orange-500 text-white py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-orange-600 transition-colors flex items-center justify-center">
                   <FontAwesomeIcon icon={faCartShopping} className="mr-2" />
                   Add to Cart
                 </button>
-                <button
-                  className="w-full bg-blue-600 text-white py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center"
-                >
+                <button className="w-full bg-blue-600 text-white py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center">
                   <FontAwesomeIcon icon={faBolt} className="mr-2" />
                   Buy Now
                 </button>
-                <button
-                  onClick={handleBiddingClick}
-                  className="w-full bg-purple-600 text-white py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center"
-                >
-                  <FontAwesomeIcon icon={faHandshake} className="mr-2" />
-                  Make a Bid
-                </button>
+                {processedProduct.isNegotiable && (
+                  <button
+                    onClick={handleBiddingClick}
+                    className="w-full bg-purple-600 text-white py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-purple-700 transition-colors flex items-center justify-center"
+                  >
+                    <FontAwesomeIcon icon={faHandshake} className="mr-2" />
+                    Make a Bid
+                  </button>
+                )}
               </>
             )}
-          </div>
-
-          {/* Additional Info */}
-          <div className="mt-4 sm:mt-6 grid grid-cols-3 gap-3 sm:gap-4 text-center">
-            <div className="flex flex-col items-center">
-              <FontAwesomeIcon
-                icon={faTruck}
-                className="text-xl sm:text-2xl text-green-600 mb-1 sm:mb-2"
-              />
-              <span className="text-xs sm:text-sm text-gray-600">
-                Free Delivery
-              </span>
-            </div>
-            <div className="flex flex-col items-center">
-              <FontAwesomeIcon
-                icon={faArrowRotateLeft}
-                className="text-xl sm:text-2xl text-blue-600 mb-1 sm:mb-2"
-              />
-              <span className="text-xs sm:text-sm text-gray-600">
-                7 Days Return
-              </span>
-            </div>
-            <div className="flex flex-col items-center">
-              <FontAwesomeIcon
-                icon={faShieldHalved}
-                className="text-xl sm:text-2xl text-purple-600 mb-1 sm:mb-2"
-              />
-              <span className="text-xs sm:text-sm text-gray-600">Warranty</span>
-            </div>
           </div>
         </div>
       </div>
 
-      {/* Notify Me Popup */}
       {isNotifyMePopupOpen && (
         <NotifyMePopup
           product={processedProduct}
@@ -594,7 +560,6 @@ const ProductInfo = ({ product, navigate, onRefresh }) => {
         />
       )}
 
-      {/* Bidding Form */}
       {isBiddingFormOpen && (
         <BiddingForm
           product={processedProduct}
