@@ -17,6 +17,7 @@ import NotifyMePopup from "../NotifyMePopup";
 import BiddingForm from "../../negotiation/BiddingForm";
 import AddToCartPopup from "../AddToCartPopup";
 import BuyNowCheckoutModal from "../BuyNowCheckoutModal";
+import iphoneImage from "../../../assets/iphone.png";
 
 const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [currentProduct, setCurrentProduct] = useState(initialProduct);
@@ -27,6 +28,11 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [isBiddingFormOpen, setIsBiddingFormOpen] = useState(false);
   const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
   const [isBuyNowCheckoutOpen, setIsBuyNowCheckoutOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
 
   // Process product data
   const processedProduct = {
@@ -203,8 +209,9 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
           <div className="relative mb-4">
             <img
               className="w-full h-64 sm:h-[450px] object-cover rounded-xl bg-white border border-gray-200"
-              src={processedProduct.mainImage}
+              src={imageError ? iphoneImage : processedProduct.mainImage}
               alt={processedProduct.name}
+              onError={handleImageError}
             />
             <div className="absolute top-4 left-4 flex flex-col space-y-2">
               {processedProduct.isVerified && (

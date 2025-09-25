@@ -2,10 +2,12 @@ import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes, faCheck } from "@fortawesome/free-solid-svg-icons";
 import OrderService from "../../services/order/order.services";
+import iphoneImage from "../../assets/iphone.png";
 
 const BuyNowCheckoutModal = ({ isOpen, onClose, product, quantity, onSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [imageError, setImageError] = useState(false);
   const [billingAddress, setBillingAddress] = useState({
     address: "",
     city: "",
@@ -37,6 +39,10 @@ const BuyNowCheckoutModal = ({ isOpen, onClose, product, quantity, onSuccess }) 
       }
     }
     return true;
+  };
+
+  const handleImageError = () => {
+    setImageError(true);
   };
 
   // Handle checkout
@@ -114,11 +120,12 @@ const BuyNowCheckoutModal = ({ isOpen, onClose, product, quantity, onSuccess }) 
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
             <h3 className="text-lg font-medium text-gray-900 mb-3">Order Summary</h3>
             <div className="flex items-center space-x-4">
-              <img
-                className="w-16 h-16 object-cover rounded-lg"
-                src={product.imageUrl || product.mainImage || "https://via.placeholder.com/400x300.png?text=Product"}
-                alt={product.name}
-              />
+               <img
+                 className="w-16 h-16 object-cover rounded-lg"
+                 src={imageError ? iphoneImage : (product.imageUrl || product.mainImage || iphoneImage)}
+                 alt={product.name}
+                 onError={handleImageError}
+               />
               <div className="flex-1">
                 <h4 className="text-base font-medium text-gray-900">{product.name}</h4>
                 <p className="text-sm text-gray-600">{product.description}</p>
