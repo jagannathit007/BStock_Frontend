@@ -1,6 +1,3 @@
-// Updated MainContent
-// Note: Added event listener for 'wishlistUpdated' to trigger refreshTick for automatic sync when wishlist changes elsewhere (e.g., from modal).
-
 import React, { useEffect, useMemo, useState } from "react";
 import ProductCard from "./ProductCard";
 import SideFilter from "../SideFilter";
@@ -21,7 +18,7 @@ const MainContent = () => {
   const [totalProductsCount, setTotalProductsCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
-  const [filters, setFilters] = useState({}); // Store filter values from SideFilter
+  const [filters, setFilters] = useState({});
   const [refreshTick, setRefreshTick] = useState(false);
 
   const mapApiProductToUi = (p) => {
@@ -73,14 +70,14 @@ const MainContent = () => {
       setErrorMessage(null);
       try {
         const baseUrl =
-          import.meta.env.VITE_BASE_URL || "http://localhost:3200"; // Fallback URL
+          import.meta.env.VITE_BASE_URL || "http://localhost:3200";
         const response = await axios.post(
           `${baseUrl}/api/customer/get-product-list`,
           {
             page: currentPage,
             limit: itemsPerPage,
-            search: filters.search || "", // Include search term from filters, default to empty string
-            ...filters, // Include other filter parameters
+            search: filters.search || "",
+            ...filters,
           },
           {
             headers: {
@@ -96,7 +93,7 @@ const MainContent = () => {
         if (response.data.status === 200) {
           const payload = response.data.data;
           const docs = payload?.docs || [];
-          const totalDocs = Number(payload?.totalDocs) || 0; // Ensure totalDocs is a number
+          const totalDocs = Number(payload?.totalDocs) || 0;
           const mapped = docs.map(mapApiProductToUi);
           setFetchedProducts(mapped);
           setTotalProductsCount(totalDocs);
@@ -124,29 +121,63 @@ const MainContent = () => {
     setCurrentPage(1);
   }, [viewMode]);
 
-  // Add event listener for wishlist updates from other components
+  // Listen for wishlist updates from other components
   useEffect(() => {
-    const handleWishlistUpdate = () => {
-      setRefreshTick((prev) => !prev);
+    const handleWishlistUpdate = (event) => {
+      if (event.detail && event.detail.productId) {
+        // Update the specific product in the list
+        setFetchedProducts((prevProducts) =>
+          prevProducts.map((product) =>
+            product.id === event.detail.productId ||
+            product._id === event.detail.productId
+              ? { ...product, isFavorite: event.detail.isWishlisted }
+              : product
+          )
+        );
+      } else {
+        // Fallback: refresh all products if no specific productId
+        setRefreshTick((prev) => !prev);
+      }
     };
-    window.addEventListener('wishlistUpdated', handleWishlistUpdate);
+
+    window.addEventListener("wishlistUpdated", handleWishlistUpdate);
     return () => {
-      window.removeEventListener('wishlistUpdated', handleWishlistUpdate);
+      window.removeEventListener("wishlistUpdated", handleWishlistUpdate);
     };
   }, []);
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
-    setCurrentPage(1); // Reset to first page on filter change
+    setCurrentPage(1);
   };
 
   const handleRefresh = () => {
     setRefreshTick((prev) => !prev);
   };
 
-  const indexOfLastProduct = useMemo(() => currentPage * itemsPerPage, [currentPage, itemsPerPage]);
-  const indexOfFirstProduct = useMemo(() => indexOfLastProduct - itemsPerPage, [indexOfLastProduct, itemsPerPage]);
-  const totalPages = useMemo(() => Math.max(Math.ceil(totalProductsCount / itemsPerPage), 1), [totalProductsCount, itemsPerPage]);
+  const handleWishlistChange = (productId, newStatus) => {
+    // Update local state immediately
+    setFetchedProducts((prevProducts) =>
+      prevProducts.map((product) =>
+        product.id === productId || product._id === productId
+          ? { ...product, isFavorite: newStatus }
+          : product
+      )
+    );
+  };
+
+  const indexOfLastProduct = useMemo(
+    () => currentPage * itemsPerPage,
+    [currentPage, itemsPerPage]
+  );
+  const indexOfFirstProduct = useMemo(
+    () => indexOfLastProduct - itemsPerPage,
+    [indexOfLastProduct, itemsPerPage]
+  );
+  const totalPages = useMemo(
+    () => Math.max(Math.ceil(totalProductsCount / itemsPerPage), 1),
+    [totalProductsCount, itemsPerPage]
+  );
   const currentProducts = useMemo(() => fetchedProducts, [fetchedProducts]);
 
   const paginate = (pageNumber) => {
@@ -229,7 +260,13 @@ const MainContent = () => {
                   </div>
                 )}
                 {currentProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} viewMode={viewMode} onRefresh={handleRefresh} />
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    viewMode={viewMode}
+                    onRefresh={handleRefresh}
+                    onWishlistChange={handleWishlistChange}
+                  />
                 ))}
               </div>
 
@@ -337,6 +374,7 @@ const MainContent = () => {
                           product={product}
                           viewMode={viewMode}
                           onRefresh={handleRefresh}
+                          onWishlistChange={handleWishlistChange}
                         />
                       ))}
                     </tbody>

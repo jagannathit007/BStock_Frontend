@@ -1,4 +1,3 @@
-// Updated ProductCard
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -26,7 +25,7 @@ const ProductCard = ({
   const navigate = useNavigate();
   const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
   const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(product.isFavorite); // Initialize with product's isFavorite
+  const [isFavorite, setIsFavorite] = useState(product.isFavorite || false); // Initialize with product's isFavorite
   const [notify, setNotify] = useState(Boolean(product?.notify));
 
   useEffect(() => {
@@ -34,8 +33,25 @@ const ProductCard = ({
   }, [product?.notify]);
 
   useEffect(() => {
-    setIsFavorite(product.isFavorite);
+    setIsFavorite(product.isFavorite || false);
   }, [product.isFavorite]);
+
+  // Listen for wishlist updates from other components
+  useEffect(() => {
+    const handleWishlistUpdate = (event) => {
+      if (
+        event.detail &&
+        event.detail.productId === (product.id || product._id)
+      ) {
+        setIsFavorite(event.detail.isWishlisted);
+      }
+    };
+
+    window.addEventListener("wishlistUpdated", handleWishlistUpdate);
+    return () => {
+      window.removeEventListener("wishlistUpdated", handleWishlistUpdate);
+    };
+  }, [product.id, product._id]);
 
   const {
     id,
@@ -55,7 +71,11 @@ const ProductCard = ({
   // Derive purchase type label for display
   const purchaseType = product?.purchaseType;
   const purchaseTypeLabel = purchaseType
-    ? (purchaseType.toLowerCase() === 'partial' ? 'Partial' : purchaseType.toLowerCase() === 'full' ? 'Full' : purchaseType)
+    ? purchaseType.toLowerCase() === "partial"
+      ? "Partial"
+      : purchaseType.toLowerCase() === "full"
+      ? "Full"
+      : purchaseType
     : null;
 
   // Check if product can accept notifications (out of stock but not expired)
@@ -135,23 +155,27 @@ const ProductCard = ({
   // Handle wishlist toggle
   const handleToggleWishlist = async (e) => {
     e.stopPropagation();
+    const productId = id || product._id;
+
     try {
       const newWishlistStatus = !isFavorite;
+      setIsFavorite(newWishlistStatus); // Optimistic update
+
       await ProductService.toggleWishlist({
-        productId: id,
+        productId: productId,
         wishlist: newWishlistStatus,
       });
-      setIsFavorite(newWishlistStatus); // Update local state
+
       if (onWishlistChange) {
-        onWishlistChange(id, newWishlistStatus); // Call callback with productId and new status
+        onWishlistChange(productId, newWishlistStatus);
       }
       if (onRefresh) {
-        onRefresh(); // Refresh listing if prop is provided
+        onRefresh();
       }
-      // Dispatch event for cross-component sync
-      window.dispatchEvent(new Event("wishlistUpdated"));
     } catch (error) {
       console.error("Failed to toggle wishlist:", error);
+      // Revert optimistic update on error
+      setIsFavorite(!newWishlistStatus);
     }
   };
 
@@ -431,9 +455,6 @@ const ProductCard = ({
           {isExpired && <span className="ml-2 text-red-500">• Expired</span>}
           {purchaseTypeLabel && (
             <span className="ml-2">• Purchase: {purchaseTypeLabel}</span>
-          )}
-          {isExpired && (
-            <span className="ml-2 text-red-500">• Expired</span>
           )}
         </div>
 
