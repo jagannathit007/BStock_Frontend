@@ -203,10 +203,11 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
           <div className="xl:col-span-6">
             <div className="relative group">
               <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 overflow-hidden">
-                <img
+               <img
                   className="w-full h-96 lg:h-[500px] object-cover rounded-xl hover:scale-105 transition-transform duration-500"
-                  src={processedProduct.mainImage}
+                  src={imageError ? iphoneImage : processedProduct.mainImage}
                   alt={processedProduct.name}
+                  onError={handleImageError}
                 />
                 
                 {/* Enhanced Status Badges */}
