@@ -238,7 +238,12 @@ const handleAddToCart = async (e) => {
                 <div className="text-xs sm:text-sm text-gray-600 mt-1 truncate">
                   {description.split("•")[1]?.trim()}
                 </div>
-                <div className="flex items-center mt-1 sm:mt-2">
+              
+              </div>
+            </div>
+          </td>
+          <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
+            <div className="flex items-center mt-1 sm:mt-2">
                   <span
                     className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass()}`}
                   >
@@ -251,24 +256,6 @@ const handleAddToCart = async (e) => {
                     {getDisplayStatus()}
                   </span>
                 </div>
-              </div>
-            </div>
-          </td>
-          <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
-            <div className="text-sm text-gray-900 font-medium truncate">
-              {description.split("•")[0]?.trim()}
-            </div>
-            <div className="text-xs sm:text-sm text-gray-500 truncate">
-              Grade A+
-            </div>
-            <div className="text-xs sm:text-sm text-gray-500 truncate">
-              Unlocked
-            </div>
-            {purchaseTypeLabel && (
-              <div className="text-xs sm:text-sm text-gray-700 truncate">
-                Purchase: {purchaseTypeLabel}
-              </div>
-            )}
           </td>
           <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
             <div className="text-base sm:text-lg font-bold text-gray-900">
