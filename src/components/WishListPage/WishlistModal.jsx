@@ -11,6 +11,7 @@ import {
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import ProductCard from "../ReadyStockPage/ProductCard";
+import iphoneImage from "../../assets/iphone.png";
 
 const WishlistModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
@@ -204,7 +205,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
                     <div className="flex items-center gap-4">
                       <div className="flex-shrink-0">
                         <img
-                          src={imageErrors[product.id] ? "src/assets/iphone.png" : product.imageUrl}
+                          src={imageErrors[product.id] ? iphoneImage : product.imageUrl}
                           alt={product.name}
                           className="w-20 h-20 object-cover rounded-lg border border-gray-100"
                           onError={() => handleImageError(product.id)}
