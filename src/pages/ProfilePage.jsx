@@ -134,11 +134,12 @@ const ProfileDetails = ({ formData, onChange, onSave }) => {
 
 const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSave, isApproved }) => {
   const countries = [
-    "United States","Hongkong","Dubai","Singapore", "Canada", "United Kingdom", "Australia", "Germany", "France", "Italy", "Spain", "Netherlands", "India", "Japan", "China", "Brazil", "Mexico", "South Africa"
+    "United States", "Hongkong", "Dubai", "Singapore", "Canada", "United Kingdom", "Australia", "Germany", "France", "Italy", "Spain", "Netherlands", "India", "Japan", "China", "Brazil", "Mexico", "South Africa"
   ];
   const logoFileName = formData.businessLogo ? (typeof formData.businessLogo === 'string' ? formData.businessLogo.split('/').pop() : formData.businessLogo.name) : '';
   const certificateExt = formData.certificate ? (typeof formData.certificate === 'string' ? (formData.certificate.split('.').pop() || '').toUpperCase() : (formData.certificate.name.split('.').pop() || '').toUpperCase()) : '';
   const certificateIsImage = typeof formData.certificate === 'object' && formData.certificate?.type?.startsWith('image/');
+
   return (
     <div className="space-y-6">
       <div className="pb-4 border-b border-gray-200">
@@ -157,14 +158,24 @@ const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSa
             <i className="fas fa-building w-4 h-4 mr-2" style={{ color: "#0071E0" }}></i>
             Business Name
           </label>
-          <input type="text" value={formData.businessName ?? ""} onChange={(e) => onChangeField("businessName", e.target.value)} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 text-sm" placeholder="Enter your business name" />
+          <input
+            type="text"
+            value={formData.businessName ?? ""}
+            onChange={(e) => onChangeField("businessName", e.target.value)}
+            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 text-sm"
+            placeholder="Enter your business name"
+          />
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700 flex items-center">
             <i className="fas fa-globe w-4 h-4 mr-2" style={{ color: "#0071E0" }}></i>
             Country
           </label>
-          <select value={formData.country ?? ""} onChange={(e) => onChangeField("country", e.target.value)} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 text-sm">
+          <select
+            value={formData.country ?? ""}
+            onChange={(e) => onChangeField("country", e.target.value)}
+            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 text-sm"
+          >
             <option value="">Select your country</option>
             {countries.map((country) => (
               <option key={country} value={country}>{country}</option>
@@ -176,7 +187,13 @@ const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSa
             <i className="fas fa-map-marker-alt w-4 h-4 mr-2" style={{ color: "#0071E0" }}></i>
             Business Address <span className="text-gray-400 ml-1">(Optional)</span>
           </label>
-          <textarea value={formData.address ?? ""} onChange={(e) => onChangeField("address", e.target.value)} rows="3" className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 text-sm" placeholder="Enter your business address" />
+          <textarea
+            value={formData.address ?? ""}
+            onChange={(e) => onChangeField("address", e.target.value)}
+            rows="3"
+            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 text-sm"
+            placeholder="Enter your business address"
+          />
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700 flex items-center">
@@ -186,7 +203,12 @@ const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSa
           <div className="space-y-3">
             <div className="flex items-center space-x-3">
               <label className="cursor-pointer px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-sm">
-                <input type="file" accept="image/*" onChange={(e) => onChangeFile("businessLogo", e.target.files[0])} className="hidden" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => onChangeFile("businessLogo", e.target.files[0])}
+                  className="hidden"
+                />
                 <i className="fas fa-upload mr-2"></i>
                 Choose Logo
               </label>
@@ -195,8 +217,18 @@ const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSa
             {previews.businessLogo && (
               <div className="mt-3">
                 <div className="relative inline-block">
-                  <img src={previews.businessLogo} alt="Business Logo Preview" className="w-24 h-24 object-cover rounded-lg border border-gray-200 shadow-sm" />
-                  <button onClick={() => { onChangeField('businessLogo', null); onChangeFile('businessLogo', null); }} className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors duration-200 text-xs">
+                  <img
+                    src={previews.businessLogo}
+                    alt="Business Logo Preview"
+                    className="w-24 h-24 object-cover rounded-lg border border-gray-200 shadow-sm"
+                  />
+                  <button
+                    onClick={() => {
+                      onChangeField('businessLogo', null);
+                      onChangeFile('businessLogo', null);
+                    }}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors duration-200 text-xs"
+                  >
                     <i className="fas fa-times"></i>
                   </button>
                 </div>
@@ -212,7 +244,12 @@ const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSa
           <div className="space-y-3">
             <div className="flex items-center space-x-3">
               <label className="cursor-pointer px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-sm">
-                <input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onChange={(e) => onChangeFile("certificate", e.target.files[0])} className="hidden" />
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  onChange={(e) => onChangeFile("certificate", e.target.files[0])}
+                  className="hidden"
+                />
                 <i className="fas fa-upload mr-2"></i>
                 Choose Certificate
               </label>
@@ -221,15 +258,32 @@ const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSa
             {previews.certificate && formData.certificate && (
               <div className="mt-3">
                 <div className="relative inline-block">
-                  {certificateIsImage ? (
-                    <img src={previews.certificate} alt="Certificate Preview" className="w-32 h-24 object-cover rounded-lg border border-gray-200 shadow-sm" />
-                  ) : (
-                    <div className="w-32 h-24 bg-gray-100 rounded-lg border border-gray-200 shadow-sm flex flex-col items-center justify-center">
-                      <i className="fas fa-file-alt text-2xl text-gray-400 mb-1"></i>
-                      <span className="text-xs text-gray-500 text-center px-1">{certificateExt}</span>
-                    </div>
-                  )}
-                  <button onClick={() => { onChangeField('certificate', null); onChangeFile('certificate', null); }} className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors duration-200 text-xs">
+                  <a
+                    href={previews.certificate}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
+                    {certificateIsImage ? (
+                      <img
+                        src={previews.certificate}
+                        alt="Certificate Preview"
+                        className="w-32 h-24 object-cover rounded-lg border border-gray-200 shadow-sm"
+                      />
+                    ) : (
+                      <div className="w-32 h-24 bg-gray-100 rounded-lg border border-gray-200 shadow-sm flex flex-col items-center justify-center">
+                        <i className="fas fa-file-alt text-2xl text-gray-400 mb-1"></i>
+                        <span className="text-xs text-gray-500 text-center px-1">{certificateExt}</span>
+                      </div>
+                    )}
+                  </a>
+                  <button
+                    onClick={() => {
+                      onChangeField('certificate', null);
+                      onChangeFile('certificate', null);
+                    }}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors duration-200 text-xs"
+                  >
                     <i className="fas fa-times"></i>
                   </button>
                 </div>
@@ -239,7 +293,10 @@ const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSa
         </div>
       </div>
       <div className="flex justify-end pt-4">
-        <button onClick={onSave} className="px-6 py-2 bg-[#0071E0] text-white rounded-lg flex items-center space-x-2 hover:bg-[#005BB5] transition-colors duration-200 shadow-sm hover:shadow-md">
+        <button
+          onClick={onSave}
+          className="px-6 py-2 bg-[#0071E0] text-white rounded-lg flex items-center space-x-2 hover:bg-[#005BB5] transition-colors duration-200 shadow-sm hover:shadow-md"
+        >
           <i className="fas fa-save"></i>
           <span>Save Business Profile</span>
         </button>
