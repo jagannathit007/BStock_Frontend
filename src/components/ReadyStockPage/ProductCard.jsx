@@ -96,7 +96,7 @@ const ProductCard = ({
       case "Out of Stock":
         return "bg-gray-100"; // Subtle red for out of stock
       default:
-        return "bg-white"; // Default white background
+        return "bg-white-50"; // Default white background
     }
   };
 

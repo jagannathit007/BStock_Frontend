@@ -67,7 +67,7 @@ const SideFilter = ({ onClose }) => {
   };
 
   return (
-    <aside className="bg-white rounded-[18px] shadow-sm border border-gray-200 h-fit sticky top-24">
+    <aside className="bg-white-50 rounded-[18px] shadow-sm border border-gray-200 h-fit sticky top-24">
       <div className="p-4 sm:p-6 pt-10">
         <div className="flex justify-between items-center mb-4 sm:mb-6">
           <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
