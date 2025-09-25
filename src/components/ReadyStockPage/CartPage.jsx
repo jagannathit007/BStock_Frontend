@@ -4,6 +4,8 @@ import { faCartShopping, faPlus, faMinus, faTrash } from "@fortawesome/free-soli
 import { useNavigate } from "react-router-dom";
 import CartService from "../../services/cart/cart.services";
 import OrderService from "../../services/order/order.services";
+import iphoneImage from "../../assets/iphone.png";
+
 const CartPage = () => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
@@ -22,6 +24,11 @@ const CartPage = () => {
     postalCode: "",
     country: "",
   });
+  const [imageErrors, setImageErrors] = useState({});
+
+  const handleImageError = (itemId) => {
+    setImageErrors(prev => ({ ...prev, [itemId]: true }));
+  };
 
   // Map backend cart item to frontend format
   const mapCartItemToUi = (item) => {
@@ -274,8 +281,9 @@ const CartPage = () => {
                           <div className="flex items-center min-w-[200px]">
                             <img
                               className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg mr-4"
-                              src={item.imageUrl}
+                              src={imageErrors[item.id] ? iphoneImage : item.imageUrl}
                               alt={item.name}
+                              onError={() => handleImageError(item.id)}
                             />
                             <div className="min-w-0">
                               <div className="text-base sm:text-lg font-bold text-gray-900 truncate">

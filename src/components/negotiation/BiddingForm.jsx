@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { DollarSign, MessageSquare, Send, X } from 'lucide-react';
 import NegotiationService from '../../services/negotiation/negotiation.services';
+import iphoneImage from '../../assets/iphone.png';
 
 const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -8,6 +9,11 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
     message: ''
   });
   const [loading, setLoading] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -64,9 +70,10 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
             <div className="flex items-center space-x-3">
               <img
-                src={product.mainImage || product.imageUrl}
+                src={imageError ? iphoneImage : (product.mainImage || product.imageUrl)}
                 alt={product.name}
                 className="w-12 h-12 object-cover rounded-lg border border-gray-200"
+                onError={handleImageError}
               />
               <div>
                 <h3 className="font-medium text-gray-900">{product.name}</h3>

@@ -15,6 +15,7 @@ import {
 import AddToCartPopup from "./AddToCartPopup";
 import CartService from "../../services/cart/cart.services";
 import { ProductService } from "../../services/products/products.services";
+import iphoneImage from "../../assets/iphone.png";
 import Swal from "sweetalert2";
 
 const ProductCard = ({
@@ -29,6 +30,7 @@ const ProductCard = ({
   const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(product.isFavorite);
   const [notify, setNotify] = useState(Boolean(product?.notify));
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     setNotify(Boolean(product?.notify));
@@ -37,6 +39,10 @@ const ProductCard = ({
   useEffect(() => {
     setIsFavorite(product.isFavorite);
   }, [product.isFavorite]);
+
+  useEffect(() => {
+    setImageError(false);
+  }, [product.id, product.imageUrl]);
 
   const {
     id,
@@ -217,6 +223,10 @@ const handleAddToCart = async (e) => {
     }
   };
 
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
   if (viewMode === "list") {
     return (
       <>
@@ -228,8 +238,9 @@ const handleAddToCart = async (e) => {
             <div className="flex items-center min-w-[200px]">
               <img
                 className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg mr-4"
-                src={`${import.meta.env.VITE_BASE_URL}/${imageUrl}`}
+                src={imageError ? iphoneImage : `${import.meta.env.VITE_BASE_URL}/${imageUrl}`}
                 alt={name}
+                onError={handleImageError}
               />
               <div className="min-w-0">
                 <div className="text-base sm:text-lg font-bold text-gray-900 truncate">
@@ -407,8 +418,9 @@ const handleAddToCart = async (e) => {
       <div className="relative flex-1">
         <img
           className="w-full h-40 sm:h-48 object-cover rounded-t-[18px]"
-          src={`${import.meta.env.VITE_BASE_URL}/${imageUrl}`}
+          src={imageError ? iphoneImage : `${import.meta.env.VITE_BASE_URL}/${imageUrl}`}
           alt={name}
+          onError={handleImageError}
         />
         <div className="absolute top-2 right-2">
           <button

@@ -9,6 +9,7 @@ import {
   faDollarSign,
 } from "@fortawesome/free-solid-svg-icons";
 import CartService from "../../services/cart/cart.services";
+import iphoneImage from "../../assets/iphone.png";
 
 const AddToCartPopup = ({ product, onClose }) => {
   const { id, name, price, imageUrl, moq, stockCount, description } = product;
@@ -20,6 +21,11 @@ const AddToCartPopup = ({ product, onClose }) => {
   const validStockCount = isNaN(parseInt(stockCount)) ? Infinity : parseInt(stockCount);
   const [quantity, setQuantity] = useState(isFullPurchase ? validStockCount : validMoq);
   const [error, setError] = useState(null);
+  const [imageError, setImageError] = useState(false);
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
 
   // Ensure price is a valid number, default to 0 if invalid
   const validPrice = isNaN(parseFloat(price)) ? 0 : parseFloat(price);
@@ -110,8 +116,9 @@ const AddToCartPopup = ({ product, onClose }) => {
             <div className="flex-shrink-0">
               <img
                 className="w-24 h-24 object-cover rounded-xl shadow-sm border border-gray-100"
-                src={`${import.meta.env.VITE_BASE_URL}/${imageUrl}`}
+                src={imageError ? iphoneImage : `${import.meta.env.VITE_BASE_URL}/${imageUrl}`}
                 alt={name || "Product"}
+                onError={handleImageError}
               />
             </div>
             <div className="flex-1 space-y-2">

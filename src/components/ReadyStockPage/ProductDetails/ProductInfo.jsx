@@ -25,6 +25,7 @@ import NotifyMePopup from "../NotifyMePopup";
 import BiddingForm from "../../negotiation/BiddingForm";
 import AddToCartPopup from "../AddToCartPopup";
 import BuyNowCheckoutModal from "../BuyNowCheckoutModal";
+import iphoneImage from "../../../assets/iphone.png";
 
 const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [currentProduct, setCurrentProduct] = useState(initialProduct);
@@ -35,6 +36,11 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [isBiddingFormOpen, setIsBiddingFormOpen] = useState(false);
   const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
   const [isBuyNowCheckoutOpen, setIsBuyNowCheckoutOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
 
   // Process product data
   const processedProduct = {
@@ -223,11 +229,39 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   </div>
                 </div>
 
-                {/* Enhanced Wishlist Button */}
-                <button
-                  className="absolute top-8 right-8 p-3 bg-white rounded-full shadow-xl hover:shadow-2xl border border-gray-100 hover:scale-110 transition-all duration-300 group"
-                  onClick={handleToggleWishlist}
-                >
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+        {/* Left Column - Image */}
+        <div className="lg:col-span-5">
+          <div className="relative mb-4">
+            <img
+              className="w-full h-64 sm:h-[450px] object-cover rounded-xl bg-white border border-gray-200"
+              src={imageError ? iphoneImage : processedProduct.mainImage}
+              alt={processedProduct.name}
+              onError={handleImageError}
+            />
+            <div className="absolute top-4 left-4 flex flex-col space-y-2">
+              {processedProduct.isVerified && (
+                <span className="bg-green-500 text-white text-xs font-medium px-2 py-1 rounded">
+                  Verified Seller
+                </span>
+              )}
+              {processedProduct.isFlashDeal && (
+                <span className="bg-orange-500 text-white text-xs font-medium px-2 py-1 rounded">
+                  Flash Deal
+                </span>
+              )}
+              <span
+                className={`${
+                  processedProduct.isExpired
+                    ? "bg-gray-100 text-gray-800"
+                    : processedProduct.stockStatus === "In Stock"
+                    ? "bg-green-100 text-green-800"
+                    : processedProduct.stockStatus === "Low Stock"
+                    ? "bg-yellow-100 text-yellow-800"
+                    : "bg-red-100 text-red-800"
+                } text-xs font-medium px-2 py-1 rounded inline-flex items-center`}
+              >
+                {processedProduct.isExpired && (
                   <FontAwesomeIcon
                     icon={isFavorite ? solidHeart : regularHeart}
                     className={`text-lg transition-all duration-300 ${
