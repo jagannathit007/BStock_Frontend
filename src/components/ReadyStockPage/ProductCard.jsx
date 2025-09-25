@@ -1,4 +1,3 @@
-// Updated ProductCard
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -24,6 +23,7 @@ const ProductCard = ({
   onRefresh,
   onWishlistChange,
   isInModal = false,
+  onOpenBiddingForm, // New prop for opening BiddingForm
 }) => {
   const navigate = useNavigate();
   const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
@@ -57,7 +57,6 @@ const ProductCard = ({
     isExpired,
   } = product;
 
-  // Derive purchase type label for display
   const purchaseType = product?.purchaseType;
   const purchaseTypeLabel = purchaseType
     ? purchaseType.toLowerCase() === "partial"
@@ -67,7 +66,6 @@ const ProductCard = ({
       : purchaseType
     : null;
 
-  // Check if product can accept notifications (out of stock but not expired)
   const derivedOutOfStock =
     typeof isOutOfStock === "boolean"
       ? isOutOfStock
@@ -90,20 +88,19 @@ const ProductCard = ({
     }
   };
 
-  // New function to get dynamic card background class
   const getCardBackgroundClass = () => {
     if (isExpired) {
-      return "bg-gray-200"; // Subtle gray for expired
+      return "bg-gray-200";
     }
     switch (stockStatus) {
       case "In Stock":
-        return "bg-white-50"; // Subtle green for in stock
+        return "bg-white-50";
       case "Low Stock":
-        return "bg-white-50"; // Subtle yellow for low stock
+        return "bg-white-50";
       case "Out of Stock":
-        return "bg-gray-100"; // Subtle red for out of stock
+        return "bg-gray-100";
       default:
-        return "bg-white-50"; // Default white background
+        return "bg-white-50";
     }
   };
 
@@ -121,56 +118,54 @@ const ProductCard = ({
     navigate(`/product/${id}`);
   };
 
-const handleAddToCart = async (e) => {
-  e.stopPropagation();
-  if (isOutOfStock || isExpired) return;
+  const handleAddToCart = async (e) => {
+    e.stopPropagation();
+    if (isOutOfStock || isExpired) return;
 
-  try {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    const { businessProfile } = user;
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const { businessProfile } = user;
 
-    // Check if businessName is null or blank
-    if (!businessProfile?.businessName || businessProfile.businessName.trim() === "") {
-      navigate("/profile");
+      if (!businessProfile?.businessName || businessProfile.businessName.trim() === "") {
+        navigate("/profile");
+        await Swal.fire({
+          icon: "warning",
+          title: "Business Details Required",
+          text: "Please add your business details before adding products to the cart.",
+          confirmButtonText: "Go to Settings",
+          confirmButtonColor: "#0071E0",
+        });
+        return;
+      }
+
+      if (user?.isApproved === false) {
+        await Swal.fire({
+          icon: "info",
+          title: "Pending Approval",
+          text: "Your business profile is not approved. Please wait for approval.",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#0071E0",
+        });
+        return;
+      }
+
+      const customerId = user._id || "";
+      if (!customerId) {
+        return navigate("/signin");
+      }
+      setIsAddToCartPopupOpen(true);
+    } catch (error) {
+      console.error("Error in add to cart:", error);
       await Swal.fire({
-        icon: "warning",
-        title: "Business Details Required",
-        text: "Please add your business details before adding products to the cart.",
-        confirmButtonText: "Go to Settings",
-        confirmButtonColor: "#0071E0",
-      });
-      return;
-    }
-
-    // Check if user is not approved
-    if (user?.isApproved === false) {
-      await Swal.fire({
-        icon: "info",
-        title: "Pending Approval",
-        text: "Your business profile is not approved. Please wait for approval.",
+        icon: "error",
+        title: "Error",
+        text: "An error occurred while adding to cart. Please try again.",
         confirmButtonText: "OK",
         confirmButtonColor: "#0071E0",
       });
-      return;
     }
+  };
 
-    // Proceed with add-to-cart
-    const customerId = user._id || "";
-    if (!customerId) {
-      return navigate("/signin");
-    }
-    setIsAddToCartPopupOpen(true);
-  } catch (error) {
-    console.error("Error in add to cart:", error);
-    await Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "An error occurred while adding to cart. Please try again.",
-      confirmButtonText: "OK",
-      confirmButtonColor: "#0071E0",
-    });
-  }
-};
   const handleNotifyToggle = async (e, nextValue) => {
     e.stopPropagation();
     if (!canNotify) return;
@@ -249,24 +244,23 @@ const handleAddToCart = async (e) => {
                 <div className="text-xs sm:text-sm text-gray-600 mt-1 truncate">
                   {description.split("•")[1]?.trim()}
                 </div>
-              
               </div>
             </div>
           </td>
           <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
             <div className="flex items-center mt-1 sm:mt-2">
-                  <span
-                    className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass()}`}
-                  >
-                    {isExpired && (
-                      <FontAwesomeIcon
-                        icon={faCalendarXmark}
-                        className="w-3 h-3 mr-1"
-                      />
-                    )}
-                    {getDisplayStatus()}
-                  </span>
-                </div>
+              <span
+                className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass()}`}
+              >
+                {isExpired && (
+                  <FontAwesomeIcon
+                    icon={faCalendarXmark}
+                    className="w-3 h-3 mr-1"
+                  />
+                )}
+                {getDisplayStatus()}
+              </span>
+            </div>
           </td>
           <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
             <div className="text-base sm:text-lg font-bold text-gray-900">
@@ -362,7 +356,13 @@ const handleAddToCart = async (e) => {
                   </button>
                 )
               ) : !isExpired && !isOutOfStock ? (
-                <button className="border border-gray-300 text-gray-700 p-1 sm:p-2 rounded-lg hover:bg-gray-50">
+                <button
+                  className="border border-gray-300 text-gray-700 p-1 sm:p-2 rounded-lg hover:bg-gray-50"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenBiddingForm(product); // Call handler with product
+                  }}
+                >
                   <FontAwesomeIcon
                     icon={faHandshake}
                     className="text-sm sm:text-base"
@@ -395,16 +395,6 @@ const handleAddToCart = async (e) => {
         </tr>
         {isAddToCartPopupOpen && (
           <AddToCartPopup product={product} onClose={handlePopupClose} />
-        )}
-        {isNotifyMePopupOpen && (
-          <NotifyMePopup
-            product={{
-              ...product,
-              isExpired: Boolean(isExpired),
-              expiryTime: product.expiryTime,
-            }}
-            onClose={() => setIsNotifyMePopupOpen(false)}
-          />
         )}
       </>
     );
@@ -465,8 +455,8 @@ const handleAddToCart = async (e) => {
         </div>
 
         <div className="text-xs text-gray-500 mb-3">
-          • MOQ: {moq} units • {stockCount} available<br/>
-          {/* {isExpired && <span className="ml-2 text-red-500">• Expired</span>} */}
+          • MOQ: {moq} units • {stockCount} available
+          <br />
           {purchaseTypeLabel && (
             <span className="">• Purchase: {purchaseTypeLabel}</span>
           )}
@@ -485,12 +475,6 @@ const handleAddToCart = async (e) => {
                 <FontAwesomeIcon icon={faCalendarXmark} className="mr-1" />
                 Expired
               </button>
-              {/* <button
-                className="flex-1 bg-gray-200 text-gray-400 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium cursor-not-allowed"
-                onClick={(e) => e.stopPropagation()}
-              >
-                Unavailable
-              </button> */}
             </>
           ) : isOutOfStock ? (
             <>
@@ -524,7 +508,10 @@ const handleAddToCart = async (e) => {
               </button>
               <button
                 className="flex-1 bg-[#0071E0] text-white py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium hover:bg-blue-600 cursor-pointer"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenBiddingForm(product); // Call handler with product
+                }}
               >
                 Offer
               </button>

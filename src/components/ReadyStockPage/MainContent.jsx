@@ -1,16 +1,15 @@
-// Updated MainContent
-// Note: Added event listener for 'wishlistUpdated' to trigger refreshTick for automatic sync when wishlist changes elsewhere (e.g., from modal).
-
 import React, { useEffect, useMemo, useState } from "react";
 import ProductCard from "./ProductCard";
 import SideFilter from "../SideFilter";
 import ViewControls from "./ViewControls";
+import BiddingForm from "../negotiation/BiddingForm"; // Import BiddingForm
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChevronLeft,
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
 import axios from "axios";
+import Swal from "sweetalert2";
 
 const MainContent = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -21,8 +20,10 @@ const MainContent = () => {
   const [totalProductsCount, setTotalProductsCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
-  const [filters, setFilters] = useState({}); // Store filter values from SideFilter
+  const [filters, setFilters] = useState({});
   const [refreshTick, setRefreshTick] = useState(false);
+  const [isBiddingFormOpen, setIsBiddingFormOpen] = useState(false); // State for BiddingForm
+  const [selectedProduct, setSelectedProduct] = useState(null); // Track selected product for bidding
 
   const mapApiProductToUi = (p) => {
     const id = p._id || p.id || "";
@@ -57,7 +58,7 @@ const MainContent = () => {
       stockStatus,
       stockCount: stock,
       imageUrl,
-      isFavorite: p.WishList || false, // Map backend WishList field to isFavorite
+      isFavorite: p.WishList || false,
       isOutOfStock: stock <= 0,
       isExpired,
       expiryTime,
@@ -73,14 +74,14 @@ const MainContent = () => {
       setErrorMessage(null);
       try {
         const baseUrl =
-          import.meta.env.VITE_BASE_URL || "http://localhost:3200"; // Fallback URL
+          import.meta.env.VITE_BASE_URL || "http://localhost:3200";
         const response = await axios.post(
           `${baseUrl}/api/customer/get-product-list`,
           {
             page: currentPage,
             limit: itemsPerPage,
-            search: filters.search || "", // Include search term from filters, default to empty string
-            ...filters, // Include other filter parameters
+            search: filters.search || "",
+            ...filters,
           },
           {
             headers: {
@@ -96,7 +97,7 @@ const MainContent = () => {
         if (response.data.status === 200) {
           const payload = response.data.data;
           const docs = payload?.docs || [];
-          const totalDocs = Number(payload?.totalDocs) || 0; // Ensure totalDocs is a number
+          const totalDocs = Number(payload?.totalDocs) || 0;
           const mapped = docs.map(mapApiProductToUi);
           setFetchedProducts(mapped);
           setTotalProductsCount(totalDocs);
@@ -124,24 +125,90 @@ const MainContent = () => {
     setCurrentPage(1);
   }, [viewMode]);
 
-  // Add event listener for wishlist updates from other components
   useEffect(() => {
     const handleWishlistUpdate = () => {
       setRefreshTick((prev) => !prev);
     };
-    window.addEventListener('wishlistUpdated', handleWishlistUpdate);
+    window.addEventListener("wishlistUpdated", handleWishlistUpdate);
     return () => {
-      window.removeEventListener('wishlistUpdated', handleWishlistUpdate);
+      window.removeEventListener("wishlistUpdated", handleWishlistUpdate);
     };
   }, []);
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
-    setCurrentPage(1); // Reset to first page on filter change
+    setCurrentPage(1);
   };
 
   const handleRefresh = () => {
     setRefreshTick((prev) => !prev);
+  };
+
+  // Handle opening BiddingForm
+  const handleOpenBiddingForm = async (product) => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const { businessProfile } = user;
+
+      if (!businessProfile?.businessName || businessProfile.businessName.trim() === "") {
+        window.location.href = "/profile";
+        await Swal.fire({
+          icon: "warning",
+          title: "Business Details Required",
+          text: "Please add your business details before making an offer.",
+          confirmButtonText: "Go to Settings",
+          confirmButtonColor: "#0071E0",
+        });
+        return;
+      }
+
+      if (user?.isApproved === false) {
+        await Swal.fire({
+          icon: "info",
+          title: "Pending Approval",
+          text: "Your business profile is not approved. Please wait for approval.",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#0071E0",
+        });
+        return;
+      }
+
+      const customerId = user._id || "";
+      if (!customerId) {
+        window.location.href = "/signin";
+        return;
+      }
+
+      setSelectedProduct(product);
+      setIsBiddingFormOpen(true);
+    } catch (error) {
+      console.error("Error in opening bidding form:", error);
+      await Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "An error occurred while opening the bidding form. Please try again.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#0071E0",
+      });
+    }
+  };
+
+  // Handle closing BiddingForm
+  const handleBiddingFormClose = () => {
+    setIsBiddingFormOpen(false);
+    setSelectedProduct(null);
+  };
+
+  // Handle successful bid submission
+  const handleBidSuccess = () => {
+    Swal.fire({
+      icon: "success",
+      title: "Bid Submitted",
+      text: "Your bid has been successfully submitted!",
+      confirmButtonText: "OK",
+      confirmButtonColor: "#0071E0",
+    });
+    setRefreshTick((prev) => !prev); // Refresh product list
   };
 
   const indexOfLastProduct = useMemo(() => currentPage * itemsPerPage, [currentPage, itemsPerPage]);
@@ -229,7 +296,13 @@ const MainContent = () => {
                   </div>
                 )}
                 {currentProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} viewMode={viewMode} onRefresh={handleRefresh} />
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    viewMode={viewMode}
+                    onRefresh={handleRefresh}
+                    onOpenBiddingForm={handleOpenBiddingForm} // Pass handler
+                  />
                 ))}
               </div>
 
@@ -337,6 +410,7 @@ const MainContent = () => {
                           product={product}
                           viewMode={viewMode}
                           onRefresh={handleRefresh}
+                          onOpenBiddingForm={handleOpenBiddingForm} // Pass handler
                         />
                       ))}
                     </tbody>
@@ -397,6 +471,15 @@ const MainContent = () => {
           )}
         </div>
       </div>
+
+      {isBiddingFormOpen && selectedProduct && (
+        <BiddingForm
+          product={selectedProduct}
+          isOpen={isBiddingFormOpen}
+          onClose={handleBiddingFormClose}
+          onSuccess={handleBidSuccess}
+        />
+      )}
     </main>
   );
 };

@@ -49,7 +49,7 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-[#00000042] flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
         <div className="p-6">
           {/* Header */}
@@ -159,7 +159,7 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
           </form>
 
           {/* Info */}
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+          {/* <div className="mt-6 p-4 bg-blue-50 rounded-lg">
             <h4 className="text-sm font-medium text-blue-900 mb-2">How it works:</h4>
             <ul className="text-xs text-blue-800 space-y-1">
               <li>• Your bid will be sent to our admin team</li>
@@ -167,7 +167,7 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
               <li>• You'll be notified of any responses</li>
               <li>• Once accepted, you can proceed to purchase</li>
             </ul>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
