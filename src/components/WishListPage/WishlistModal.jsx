@@ -19,6 +19,11 @@ const WishlistModal = ({ isOpen, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProductsCount, setTotalProductsCount] = useState(0);
+  const [imageErrors, setImageErrors] = useState({});
+
+  const handleImageError = (productId) => {
+    setImageErrors(prev => ({ ...prev, [productId]: true }));
+  };
   const itemsPerPage = 10;
   const totalPages = Math.max(Math.ceil(totalProductsCount / itemsPerPage), 1);
 
@@ -199,9 +204,10 @@ const WishlistModal = ({ isOpen, onClose }) => {
                     <div className="flex items-center gap-4">
                       <div className="flex-shrink-0">
                         <img
-                          src={product.imageUrl}
+                          src={imageErrors[product.id] ? "src/assets/iphone.png" : product.imageUrl}
                           alt={product.name}
                           className="w-20 h-20 object-cover rounded-lg border border-gray-100"
+                          onError={() => handleImageError(product.id)}
                         />
                       </div>
 
