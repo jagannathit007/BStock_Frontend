@@ -26,7 +26,7 @@ const ProductCard = ({
   const navigate = useNavigate();
   const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
   const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(product.isFavorite); // Initialize with product's isFavorite
+  const [isFavorite, setIsFavorite] = useState(product.isFavorite);
   const [notify, setNotify] = useState(Boolean(product?.notify));
 
   useEffect(() => {
@@ -42,8 +42,6 @@ const ProductCard = ({
     name,
     description,
     price,
-    originalPrice,
-    discount,
     moq,
     stockStatus,
     stockCount,
@@ -55,7 +53,11 @@ const ProductCard = ({
   // Derive purchase type label for display
   const purchaseType = product?.purchaseType;
   const purchaseTypeLabel = purchaseType
-    ? (purchaseType.toLowerCase() === 'partial' ? 'Partial' : purchaseType.toLowerCase() === 'full' ? 'Full' : purchaseType)
+    ? purchaseType.toLowerCase() === "partial"
+      ? "Partial"
+      : purchaseType.toLowerCase() === "full"
+      ? "Full"
+      : purchaseType
     : null;
 
   // Check if product can accept notifications (out of stock but not expired)
@@ -78,6 +80,23 @@ const ProductCard = ({
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  // New function to get dynamic card background class
+  const getCardBackgroundClass = () => {
+    if (isExpired) {
+      return "bg-gray-200"; // Subtle gray for expired
+    }
+    switch (stockStatus) {
+      case "In Stock":
+        return "bg-white-50"; // Subtle green for in stock
+      case "Low Stock":
+        return "bg-white-50"; // Subtle yellow for low stock
+      case "Out of Stock":
+        return "bg-gray-100"; // Subtle red for out of stock
+      default:
+        return "bg-white"; // Default white background
     }
   };
 
@@ -128,11 +147,9 @@ const ProductCard = ({
       }
     } catch (err) {
       console.error("Notification toggle error:", err);
-      // errors are toasted in service
     }
   };
 
-  // Handle wishlist toggle
   const handleToggleWishlist = async (e) => {
     e.stopPropagation();
     try {
@@ -141,21 +158,19 @@ const ProductCard = ({
         productId: id,
         wishlist: newWishlistStatus,
       });
-      setIsFavorite(newWishlistStatus); // Update local state
+      setIsFavorite(newWishlistStatus);
       if (onWishlistChange) {
-        onWishlistChange(id, newWishlistStatus); // Call callback with productId and new status
+        onWishlistChange(id, newWishlistStatus);
       }
       if (onRefresh) {
-        onRefresh(); // Refresh listing if prop is provided
+        onRefresh();
       }
-      // Dispatch event for cross-component sync
       window.dispatchEvent(new Event("wishlistUpdated"));
     } catch (error) {
       console.error("Failed to toggle wishlist:", error);
     }
   };
 
-  // Handle popup close and refresh cart count
   const handlePopupClose = async () => {
     setIsAddToCartPopupOpen(false);
     try {
@@ -223,12 +238,6 @@ const ProductCard = ({
             <div className="text-base sm:text-lg font-bold text-gray-900">
               ${price}
             </div>
-            <div className="text-xs sm:text-sm text-gray-500 line-through">
-              ${originalPrice}
-            </div>
-            <span className="text-xs text-green-600 font-medium">
-              Save ${discount}
-            </span>
           </td>
           <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
             <div
@@ -369,7 +378,7 @@ const ProductCard = ({
 
   return (
     <div
-      className="bg-white rounded-[18px] shadow-[2px_4px_12px_#00000014] hover:shadow-[6px_8px_24px_#00000026] transition-shadow duration-200 h-full flex flex-col cursor-pointer"
+      className={`rounded-[18px] shadow-[2px_4px_12px_#00000014] hover:shadow-[6px_8px_24px_#00000026] transition-shadow duration-200 h-full flex flex-col cursor-pointer ${getCardBackgroundClass()}`}
       onClick={!isInModal ? handleProductClick : undefined}
     >
       <div className="relative flex-1">
@@ -418,12 +427,6 @@ const ProductCard = ({
           <span className="text-base sm:text-lg font-bold text-gray-900">
             ${price}
           </span>
-          <span className="ml-2 text-xs sm:text-sm text-gray-500 line-through">
-            ${originalPrice}
-          </span>
-          <span className="ml-2 text-xs text-green-600 font-medium">
-            Save ${discount}
-          </span>
         </div>
 
         <div className="text-xs text-gray-500 mb-3">
@@ -447,12 +450,12 @@ const ProductCard = ({
                 <FontAwesomeIcon icon={faCalendarXmark} className="mr-1" />
                 Expired
               </button>
-              <button
+              {/* <button
                 className="flex-1 bg-gray-200 text-gray-400 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium cursor-not-allowed"
                 onClick={(e) => e.stopPropagation()}
               >
                 Unavailable
-              </button>
+              </button> */}
             </>
           ) : isOutOfStock ? (
             <>

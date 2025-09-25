@@ -115,6 +115,7 @@ export class ProductService {
 
     try {
       const res = await api.post(url, { id });
+      
       if (res.data?.data === null) {
         throw new Error(res.data?.message || "Failed to fetch Product");
       }
