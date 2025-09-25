@@ -16,6 +16,7 @@ import { ProductService } from "../../../services/products/products.services";
 import NotifyMePopup from "../NotifyMePopup";
 import BiddingForm from "../../negotiation/BiddingForm";
 import AddToCartPopup from "../AddToCartPopup";
+import BuyNowCheckoutModal from "../BuyNowCheckoutModal";
 
 const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [currentProduct, setCurrentProduct] = useState(initialProduct);
@@ -25,6 +26,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
   const [isBiddingFormOpen, setIsBiddingFormOpen] = useState(false);
   const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
+  const [isBuyNowCheckoutOpen, setIsBuyNowCheckoutOpen] = useState(false);
 
   // Process product data
   const processedProduct = {
@@ -146,6 +148,21 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       return navigate('/signin');
     }
     setIsAddToCartPopupOpen(true);
+  };
+
+  const handleBuyNowClick = (e) => {
+    e.stopPropagation();
+    if (processedProduct.isOutOfStock || processedProduct.isExpired) return;
+    const customerId = localStorage.getItem('userId') || '';
+    if (!customerId) {
+      return navigate('/signin');
+    }
+    setIsBuyNowCheckoutOpen(true);
+  };
+
+  const handleBuyNowSuccess = () => {
+    console.log("Order placed successfully!");
+    // The modal will show success message and close automatically
   };
 
   const popupProduct = {
@@ -558,7 +575,10 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   <FontAwesomeIcon icon={faCartShopping} className="mr-2" />
                   Add to Cart
                 </button>
-                <button className="w-full bg-blue-600 text-white py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center">
+                <button 
+                  onClick={handleBuyNowClick}
+                  className="w-full bg-blue-600 text-white py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center"
+                >
                   <FontAwesomeIcon icon={faBolt} className="mr-2" />
                   Buy Now
                 </button>
@@ -597,6 +617,16 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
           isOpen={isBiddingFormOpen}
           onClose={() => setIsBiddingFormOpen(false)}
           onSuccess={handleBiddingSuccess}
+        />
+      )}
+
+      {isBuyNowCheckoutOpen && (
+        <BuyNowCheckoutModal
+          isOpen={isBuyNowCheckoutOpen}
+          onClose={() => setIsBuyNowCheckoutOpen(false)}
+          product={popupProduct}
+          quantity={quantity}
+          onSuccess={handleBuyNowSuccess}
         />
       )}
     </div>
