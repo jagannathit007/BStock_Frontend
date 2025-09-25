@@ -5,6 +5,8 @@ import toastHelper from "../utils/toastHelper";
 
 // Top-level, stable components to prevent remounts (focus loss)
 const ProfilePictureUpload = ({ profileImage, displayName, onChangeImage }) => {
+  const [imageError, setImageError] = useState(false);
+
   const hasImage = useMemo(() => {
     return (typeof profileImage === 'string' && profileImage.trim() !== '') || 
            (profileImage instanceof File);
@@ -25,15 +27,25 @@ const ProfilePictureUpload = ({ profileImage, displayName, onChangeImage }) => {
     return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
   }, [displayName]);
 
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
+  // Reset image error when profileImage changes
+  useEffect(() => {
+    setImageError(false);
+  }, [profileImage]);
+
   return (
     <div className="flex flex-col items-center">
       <div className="relative group cursor-pointer mb-4">
         <div className="relative bg-white p-1 rounded-full shadow-md">
           {hasImage ? (
             <img
-              src={previewSrc}
+              src={imageError ? "/images/avtar.jpg" : previewSrc}
               alt="Profile"
               className="w-28 h-28 rounded-full object-cover ring-2 ring-gray-200"
+              onError={handleImageError}
             />
           ) : (
             <div className="w-28 h-28 rounded-full bg-gradient-to-br from-[#0071E0] to-[#005BB5] flex items-center justify-center ring-2 ring-gray-200">
@@ -133,6 +145,26 @@ const ProfileDetails = ({ formData, onChange, onSave }) => {
 };
 
 const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSave, status }) => {
+  const [logoImageError, setLogoImageError] = useState(false);
+  const [certificateImageError, setCertificateImageError] = useState(false);
+
+  const handleLogoImageError = () => {
+    setLogoImageError(true);
+  };
+
+  const handleCertificateImageError = () => {
+    setCertificateImageError(true);
+  };
+
+  // Reset image errors when images change
+  useEffect(() => {
+    setLogoImageError(false);
+  }, [formData.businessLogo]);
+
+  useEffect(() => {
+    setCertificateImageError(false);
+  }, [formData.certificate]);
+
   const countries = [
     "United States", "Hongkong", "Dubai", "Singapore", "Canada", "United Kingdom", "Australia", "Germany", "France", "Italy", "Spain", "Netherlands", "India", "Japan", "China", "Brazil", "Mexico", "South Africa"
   ];
@@ -230,9 +262,10 @@ const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSa
               <div className="mt-3">
                 <div className="relative inline-block">
                   <img
-                    src={previews.businessLogo}
+                    src={logoImageError ? "/images/avtar.jpg" : previews.businessLogo}
                     alt="Business Logo Preview"
                     className="w-24 h-24 object-cover rounded-lg border border-gray-200 shadow-sm"
+                    onError={handleLogoImageError}
                   />
                   <button
                     onClick={() => {
@@ -278,9 +311,10 @@ const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSa
                   >
                     {certificateIsImage ? (
                       <img
-                        src={previews.certificate}
+                        src={certificateImageError ? "/images/avtar.jpg" : previews.certificate}
                         alt="Certificate Preview"
                         className="w-32 h-24 object-cover rounded-lg border border-gray-200 shadow-sm"
+                        onError={handleCertificateImageError}
                       />
                     ) : (
                       <div className="w-32 h-24 bg-gray-100 rounded-lg border border-gray-200 shadow-sm flex flex-col items-center justify-center">

@@ -165,6 +165,17 @@ const Header = ({ onLogout }) => {
     };
   }, []);
 
+  const [imageError, setImageError] = useState(false);
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
+  // Reset image error when avatarUrl changes
+  useEffect(() => {
+    setImageError(false);
+  }, [avatarUrl]);
+
   const hasImage = useMemo(() => {
     return avatarUrl && avatarUrl.trim() !== '';
   }, [avatarUrl]);
@@ -285,9 +296,10 @@ const Header = ({ onLogout }) => {
                 >
                   {hasImage ? (
                     <img
-                      src={avatarUrl}
+                      src={imageError ? "/images/avtar.jpg" : avatarUrl}
                       alt="Profile"
                       className="w-8 h-8 rounded-full border-2 border-gray-200 object-cover"
+                      onError={handleImageError}
                     />
                   ) : (
                     <div className="w-8 h-8 rounded-full border-2 border-gray-200 bg-gradient-to-br from-[#0071E0] to-[#005BB5] flex items-center justify-center">
