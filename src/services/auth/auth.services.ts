@@ -29,6 +29,7 @@ export interface ProfileData {
   logo?: File | string | null;
   certificate?: File | string | null;
   profileImage?: File | string | null;
+  whatsappNumber?: string;
 }
 
 export interface ProfileResponse<T = any> {
@@ -58,6 +59,37 @@ export interface ChangePasswordRequest {
 }
 
 export class AuthService {
+  // Helper method to convert relative URLs to absolute URLs
+  private static toAbsoluteUrl = (p: string | null | undefined): string | null => {
+    if (!p || typeof p !== 'string') return null;
+    const normalized = p.replace(/\\/g, '/');
+    if (/^https?:\/\//i.test(normalized)) return normalized;
+    return `${env.baseUrl}/${normalized.replace(/^\//, '')}`;
+  };
+
+  // Helper method to save user data to localStorage
+  private static saveUserToLocalStorage = (userData: any): void => {
+    try {
+      localStorage.setItem("user", JSON.stringify(userData));
+      
+      // Save profile image separately if available
+      const profileImage = userData.profileImage || userData.avatar;
+      if (profileImage) {
+        const absoluteUrl = this.toAbsoluteUrl(profileImage);
+        if (absoluteUrl) {
+          localStorage.setItem("profileImageUrl", absoluteUrl);
+        }
+      }
+
+      // Dispatch custom event to notify components about the update
+      window.dispatchEvent(new CustomEvent('profileUpdated', { 
+        detail: userData 
+      }));
+    } catch (error) {
+      console.error('Failed to save user data to localStorage:', error);
+    }
+  };
+
   // Register a new user
   static register = async (userData: RegisterRequest): Promise<AuthResponse> => {
     const baseUrl = env.baseUrl;
@@ -96,7 +128,15 @@ export class AuthService {
 
     try {
       const res = await api.post(url, loginData);
+      
+      // Store userId
       localStorage.setItem('userId', res.data.data?.customer?._id || '');
+      
+      // Save customer data to localStorage
+      if (res.data.data?.customer) {
+        this.saveUserToLocalStorage(res.data.data.customer);
+      }
+      
       toastHelper.showTost(res.data.message || 'Login successful!', 'success');
       return res.data;
     } catch (err: any) {
@@ -112,6 +152,15 @@ export class AuthService {
     const url = `${baseUrl}/api/customer/get-profile`;
     try {
       const res = await api.post(url, {});
+      
+      // Save updated user data to localStorage when profile is fetched
+      if (res.data) {
+        const userData = res.data.data || res.data.customer || res.data;
+        if (userData) {
+          this.saveUserToLocalStorage(userData);
+        }
+      }
+      
       return res.data;
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Failed to load profile';
@@ -132,6 +181,7 @@ export class AuthService {
     if (payload.name !== undefined) form.append('name', String(payload.name));
     if (payload.email !== undefined) form.append('email', String(payload.email));
     if (payload.mobileNumber !== undefined) form.append('mobileNumber', String(payload.mobileNumber));
+    if (payload.whatsappNumber !== undefined) form.append('whatsappNumber', String(payload.whatsappNumber));
 
     if (payload.logo instanceof File) {
       form.append('logo', payload.logo);
@@ -153,6 +203,15 @@ export class AuthService {
 
     try {
       const res = await api.post(url, form, { headers: { 'Content-Type': 'multipart/form-data' } });
+      
+      // Update localStorage with the updated profile data
+      if (res.data) {
+        const userData = res.data.data || res.data.customer || res.data;
+        if (userData) {
+          this.saveUserToLocalStorage(userData);
+        }
+      }
+      
       toastHelper.showTost(res.data?.message || 'Profile updated successfully', 'success');
       return res.data;
     } catch (err: any) {
@@ -177,6 +236,19 @@ export class AuthService {
       const errorMessage = err.response?.data?.message || 'Failed to change password';
       toastHelper.showTost(errorMessage, 'error');
       throw new Error(errorMessage);
+    }
+  };
+
+  // Clear user data from localStorage (for logout)
+  static clearUserData = (): void => {
+    try {
+      localStorage.removeItem('user');
+      localStorage.removeItem('profileImageUrl');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('token');
+      localStorage.removeItem('isLoggedIn');
+    } catch (error) {
+      console.error('Failed to clear user data from localStorage:', error);
     }
   };
 }

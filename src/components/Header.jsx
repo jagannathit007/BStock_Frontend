@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Handshake } from "lucide-react";
 import CartService from "../services/cart/cart.services";
@@ -97,6 +97,17 @@ const Header = ({ onLogout }) => {
     return "";
   });
 
+  const [userName, setUserName] = useState(() => {
+    try {
+      const raw = localStorage.getItem('user');
+      if (raw) {
+        const user = JSON.parse(raw);
+        return user?.name || "";
+      }
+    } catch {}
+    return "";
+  });
+
   useEffect(() => {
     const applyAvatar = () => {
       const storedDirect = localStorage.getItem("profileImageUrl");
@@ -117,15 +128,55 @@ const Header = ({ onLogout }) => {
       } catch {}
       setAvatarUrl("");
     };
+
+    const applyUserName = () => {
+      try {
+        const raw = localStorage.getItem('user');
+        if (raw) {
+          const user = JSON.parse(raw);
+          setUserName(user?.name || "");
+        }
+      } catch {}
+    };
+
     applyAvatar();
+    applyUserName();
+
+    // Listen for storage events from other tabs/windows
     const onStorage = (e) => {
       if (e.key === "profileImageUrl" || e.key === "user") {
         applyAvatar();
+        applyUserName();
       }
     };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+
+    // Listen for custom events from the same page
+    const onProfileUpdate = () => {
+      applyAvatar();
+      applyUserName();
+    };
+
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('profileUpdated', onProfileUpdate);
+    
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('profileUpdated', onProfileUpdate);
+    };
   }, []);
+
+  const hasImage = useMemo(() => {
+    return avatarUrl && avatarUrl.trim() !== '';
+  }, [avatarUrl]);
+
+  const getInitials = useMemo(() => {
+    if (!userName) return 'U';
+    const words = userName.trim().split(' ');
+    if (words.length === 1) {
+      return words[0].substring(0, 2).toUpperCase();
+    }
+    return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
+  }, [userName]);
 
   return (
     <>
@@ -232,14 +283,18 @@ const Header = ({ onLogout }) => {
                   className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 rounded-lg p-1 transition-colors duration-200"
                   onClick={handleProfileClick}
                 >
-                  {avatarUrl ? (
+                  {hasImage ? (
                     <img
                       src={avatarUrl}
                       alt="Profile"
                       className="w-8 h-8 rounded-full border-2 border-gray-200 object-cover"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full border-2 border-gray-200 bg-gray-200" />
+                    <div className="w-8 h-8 rounded-full border-2 border-gray-200 bg-gradient-to-br from-[#0071E0] to-[#005BB5] flex items-center justify-center">
+                      <span className="text-white text-xs font-semibold">
+                        {getInitials}
+                      </span>
+                    </div>
                   )}
                 </div>
 

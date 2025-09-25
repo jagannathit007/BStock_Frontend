@@ -5,21 +5,43 @@ import toastHelper from "../utils/toastHelper";
 
 // Top-level, stable components to prevent remounts (focus loss)
 const ProfilePictureUpload = ({ profileImage, displayName, onChangeImage }) => {
-  const previewSrc = useMemo(() => {
-    if (typeof profileImage === 'string') return profileImage;
-    if (profileImage instanceof File) return URL.createObjectURL(profileImage);
-    return "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg";
+  const hasImage = useMemo(() => {
+    return (typeof profileImage === 'string' && profileImage.trim() !== '') || 
+           (profileImage instanceof File);
   }, [profileImage]);
+
+  const previewSrc = useMemo(() => {
+    if (typeof profileImage === 'string' && profileImage.trim() !== '') return profileImage;
+    if (profileImage instanceof File) return URL.createObjectURL(profileImage);
+    return null;
+  }, [profileImage]);
+
+  const getInitials = useMemo(() => {
+    if (!displayName) return 'U';
+    const words = displayName.trim().split(' ');
+    if (words.length === 1) {
+      return words[0].substring(0, 2).toUpperCase();
+    }
+    return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
+  }, [displayName]);
 
   return (
     <div className="flex flex-col items-center">
       <div className="relative group cursor-pointer mb-4">
         <div className="relative bg-white p-1 rounded-full shadow-md">
-          <img
-            src={previewSrc}
-            alt="Profile"
-            className="w-28 h-28 rounded-full object-cover ring-2 ring-gray-200"
-          />
+          {hasImage ? (
+            <img
+              src={previewSrc}
+              alt="Profile"
+              className="w-28 h-28 rounded-full object-cover ring-2 ring-gray-200"
+            />
+          ) : (
+            <div className="w-28 h-28 rounded-full bg-gradient-to-br from-[#0071E0] to-[#005BB5] flex items-center justify-center ring-2 ring-gray-200">
+              <span className="text-white text-2xl font-semibold">
+                {getInitials}
+              </span>
+            </div>
+          )}
         </div>
         <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <label className="cursor-pointer p-3 rounded-full hover:bg-white/20 transition-colors duration-200" style={{ backgroundColor: "rgba(255, 255, 255, 0.1)" }}>
@@ -74,7 +96,9 @@ const ProfileDetails = ({ formData, onChange, onSave }) => {
     { key: "name", label: "Name", icon: "fas fa-user", type: "text", width: "full" },
     { key: "email", label: "Email Address", icon: "fas fa-envelope", type: "email", width: "full" },
     { key: "mobileNumber", label: "Mobile Number", icon: "fas fa-phone", type: "tel", width: "full" },
+    { key: "whatsappNumber", label: "WhatsApp Number", icon: "fab fa-whatsapp", type: "tel", width: "full" },
   ];
+  
   return (
     <div className="space-y-6">
       <div className="pb-4 border-b border-gray-200">
@@ -110,11 +134,12 @@ const ProfileDetails = ({ formData, onChange, onSave }) => {
 
 const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSave, status }) => {
   const countries = [
-    "United States", "Canada", "United Kingdom", "Australia", "Germany", "France", "Italy", "Spain", "Netherlands", "India", "Japan", "China", "Brazil", "Mexico", "South Africa"
+    "United States", "Hongkong", "Dubai", "Singapore", "Canada", "United Kingdom", "Australia", "Germany", "France", "Italy", "Spain", "Netherlands", "India", "Japan", "China", "Brazil", "Mexico", "South Africa"
   ];
   const logoFileName = formData.businessLogo ? (typeof formData.businessLogo === 'string' ? formData.businessLogo.split('/').pop() : formData.businessLogo.name) : '';
   const certificateExt = formData.certificate ? (typeof formData.certificate === 'string' ? (formData.certificate.split('.').pop() || '').toUpperCase() : (formData.certificate.name.split('.').pop() || '').toUpperCase()) : '';
   const certificateIsImage = typeof formData.certificate === 'object' && formData.certificate?.type?.startsWith('image/');
+
   return (
     <div className="space-y-6">
       <div className="pb-4 border-b border-gray-200">
@@ -145,14 +170,24 @@ const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSa
             <i className="fas fa-building w-4 h-4 mr-2" style={{ color: "#0071E0" }}></i>
             Business Name
           </label>
-          <input type="text" value={formData.businessName ?? ""} onChange={(e) => onChangeField("businessName", e.target.value)} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 text-sm" placeholder="Enter your business name" />
+          <input
+            type="text"
+            value={formData.businessName ?? ""}
+            onChange={(e) => onChangeField("businessName", e.target.value)}
+            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 text-sm"
+            placeholder="Enter your business name"
+          />
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700 flex items-center">
             <i className="fas fa-globe w-4 h-4 mr-2" style={{ color: "#0071E0" }}></i>
             Country
           </label>
-          <select value={formData.country ?? ""} onChange={(e) => onChangeField("country", e.target.value)} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 text-sm">
+          <select
+            value={formData.country ?? ""}
+            onChange={(e) => onChangeField("country", e.target.value)}
+            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 text-sm"
+          >
             <option value="">Select your country</option>
             {countries.map((country) => (
               <option key={country} value={country}>{country}</option>
@@ -164,7 +199,13 @@ const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSa
             <i className="fas fa-map-marker-alt w-4 h-4 mr-2" style={{ color: "#0071E0" }}></i>
             Business Address <span className="text-gray-400 ml-1">(Optional)</span>
           </label>
-          <textarea value={formData.address ?? ""} onChange={(e) => onChangeField("address", e.target.value)} rows="3" className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 text-sm" placeholder="Enter your business address" />
+          <textarea
+            value={formData.address ?? ""}
+            onChange={(e) => onChangeField("address", e.target.value)}
+            rows="3"
+            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 text-sm"
+            placeholder="Enter your business address"
+          />
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700 flex items-center">
@@ -174,7 +215,12 @@ const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSa
           <div className="space-y-3">
             <div className="flex items-center space-x-3">
               <label className="cursor-pointer px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-sm">
-                <input type="file" accept="image/*" onChange={(e) => onChangeFile("businessLogo", e.target.files[0])} className="hidden" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => onChangeFile("businessLogo", e.target.files[0])}
+                  className="hidden"
+                />
                 <i className="fas fa-upload mr-2"></i>
                 Choose Logo
               </label>
@@ -183,8 +229,18 @@ const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSa
             {previews.businessLogo && (
               <div className="mt-3">
                 <div className="relative inline-block">
-                  <img src={previews.businessLogo} alt="Business Logo Preview" className="w-24 h-24 object-cover rounded-lg border border-gray-200 shadow-sm" />
-                  <button onClick={() => { onChangeField('businessLogo', null); onChangeFile('businessLogo', null); }} className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors duration-200 text-xs">
+                  <img
+                    src={previews.businessLogo}
+                    alt="Business Logo Preview"
+                    className="w-24 h-24 object-cover rounded-lg border border-gray-200 shadow-sm"
+                  />
+                  <button
+                    onClick={() => {
+                      onChangeField('businessLogo', null);
+                      onChangeFile('businessLogo', null);
+                    }}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors duration-200 text-xs"
+                  >
                     <i className="fas fa-times"></i>
                   </button>
                 </div>
@@ -200,7 +256,12 @@ const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSa
           <div className="space-y-3">
             <div className="flex items-center space-x-3">
               <label className="cursor-pointer px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-sm">
-                <input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" onChange={(e) => onChangeFile("certificate", e.target.files[0])} className="hidden" />
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  onChange={(e) => onChangeFile("certificate", e.target.files[0])}
+                  className="hidden"
+                />
                 <i className="fas fa-upload mr-2"></i>
                 Choose Certificate
               </label>
@@ -209,15 +270,32 @@ const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSa
             {previews.certificate && formData.certificate && (
               <div className="mt-3">
                 <div className="relative inline-block">
-                  {certificateIsImage ? (
-                    <img src={previews.certificate} alt="Certificate Preview" className="w-32 h-24 object-cover rounded-lg border border-gray-200 shadow-sm" />
-                  ) : (
-                    <div className="w-32 h-24 bg-gray-100 rounded-lg border border-gray-200 shadow-sm flex flex-col items-center justify-center">
-                      <i className="fas fa-file-alt text-2xl text-gray-400 mb-1"></i>
-                      <span className="text-xs text-gray-500 text-center px-1">{certificateExt}</span>
-                    </div>
-                  )}
-                  <button onClick={() => { onChangeField('certificate', null); onChangeFile('certificate', null); }} className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors duration-200 text-xs">
+                  <a
+                    href={previews.certificate}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
+                    {certificateIsImage ? (
+                      <img
+                        src={previews.certificate}
+                        alt="Certificate Preview"
+                        className="w-32 h-24 object-cover rounded-lg border border-gray-200 shadow-sm"
+                      />
+                    ) : (
+                      <div className="w-32 h-24 bg-gray-100 rounded-lg border border-gray-200 shadow-sm flex flex-col items-center justify-center">
+                        <i className="fas fa-file-alt text-2xl text-gray-400 mb-1"></i>
+                        <span className="text-xs text-gray-500 text-center px-1">{certificateExt}</span>
+                      </div>
+                    )}
+                  </a>
+                  <button
+                    onClick={() => {
+                      onChangeField('certificate', null);
+                      onChangeFile('certificate', null);
+                    }}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors duration-200 text-xs"
+                  >
                     <i className="fas fa-times"></i>
                   </button>
                 </div>
@@ -227,7 +305,10 @@ const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSa
         </div>
       </div>
       <div className="flex justify-end pt-4">
-        <button onClick={onSave} className="px-6 py-2 bg-[#0071E0] text-white rounded-lg flex items-center space-x-2 hover:bg-[#005BB5] transition-colors duration-200 shadow-sm hover:shadow-md">
+        <button
+          onClick={onSave}
+          className="px-6 py-2 bg-[#0071E0] text-white rounded-lg flex items-center space-x-2 hover:bg-[#005BB5] transition-colors duration-200 shadow-sm hover:shadow-md"
+        >
           <i className="fas fa-save"></i>
           <span>Save Business Profile</span>
         </button>
@@ -287,6 +368,7 @@ const ProfilePage = () => {
     name: "",
     email: "",
     mobileNumber: "",
+    whatsappNumber: "",
   });
   const [passwords, setPasswords] = useState({
     current: "",
@@ -314,12 +396,43 @@ const ProfilePage = () => {
   const [businessStatus, setBusinessStatus] = useState(null);
 
   // Profile Picture Upload Handler
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setProfileImage(file);
+      const previousImage = profileImage; // Store previous image for rollback
+      setProfileImage(file); // Update local state for immediate preview
+
+      // Immediately update profile image via API
+      try {
+        const payload = { profileImage: file };
+        await AuthService.updateProfile(payload);
+
+        // Refresh profile image from server to ensure consistency
+        try {
+          const res = await AuthService.getProfile();
+          const root = res ?? {};
+          const container = (root?.data?.customer ?? root?.data) ?? root;
+          const pimg = container?.profileImage ?? container?.avatar;
+          if (typeof pimg === 'string') {
+            const normalized = pimg.replace(/\\/g, '/');
+            const absolute = /^https?:\/\//i.test(normalized) ? normalized : `${env.baseUrl}/${normalized.replace(/^\//, '')}`;
+            setProfileImage(absolute);
+            try { localStorage.setItem('profileImageUrl', absolute); } catch {}
+          }
+          toastHelper.showTost('Profile image updated successfully', 'success');
+        } catch (refreshError) {
+          console.error('Error refreshing profile data:', refreshError);
+          setProfileImage(previousImage); // Revert to previous image
+          toastHelper.showTost('Failed to refresh profile data', 'error');
+        }
+      } catch (e) {
+        console.error('Error updating profile image:', e);
+        setProfileImage(previousImage); // Revert to previous image on error
+        // Error already handled via toast in AuthService
+      }
     }
   };
+
   // Load profile on mount
   useEffect(() => {
     const toAbsoluteUrl = (p) => {
@@ -335,24 +448,15 @@ const ProfilePage = () => {
       const name = container?.name ?? '';
       const email = container?.email ?? '';
       const mobileNumber = container?.mobileNumber ?? container?.phone ?? '';
+      const whatsappNumber = container?.whatsappNumber ?? '';
       const profileImage = toAbsoluteUrl(container?.profileImage ?? container?.avatar ?? null);
       const businessName = business?.businessName ?? business?.companyName ?? '';
       const country = business?.country ?? business?.businessCountry ?? '';
       const address = business?.address ?? business?.businessAddress ?? '';
       const logo = toAbsoluteUrl(business?.logo ?? business?.businessLogo ?? null);
       const certificate = toAbsoluteUrl(business?.certificate ?? business?.businessCertificate ?? null);
-      // Normalize status: prefer `status`, fallback to legacy boolean `isApproved`
-      const rawStatus = business?.status ?? null;
-      let normalizedStatus = null;
-      if (typeof rawStatus === 'string') {
-        const s = rawStatus.trim().toLowerCase();
-        if (s === 'approved') normalizedStatus = 'Approved';
-        else if (s === 'rejected') normalizedStatus = 'Rejected';
-        else if (s === 'pending') normalizedStatus = 'Pending';
-      } else if (typeof business?.isApproved === 'boolean') {
-        normalizedStatus = business.isApproved ? 'Approved' : 'Rejected';
-      }
-      return { name, email, mobileNumber, profileImage, business: { businessName, country, address, logo, certificate, status: normalizedStatus } };
+      const isApproved = business?.isApproved ?? null;
+      return { name, email, mobileNumber, whatsappNumber, profileImage, business: { businessName, country, address, logo, certificate, isApproved } };
     };
     const loadProfile = async () => {
       try {
@@ -362,6 +466,7 @@ const ProfilePage = () => {
           name: normalized.name,
           email: normalized.email,
           mobileNumber: normalized.mobileNumber,
+          whatsappNumber: normalized.whatsappNumber,
         });
         setBusinessFormData((prev) => ({
           ...prev,
@@ -389,32 +494,36 @@ const ProfilePage = () => {
 
   const handleSaveProfile = async () => {
     try {
-      await AuthService.updateProfile({
+      const payload = {
         name: profileFormData.name,
         email: profileFormData.email,
         mobileNumber: profileFormData.mobileNumber,
-        profileImage: profileImage || undefined,
-      });
+        whatsappNumber: profileFormData.whatsappNumber || "",
+      };
+      
+      await AuthService.updateProfile(payload);
+      
       // refresh data to reflect persisted values
       try {
         const res = await AuthService.getProfile();
         const root = res ?? {};
         const container = (root?.data?.customer ?? root?.data) ?? root;
+        
         setProfileFormData({
           name: container?.name || "",
           email: container?.email || "",
           mobileNumber: (container?.mobileNumber ?? container?.phone) || "",
+          whatsappNumber: container?.whatsappNumber || "",
         });
-        const pimg = container?.profileImage ?? container?.avatar;
-        if (typeof pimg === 'string') {
-          // Normalize relative path using baseUrl
-          const normalized = pimg.replace(/\\/g, '/');
-          const absolute = /^https?:\/\//i.test(normalized) ? normalized : `${env.baseUrl}/${normalized.replace(/^\//, '')}`;
-          setProfileImage(absolute);
-          try { localStorage.setItem('profileImageUrl', absolute); } catch {}
-        }
-      } catch {}
-    } catch (e) {}
+        toastHelper.showTost('Profile updated successfully', 'success');
+      } catch (refreshError) {
+        console.error('Error refreshing profile data:', refreshError);
+        toastHelper.showTost('Failed to refresh profile data', 'error');
+      }
+    } catch (e) {
+      console.error('Error updating profile:', e);
+      // Error already handled via toast in AuthService
+    }
   };
 
   const handleSaveBusiness = async () => {
@@ -448,23 +557,17 @@ const ProfilePage = () => {
             ? (business?.certificate ?? business?.businessCertificate)
             : prev.certificate,
         }));
-        {
-          const rawStatus = business?.status ?? null;
-          let normalizedStatus = null;
-          if (typeof rawStatus === 'string') {
-            const s = rawStatus.trim().toLowerCase();
-            if (s === 'approved') normalizedStatus = 'Approved';
-            else if (s === 'rejected') normalizedStatus = 'Rejected';
-            else if (s === 'pending') normalizedStatus = 'Pending';
-          } else if (typeof business?.isApproved === 'boolean') {
-            normalizedStatus = business.isApproved ? 'Approved' : 'Rejected';
-          }
-          setBusinessStatus(normalizedStatus);
-        }
-      } catch {}
-    } catch (e) {}
+        setBusinessApproved(business?.isApproved ?? null);
+        toastHelper.showTost('Business profile updated successfully', 'success');
+      } catch (refreshError) {
+        console.error('Error refreshing business profile data:', refreshError);
+        toastHelper.showTost('Failed to refresh business profile data', 'error');
+      }
+    } catch (e) {
+      console.error('Error updating business profile:', e);
+      // Error already handled via toast in AuthService
+    }
   };
-
 
   // Profile Details Handler
   const handleProfileChange = (field, value) => {
@@ -521,6 +624,7 @@ const ProfilePage = () => {
     try {
       await AuthService.changePassword({ currentPassword, newPassword });
       setPasswords({ current: '', new: '', confirm: '' });
+      toastHelper.showTost('Password updated successfully', 'success');
     } catch (e) {
       // Error already handled via toast in service
     }
@@ -532,7 +636,6 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* <ProfileHeader /> */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left sidebar with profile picture and navigation */}

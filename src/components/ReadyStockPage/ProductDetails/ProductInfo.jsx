@@ -15,6 +15,7 @@ import {
 import { ProductService } from "../../../services/products/products.services";
 import NotifyMePopup from "../NotifyMePopup";
 import BiddingForm from "../../negotiation/BiddingForm";
+import AddToCartPopup from "../AddToCartPopup";
 
 const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [currentProduct, setCurrentProduct] = useState(initialProduct);
@@ -23,6 +24,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [notify, setNotify] = useState(Boolean(initialProduct.notify));
   const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
   const [isBiddingFormOpen, setIsBiddingFormOpen] = useState(false);
+  const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
 
   // Process product data
   const processedProduct = {
@@ -134,6 +136,28 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
 
   const handleBiddingSuccess = () => {
     console.log("Bid submitted successfully");
+  };
+
+  const handleAddToCartClick = (e) => {
+    e.stopPropagation();
+    if (processedProduct.isOutOfStock || processedProduct.isExpired) return;
+    const customerId = localStorage.getItem('userId') || '';
+    if (!customerId) {
+      return navigate('/signin');
+    }
+    setIsAddToCartPopupOpen(true);
+  };
+
+  const popupProduct = {
+    id: processedProduct.id || processedProduct._id,
+    name: processedProduct.name,
+    price: processedProduct.price,
+    imageUrl: processedProduct.imageUrl || processedProduct.mainImage || "",
+    moq: processedProduct.moq,
+    stockCount: processedProduct.stockCount,
+    description: processedProduct.description || "",
+    notify: processedProduct.notify,
+    purchaseType: processedProduct.purchaseType,
   };
 
   const totalAmount = (
@@ -530,7 +554,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
               </>
             ) : (
               <>
-                <button className="w-full bg-orange-500 text-white py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-orange-600 transition-colors flex items-center justify-center">
+                <button onClick={handleAddToCartClick} className="w-full bg-orange-500 text-white py-3 sm:py-4 px-6 rounded-lg text-base sm:text-lg font-medium hover:bg-orange-600 transition-colors flex items-center justify-center">
                   <FontAwesomeIcon icon={faCartShopping} className="mr-2" />
                   Add to Cart
                 </button>
@@ -557,6 +581,13 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
         <NotifyMePopup
           product={processedProduct}
           onClose={() => setIsNotifyMePopupOpen(false)}
+        />
+      )}
+
+      {isAddToCartPopupOpen && (
+        <AddToCartPopup
+          product={popupProduct}
+          onClose={() => setIsAddToCartPopupOpen(false)}
         />
       )}
 
