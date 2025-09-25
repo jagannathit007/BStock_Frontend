@@ -16,6 +16,7 @@ import AddToCartPopup from "./AddToCartPopup";
 import CartService from "../../services/cart/cart.services";
 import { ProductService } from "../../services/products/products.services";
 import iphoneImage from "../../assets/iphone.png";
+import Swal from "sweetalert2";
 
 const ProductCard = ({
   product,
@@ -102,7 +103,7 @@ const ProductCard = ({
       case "Out of Stock":
         return "bg-gray-100"; // Subtle red for out of stock
       default:
-        return "bg-white"; // Default white background
+        return "bg-white-50"; // Default white background
     }
   };
 
@@ -120,21 +121,56 @@ const ProductCard = ({
     navigate(`/product/${id}`);
   };
 
-  const handleAddToCart = async (e) => {
-    e.stopPropagation();
-    if (isOutOfStock || isExpired) return;
+const handleAddToCart = async (e) => {
+  e.stopPropagation();
+  if (isOutOfStock || isExpired) return;
 
-    try {
-      const customerId = localStorage.getItem("userId") || "";
-      if (!customerId) {
-        return navigate("/signin");
-      }
-      setIsAddToCartPopupOpen(true);
-    } catch (error) {
-      console.error("Error in add to cart:", error);
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const { businessProfile } = user;
+
+    // Check if businessName is null or blank
+    if (!businessProfile?.businessName || businessProfile.businessName.trim() === "") {
+      navigate("/profile");
+      await Swal.fire({
+        icon: "warning",
+        title: "Business Details Required",
+        text: "Please add your business details before adding products to the cart.",
+        confirmButtonText: "Go to Settings",
+        confirmButtonColor: "#0071E0",
+      });
+      return;
     }
-  };
 
+    // Check if user is not approved
+    if (user?.isApproved === false) {
+      await Swal.fire({
+        icon: "info",
+        title: "Pending Approval",
+        text: "Your business profile is not approved. Please wait for approval.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#0071E0",
+      });
+      return;
+    }
+
+    // Proceed with add-to-cart
+    const customerId = user._id || "";
+    if (!customerId) {
+      return navigate("/signin");
+    }
+    setIsAddToCartPopupOpen(true);
+  } catch (error) {
+    console.error("Error in add to cart:", error);
+    await Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "An error occurred while adding to cart. Please try again.",
+      confirmButtonText: "OK",
+      confirmButtonColor: "#0071E0",
+    });
+  }
+};
   const handleNotifyToggle = async (e, nextValue) => {
     e.stopPropagation();
     if (!canNotify) return;
@@ -213,7 +249,12 @@ const ProductCard = ({
                 <div className="text-xs sm:text-sm text-gray-600 mt-1 truncate">
                   {description.split("•")[1]?.trim()}
                 </div>
-                <div className="flex items-center mt-1 sm:mt-2">
+              
+              </div>
+            </div>
+          </td>
+          <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
+            <div className="flex items-center mt-1 sm:mt-2">
                   <span
                     className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass()}`}
                   >
@@ -226,24 +267,6 @@ const ProductCard = ({
                     {getDisplayStatus()}
                   </span>
                 </div>
-              </div>
-            </div>
-          </td>
-          <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
-            <div className="text-sm text-gray-900 font-medium truncate">
-              {description.split("•")[0]?.trim()}
-            </div>
-            <div className="text-xs sm:text-sm text-gray-500 truncate">
-              Grade A+
-            </div>
-            <div className="text-xs sm:text-sm text-gray-500 truncate">
-              Unlocked
-            </div>
-            {purchaseTypeLabel && (
-              <div className="text-xs sm:text-sm text-gray-700 truncate">
-                Purchase: {purchaseTypeLabel}
-              </div>
-            )}
           </td>
           <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
             <div className="text-base sm:text-lg font-bold text-gray-900">
@@ -442,10 +465,10 @@ const ProductCard = ({
         </div>
 
         <div className="text-xs text-gray-500 mb-3">
-          MOQ: {moq} units • {stockCount} available
-          {isExpired && <span className="ml-2 text-red-500">• Expired</span>}
+          • MOQ: {moq} units • {stockCount} available<br/>
+          {/* {isExpired && <span className="ml-2 text-red-500">• Expired</span>} */}
           {purchaseTypeLabel && (
-            <span className="ml-2">• Purchase: {purchaseTypeLabel}</span>
+            <span className="">• Purchase: {purchaseTypeLabel}</span>
           )}
           {isExpired && (
             <span className="ml-2 text-red-500">• Expired</span>

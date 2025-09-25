@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCartShopping, faPlus, faMinus, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faCartShopping, faPlus, faMinus, faTrash } from "@fortawesome/free-solid-svg-icons"; // Corrected import
 import { useNavigate } from "react-router-dom";
 import CartService from "../../services/cart/cart.services";
 import OrderService from "../../services/order/order.services";
@@ -349,121 +349,133 @@ const CartPage = () => {
               </div>
             </div>
 
-            {showCheckoutForm ? (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Checkout</h2>
-                <form onSubmit={handleCheckout} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-700 mb-2">Billing Address</h3>
-                    <div className="space-y-4">
-                      <input
-                        type="text"
-                        placeholder="Address (e.g., 123 Main St, Apt 4B)"
-                        value={billingAddress.address}
-                        onChange={(e) => handleAddressChange("billing", "address", e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-lg"
-                        required
-                      />
-                      <input
-                        type="text"
-                        placeholder="City"
-                        value={billingAddress.city}
-                        onChange={(e) => handleAddressChange("billing", "city", e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-lg"
-                        required
-                      />
-                      <input
-                        type="text"
-                        placeholder="Postal Code"
-                        value={billingAddress.postalCode}
-                        onChange={(e) => handleAddressChange("billing", "postalCode", e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-lg"
-                        required
-                      />
-                      <input
-                        type="text"
-                        placeholder="Country"
-                        value={billingAddress.country}
-                        onChange={(e) => handleAddressChange("billing", "country", e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-lg"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-700 mb-2">Shipping Address</h3>
-                    <div className="space-y-4">
-                      <input
-                        type="text"
-                        placeholder="Address (e.g., 123 Main St, Apt 4B)"
-                        value={shippingAddress.address}
-                        onChange={(e) => handleAddressChange("shipping", "address", e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-lg"
-                        required
-                      />
-                      <input
-                        type="text"
-                        placeholder="City"
-                        value={shippingAddress.city}
-                        onChange={(e) => handleAddressChange("shipping", "city", e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-lg"
-                        required
-                      />
-                      <input
-                        type="text"
-                        placeholder="Postal Code"
-                        value={shippingAddress.postalCode}
-                        onChange={(e) => handleAddressChange("shipping", "postalCode", e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-lg"
-                        required
-                      />
-                      <input
-                        type="text"
-                        placeholder="Country"
-                        value={shippingAddress.country}
-                        onChange={(e) => handleAddressChange("shipping", "country", e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-lg"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="md:col-span-2 flex justify-end gap-3">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex justify-between items-center">
+              <div>
+                <div className="text-lg font-medium text-gray-700">Total:</div>
+                <div className="text-2xl font-bold text-gray-900">${totalPrice}</div>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  className="bg-red-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-red-700 transition-all duration-200"
+                  onClick={handleClearCart}
+                >
+                  Clear Cart
+                </button>
+                <button
+                  className="bg-[#0071E0] text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-600 transition-all duration-200"
+                  onClick={() => setShowCheckoutForm(true)}
+                >
+                  Proceed to Checkout
+                </button>
+              </div>
+            </div>
+
+            {showCheckoutForm && (
+              <div className="fixed inset-0 bg-[#00000057] bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-xl shadow-lg p-6 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-semibold text-gray-900">Checkout</h2>
                     <button
-                      type="button"
-                      className="bg-gray-500 text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-600 transition-all duration-200"
+                      className="text-gray-500 hover:text-gray-700"
                       onClick={() => setShowCheckoutForm(false)}
                     >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="bg-[#0071E0] text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-600 transition-all duration-200"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? "Processing..." : "Place Order"}
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
                     </button>
                   </div>
-                </form>
-              </div>
-            ) : (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex justify-between items-center">
-                <div>
-                  <div className="text-lg font-medium text-gray-700">Total:</div>
-                  <div className="text-2xl font-bold text-gray-900">${totalPrice}</div>
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    className="bg-red-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-red-700 transition-all duration-200"
-                    onClick={handleClearCart}
-                  >
-                    Clear Cart
-                  </button>
-                  <button
-                    className="bg-[#0071E0] text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-600 transition-all duration-200"
-                    onClick={() => setShowCheckoutForm(true)}
-                  >
-                    Proceed to Checkout
-                  </button>
+                  <form onSubmit={handleCheckout} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-700 mb-2">Billing Address</h3>
+                      <div className="space-y-4">
+                        <input
+                          type="text"
+                          placeholder="Address (e.g., 123 Main St, Apt 4B)"
+                          value={billingAddress.address}
+                          onChange={(e) => handleAddressChange("billing", "address", e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-lg"
+                          required
+                        />
+                        <input
+                          type="text"
+                          placeholder="City"
+                          value={billingAddress.city}
+                          onChange={(e) => handleAddressChange("billing", "city", e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-lg"
+                          required
+                        />
+                        <input
+                          type="text"
+                          placeholder="Postal Code"
+                          value={billingAddress.postalCode}
+                          onChange={(e) => handleAddressChange("billing", "postalCode", e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-lg"
+                          required
+                        />
+                        <input
+                          type="text"
+                          placeholder="Country"
+                          value={billingAddress.country}
+                          onChange={(e) => handleAddressChange("billing", "country", e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-lg"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-700 mb-2">Shipping Address</h3>
+                      <div className="space-y-4">
+                        <input
+                          type="text"
+                          placeholder="Address (e.g., 123 Main St, Apt 4B)"
+                          value={shippingAddress.address}
+                          onChange={(e) => handleAddressChange("shipping", "address", e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-lg"
+                          required
+                        />
+                        <input
+                          type="text"
+                          placeholder="City"
+                          value={shippingAddress.city}
+                          onChange={(e) => handleAddressChange("shipping", "city", e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-lg"
+                          required
+                        />
+                        <input
+                          type="text"
+                          placeholder="Postal Code"
+                          value={shippingAddress.postalCode}
+                          onChange={(e) => handleAddressChange("shipping", "postalCode", e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-lg"
+                          required
+                        />
+                        <input
+                          type="text"
+                          placeholder="Country"
+                          value={shippingAddress.country}
+                          onChange={(e) => handleAddressChange("shipping", "country", e.target.value)}
+                          className="w-full p-2 border border-gray-300 rounded-lg"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="md:col-span-2 flex justify-end gap-3">
+                      <button
+                        type="button"
+                        className="bg-gray-500 text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-600 transition-all duration-200"
+                        onClick={() => setShowCheckoutForm(false)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="bg-[#0071E0] text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-600 transition-all duration-200"
+                        disabled={isLoading}
+                      >
+                        {isLoading ? "Processing..." : "Place Order"}
+                      </button>
+                    </div>
+                  </form>
                 </div>
               </div>
             )}
