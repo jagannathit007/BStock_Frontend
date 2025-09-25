@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import {
-  BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
+  HashRouter,
 } from "react-router-dom";
 import Header from "./components/Header";
 import NavTabs from "./components/NavTabs";
@@ -42,7 +42,7 @@ const App = () => {
   };
 
   return (
-    <Router>
+    <HashRouter>
       <div className="bg-gray-50">
         {isLoggedIn && (
           <>
@@ -118,7 +118,7 @@ const App = () => {
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </div>
-    </Router>
+    </HashRouter>
   );
 };
 
