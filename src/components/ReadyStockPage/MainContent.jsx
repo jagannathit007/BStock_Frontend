@@ -224,18 +224,18 @@ const MainContent = () => {
     );
   };
 
-  const indexOfLastProduct = useMemo(
-    () => currentPage * itemsPerPage,
-    [currentPage, itemsPerPage]
-  );
-  const indexOfFirstProduct = useMemo(
-    () => indexOfLastProduct - itemsPerPage,
-    [indexOfLastProduct, itemsPerPage]
-  );
-  const totalPages = useMemo(
-    () => Math.max(Math.ceil(totalProductsCount / itemsPerPage), 1),
-    [totalProductsCount, itemsPerPage]
-  );
+  // const indexOfLastProduct = useMemo(
+  //   () => currentPage * itemsPerPage,
+  //   [currentPage, itemsPerPage]
+  // );
+  // const indexOfFirstProduct = useMemo(
+  //   () => indexOfLastProduct - itemsPerPage,
+  //   [indexOfLastProduct, itemsPerPage]
+  // );
+  // const totalPages = useMemo(
+  //   () => Math.max(Math.ceil(totalProductsCount / itemsPerPage), 1),
+  //   [totalProductsCount, itemsPerPage]
+  // );
 
   // Handle successful bid submission
   const handleBidSuccess = () => {

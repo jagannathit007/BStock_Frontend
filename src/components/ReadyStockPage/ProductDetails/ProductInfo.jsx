@@ -12,13 +12,13 @@ import {
   faXmark,
   faCheck,
   // faShieldCheck,
-  faTruck,
-  faRotateLeft,
-  faStar,
-  faMapMarkerAlt,
-  faPhone,
-  faEnvelope,
-  faStore,
+  // faTruck,
+  // faRotateLeft,
+  // faStar,
+  // faMapMarkerAlt,
+  // faPhone,
+  // faEnvelope,
+  // faStore,
 } from "@fortawesome/free-solid-svg-icons";
 import { ProductService } from "../../../services/products/products.services";
 import NotifyMePopup from "../NotifyMePopup";
@@ -30,10 +30,10 @@ import iphoneImage from "../../../assets/iphone.png";
 const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [currentProduct, setCurrentProduct] = useState(initialProduct);
   const [quantity, setQuantity] = useState(initialProduct.moq || 5);
-  const [isFavorite, setIsFavorite] = useState(initialProduct.wishList || false);
-  const [notify, setNotify] = useState(Boolean(initialProduct.notify));
-  const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
-  const [isBiddingFormOpen, setIsBiddingFormOpen] = useState(false);
+  // const [isFavorite, setIsFavorite] = useState(initialProduct.wishList || false);
+  // const [notify, setNotify] = useState(Boolean(initialProduct.notify));
+  // const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
+  // const [isBiddingFormOpen, setIsBiddingFormOpen] = useState(false);
   const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
   const [isBuyNowCheckoutOpen, setIsBuyNowCheckoutOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -68,10 +68,10 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       : currentProduct.networkBands || "",
   };
 
-  const [selectedColor, setSelectedColor] = useState("Natural Titanium");
-  const [selectedStorage, setSelectedStorage] = useState("256GB");
-  const [selectedGrade, setSelectedGrade] = useState("A+");
-  const [quantity, setQuantity] = useState(5);
+  // const [selectedColor, setSelectedColor] = useState("Natural Titanium");
+  // const [selectedStorage, setSelectedStorage] = useState("256GB");
+  // const [selectedGrade, setSelectedGrade] = useState("A+");
+  // const [quantity, setQuantity] = useState(5);
   // Initialize with proper fallback checking
   const [isFavorite, setIsFavorite] = useState(() => {
     const initialWishlistStatus =
@@ -91,15 +91,15 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
   const [isBiddingFormOpen, setIsBiddingFormOpen] = useState(false);
 
-  const colors = [
-    { name: "Natural Titanium", class: "bg-gray-200" },
-    { name: "Blue", class: "bg-blue-600" },
-    { name: "Black", class: "bg-black" },
-    { name: "White", class: "bg-white border-2 border-gray-300" },
-  ];
+  // const colors = [
+  //   { name: "Natural Titanium", class: "bg-gray-200" },
+  //   { name: "Blue", class: "bg-blue-600" },
+  //   { name: "Black", class: "bg-black" },
+  //   { name: "White", class: "bg-white border-2 border-gray-300" },
+  // ];
 
-  const storageOptions = ["128GB", "256GB", "512GB", "1TB"];
-  const gradeOptions = ["A+", "A", "B", "C"];
+  // const storageOptions = ["128GB", "256GB", "512GB", "1TB"];
+  // const gradeOptions = ["A+", "A", "B", "C"];
 
   // Check if product can accept notifications (out of stock but not expired)
   const canNotify =
