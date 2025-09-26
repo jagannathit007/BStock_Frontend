@@ -88,8 +88,7 @@ const Order = () => {
           >
             <option value="">All</option>
             <option value="request">Request</option>
-            <option value="verified">Verified</option>
-            <option value="approved">Approved</option>
+            <option value="accepted">Accepted</option>
             <option value="shipped">Shipped</option>
             <option value="delivered">Delivered</option>
             <option value="cancelled">Cancelled</option>
