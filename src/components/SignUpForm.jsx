@@ -17,6 +17,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { jwtDecode } from "jwt-decode";
 import { AuthService } from "../services/auth/auth.services";
+import loginImage from "../../public/images/login.png";
 
 const SignUpForm = () => {
   const navigate = useNavigate();
@@ -225,7 +226,7 @@ const SignUpForm = () => {
     <div className="relative w-full h-full bg-indigo-600 flex items-center justify-center">
       {/* Background Image */}
       <img
-        src="./images/login.png"
+        src={loginImage}
         alt="Premium GSM Bidding Platform"
         className="absolute inset-0 w-full h-full object-cover"
       />

@@ -14,6 +14,8 @@ import { motion } from "framer-motion";
 import { jwtDecode } from "jwt-decode";
 import ForgotPasswordModal from "./ForgotPasswordModal";
 import { AuthService } from "../services/auth/auth.services";
+import loginImage from "../../public/images/login.png";
+
 
 const LoginForm = ({ onLogin }) => {
   const navigate = useNavigate();
@@ -218,7 +220,7 @@ const LoginForm = ({ onLogin }) => {
   const ImageSection = () => (
     <div className="relative w-full h-screen bg-indigo-600 flex items-center justify-center">
       <img
-        src="./images/login.png"
+        src={loginImage}
         alt="Premium Bedding Collection"
         className="absolute inset-0 w-full h-full object-cover"
       />
