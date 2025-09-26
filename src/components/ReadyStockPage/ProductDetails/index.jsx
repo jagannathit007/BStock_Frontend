@@ -155,7 +155,7 @@ const ProductDetails = () => {
           }
         }}
       />
-      <ProductSpecs />
+      {/* <ProductSpecs /> */}
     </>
   );
 };

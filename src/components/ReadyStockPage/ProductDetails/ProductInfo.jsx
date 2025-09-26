@@ -11,14 +11,6 @@ import {
   faBellSlash,
   faXmark,
   faCheck,
-  // faShieldCheck,
-  // faTruck,
-  // faRotateLeft,
-  // faStar,
-  // faMapMarkerAlt,
-  // faPhone,
-  // faEnvelope,
-  // faStore,
 } from "@fortawesome/free-solid-svg-icons";
 import { ProductService } from "../../../services/products/products.services";
 import NotifyMePopup from "../NotifyMePopup";
@@ -30,10 +22,6 @@ import iphoneImage from "../../../assets/iphone.png";
 const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [currentProduct, setCurrentProduct] = useState(initialProduct);
   const [quantity, setQuantity] = useState(initialProduct.moq || 5);
-  // const [isFavorite, setIsFavorite] = useState(initialProduct.wishList || false);
-  // const [notify, setNotify] = useState(Boolean(initialProduct.notify));
-  // const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
-  // const [isBiddingFormOpen, setIsBiddingFormOpen] = useState(false);
   const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
   const [isBuyNowCheckoutOpen, setIsBuyNowCheckoutOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -68,11 +56,6 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       : currentProduct.networkBands || "",
   };
 
-  // const [selectedColor, setSelectedColor] = useState("Natural Titanium");
-  // const [selectedStorage, setSelectedStorage] = useState("256GB");
-  // const [selectedGrade, setSelectedGrade] = useState("A+");
-  // const [quantity, setQuantity] = useState(5);
-  // Initialize with proper fallback checking
   const [isFavorite, setIsFavorite] = useState(() => {
     const initialWishlistStatus =
       initialProduct?.WishList ||
@@ -90,18 +73,6 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [notify, setNotify] = useState(Boolean(currentProduct?.notify));
   const [isNotifyMePopupOpen, setIsNotifyMePopupOpen] = useState(false);
   const [isBiddingFormOpen, setIsBiddingFormOpen] = useState(false);
-
-  // const colors = [
-  //   { name: "Natural Titanium", class: "bg-gray-200" },
-  //   { name: "Blue", class: "bg-blue-600" },
-  //   { name: "Black", class: "bg-black" },
-  //   { name: "White", class: "bg-white border-2 border-gray-300" },
-  // ];
-
-  // const storageOptions = ["128GB", "256GB", "512GB", "1TB"];
-  // const gradeOptions = ["A+", "A", "B", "C"];
-
-  // Check if product can accept notifications (out of stock but not expired)
   const canNotify =
     processedProduct.isOutOfStock && !processedProduct.isExpired;
 
@@ -394,9 +365,9 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   { label: "Purchase Type", value: processedProduct.purchaseType },
                   { label: "Status", value: processedProduct.status },
                 ].filter(item => item.value).map((item, index) => (
-                  <div key={index} className="bg-gray-50 rounded-lg p-2 hover:bg-gray-100 transition-colors">
-                    <p className="text-sm font-medium text-gray-600 mb-1">{item.label}</p>
-                    <p className="text-base font-semibold text-gray-900">{item.value}</p>
+                  <div key={index} className="bg-gray-50 rounded-lg p-2 hover:bg-gray-100 transition-colors flex justify-between items-center">
+                    <p className="text-sm font-medium text-gray-600 ">{item.label}</p>
+                    <p className="text-base font-semibold text-gray-900 capitalize">{item.value}</p>
                   </div>
                 ))}
               </div>
@@ -407,7 +378,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
           {/* Enhanced Right Column */}
           <div className="xl:col-span-6">
             {/* Enhanced Header */}
-            <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 mb-6">
+            <div className="bg-white rounded-2xl px-6 py-3 shadow-xl border border-gray-100 mb-6">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-3 leading-tight">
@@ -421,12 +392,12 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
             </div>
 
             {/* Enhanced Price Section */}
-            <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 mb-6">
-              <div className="border-l-4 border-blue-500 pl-4 mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Pricing Details</h2>
+            <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 mb-4">
+              <div className="border-l-4 border-blue-500 pl-4 mb-4">
+                <h2 className="text-xl font-semibold text-gray-900 mb-3">Pricing Details</h2>
               </div>
               
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-3">
                 <div className="mb-4 lg:mb-0">
                   <span className="text-4xl font-bold text-gray-900 mr-3">
                     ${processedProduct.price}
@@ -434,8 +405,8 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
+              <div className="grid grid-cols-2 gap-4 mb-3">
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-2 border border-blue-100">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-gray-700">Minimum Order</span>
                     <span className="font-bold text-blue-600 text-lg">
@@ -452,7 +423,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                       : processedProduct.stockCount > 0
                       ? "bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200"
                       : "bg-gradient-to-br from-red-50 to-pink-50 border-red-200"
-                  } rounded-xl p-4 border`}
+                  } rounded-xl p-2 border`}
                 >
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-gray-700">Available Stock</span>
@@ -475,7 +446,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
 
               {processedProduct.expiryTime && (
                 <div
-                  className={`p-4 rounded-xl mb-6 border ${
+                  className={`p-2 rounded-xl mb-4 border ${
                     processedProduct.isExpired
                       ? "bg-gradient-to-r from-red-50 to-pink-50 border-red-200"
                       : "bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200"
@@ -501,12 +472,12 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                 </div>
               )}
 
-              <div className="border-t border-gray-200 pt-6">
+              <div className="border-t border-gray-200 pt-4">
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-lg font-semibold text-gray-900">Quantity</span>
                   <div className="flex items-center bg-gray-50 rounded-xl border border-gray-200">
                     <button
-                      className="p-3 hover:bg-gray-100 cursor-pointer  rounded-l-xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="px-3 py-1 hover:bg-gray-100 cursor-pointer  rounded-l-xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       onClick={() => handleQuantityChange(-1)}
                       disabled={
                         quantity <= processedProduct.moq ||
@@ -516,11 +487,11 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                     >
                       <FontAwesomeIcon icon={faXmark} className="text-gray-600" />
                     </button>
-                    <span className="px-6 py-3 font-bold text-lg bg-white border-x border-gray-200">
+                    <span className="px-4 py-1 font-bold text-lg bg-white border-x border-gray-200">
                       {quantity}
                     </span>
                     <button
-                      className="p-3 hover:bg-gray-100 cursor-pointer  rounded-r-xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="px-3 py-1 hover:bg-gray-100 cursor-pointer  rounded-r-xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       onClick={() => handleQuantityChange(1)}
                       disabled={processedProduct.isOutOfStock || processedProduct.isExpired}
                     >
@@ -528,7 +499,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                     </button>
                   </div>
                 </div>
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-2 border border-blue-100">
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-semibold text-gray-900">Total Amount:</span>
                     <span className="text-2xl font-bold text-blue-600">${totalAmount}</span>
@@ -536,26 +507,6 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                 </div>
               </div>
             </div>
-
-            {/* Enhanced Features Section */}
-            {processedProduct.features && processedProduct.features.length > 0 && (
-              <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 mb-6">
-                <div className="border-l-4 border-green-500 pl-4 mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">Key Features</h2>
-                </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {processedProduct.features.map((feature, index) => (
-                    <div key={index} className="flex items-center bg-green-50 p-3 rounded-lg border border-green-100">
-                      <FontAwesomeIcon
-                        icon={feature.icon}
-                        className={`mr-3 text-lg ${feature.color}`}
-                      />
-                      <span className="font-medium text-gray-900">{feature.text}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Enhanced Action Buttons */}
             <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
