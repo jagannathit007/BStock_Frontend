@@ -73,26 +73,26 @@ const Order = () => {
             <FontAwesomeIcon icon={faShoppingBag} className="w-5 h-5 text-blue-600" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">Your Orders</h1>
-        </div>
 
-        {/* Status Filter */}
-        <div className="flex items-center gap-3">
-          <label htmlFor="statusFilter" className="text-sm font-medium text-gray-700">
-            Filter by Status:
-          </label>
-          <select
-            id="statusFilter"
-            value={statusFilter}
-            onChange={handleStatusChange}
-            className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-          >
-            <option value="">All</option>
-            <option value="request">Request</option>
-            <option value="accepted">Accepted</option>
-            <option value="shipped">Shipped</option>
-            <option value="delivered">Delivered</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
+          {/* Status Filter */}
+          <div className="flex items-center gap-3 ms-auto">
+            <label htmlFor="statusFilter" className="text-sm font-medium text-gray-700">
+              Filter by Status:
+            </label>
+            <select
+              id="statusFilter"
+              value={statusFilter}
+              onChange={handleStatusChange}
+              className="p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+            >
+              <option value="">All</option>
+              <option value="request">Request</option>
+              <option value="accepted">Accepted</option>
+              <option value="shipped">Shipped</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
         </div>
 
         {error && (

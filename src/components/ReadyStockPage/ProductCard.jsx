@@ -459,7 +459,7 @@ const ProductCard = ({
         </div>
         <div className="absolute top-2 left-2">
           <span
-            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass()}`}
+            className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${getStatusBadgeClass()}`}
           >
             {isExpired && (
               <FontAwesomeIcon

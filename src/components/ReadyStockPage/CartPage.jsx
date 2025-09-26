@@ -384,6 +384,42 @@ const CartPage = () => {
                       </svg>
                     </button>
                   </div>
+
+                  {/* Order Summary Section */}
+                  <div className="mb-6">
+                    <h3 className="text-lg font-medium text-gray-700 mb-4">Order Summary</h3>
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      {cartItems.map((item) => (
+                        <div key={item.id} className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
+                          <div className="flex items-center">
+                            <img
+                              className="w-12 h-12 object-cover rounded-lg mr-4"
+                              src={imageErrors[item.id] ? iphoneImage : item.imageUrl}
+                              alt={item.name}
+                              onError={() => handleImageError(item.id)}
+                            />
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900">{item.name}</p>
+                              <p className="text-xs text-gray-600">{item.description}</p>
+                              <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold text-gray-900">
+                              ${(item.price * item.quantity).toFixed(2)}
+                            </p>
+                            <p className="text-xs text-gray-600">(${(item.price).toFixed(2)} x {item.quantity})</p>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
+                        <p className="text-lg font-medium text-gray-700">Total:</p>
+                        <p className="text-lg font-bold text-gray-900">${totalPrice}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Address Form */}
                   <form onSubmit={handleCheckout} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <h3 className="text-lg font-medium text-gray-700 mb-2">Billing Address</h3>

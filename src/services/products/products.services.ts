@@ -119,9 +119,6 @@ export class ProductService {
       if (res.data?.data === null) {
         throw new Error(res.data?.message || "Failed to fetch Product");
       }
-
-  
-
       return res.data.data; // Return the Product with populated skuFamilyId and WishList status
     } catch (err: any) {
       const errorMessage =
@@ -163,13 +160,13 @@ export class ProductService {
 
     try {
       const res = await api.post(url, wishlistData);
-      toastHelper.showTost(
-        res.data.message ||
-          `Product ${
-            wishlistData.wishlist ? "added to" : "removed from"
-          } wishlist!`,
-        "success"
-      );
+      // toastHelper.showTost(
+      //   res.data.message ||
+      //     `Product ${
+      //       wishlistData.wishlist ? "added to" : "removed from"
+      //     } wishlist!`,
+      //   "success"
+      // );
 
       // Dispatch wishlist updated event for cross-component synchronization
       window.dispatchEvent(

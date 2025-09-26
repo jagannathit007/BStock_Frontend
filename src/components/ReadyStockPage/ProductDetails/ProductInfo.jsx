@@ -116,11 +116,15 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
           );
           const freshProduct = await ProductService.getProductById(productId);
           console.log("ProductInfo - Fresh product from API:", freshProduct);
-          setCurrentProduct(freshProduct);
+          let productToSet = initialProduct;
+          if (freshProduct && typeof freshProduct === 'object' && freshProduct.name) {
+            productToSet = freshProduct;
+          }
+          setCurrentProduct(productToSet);
 
           // Set wishlist status from fresh API data
           const wishlistStatus =
-            freshProduct.WishList || freshProduct.wishList || false;
+            productToSet.WishList || productToSet.wishList || false;
           console.log(
             "ProductInfo - Setting wishlist status from fresh data:",
             wishlistStatus
