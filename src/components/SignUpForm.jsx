@@ -72,6 +72,7 @@ const SignUpForm = () => {
           "695873248784-k6f8fjsvj0u76e82u40qu8ishcbnrabd.apps.googleusercontent.com",
         callback: handleGoogleResponse,
         auto_select: false,
+        cancel_on_tap_outside: true,
       });
 
       const googleSignInDiv = document.getElementById("googleSignInDiv");
@@ -722,7 +723,7 @@ const SignUpForm = () => {
                   </span>
                 </div>
               ) : (
-                <div id="googleSignInDiv" className="w-full"></div>
+                <div id="googleSignInDiv" className="w-full [&>div]:rounded-lg [&>div>div]:rounded-lg [&>div>div>div]:rounded-lg"></div>
               )}
             </div>
           </motion.form>

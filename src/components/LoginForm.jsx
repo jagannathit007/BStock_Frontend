@@ -52,6 +52,7 @@ const LoginForm = ({ onLogin }) => {
           "695873248784-k6f8fjsvj0u76e82u40qu8ishcbnrabd.apps.googleusercontent.com",
         callback: handleGoogleResponse,
         auto_select: false,
+        cancel_on_tap_outside: true,
       });
 
       const googleSignInDiv = document.getElementById("googleSignInDiv");
@@ -64,11 +65,12 @@ const LoginForm = ({ onLogin }) => {
           shape: "pill",
         });
 
-        window.google.accounts.id.prompt((notification) => {
-          if (notification.isNotDisplayed() || notification.isSkipped()) {
-            // Try next time or use fallback
-          }
-        });
+        // Remove the auto-prompt to prevent showing suggestions automatically
+        // window.google.accounts.id.prompt((notification) => {
+        //   if (notification.isNotDisplayed() || notification.isSkipped()) {
+        //     // Try next time or use fallback
+        //   }
+        // });
       }
     }
   };
@@ -413,7 +415,7 @@ const LoginForm = ({ onLogin }) => {
                       </span>
                     </div>
                   ) : (
-                    <div id="googleSignInDiv" className="w-full"></div>
+                    <div id="googleSignInDiv" className="w-full [&>div]:rounded-lg [&>div>div]:rounded-lg [&>div>div>div]:rounded-lg"></div>
                   )}
                 </div>
               </motion.form>
