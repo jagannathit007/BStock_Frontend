@@ -151,7 +151,7 @@ const ProductCard = ({
         return;
       }
 
-      if (user?.isApproved === false) {
+      if (businessProfile?.status === "pending" || businessProfile?.status === "rejected") {
         await Swal.fire({
           icon: "info",
           title: "Pending Approval",
