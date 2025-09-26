@@ -7,7 +7,7 @@ import {
   faEyeSlash,
   faSpinner,
   faShieldHalved,
-  faMobileAlt,
+  faExclamationTriangle,
 } from "@fortawesome/free-solid-svg-icons";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -28,6 +28,7 @@ const LoginForm = ({ onLogin }) => {
   const [error, setError] = useState("");
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const [showLoginForm, setShowLoginForm] = useState(true);
+
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -166,7 +167,7 @@ const LoginForm = ({ onLogin }) => {
         navigate("/ready-stock");
       }
     } catch (err) {
-      setError(err.message || "Login failed");
+      setError(err.message || "Login failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -207,21 +208,13 @@ const LoginForm = ({ onLogin }) => {
     tap: { scale: 0.98 },
   };
 
-  const logoVariants = {
-    hidden: { scale: 0, rotate: -180 },
-    visible: {
-      scale: 1,
-      rotate: 0,
-      transition: { type: "spring", stiffness: 260, damping: 20 },
-    },
-  };
 
-  // Right side image section for bedding ecommerce
+  // Right side image section
   const ImageSection = () => (
     <div className="relative w-full h-screen bg-indigo-600 flex items-center justify-center">
       <img
         src={loginImage}
-        alt="Premium Bedding Collection"
+        alt="Premium GSM Bidding Platform"
         className="absolute inset-0 w-full h-full object-cover"
       />
       <div className="absolute inset-0 bg-black/50"></div>
@@ -249,18 +242,6 @@ const LoginForm = ({ onLogin }) => {
               animate="visible"
             >
               <motion.div className="text-left" variants={childVariants}>
-                <motion.div
-                  className="inline-flex items-center space-x-3 mb-6"
-                  variants={logoVariants}
-                >
-                  {/* <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
-                    <FontAwesomeIcon
-                      icon={faMobileAlt}
-                      className="text-white text-lg"
-                    />
-                  </div>
-                  <span className="text-2xl font-bold text-gray-900">GSM Bidding</span> */}
-                </motion.div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
                   Welcome back !
                 </h1>
@@ -271,10 +252,17 @@ const LoginForm = ({ onLogin }) => {
 
               {error && (
                 <motion.div
-                  className="p-4 bg-red-50 text-red-600 rounded-lg text-sm border border-red-100"
+                  className="p-4 bg-amber-50 text-amber-800 rounded-lg text-sm border border-amber-200 flex items-start space-x-3"
                   variants={childVariants}
                 >
-                  {error}
+                  <FontAwesomeIcon
+                    icon={faExclamationTriangle}
+                    className="text-amber-600 text-sm mt-0.5 flex-shrink-0"
+                  />
+                  <div>
+                    <p className="font-medium">Login Warning</p>
+                    <p className="mt-1">{error}</p>
+                  </div>
                 </motion.div>
               )}
 
