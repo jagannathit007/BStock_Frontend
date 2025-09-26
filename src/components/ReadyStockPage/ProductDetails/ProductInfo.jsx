@@ -360,8 +360,8 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                 >
                   <FontAwesomeIcon
                     icon={isFavorite ? solidHeart : regularHeart}
-                    className={`text-lg transition-all duration-300 ${
-                      isFavorite ? "text-red-500 animate-pulse" : "text-gray-400 group-hover:text-red-400"
+                    className={`text-lg transition-all cursor-pointer duration-300 ${
+                      isFavorite ? "text-red-500 " : "text-gray-400 "
                     }`}
                   />
                 </button>

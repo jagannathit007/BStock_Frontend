@@ -400,7 +400,7 @@ const ProductCard = ({
               <button
                 className={`p-1 sm:p-2 rounded-lg ${
                   isFavorite ? "text-red-500" : "text-gray-400"
-                } hover:text-red-500`}
+                } `}
                 onClick={handleToggleWishlist}
               >
                 <FontAwesomeIcon
@@ -434,7 +434,7 @@ const ProductCard = ({
           <button
             className={`p-2 bg-white rounded-full cursor-pointer shadow-md ${
               isFavorite ? "text-red-500" : "text-gray-400"
-            } hover:text-red-500 w-10 h-10 flex items-center justify-center`}
+            } w-10 h-10 flex items-center justify-center`}
             onClick={handleToggleWishlist}
           >
             <FontAwesomeIcon
