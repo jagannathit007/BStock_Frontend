@@ -139,7 +139,10 @@ const ProductCard = ({
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       const { businessProfile } = user;
 
-      if (!businessProfile?.businessName || businessProfile.businessName.trim() === "") {
+      if (
+        !businessProfile?.businessName ||
+        businessProfile.businessName.trim() === ""
+      ) {
         navigate("/profile");
         await Swal.fire({
           icon: "warning",
@@ -151,7 +154,10 @@ const ProductCard = ({
         return;
       }
 
-      if (businessProfile?.status === "pending" || businessProfile?.status === "rejected") {
+      if (
+        businessProfile?.status === "pending" ||
+        businessProfile?.status === "rejected"
+      ) {
         await Swal.fire({
           icon: "info",
           title: "Pending Approval",
@@ -251,7 +257,11 @@ const ProductCard = ({
             <div className="flex items-center min-w-[200px]">
               <img
                 className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg mr-4"
-                src={imageError ? iphoneImage : `${import.meta.env.VITE_BASE_URL}/${imageUrl}`}
+                src={
+                  imageError
+                    ? iphoneImage
+                    : `${import.meta.env.VITE_BASE_URL}/${imageUrl}`
+                }
                 alt={name}
                 onError={handleImageError}
               />
@@ -311,6 +321,17 @@ const ProductCard = ({
           </td>
           <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
             <div className="flex space-x-1 sm:space-x-2">
+              <button
+                className={`p-1 sm:p-2 cursor-pointer rounded-lg ${
+                  isFavorite ? "text-red-500" : "text-gray-400"
+                } `}
+                onClick={handleToggleWishlist}
+              >
+                <FontAwesomeIcon
+                  icon={isFavorite ? solidHeart : regularHeart}
+                  className="text-sm sm:text-base"
+                />
+              </button>
               {isExpired ? (
                 <button
                   disabled
@@ -333,7 +354,7 @@ const ProductCard = ({
                 </button>
               ) : (
                 <button
-                  className="bg-[#0071E0] text-white p-1 sm:p-2 rounded-lg hover:bg-blue-600"
+                  className="bg-[#0071E0] cursor-pointer text-white p-1 sm:p-2 rounded-lg hover:bg-blue-600"
                   onClick={handleAddToCart}
                 >
                   <FontAwesomeIcon
@@ -346,7 +367,7 @@ const ProductCard = ({
               {canNotify ? (
                 notify ? (
                   <button
-                    className="border border-red-300 text-red-700 bg-red-50 p-1 sm:p-2 rounded-lg hover:bg-red-100 transition-colors duration-200"
+                    className="border border-red-300 cursor-pointer text-red-700 bg-red-50 p-1 sm:p-2 rounded-lg hover:bg-red-100 transition-colors duration-200"
                     onClick={(ev) => handleNotifyToggle(ev, false)}
                     title="Turn off notifications"
                   >
@@ -360,25 +381,25 @@ const ProductCard = ({
                   </button>
                 ) : (
                   <button
-                    className="border border-blue-300 text-blue-700 bg-blue-50 p-1 sm:p-2 rounded-lg hover:bg-blue-100 transition-colors duration-200"
+                    className="flex items-center justify-center 
+             border border-blue-300 text-blue-700 bg-blue-50 cursor-pointer
+             w-8 h-8 sm:w-9 sm:h-10 
+             rounded-lg hover:bg-blue-100 transition-colors duration-200"
                     onClick={(ev) => handleNotifyToggle(ev, true)}
                     title="Notify me when back in stock"
                   >
                     <FontAwesomeIcon
                       icon={faBell}
-                      className="text-sm sm:text-base mr-1"
+                      className="text-sm sm:text-base"
                     />
-                    <span className="hidden sm:inline text-xs font-medium">
-                      Notify
-                    </span>
                   </button>
                 )
               ) : !isExpired && !isOutOfStock ? (
                 <button
-                  className="border border-gray-300 text-gray-700 p-1 sm:p-2 rounded-lg hover:bg-gray-50"
+                  className="border border-gray-300 cursor-pointer text-gray-700 p-1 sm:p-2 rounded-lg hover:bg-gray-50"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onOpenBiddingForm(product); // Call handler with product
+                    onOpenBiddingForm(product);
                   }}
                 >
                   <FontAwesomeIcon
@@ -389,7 +410,7 @@ const ProductCard = ({
               ) : (
                 <button
                   disabled
-                  className="bg-gray-200 text-gray-400 p-1 sm:p-2 rounded-lg cursor-not-allowed"
+                  className="bg-gray-200 cursor-pointer text-gray-400 p-1 sm:p-2 rounded-lg cursor-not-allowed"
                 >
                   <FontAwesomeIcon
                     icon={faXmark}
@@ -397,17 +418,6 @@ const ProductCard = ({
                   />
                 </button>
               )}
-              <button
-                className={`p-1 sm:p-2 rounded-lg ${
-                  isFavorite ? "text-red-500" : "text-gray-400"
-                } `}
-                onClick={handleToggleWishlist}
-              >
-                <FontAwesomeIcon
-                  icon={isFavorite ? solidHeart : regularHeart}
-                  className="text-sm sm:text-base"
-                />
-              </button>
             </div>
           </td>
         </tr>
@@ -426,7 +436,11 @@ const ProductCard = ({
       <div className="relative flex-1">
         <img
           className="w-full h-40 sm:h-48 object-cover rounded-t-[18px]"
-          src={imageError ? iphoneImage : `${import.meta.env.VITE_BASE_URL}/${imageUrl}`}
+          src={
+            imageError
+              ? iphoneImage
+              : `${import.meta.env.VITE_BASE_URL}/${imageUrl}`
+          }
           alt={name}
           onError={handleImageError}
         />
@@ -484,7 +498,7 @@ const ProductCard = ({
           {isExpired ? (
             <>
               <button
-                className="flex-1 bg-gray-300 text-gray-500 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium cursor-not-allowed"
+                className="flex-1 bg-gray-300  text-gray-500 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium cursor-not-allowed"
                 onClick={(e) => e.stopPropagation()}
               >
                 <FontAwesomeIcon icon={faCalendarXmark} className="mr-1" />
@@ -495,7 +509,7 @@ const ProductCard = ({
             <>
               {notify ? (
                 <button
-                  className="flex-1 border border-red-300 text-red-700 bg-red-50 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium hover:bg-red-100 cursor-pointer transition-colors duration-200 flex items-center justify-center"
+                  className="flex-1 border border-red-300  text-red-700 bg-red-50 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium hover:bg-red-100 cursor-pointer transition-colors duration-200 flex items-center justify-center"
                   onClick={(ev) => handleNotifyToggle(ev, false)}
                   title="Turn off notifications for notifying me when back in stock"
                 >
@@ -516,13 +530,13 @@ const ProductCard = ({
           ) : (
             <>
               <button
-                className="flex-1 border border-gray-300 text-gray-700 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium hover:bg-gray-50 cursor-pointer"
+                className="flex-1 border border-gray-300  text-gray-700 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium hover:bg-gray-50 cursor-pointer"
                 onClick={handleAddToCart}
               >
                 Add to Cart
               </button>
               <button
-                className="flex-1 bg-[#0071E0] text-white py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium hover:bg-blue-600 cursor-pointer"
+                className="flex-1 bg-[#0071E0] text-white  py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium hover:bg-blue-600 cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
                   onOpenBiddingForm(product); // Call handler with product
