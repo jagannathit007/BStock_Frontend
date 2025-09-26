@@ -45,7 +45,7 @@ const ViewControls = ({
         <span>
           Showing {showingProducts} of {totalProducts} products
         </span>
-        <select className="border border-gray-300 rounded-lg px-3 py-1 text-sm">
+        <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
           <option>Sort by: Featured</option>
           <option>Sort by: Price Low to High</option>
           <option>Sort by: Price High to Low</option>

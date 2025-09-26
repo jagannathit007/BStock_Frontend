@@ -160,13 +160,13 @@ export class ProductService {
 
     try {
       const res = await api.post(url, wishlistData);
-      toastHelper.showTost(
-        res.data.message ||
-          `Product ${
-            wishlistData.wishlist ? "added to" : "removed from"
-          } wishlist!`,
-        "success"
-      );
+      // toastHelper.showTost(
+      //   res.data.message ||
+      //     `Product ${
+      //       wishlistData.wishlist ? "added to" : "removed from"
+      //     } wishlist!`,
+      //   "success"
+      // );
 
       // Dispatch wishlist updated event for cross-component synchronization
       window.dispatchEvent(
