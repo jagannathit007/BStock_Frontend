@@ -11,6 +11,7 @@ import {
   faShieldHalved,
   faSpinner,
   faChevronDown,
+  faSearch,
 } from "@fortawesome/free-solid-svg-icons";
 import countriesData from "../data/countries.json";
 import { Link, useNavigate } from "react-router-dom";
@@ -39,6 +40,8 @@ const SignUpForm = () => {
   const [showWhatsappDropdown, setShowWhatsappDropdown] = useState(false);
   const [countries, setCountries] = useState([]);
   const [error, setError] = useState(null);
+  const [phoneSearchTerm, setPhoneSearchTerm] = useState("");
+  const [whatsappSearchTerm, setWhatsappSearchTerm] = useState("");
 
   useEffect(() => {
     // Sort countries alphabetically
@@ -69,6 +72,7 @@ const SignUpForm = () => {
           "695873248784-k6f8fjsvj0u76e82u40qu8ishcbnrabd.apps.googleusercontent.com",
         callback: handleGoogleResponse,
         auto_select: false,
+        cancel_on_tap_outside: true,
       });
 
       const googleSignInDiv = document.getElementById("googleSignInDiv");
@@ -135,11 +139,22 @@ const SignUpForm = () => {
       mobileNumber: `${code}${prev.mobileNumber.replace(/^\+\d+/, "") || ""}`, // Update mobileNumber with new code
     }));
     setShowPhoneDropdown(false);
+    setPhoneSearchTerm(""); // Clear search when selection is made
   };
 
   const handleWhatsappCodeChange = (code) => {
     setFormData((prev) => ({ ...prev, whatsappCode: code }));
     setShowWhatsappDropdown(false);
+    setWhatsappSearchTerm(""); // Clear search when selection is made
+  };
+
+  // Filter countries based on search term
+  const getFilteredCountries = (searchTerm) => {
+    if (!searchTerm) return countries;
+    return countries.filter(country => 
+      country.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      country.phone_code.includes(searchTerm)
+    );
   };
 
   const handleSubmit = async (e) => {
@@ -340,7 +355,12 @@ const SignUpForm = () => {
                   <div className="relative w-24 mr-2">
                     <button
                       type="button"
-                      onClick={() => setShowPhoneDropdown(!showPhoneDropdown)}
+                      onClick={() => {
+                        setShowPhoneDropdown(!showPhoneDropdown);
+                        if (showPhoneDropdown) {
+                          setPhoneSearchTerm(""); // Clear search when closing
+                        }
+                      }}
                       className="flex items-center justify-between cursor-pointer w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-gray-700 text-sm hover:bg-gray-100 transition-colors"
                     >
                       <div className="flex items-center">
@@ -365,26 +385,53 @@ const SignUpForm = () => {
                       />
                     </button>
                     {showPhoneDropdown && (
-                      <div className="absolute top-full left-0 mt-1 w-64 h-60 overflow-y-auto bg-white border border-gray-300 rounded-lg shadow-lg z-10">
-                        {countries.map((country) => (
-                          <div
-                            key={country.code}
-                            onClick={() =>
-                              handlePhoneCodeChange(country.phone_code)
-                            }
-                            className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                          >
-                            <img
-                              src={country.flag}
-                              alt={country.name}
-                              className="w-4 h-4 mr-2"
+                      <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
+                        {/* Search Input */}
+                        <div className="p-2 border-b border-gray-200">
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <FontAwesomeIcon
+                                icon={faSearch}
+                                className="text-gray-400 text-xs"
+                              />
+                            </div>
+                            <input
+                              type="text"
+                              value={phoneSearchTerm}
+                              onChange={(e) => setPhoneSearchTerm(e.target.value)}
+                              className="block w-full pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                              placeholder="Search countries..."
+                              onClick={(e) => e.stopPropagation()}
                             />
-                            <span className="truncate">{country.name}</span>
-                            <span className="ml-auto text-gray-500">
-                              {country.phone_code}
-                            </span>
                           </div>
-                        ))}
+                        </div>
+                        {/* Countries List */}
+                        <div className="max-h-48 overflow-y-auto">
+                          {getFilteredCountries(phoneSearchTerm).map((country) => (
+                            <div
+                              key={country.code}
+                              onClick={() =>
+                                handlePhoneCodeChange(country.phone_code)
+                              }
+                              className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                            >
+                              <img
+                                src={country.flag}
+                                alt={country.name}
+                                className="w-4 h-4 mr-2"
+                              />
+                              <span className="truncate">{country.name}</span>
+                              <span className="ml-auto text-gray-500">
+                                {country.phone_code}
+                              </span>
+                            </div>
+                          ))}
+                          {getFilteredCountries(phoneSearchTerm).length === 0 && (
+                            <div className="px-3 py-2 text-sm text-gray-500 text-center">
+                              No countries found
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -416,9 +463,12 @@ const SignUpForm = () => {
                   <div className="relative w-24 mr-2">
                     <button
                       type="button"
-                      onClick={() =>
-                        setShowWhatsappDropdown(!showWhatsappDropdown)
-                      }
+                      onClick={() => {
+                        setShowWhatsappDropdown(!showWhatsappDropdown);
+                        if (showWhatsappDropdown) {
+                          setWhatsappSearchTerm(""); // Clear search when closing
+                        }
+                      }}
                       className="flex items-center justify-between cursor-pointer w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-gray-700 text-sm hover:bg-gray-100 transition-colors"
                     >
                       <div className="flex items-center">
@@ -443,26 +493,53 @@ const SignUpForm = () => {
                       />
                     </button>
                     {showWhatsappDropdown && (
-                      <div className="absolute top-full left-0 mt-1 w-64 h-60 overflow-y-auto bg-white border border-gray-300 rounded-lg shadow-lg z-10">
-                        {countries.map((country) => (
-                          <div
-                            key={country.code}
-                            onClick={() =>
-                              handleWhatsappCodeChange(country.phone_code)
-                            }
-                            className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                          >
-                            <img
-                              src={country.flag}
-                              alt={country.name}
-                              className="w-4 h-4 mr-2"
+                      <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
+                        {/* Search Input */}
+                        <div className="p-2 border-b border-gray-200">
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <FontAwesomeIcon
+                                icon={faSearch}
+                                className="text-gray-400 text-xs"
+                              />
+                            </div>
+                            <input
+                              type="text"
+                              value={whatsappSearchTerm}
+                              onChange={(e) => setWhatsappSearchTerm(e.target.value)}
+                              className="block w-full pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                              placeholder="Search countries..."
+                              onClick={(e) => e.stopPropagation()}
                             />
-                            <span className="truncate">{country.name}</span>
-                            <span className="ml-auto text-gray-500">
-                              {country.phone_code}
-                            </span>
                           </div>
-                        ))}
+                        </div>
+                        {/* Countries List */}
+                        <div className="max-h-48 overflow-y-auto">
+                          {getFilteredCountries(whatsappSearchTerm).map((country) => (
+                            <div
+                              key={country.code}
+                              onClick={() =>
+                                handleWhatsappCodeChange(country.phone_code)
+                              }
+                              className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                            >
+                              <img
+                                src={country.flag}
+                                alt={country.name}
+                                className="w-4 h-4 mr-2"
+                              />
+                              <span className="truncate">{country.name}</span>
+                              <span className="ml-auto text-gray-500">
+                                {country.phone_code}
+                              </span>
+                            </div>
+                          ))}
+                          {getFilteredCountries(whatsappSearchTerm).length === 0 && (
+                            <div className="px-3 py-2 text-sm text-gray-500 text-center">
+                              No countries found
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -646,7 +723,7 @@ const SignUpForm = () => {
                   </span>
                 </div>
               ) : (
-                <div id="googleSignInDiv" className="w-full"></div>
+                <div id="googleSignInDiv" className="w-full [&>div]:rounded-lg [&>div>div]:rounded-lg [&>div>div>div]:rounded-lg"></div>
               )}
             </div>
           </motion.form>

@@ -52,10 +52,19 @@ const toastHelper: ToastHelper = {
   },
 
   showTost: (message: string, type: ToastType) => {
+    // Check if it's an "Invalid credentials" error and show as warning
+    let displayMessage = message;
+    let displayType = type;
+    
+    if (type === 'error' && message.toLowerCase().includes('invalid credentials')) {
+      displayMessage = 'Incorrect email or password. Please check and try again.';
+      displayType = 'warning';
+    }
+    
     Swal.fire({
-      icon: type,
-      title: type.charAt(0).toUpperCase() + type.slice(1) + '!',
-      text: message,
+      icon: displayType,
+      title: displayType.charAt(0).toUpperCase() + displayType.slice(1) + '!',
+      text: displayMessage,
       timer: 3000,
       showConfirmButton: false,
       toast: true,
