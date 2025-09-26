@@ -229,7 +229,7 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-100 cursor-pointer rounded-full  transition-colors"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -239,7 +239,7 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
         <div className="flex border-b border-gray-200">
           <button
             onClick={() => setActiveTab('active')}
-            className={`px-6 py-3 font-medium text-sm transition-colors ${
+            className={`px-6 py-3 font-medium cursor-pointer text-sm transition-colors ${
               activeTab === 'active'
                 ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
                 : 'text-gray-500 hover:text-gray-700'
@@ -249,7 +249,7 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
           </button>
           <button
             onClick={() => setActiveTab('accepted')}
-            className={`px-6 py-3 font-medium text-sm transition-colors ${
+            className={`px-6 py-3 font-medium cursor-pointer text-sm transition-colors ${
               activeTab === 'accepted'
                 ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
                 : 'text-gray-500 hover:text-gray-700'
@@ -336,7 +336,7 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
                                   setShowResponseForm(true);
                                 }
                               }}
-                              className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                              className="px-4 py-2 bg-blue-600 text-white cursor-pointer text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
                             >
                               <Send className="w-4 h-4" />
                               <span>Make Counter Offer</span>
@@ -395,7 +395,7 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
                                             setResponseData({ action: 'accept', offerPrice: '', message: '' });
                                             setShowResponseForm(true);
                                           }}
-                                          className="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-1"
+                                          className="px-3 py-1.5 bg-green-600 cursor-pointer text-white text-sm rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-1"
                                         >
                                           <CheckCircle className="w-4 h-4" />
                                           <span>Accept</span>
@@ -487,7 +487,7 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
                                 : individualNegotiation.productId._id;
                               window.location.href = `/product/${productId}`;
                             }}
-                            className="px-4 py-2 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-2"
+                            className="px-4 py-2 bg-orange-600 cursor-pointer text-white text-sm rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-2"
                           >
                             <Package className="w-4 h-4" />
                             <span>Buy Now</span>
@@ -514,7 +514,7 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
                   </h3>
                   <button
                     onClick={() => setShowResponseForm(false)}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    className="p-2 hover:bg-gray-100 rounded-full cursor-pointer transition-colors"
                   >
                     <X className="w-5 h-5 text-gray-500" />
                   </button>
@@ -556,13 +556,13 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
                     <button
                       type="button"
                       onClick={() => setShowResponseForm(false)}
-                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                      className="flex-1 px-4 py-2 border border-gray-300 cursor-pointer text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className={`flex-1 px-4 py-2 text-white rounded-lg transition-colors ${
+                      className={`flex-1 px-4 py-2 text-white cursor-pointer rounded-lg transition-colors ${
                         responseData.action === 'accept'
                           ? 'bg-green-600 hover:bg-green-700'
                           : 'bg-blue-600 hover:bg-blue-700'

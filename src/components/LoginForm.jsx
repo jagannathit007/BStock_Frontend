@@ -71,102 +71,104 @@ const LoginForm = ({ onLogin }) => {
   };
 
   const handleGoogleResponse = async (response) => {
-  setGoogleLoading(true);
-  setError("");
-  try {
-    const userData = jwtDecode(response.credential);
-    console.log("Google User:", userData);
+    setGoogleLoading(true);
+    setError("");
+    try {
+      const userData = jwtDecode(response.credential);
+      console.log("Google User:", userData);
 
-    const loginData = {
-      email: userData.email || "",
-      socialId: userData.sub, // Google user ID
-      platformName: "google",
-    };
+      const loginData = {
+        email: userData.email || "",
+        socialId: userData.sub, // Google user ID
+        platformName: "google",
+      };
 
-    const res = await AuthService.login(loginData);
-    if (res.data && res.data.token) {
-      localStorage.setItem("token", res.data.token);
-      
-      // Save customer data to localStorage
-      if (res.data.customer) {
-        localStorage.setItem("user", JSON.stringify(res.data.customer));
-        
-        // Save profile image URL separately if available
-        if (res.data.customer.profileImage || res.data.customer.avatar) {
-          const profileImage = res.data.customer.profileImage || res.data.customer.avatar;
-          localStorage.setItem("profileImageUrl", profileImage);
+      const res = await AuthService.login(loginData);
+      if (res.data && res.data.token) {
+        localStorage.setItem("token", res.data.token);
+
+        // Save customer data to localStorage
+        if (res.data.customer) {
+          localStorage.setItem("user", JSON.stringify(res.data.customer));
+
+          // Save profile image URL separately if available
+          if (res.data.customer.profileImage || res.data.customer.avatar) {
+            const profileImage =
+              res.data.customer.profileImage || res.data.customer.avatar;
+            localStorage.setItem("profileImageUrl", profileImage);
+          }
         }
+
+        if (rememberMe) {
+          localStorage.setItem("rememberMe", "true");
+          localStorage.setItem("email", email);
+        } else {
+          localStorage.removeItem("rememberMe");
+          localStorage.removeItem("email");
+        }
+        localStorage.setItem("isLoggedIn", "true");
+        if (onLogin) onLogin();
+        navigate("/ready-stock");
       }
-      
-      if (rememberMe) {
-        localStorage.setItem("rememberMe", "true");
-        localStorage.setItem("email", email);
-      } else {
-        localStorage.removeItem("rememberMe");
-        localStorage.removeItem("email");
-      }
-      localStorage.setItem("isLoggedIn", "true");
-      if (onLogin) onLogin();
-      navigate("/ready-stock");
+    } catch (err) {
+      console.error("Google login failed:", err);
+      setError(err.message || "Google login failed. Please try again.");
+    } finally {
+      setGoogleLoading(false);
     }
-  } catch (err) {
-    console.error("Google login failed:", err);
-    setError(err.message || "Google login failed. Please try again.");
-  } finally {
-    setGoogleLoading(false);
-  }
-};
-
-  const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsLoading(true);
-  setError("");
-
-  // Basic validation
-  if (!email || !password) {
-    setError("Please enter both email and password");
-    setIsLoading(false);
-    return;
-  }
-
-  const loginData = {
-    email: email.trim().toLowerCase(),
-    password,
   };
 
-  try {
-    const res = await AuthService.login(loginData);
-    if (res.data && res.data.token) {
-      localStorage.setItem("token", res.data.token);
-      
-      // Save customer data to localStorage
-      if (res.data.customer) {
-        localStorage.setItem("user", JSON.stringify(res.data.customer));
-        
-        // Save profile image URL separately if available
-        if (res.data.customer.profileImage || res.data.customer.avatar) {
-          const profileImage = res.data.customer.profileImage || res.data.customer.avatar;
-          localStorage.setItem("profileImageUrl", profileImage);
-        }
-      }
-      
-      if (rememberMe) {
-        localStorage.setItem("rememberMe", "true");
-        localStorage.setItem("email", email);
-      } else {
-        localStorage.removeItem("rememberMe");
-        localStorage.removeItem("email");
-      }
-      localStorage.setItem("isLoggedIn", "true");
-      if (onLogin) onLogin();
-      navigate("/ready-stock");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    // Basic validation
+    if (!email || !password) {
+      setError("Please enter both email and password");
+      setIsLoading(false);
+      return;
     }
-  } catch (err) {
-    setError(err.message || "Login failed");
-  } finally {
-    setIsLoading(false);
-  }
-};
+
+    const loginData = {
+      email: email.trim().toLowerCase(),
+      password,
+    };
+
+    try {
+      const res = await AuthService.login(loginData);
+      if (res.data && res.data.token) {
+        localStorage.setItem("token", res.data.token);
+
+        // Save customer data to localStorage
+        if (res.data.customer) {
+          localStorage.setItem("user", JSON.stringify(res.data.customer));
+
+          // Save profile image URL separately if available
+          if (res.data.customer.profileImage || res.data.customer.avatar) {
+            const profileImage =
+              res.data.customer.profileImage || res.data.customer.avatar;
+            localStorage.setItem("profileImageUrl", profileImage);
+          }
+        }
+
+        if (rememberMe) {
+          localStorage.setItem("rememberMe", "true");
+          localStorage.setItem("email", email);
+        } else {
+          localStorage.removeItem("rememberMe");
+          localStorage.removeItem("email");
+        }
+        localStorage.setItem("isLoggedIn", "true");
+        if (onLogin) onLogin();
+        navigate("/ready-stock");
+      }
+    } catch (err) {
+      setError(err.message || "Login failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
@@ -236,7 +238,7 @@ const LoginForm = ({ onLogin }) => {
   return (
     <>
       <div className="min-h-screen flex bg-white fixed inset-0 overflow-auto">
-        <div className="flex-1 flex items-start justify-center px-4 sm:px-4 lg:px-6 bg-white overflow-y-auto py-12">
+        <div className="flex-1 flex  justify-center px-4 sm:px-4 lg:px-6 bg-white overflow-y-auto py-12 items-center">
           {showLoginForm && (
             <motion.div
               className="max-w-md w-full space-y-8 px-4 sm:px-6"
@@ -361,18 +363,40 @@ const LoginForm = ({ onLogin }) => {
 
                 <motion.button
                   type="submit"
-                  className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium focus:ring-4 focus:ring-indigo-300 flex items-center justify-center disabled:opacity-70"
+                  className="w-full bg-[#0071E0] text-white cursor-pointer py-2 px-4 rounded-lg font-medium focus:ring-4 flex items-center justify-center disabled:opacity-70"
                   disabled={isLoading}
                   variants={buttonVariants}
                   whileHover="hover"
                   whileTap="tap"
                 >
-                  <span className={isLoading ? "mr-2" : ""}>Log In</span>
-                  {isLoading && (
-                    <FontAwesomeIcon
-                      icon={faSpinner}
-                      className="animate-spin"
-                    />
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <svg
+                        className="animate-spin h-5 w-5 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 
+             0 5.373 0 12h4zm2 5.291A7.962 
+             7.962 0 014 12H0c0 3.042 1.135 
+             5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                    </div>
+                  ) : (
+                    <span>Log In</span>
                   )}
                 </motion.button>
 

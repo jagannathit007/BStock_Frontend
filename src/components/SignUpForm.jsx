@@ -16,7 +16,7 @@ import countriesData from "../data/countries.json";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { jwtDecode } from "jwt-decode";
-import { AuthService } from '../services/auth/auth.services'
+import { AuthService } from "../services/auth/auth.services";
 
 const SignUpForm = () => {
   const navigate = useNavigate();
@@ -116,7 +116,7 @@ const SignUpForm = () => {
       // Combine phoneCode with mobileNumber when updating
       setFormData((prev) => ({
         ...prev,
-        [name]: `${prev.phoneCode}${value.replace(/[^0-9]/g, '')}`, // Ensure only digits are appended
+        [name]: `${prev.phoneCode}${value.replace(/[^0-9]/g, "")}`, // Ensure only digits are appended
       }));
     } else {
       setFormData((prev) => ({
@@ -131,7 +131,7 @@ const SignUpForm = () => {
     setFormData((prev) => ({
       ...prev,
       phoneCode: code,
-      mobileNumber: `${code}${prev.mobileNumber.replace(/^\+\d+/, '') || ''}`, // Update mobileNumber with new code
+      mobileNumber: `${code}${prev.mobileNumber.replace(/^\+\d+/, "") || ""}`, // Update mobileNumber with new code
     }));
     setShowPhoneDropdown(false);
   };
@@ -164,7 +164,9 @@ const SignUpForm = () => {
       email: formData.email.trim().toLowerCase(),
       password: formData.password,
       mobileNumber: formData.mobileNumber,
-      whatsappNumber: `${formData.whatsappCode}${(formData.whatsapp || '').replace(/[^0-9]/g, '')}`,
+      whatsappNumber: `${formData.whatsappCode}${(
+        formData.whatsapp || ""
+      ).replace(/[^0-9]/g, "")}`,
     };
 
     try {
@@ -247,7 +249,7 @@ const SignUpForm = () => {
   return (
     <div className="min-h-screen flex bg-white fixed inset-0 overflow-auto">
       {/* Left Side - Signup Form */}
-      <div className="flex-1 flex items-start justify-center px-4 sm:px-4 lg:px-6 bg-white overflow-y-auto py-4">
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-4 lg:px-6 bg-white overflow-y-auto py-4">
         <motion.div
           className="w-full max-w-xl space-y-8 px-4 sm:px-6"
           variants={containerVariants}
@@ -263,7 +265,9 @@ const SignUpForm = () => {
               Join us to access the best deals in the mobile industry.
             </p>
             {error && (
-              <p className="text-red-500 text-sm mt-2 bg-red-50 p-2 rounded">{error}</p>
+              <p className="text-red-500 text-sm mt-2 bg-red-50 p-2 rounded">
+                {error}
+              </p>
             )}
           </motion.div>
           {/* Signup Form */}
@@ -336,7 +340,7 @@ const SignUpForm = () => {
                     <button
                       type="button"
                       onClick={() => setShowPhoneDropdown(!showPhoneDropdown)}
-                      className="flex items-center justify-between w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-gray-700 text-sm hover:bg-gray-100 transition-colors"
+                      className="flex items-center justify-between cursor-pointer w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-gray-700 text-sm hover:bg-gray-100 transition-colors"
                     >
                       <div className="flex items-center">
                         {countries.find(
@@ -389,7 +393,10 @@ const SignUpForm = () => {
                       type="tel"
                       id="mobileNumber"
                       name="mobileNumber"
-                      value={formData.mobileNumber.replace(formData.phoneCode, '') || ''} // Display without phoneCode
+                      value={
+                        formData.mobileNumber.replace(formData.phoneCode, "") ||
+                        ""
+                      } // Display without phoneCode
                       onChange={handleChange}
                       className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white"
                       placeholder="Phone number"
@@ -411,7 +418,7 @@ const SignUpForm = () => {
                       onClick={() =>
                         setShowWhatsappDropdown(!showWhatsappDropdown)
                       }
-                      className="flex items-center justify-between w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-gray-700 text-sm hover:bg-gray-100 transition-colors"
+                      className="flex items-center justify-between cursor-pointer w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-gray-700 text-sm hover:bg-gray-100 transition-colors"
                     >
                       <div className="flex items-center">
                         {countries.find(
@@ -578,17 +585,42 @@ const SignUpForm = () => {
             {/* Create Account Button */}
             <motion.button
               type="submit"
-              className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium focus:ring-4 focus:ring-indigo-300 transition-colors flex items-center justify-center disabled:opacity-70"
+              className="w-full bg-[#0071E0] text-white py-2 px-4 rounded-lg font-medium focus:ring-4 cursor-pointer transition-colors flex items-center justify-center disabled:opacity-70"
               disabled={isLoading}
               variants={buttonVariants}
               whileHover="hover"
               whileTap="tap"
             >
-              <span className={isLoading ? "mr-2" : ""}>Create Account</span>
-              {isLoading && (
-                <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <svg
+                    className="animate-spin h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 
+             5.291A7.962 7.962 0 014 12H0c0 
+             3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                </div>
+              ) : (
+                <span>Create Account</span>
               )}
             </motion.button>
+
             {/* Divider */}
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">

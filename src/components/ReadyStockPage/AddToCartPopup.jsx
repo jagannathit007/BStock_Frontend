@@ -98,7 +98,7 @@ const AddToCartPopup = ({ product, onClose }) => {
             </h2>
           </div>
           <button
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors duration-200"
+            className="w-8 h-8 flex items-center cursor-pointer justify-center rounded-full hover:bg-gray-100 transition-colors duration-200"
             onClick={onClose}
           >
             <FontAwesomeIcon icon={faTimes} className="w-5 h-5 text-gray-500" />
@@ -158,7 +158,7 @@ const AddToCartPopup = ({ product, onClose }) => {
               <button
                 onClick={() => handleQuantityChange(quantity - 1)}
                 disabled={isFullPurchase || quantity <= validMoq}
-                className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-white"
+                className="w-10 h-10 flex items-center justify-center cursor-pointer rounded-full border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-white"
               >
                 <FontAwesomeIcon
                   icon={faMinus}
@@ -187,7 +187,7 @@ const AddToCartPopup = ({ product, onClose }) => {
               <button
                 onClick={() => handleQuantityChange(quantity + 1)}
                 disabled={isFullPurchase || quantity >= validStockCount}
-                className="w-10 h-10 flex items-center justify-center rounded-full border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-white"
+                className="w-10 h-10 flex items-center justify-center cursor-pointer rounded-full border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-white"
               >
                 <FontAwesomeIcon
                   icon={faPlus}

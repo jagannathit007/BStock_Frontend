@@ -355,7 +355,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
 
                 {/* Enhanced Wishlist Button */}
                 <button
-                  className="absolute top-8 right-8 p-3 bg-white rounded-full shadow-xl hover:shadow-2xl border border-gray-100 hover:scale-110 transition-all duration-300 group"
+                  className="absolute top-8 right-8 p-3 cursor-pointer bg-white rounded-full shadow-xl hover:shadow-2xl border border-gray-100 hover:scale-110 transition-all duration-300 group"
                   onClick={handleToggleWishlist}
                 >
                   <FontAwesomeIcon
@@ -502,7 +502,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   <span className="text-lg font-semibold text-gray-900">Quantity</span>
                   <div className="flex items-center bg-gray-50 rounded-xl border border-gray-200">
                     <button
-                      className="p-3 hover:bg-gray-100 rounded-l-xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="p-3 hover:bg-gray-100 cursor-pointer  rounded-l-xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       onClick={() => handleQuantityChange(-1)}
                       disabled={
                         quantity <= processedProduct.moq ||
@@ -516,7 +516,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                       {quantity}
                     </span>
                     <button
-                      className="p-3 hover:bg-gray-100 rounded-r-xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="p-3 hover:bg-gray-100 cursor-pointer  rounded-r-xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       onClick={() => handleQuantityChange(1)}
                       disabled={processedProduct.isOutOfStock || processedProduct.isExpired}
                     >
@@ -559,7 +559,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                 {processedProduct.isExpired ? (
                   <>
                     <button
-                      className="w-full bg-gradient-to-r from-gray-400 to-gray-500 text-white py-4 px-6 rounded-xl text-lg font-semibold cursor-not-allowed flex items-center justify-center"
+                      className="w-full bg-gradient-to-r from-gray-400  to-gray-500 text-white py-4 px-6 rounded-xl text-lg font-semibold cursor-not-allowed flex items-center justify-center"
                       disabled
                     >
                       <FontAwesomeIcon icon={faCalendarXmark} className="mr-3 text-xl" />
@@ -576,7 +576,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                 ) : processedProduct.isOutOfStock ? (
                   <>
                     <button
-                      className="w-full bg-gradient-to-r from-gray-400 to-gray-500 text-white py-4 px-6 rounded-xl text-lg font-semibold cursor-not-allowed flex items-center justify-center"
+                      className="w-full bg-gradient-to-r from-gray-400  to-gray-500 text-white py-4 px-6 rounded-xl text-lg font-semibold cursor-not-allowed flex items-center justify-center"
                       disabled
                     >
                       <FontAwesomeIcon icon={faXmark} className="mr-3 text-xl" />
@@ -584,7 +584,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                     </button>
                     {notify ? (
                       <button
-                        className="w-full bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white py-4 px-6 rounded-xl text-lg font-semibold transition-all duration-300 flex items-center justify-center transform hover:scale-105 shadow-lg"
+                        className="w-full bg-gradient-to-r from-red-500 cursor-pointer to-pink-500 hover:from-red-600 hover:to-pink-600 text-white py-4 px-6 rounded-xl text-lg font-semibold transition-all duration-300 flex items-center justify-center transform hover:scale-105 shadow-lg"
                         onClick={(ev) => handleNotifyToggle(ev, false)}
                         title="Turn off notifications"
                       >
@@ -593,7 +593,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                       </button>
                     ) : (
                       <button
-                        className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white py-4 px-6 rounded-xl text-lg font-semibold transition-all duration-300 flex items-center justify-center transform hover:scale-105 shadow-lg"
+                        className="w-full bg-gradient-to-r from-blue-500 cursor-pointer to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white py-4 px-6 rounded-xl text-lg font-semibold transition-all duration-300 flex items-center justify-center transform hover:scale-105 shadow-lg"
                         onClick={(ev) => handleNotifyToggle(ev, true)}
                         title="Notify me when back in stock"
                       >
@@ -606,14 +606,14 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   <>
                     <button 
                       onClick={handleAddToCartClick} 
-                      className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-4 px-6 rounded-xl text-lg font-semibold transition-all duration-300 flex items-center justify-center transform hover:scale-105 shadow-lg hover:shadow-xl"
+                      className="w-full bg-gradient-to-r from-orange-500 to-red-500 cursor-pointer hover:from-orange-600 hover:to-red-600 text-white py-4 px-6 rounded-xl text-lg font-semibold transition-all duration-300 flex items-center justify-center transform hover:scale-105 shadow-lg hover:shadow-xl"
                     >
                       <FontAwesomeIcon icon={faCartShopping} className="mr-3 text-xl" />
                       Add to Cart
                     </button>
                     <button 
                       onClick={handleBuyNowClick}
-                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-4 px-6 rounded-xl text-lg font-semibold transition-all duration-300 flex items-center justify-center transform hover:scale-105 shadow-lg hover:shadow-xl"
+                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 cursor-pointer hover:from-blue-700 hover:to-indigo-700 text-white py-4 px-6 rounded-xl text-lg font-semibold transition-all duration-300 flex items-center justify-center transform hover:scale-105 shadow-lg hover:shadow-xl"
                     >
                       <FontAwesomeIcon icon={faBolt} className="mr-3 text-xl" />
                       Buy Now
@@ -621,7 +621,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                     {processedProduct.isNegotiable && (
                       <button
                         onClick={handleBiddingClick}
-                        className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-4 px-6 rounded-xl text-lg font-semibold transition-all duration-300 flex items-center justify-center transform hover:scale-105 shadow-lg hover:shadow-xl"
+                        className="w-full bg-gradient-to-r from-purple-600 cursor-pointer to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-4 px-6 rounded-xl text-lg font-semibold transition-all duration-300 flex items-center justify-center transform hover:scale-105 shadow-lg hover:shadow-xl"
                       >
                         <FontAwesomeIcon icon={faHandshake} className="mr-3 text-xl" />
                         Make an Offer

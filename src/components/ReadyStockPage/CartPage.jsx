@@ -305,7 +305,7 @@ const CartPage = () => {
                             <button
                               onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
                               disabled={item.quantity <= 1}
-                              className="w-8 h-8 flex items-center justify-center rounded-full border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="w-8 h-8 flex items-center cursor-pointer justify-center rounded-full border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               <FontAwesomeIcon icon={faMinus} className="w-4 h-4 text-gray-600" />
                             </button>
@@ -323,7 +323,7 @@ const CartPage = () => {
                             <button
                               onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
                               disabled={item.quantity >= item.stockCount}
-                              className="w-8 h-8 flex items-center justify-center rounded-full border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="w-8 h-8 flex items-center cursor-pointer justify-center rounded-full border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               <FontAwesomeIcon icon={faPlus} className="w-4 h-4 text-gray-600" />
                             </button>
@@ -337,7 +337,7 @@ const CartPage = () => {
                         <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
                           <button
                             onClick={() => handleRemoveItem(item.id)}
-                            className="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition-all duration-200"
+                            className="text-red-600 hover:text-red-800 p-2 cursor-pointer rounded-lg hover:bg-red-50 transition-all duration-200"
                           >
                             <FontAwesomeIcon icon={faTrash} className="w-5 h-5" />
                           </button>
@@ -356,13 +356,13 @@ const CartPage = () => {
               </div>
               <div className="flex gap-3">
                 <button
-                  className="bg-red-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-red-700 transition-all duration-200"
+                  className="bg-red-600 text-white py-3 cursor-pointer px-6 rounded-lg font-medium hover:bg-red-700 transition-all duration-200"
                   onClick={handleClearCart}
                 >
                   Clear Cart
                 </button>
                 <button
-                  className="bg-[#0071E0] text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-600 transition-all duration-200"
+                  className="bg-[#0071E0] text-white cursor-pointer py-3 px-6 rounded-lg font-medium hover:bg-blue-600 transition-all duration-200"
                   onClick={() => setShowCheckoutForm(true)}
                 >
                   Proceed to Checkout

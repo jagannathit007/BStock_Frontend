@@ -178,7 +178,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 p-2"
+            className="text-gray-400 cursor-pointer hover:text-gray-600 p-2"
           >
             <FontAwesomeIcon icon={faTimes} className="text-lg" />
           </button>
@@ -274,13 +274,13 @@ const WishlistModal = ({ isOpen, onClose }) => {
 
                           <div className="flex items-center gap-2 ml-4">
                             {product.notify && (
-                              <button className="px-3 py-2 text-sm border border-orange-300 text-orange-700 bg-orange-50 rounded hover:bg-orange-100 transition-colors flex items-center gap-2">
+                              <button className="px-3 py-2 text-sm border cursor-pointer border-orange-300 text-orange-700 bg-orange-50 rounded hover:bg-orange-100 transition-colors flex items-center gap-2">
                                 <FontAwesomeIcon icon={faBell} />
                                 Notify
                               </button>
                             )}
                             {!product.isOutOfStock && !product.isExpired && (
-                              <button className="px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-2">
+                              <button className="px-3 py-2 text-sm bg-blue-600 cursor-pointer text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-2">
                                 <FontAwesomeIcon icon={faShoppingCart} />
                                 Add to Cart
                               </button>
@@ -289,7 +289,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
                               onClick={() =>
                                 handleWishlistChange(product.id, false)
                               }
-                              className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                              className="p-2 text-red-500 hover:text-red-700 cursor-pointer  rounded transition-colors"
                               title="Remove from wishlist"
                             >
                               <FontAwesomeIcon icon={faHeart} />

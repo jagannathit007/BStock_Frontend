@@ -91,7 +91,7 @@ const ProfileNavigation = ({ activeTab, setActiveTab }) => {
             <button
               key={id}
               onClick={() => setActiveTab(id)}
-              className={`w-full px-4 py-3 text-left rounded-lg flex items-center text-sm font-medium transition-colors duration-200 ${activeTab === id ? "text-white bg-[#0071E0] shadow-sm" : "text-gray-600 hover:bg-gray-50"}`}
+              className={`w-full px-4 py-3 cursor-pointer text-left rounded-lg flex items-center text-sm font-medium transition-colors duration-200 ${activeTab === id ? "text-white bg-[#0071E0] shadow-sm" : "text-gray-600 hover:bg-gray-50"}`}
             >
               <i className={`${icon} w-4 h-4 mr-3`} style={{ color: activeTab === id ? "white" : "#0071E0" }}></i>
               {label}
@@ -135,7 +135,7 @@ const ProfileDetails = ({ formData, onChange, onSave }) => {
         ))}
       </div>
       <div className="flex justify-end pt-4">
-        <button onClick={onSave} className="px-6 py-2 bg-[#0071E0] text-white rounded-lg flex items-center space-x-2 hover:bg-[#005BB5] transition-colors duration-200 shadow-sm hover:shadow-md">
+        <button onClick={onSave} className="px-6 py-2 cursor-pointer bg-[#0071E0] text-white rounded-lg flex items-center space-x-2 hover:bg-[#005BB5] transition-colors duration-200 shadow-sm hover:shadow-md">
           <i className="fas fa-save"></i>
           <span>Save Changes</span>
         </button>
@@ -165,9 +165,7 @@ const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSa
     setCertificateImageError(false);
   }, [formData.certificate]);
 
-  const countries = [
-    "United States", "Hongkong", "Dubai", "Singapore", "Canada", "United Kingdom", "Australia", "Germany", "France", "Italy", "Spain", "Netherlands", "India", "Japan", "China", "Brazil", "Mexico", "South Africa"
-  ];
+  const countries = ["Hongkong" , "Dubai" , "Singapore" , "India"];
   const logoFileName = formData.businessLogo ? (typeof formData.businessLogo === 'string' ? formData.businessLogo.split('/').pop() : formData.businessLogo.name) : '';
   const certificateExt = formData.certificate ? (typeof formData.certificate === 'string' ? (formData.certificate.split('.').pop() || '').toUpperCase() : (formData.certificate.name.split('.').pop() || '').toUpperCase()) : '';
   const certificateIsImage = typeof formData.certificate === 'object' && formData.certificate?.type?.startsWith('image/');
@@ -341,7 +339,7 @@ const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSa
       <div className="flex justify-end pt-4">
         <button
           onClick={onSave}
-          className="px-6 py-2 bg-[#0071E0] text-white rounded-lg flex items-center space-x-2 hover:bg-[#005BB5] transition-colors duration-200 shadow-sm hover:shadow-md"
+          className="px-6 py-2 bg-[#0071E0] text-white cursor-pointer rounded-lg flex items-center space-x-2 hover:bg-[#005BB5] transition-colors duration-200 shadow-sm hover:shadow-md"
         >
           <i className="fas fa-save"></i>
           <span>Save Business Profile</span>
@@ -387,7 +385,7 @@ const ChangePassword = ({ passwords, showPasswords, onChange, onToggle, onSubmit
       ))}
     </div>
     <div className="flex justify-end pt-4">
-      <button onClick={onSubmit} className="px-6 py-3 bg-[#0071E0] text-white rounded-lg flex items-center space-x-2 hover:bg-[#005BB5] transition-colors duration-200 shadow-sm hover:shadow-md">
+      <button onClick={onSubmit} className="px-6 py-3 bg-[#0071E0] cursor-pointer text-white rounded-lg flex items-center space-x-2 hover:bg-[#005BB5] transition-colors duration-200 shadow-sm hover:shadow-md">
         <i className="fas fa-lock"></i>
         <span>Update Password</span>
       </button>

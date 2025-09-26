@@ -238,7 +238,7 @@ const Header = ({ onLogout }) => {
             {/* Right Side */}
             <div className="flex items-center space-x-2 sm:space-x-4">
               {/* Wallet Info */}
-              <div className="hidden sm:flex items-center space-x-2">
+              <div className="hidden sm:flex items-center space-x-2 cursor-pointer">
                 <svg
                   className="h-5 w-5 text-gray-600"
                   fill="currentColor"
@@ -253,7 +253,7 @@ const Header = ({ onLogout }) => {
 
               {/* Negotiations */}
               <button
-                className="p-2 text-gray-600 hover:text-gray-900 relative"
+                className="p-2 text-gray-600 hover:text-gray-900 relative cursor-pointer"
                 onClick={handleNegotiationClick}
                 title="My Negotiations"
               >
@@ -262,7 +262,7 @@ const Header = ({ onLogout }) => {
 
               {/* Wishlist */}
               <button
-                className="p-2 text-gray-600 hover:text-gray-900 relative"
+                className="p-2 text-gray-600 hover:text-gray-900 relative cursor-pointer"
                 onClick={handleWishlistClick}
                 title="My Wishlist"
               >
@@ -271,7 +271,7 @@ const Header = ({ onLogout }) => {
 
               {/* Cart */}
               <button
-                className="p-2 text-gray-600 hover:text-gray-900 relative"
+                className="p-2 text-gray-600 hover:text-gray-900 relative cursor-pointer"
                 onClick={handleCartClick}
               >
                 <svg
@@ -315,7 +315,7 @@ const Header = ({ onLogout }) => {
                     <div className="py-1">
                       <button
                         onClick={handleProfileNavigation}
-                        className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#0071E0] transition-colors duration-150"
+                        className="flex items-center cursor-pointer w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#0071E0] transition-colors duration-150"
                       >
                         <i className="fas fa-user w-4 h-4 mr-3 text-gray-400"></i>
                         Profile
@@ -323,7 +323,7 @@ const Header = ({ onLogout }) => {
 
                       <button
                         onClick={handleLogout}
-                        className="flex items-center w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150"
+                        className="flex items-center w-full cursor-pointer px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150"
                       >
                         <i className="fas fa-sign-out-alt w-4 h-4 mr-3 text-red-500"></i>
                         Logout
