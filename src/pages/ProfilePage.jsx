@@ -489,8 +489,8 @@ const ProfilePage = () => {
       const address = business?.address ?? business?.businessAddress ?? '';
       const logo = toAbsoluteUrl(business?.logo ?? business?.businessLogo ?? null);
       const certificate = toAbsoluteUrl(business?.certificate ?? business?.businessCertificate ?? null);
-      const isApproved = business?.isApproved ?? null;
-      return { name, email, mobileNumber, whatsappNumber, profileImage, business: { businessName, country, address, logo, certificate, isApproved } };
+      const status = business?.status ?? null;
+      return { name, email, mobileNumber, whatsappNumber, profileImage, business: { businessName, country, address, logo, certificate, status } };
     };
     const loadProfile = async () => {
       try {
@@ -514,7 +514,7 @@ const ProfilePage = () => {
           businessLogo: typeof normalized.business.logo === 'string' ? normalized.business.logo : null,
           certificate: typeof normalized.business.certificate === 'string' ? normalized.business.certificate : null,
         });
-        setBusinessStatus(normalized.business.status ?? null);
+        setBusinessStatus(normalized.business.status ? normalized.business.status.charAt(0).toUpperCase() + normalized.business.status.slice(1).toLowerCase() : null);
         if (typeof normalized.profileImage === 'string') {
           setProfileImage(normalized.profileImage);
           try { localStorage.setItem('profileImageUrl', normalized.profileImage); } catch {}
@@ -572,35 +572,58 @@ const ProfilePage = () => {
       // refresh data to reflect persisted values
       try {
         const res = await AuthService.getProfile();
-        const root = res ?? {};
-        const container = (root?.data?.customer ?? root?.data) ?? root;
-        const business = container?.businessProfile ?? container?.business ?? {};
+        const normalized = normalize(res);
         setBusinessFormData((prev) => ({
           ...prev,
-          businessName: (business?.businessName ?? business?.companyName) || prev.businessName,
-          country: (business?.country ?? business?.businessCountry) || prev.country,
-          address: (business?.address ?? business?.businessAddress) || prev.address,
-          businessLogo: (business?.logo ?? business?.businessLogo) ?? prev.businessLogo,
-          certificate: (business?.certificate ?? business?.businessCertificate) ?? prev.certificate,
+          businessName: normalized.business.businessName || prev.businessName,
+          country: normalized.business.country || prev.country,
+          address: normalized.business.address || prev.address,
+          businessLogo: normalized.business.logo ?? prev.businessLogo,
+          certificate: normalized.business.certificate ?? prev.certificate,
         }));
         setBusinessPreviews((prev) => ({
-          businessLogo: typeof (business?.logo ?? business?.businessLogo) === 'string'
-            ? (business?.logo ?? business?.businessLogo)
+          businessLogo: typeof normalized.business.logo === 'string'
+            ? normalized.business.logo
             : prev.businessLogo,
-          certificate: typeof (business?.certificate ?? business?.businessCertificate) === 'string'
-            ? (business?.certificate ?? business?.businessCertificate)
+          certificate: typeof normalized.business.certificate === 'string'
+            ? normalized.business.certificate
             : prev.certificate,
         }));
-        setBusinessApproved(business?.isApproved ?? null);
+        setBusinessStatus( normalized.business.status ? normalized.business.status.charAt(0).toUpperCase() + normalized.business.status.slice(1).toLowerCase() : null );
         toastHelper.showTost('Business profile updated successfully', 'success');
       } catch (refreshError) {
         console.error('Error refreshing business profile data:', refreshError);
-        toastHelper.showTost('Failed to refresh business profile data', 'error');
+        // toastHelper.showTost('Failed to refresh business profile data', 'error');
       }
     } catch (e) {
       console.error('Error updating business profile:', e);
       // Error already handled via toast in AuthService
     }
+  };
+
+  const normalize = (raw) => {
+    const root = raw ?? {};
+    const container = (root?.data?.customer ?? root?.data) ?? root;
+    const business = container?.businessProfile ?? container?.business ?? {};
+    const name = container?.name ?? '';
+    const email = container?.email ?? '';
+    const mobileNumber = container?.mobileNumber ?? container?.phone ?? '';
+    const whatsappNumber = container?.whatsappNumber ?? '';
+    const profileImage = toAbsoluteUrl(container?.profileImage ?? container?.avatar ?? null);
+    const businessName = business?.businessName ?? business?.companyName ?? '';
+    const country = business?.country ?? business?.businessCountry ?? '';
+    const address = business?.address ?? business?.businessAddress ?? '';
+    const logo = toAbsoluteUrl(business?.logo ?? business?.businessLogo ?? null);
+    const certificate = toAbsoluteUrl(business?.certificate ?? business?.businessCertificate ?? null);
+    const status = business?.status ?? null;
+    return { name, email, mobileNumber, whatsappNumber, profileImage, business: { businessName, country, address, logo, certificate, status } };
+  };
+
+  const toAbsoluteUrl = (p) => {
+    if (!p || typeof p !== 'string') return null;
+    const normalized = p.replace(/\\/g, '/');
+    if (/^https?:\/\//i.test(normalized)) return normalized;
+    return `${env.baseUrl}/${normalized.replace(/^\//, '')}`;
   };
 
   // Profile Details Handler
