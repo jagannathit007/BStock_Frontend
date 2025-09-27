@@ -143,14 +143,15 @@ const ProductCard = ({
         !businessProfile?.businessName ||
         businessProfile.businessName.trim() === ""
       ) {
-        navigate("/profile");
-        await Swal.fire({
+        const confirm = await Swal.fire({
           icon: "warning",
           title: "Business Details Required",
           text: "Please add your business details before adding products to the cart.",
           confirmButtonText: "Go to Settings",
           confirmButtonColor: "#0071E0",
         });
+        if(confirm.isConfirmed) navigate("/profile?tab=business");
+        
         return;
       }
 
