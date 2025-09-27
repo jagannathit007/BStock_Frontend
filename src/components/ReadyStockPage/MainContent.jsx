@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import ProductCard from "./ProductCard";
 import SideFilter from "../SideFilter";
 import ViewControls from "./ViewControls";
@@ -25,6 +25,8 @@ const MainContent = () => {
   const [refreshTick, setRefreshTick] = useState(false);
   const [isBiddingFormOpen, setIsBiddingFormOpen] = useState(false); // State for BiddingForm
   const [selectedProduct, setSelectedProduct] = useState(null); // Track selected product for bidding
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState('');
 
   const navigate = useNavigate();
   const mapApiProductToUi = (p) => {
@@ -82,7 +84,8 @@ const MainContent = () => {
           {
             page: currentPage,
             limit: itemsPerPage,
-            search: filters.search || "",
+            search: searchQuery,
+            sort: getSortObject(sortOption),
             ...filters,
           },
           {
@@ -109,7 +112,7 @@ const MainContent = () => {
           setTotalProductsCount(0);
         }
       } catch (e) {
-        if (e.name !== "AbortError") {
+        if (!axios.isCancel(e)) {
           setFetchedProducts([]);
           setTotalProductsCount(0);
           console.error("Fetch products error:", e);
@@ -120,7 +123,7 @@ const MainContent = () => {
     };
     fetchData();
     return () => controller.abort();
-  }, [currentPage, itemsPerPage, filters, refreshTick]);
+  }, [currentPage, itemsPerPage, filters, refreshTick, searchQuery, sortOption]);
 
   useEffect(() => {
     setItemsPerPage(viewMode === "grid" ? 9 : 10);
@@ -151,10 +154,10 @@ const MainContent = () => {
     };
   }, []);
 
-  const handleFilterChange = (newFilters) => {
+  const handleFilterChange = useCallback((newFilters) => {
     setFilters(newFilters);
     setCurrentPage(1);
-  };
+  }, []);
 
   const handleRefresh = () => {
     setRefreshTick((prev) => !prev);
@@ -229,19 +232,6 @@ const MainContent = () => {
     );
   };
 
-  // const indexOfLastProduct = useMemo(
-  //   () => currentPage * itemsPerPage,
-  //   [currentPage, itemsPerPage]
-  // );
-  // const indexOfFirstProduct = useMemo(
-  //   () => indexOfLastProduct - itemsPerPage,
-  //   [indexOfLastProduct, itemsPerPage]
-  // );
-  // const totalPages = useMemo(
-  //   () => Math.max(Math.ceil(totalProductsCount / itemsPerPage), 1),
-  //   [totalProductsCount, itemsPerPage]
-  // );
-
   // Handle successful bid submission
   const handleBidSuccess = () => {
     Swal.fire({
@@ -254,10 +244,24 @@ const MainContent = () => {
     setRefreshTick((prev) => !prev); // Refresh product list
   };
 
+  const getSortObject = (option) => {
+    switch (option) {
+      case 'price_asc':
+        return { price: 1 };
+      case 'price_desc':
+        return { price: -1 };
+      case 'newest':
+        return { createdAt: -1 };
+      default:
+        return {};
+    }
+  };
+
   const indexOfLastProduct = useMemo(() => currentPage * itemsPerPage, [currentPage, itemsPerPage]);
   const indexOfFirstProduct = useMemo(() => indexOfLastProduct - itemsPerPage, [indexOfLastProduct, itemsPerPage]);
   const totalPages = useMemo(() => Math.max(Math.ceil(totalProductsCount / itemsPerPage), 1), [totalProductsCount, itemsPerPage]);
   const currentProducts = useMemo(() => fetchedProducts, [fetchedProducts]);
+  const showingProducts = `${Math.min(indexOfFirstProduct + 1, totalProductsCount)}-${Math.min(indexOfLastProduct, totalProductsCount)}`;
 
   const paginate = (pageNumber) => {
     if (pageNumber < 1 || pageNumber > totalPages) return;
@@ -318,11 +322,11 @@ const MainContent = () => {
           <ViewControls
             viewMode={viewMode}
             setViewMode={setViewMode}
-            totalProducts={totalProductsCount}
-            showingProducts={`${Math.min(
-              indexOfFirstProduct + 1,
-              totalProductsCount
-            )}-${Math.min(indexOfLastProduct, totalProductsCount)}`}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            sortOption={sortOption}
+            setSortOption={setSortOption}
+            setCurrentPage={setCurrentPage}
           />
 
           {viewMode === "grid" ? (
@@ -349,7 +353,9 @@ const MainContent = () => {
                   />
                 ))}
               </div>
-
+              <div className="text-sm text-gray-600 mt-4 mb-2">
+                Showing {showingProducts} of {totalProductsCount} products
+              </div>
               <div className="flex items-center justify-between border-t border-gray-200 pt-6 mt-6">
                 <button
                   onClick={() => paginate(currentPage - 1)}
@@ -407,7 +413,7 @@ const MainContent = () => {
                   <table className="w-full min-w-max">
                     <thead className="bg-gray-50 border-b border-gray-200">
                       <tr>
-                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider">
                           Product
                         </th>
                         <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
@@ -462,7 +468,9 @@ const MainContent = () => {
                   </table>
                 </div>
               </div>
-
+              <div className="text-sm text-gray-600 mt-4 mb-2">
+                Showing {showingProducts} of {totalProductsCount} products
+              </div>
               <div className="flex items-center justify-between border-t border-gray-200 pt-6 mt-6">
                 <button
                   onClick={() => paginate(currentPage - 1)}

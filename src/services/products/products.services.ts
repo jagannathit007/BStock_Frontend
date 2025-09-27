@@ -229,4 +229,22 @@ export class ProductService {
       throw new Error(errorMessage);
     }
   };
+
+  static getFilters = async (): Promise<any> => {
+    const baseUrl = env.baseUrl;
+    const url = `${baseUrl}/api/customer/get-product-filters`;
+
+    try {
+      const res = await api.post(url);
+      if (res.data.status !== 200) {
+        throw new Error(res.data.message || "Failed to fetch filters");
+      }
+      return res.data.data;
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.message || "Failed to fetch filters";
+      toastHelper.showTost(errorMessage, "error");
+      throw new Error(errorMessage);
+    }
+  };
 }
