@@ -65,6 +65,24 @@ export interface ChangePasswordRequest {
 }
 
 export class AuthService {
+  // Helper method to check if user profile is complete
+  static isProfileComplete = (customer: any): boolean => {
+    if (!customer) return false;
+    
+    // Check required personal information
+    const hasPersonalInfo = customer.name && 
+                           customer.email && 
+                           customer.mobileNumber && 
+                           customer.mobileCountryCode;
+    
+    // Check required business information
+    // const businessProfile = customer.businessProfile || {};
+    // const hasBusinessInfo = businessProfile.businessName && 
+    //                        businessProfile.country;
+    // return hasPersonalInfo && hasBusinessInfo;
+    return hasPersonalInfo;
+  };
+
   // Helper method to convert relative URLs to absolute URLs
   private static toAbsoluteUrl = (p: string | null | undefined): string | null => {
     if (!p || typeof p !== 'string') return null;

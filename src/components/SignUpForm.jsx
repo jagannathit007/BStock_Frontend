@@ -105,6 +105,16 @@ const SignUpForm = () => {
       const res = await AuthService.register(registerData);
       if (res.data && res.data.token) {
         localStorage.setItem("token", res.data.token);
+        
+        // Check if profile is complete for Google signup users
+        if (res.data.customer && res.data.customer.platformName === 'google') {
+          const isProfileComplete = AuthService.isProfileComplete(res.data.customer);
+          if (!isProfileComplete) {
+            navigate("/profile");
+            return;
+          }
+        }
+        
         navigate("/dashboard");
       }
     } catch (err) {

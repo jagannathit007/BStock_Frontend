@@ -832,6 +832,9 @@ const ProfilePage = () => {
   // Get active tab from query params, default to "profile" if not specified
   const activeTab = searchParams.get('tab') || 'profile';
   
+  // Check if user came from Google login and profile is incomplete
+  const [isIncompleteProfile, setIsIncompleteProfile] = useState(false);
+  
   // Set default tab in URL if no tab parameter is present
   useEffect(() => {
     if (!searchParams.get('tab')) {
@@ -912,6 +915,22 @@ const ProfilePage = () => {
       }
     }
   };
+
+  // Check if profile is incomplete on mount
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        if (userData.platformName === 'google') {
+          const isProfileComplete = AuthService.isProfileComplete(userData);
+          setIsIncompleteProfile(!isProfileComplete);
+        }
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+  }, []);
 
   // Load profile on mount
   useEffect(() => {
@@ -1003,6 +1022,15 @@ const ProfilePage = () => {
           whatsappNumber: container?.whatsappNumber || "",
           whatsappCountryCode: container?.whatsappCountryCode || "",
         });
+        
+        // Check if profile is now complete
+        const updatedUserData = {
+          ...container,
+          businessProfile: container?.businessProfile || {}
+        };
+        const isProfileComplete = AuthService.isProfileComplete(updatedUserData);
+        setIsIncompleteProfile(!isProfileComplete);
+        
         toastHelper.showTost('Profile updated successfully', 'success');
       } catch (refreshError) {
         console.error('Error refreshing profile data:', refreshError);
@@ -1044,6 +1072,21 @@ const ProfilePage = () => {
             : prev.certificate,
         }));
         setBusinessStatus( normalized.business.status ? normalized.business.status.charAt(0).toUpperCase() + normalized.business.status.slice(1).toLowerCase() : null );
+        
+        // Check if profile is now complete
+        const updatedUserData = {
+          name: normalized.name,
+          email: normalized.email,
+          mobileNumber: normalized.mobileNumber,
+          mobileCountryCode: normalized.mobileCountryCode,
+          businessProfile: {
+            businessName: normalized.business.businessName,
+            country: normalized.business.country
+          }
+        };
+        const isProfileComplete = AuthService.isProfileComplete(updatedUserData);
+        setIsIncompleteProfile(!isProfileComplete);
+        
         toastHelper.showTost('Business profile updated successfully', 'success');
       } catch (refreshError) {
         console.error('Error refreshing business profile data:', refreshError);
@@ -1135,6 +1178,35 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Profile Completion Banner */}
+      {isIncompleteProfile && (
+        <div className="bg-amber-50 border-l-4 border-amber-400 p-4">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <i className="fas fa-exclamation-triangle text-amber-400"></i>
+              </div>
+              <div className="ml-3 flex-1">
+                <p className="text-sm text-amber-700">
+                  <strong>Complete your profile:</strong> Please fill in your personal and business information to access all features of the platform.
+                </p>
+              </div>
+              {!isIncompleteProfile && (
+                <div className="ml-3">
+                  <button
+                    onClick={() => navigate('/ready-stock')}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+                  >
+                    <i className="fas fa-check mr-2"></i>
+                    Continue to Dashboard
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left sidebar with profile picture and navigation */}
