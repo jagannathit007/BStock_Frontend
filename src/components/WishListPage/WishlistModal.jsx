@@ -260,16 +260,6 @@ const WishlistModal = ({ isOpen, onClose }) => {
                             <div className="text-xl font-semibold text-gray-900">
                               ${product.price}
                             </div>
-                            {product.originalPrice !== product.price && (
-                              <div className="text-sm">
-                                <span className="text-gray-500 line-through">
-                                  ${product.originalPrice}
-                                </span>
-                                <span className="text-green-600 ml-2 font-medium">
-                                  Save ${product.discount}
-                                </span>
-                              </div>
-                            )}
                           </div>
 
                           <div className="flex items-center gap-2 ml-4">

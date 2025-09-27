@@ -107,13 +107,13 @@ const ProductCard = ({
     }
     switch (stockStatus) {
       case "In Stock":
-        return "bg-white-50";
+        return "bg-white-25";
       case "Low Stock":
-        return "bg-white-50";
+        return "bg-white-25";
       case "Out of Stock":
         return "bg-gray-100";
       default:
-        return "bg-white-50";
+        return "bg-white-25";
     }
   };
 
@@ -253,7 +253,7 @@ const ProductCard = ({
           className="hover:bg-gray-50 cursor-pointer"
           onClick={!isInModal ? handleProductClick : undefined}
         >
-          <td className="px-3 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
+          <td className="px-3 py-3 sm:px-6 sm:py-4">
             <div className="flex items-center min-w-[200px]">
               <img
                 className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg mr-4"
@@ -269,8 +269,13 @@ const ProductCard = ({
                 <div className="text-base sm:text-lg font-bold text-gray-900 truncate">
                   {name}
                 </div>
-                <div className="text-xs sm:text-sm text-gray-600 mt-1 truncate">
-                  {description.split("•")[1]?.trim()}
+                <div className="text-xs sm:text-sm text-gray-600 mt-1">
+                  {description.split(" • ").map((part, index) => (
+                    <div key={index}>{part.trim()}</div>
+                  ))}
+                  {purchaseTypeLabel && (
+                    <div>Purchase: {purchaseTypeLabel}</div>
+                  )}
                 </div>
               </div>
             </div>

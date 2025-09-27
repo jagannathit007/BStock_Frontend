@@ -8,7 +8,7 @@ const NavTabs = () => {
   const tabs = [
     { id: "ready-stock", name: "Ready Stock", path: "/ready-stock" },
     // { id: "flash-deals", name: "Flash Deals", path: "/flash-deals" },
-    { id: "bidding", name: "Bidding", path: "/bidding" },
+    // { id: "bidding", name: "Bidding", path: "/bidding" },
     // { id: "watchlist", name: "Watchlist", path: "/watchlist" },
     { id: "Order", name: "Order", path: "/order" },
   ];

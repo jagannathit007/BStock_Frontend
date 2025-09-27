@@ -43,7 +43,7 @@ const App = () => {
 
   return (
     <HashRouter>
-      <div className="bg-gray-50">
+      <div className="">
         {isLoggedIn && (
           <>
             <Header onLogout={handleLogout} />
