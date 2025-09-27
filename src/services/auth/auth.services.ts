@@ -26,10 +26,12 @@ export interface ProfileData {
   name?: string;
   email?: string;
   mobileNumber?: string;
+  mobileCountryCode?: string;
   logo?: File | string | null;
   certificate?: File | string | null;
   profileImage?: File | string | null;
   whatsappNumber?: string;
+  whatsappCountryCode?: string;
 }
 
 export interface ProfileResponse<T = any> {
@@ -44,6 +46,10 @@ export interface RegisterRequest {
   password?: string;
   socialId?: string;
   platformName?: string;
+  mobileNumber?: string;
+  mobileCountryCode?: string;
+  whatsappNumber?: string;
+  whatsappCountryCode?: string;
 }
 
 export interface LoginRequest {
@@ -59,6 +65,24 @@ export interface ChangePasswordRequest {
 }
 
 export class AuthService {
+  // Helper method to check if user profile is complete
+  static isProfileComplete = (customer: any): boolean => {
+    if (!customer) return false;
+    
+    // Check required personal information
+    const hasPersonalInfo = customer.name && 
+                           customer.email && 
+                           customer.mobileNumber && 
+                           customer.mobileCountryCode;
+    
+    // Check required business information
+    // const businessProfile = customer.businessProfile || {};
+    // const hasBusinessInfo = businessProfile.businessName && 
+    //                        businessProfile.country;
+    // return hasPersonalInfo && hasBusinessInfo;
+    return hasPersonalInfo;
+  };
+
   // Helper method to convert relative URLs to absolute URLs
   private static toAbsoluteUrl = (p: string | null | undefined): string | null => {
     if (!p || typeof p !== 'string') return null;
@@ -181,7 +205,10 @@ export class AuthService {
     if (payload.name !== undefined) form.append('name', String(payload.name));
     if (payload.email !== undefined) form.append('email', String(payload.email));
     if (payload.mobileNumber !== undefined) form.append('mobileNumber', String(payload.mobileNumber));
+    if (payload.mobileCountryCode !== undefined) form.append('mobileCountryCode', String(payload.mobileCountryCode));
     if (payload.whatsappNumber !== undefined) form.append('whatsappNumber', String(payload.whatsappNumber));
+    if (payload.whatsappCountryCode !== undefined) form.append('whatsappCountryCode', String(payload.whatsappCountryCode));
+
 
     if (payload.logo instanceof File) {
       form.append('logo', payload.logo);

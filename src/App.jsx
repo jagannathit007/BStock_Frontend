@@ -18,6 +18,7 @@ import VerifyEmail from "./components/VerifyEmail";
 import CartPage from "./components/ReadyStockPage/CartPage";
 import ProfilePage from "./pages/ProfilePage";
 import Order from "./components/Order";
+import { AuthService } from "./services/auth/auth.services";
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(
@@ -38,6 +39,26 @@ const App = () => {
     if (!isLoggedIn) {
       return <Navigate to="/login" replace />;
     }
+    
+    // Check profile completion for Google users on protected routes (except profile page)
+    const currentPath = window.location.hash.replace('#', '');
+    if (currentPath !== '/profile') {
+      const user = localStorage.getItem('user');
+      if (user) {
+        try {
+          const userData = JSON.parse(user);
+          if (userData.platformName === 'google') {
+            const isProfileComplete = AuthService.isProfileComplete(userData);
+            if (!isProfileComplete) {
+              return <Navigate to="/profile" replace />;
+            }
+          }
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+        }
+      }
+    }
+    
     return children;
   };
 

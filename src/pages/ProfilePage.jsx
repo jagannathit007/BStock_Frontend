@@ -1,7 +1,53 @@
 import React, { useEffect, useState, useMemo } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import { AuthService } from "../services/auth/auth.services";
 import { env } from "../utils/env";
 import toastHelper from "../utils/toastHelper";
+import CountrySelector from "../components/CountrySelector";
+
+// Validation schemas
+const profileSchema = yup.object({
+  name: yup.string()
+    .required('Name is required')
+    .min(2, 'Name must be at least 2 characters')
+    .trim(),
+  email: yup.string()
+    .required('Email is required')
+    .email('Please enter a valid email address')
+    .trim(),
+  mobileNumber: yup.string()
+    .required('Mobile number is required')
+    .min(7, 'Mobile number must be at least 7 digits'),
+  mobileCountryCode: yup.string()
+    .required('Country code is required'),
+  whatsappNumber: yup.string().optional(),
+  whatsappCountryCode: yup.string().optional()
+});
+
+const businessSchema = yup.object({
+  businessName: yup.string()
+    .required('Business name is required')
+    .min(2, 'Business name must be at least 2 characters')
+    .trim(),
+  country: yup.string()
+    .required('Country is required'),
+  address: yup.string().optional()
+});
+
+const passwordSchema = yup.object({
+  current: yup.string()
+    .required('Current password is required'),
+  new: yup.string()
+    .required('New password is required')
+    .min(6, 'New password must be at least 6 characters')
+    .notOneOf([yup.ref('current')], 'New password must be different from current password'),
+  confirm: yup.string()
+    .required('Confirm password is required')
+    .oneOf([yup.ref('new')], 'Passwords do not match')
+});
 
 // Top-level, stable components to prevent remounts (focus loss)
 const ProfilePictureUpload = ({ profileImage, displayName, onChangeImage }) => {
@@ -76,12 +122,22 @@ const ProfilePictureUpload = ({ profileImage, displayName, onChangeImage }) => {
   );
 };
 
-const ProfileNavigation = ({ activeTab, setActiveTab }) => {
+const ProfileNavigation = ({ activeTab }) => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  
   const navItems = [
     { id: "profile", label: "Profile Information", icon: "fas fa-user" },
     { id: "business", label: "Business Profile", icon: "fas fa-building" },
     { id: "password", label: "Security Settings", icon: "fas fa-lock" },
   ];
+
+  const handleTabChange = (tabId) => {
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.set('tab', tabId);
+    navigate({ search: newSearchParams.toString() });
+  };
+
   return (
     <div className="w-full">
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
@@ -90,7 +146,7 @@ const ProfileNavigation = ({ activeTab, setActiveTab }) => {
           {navItems.map(({ id, label, icon }) => (
             <button
               key={id}
-              onClick={() => setActiveTab(id)}
+              onClick={() => handleTabChange(id)}
               className={`w-full px-4 py-3 cursor-pointer text-left rounded-lg flex items-center text-sm font-medium transition-colors duration-200 ${activeTab === id ? "text-white bg-[#0071E0] shadow-sm" : "text-gray-600 hover:bg-gray-50"}`}
             >
               <i className={`${icon} w-4 h-4 mr-3`} style={{ color: activeTab === id ? "white" : "#0071E0" }}></i>
@@ -103,50 +159,319 @@ const ProfileNavigation = ({ activeTab, setActiveTab }) => {
   );
 };
 
+
 const ProfileDetails = ({ formData, onChange, onSave }) => {
-  const inputFields = [
-    { key: "name", label: "Name", icon: "fas fa-user", type: "text", width: "full" },
-    { key: "email", label: "Email Address", icon: "fas fa-envelope", type: "email", width: "full" },
-    { key: "mobileNumber", label: "Mobile Number", icon: "fas fa-phone", type: "tel", width: "full" },
-    { key: "whatsappNumber", label: "WhatsApp Number", icon: "fab fa-whatsapp", type: "tel", width: "full" },
-  ];
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setValue,
+    watch,
+    trigger,
+    setError,
+    clearErrors
+  } = useForm({
+    resolver: yupResolver(profileSchema),
+    defaultValues: formData,
+    mode: 'onBlur'
+  });
+
+  const watchedWhatsappNumber = watch('whatsappNumber');
+  const watchedWhatsappCountryCode = watch('whatsappCountryCode');
+
+  // Update form values when formData changes
+  useEffect(() => {
+    Object.keys(formData).forEach(key => {
+      setValue(key, formData[key]);
+    });
+  }, [formData, setValue]);
+
+  // Validate WhatsApp country code when WhatsApp number changes
+  useEffect(() => {
+    if (watchedWhatsappNumber && watchedWhatsappNumber.trim().length > 0) {
+      // WhatsApp number is provided, country code becomes required
+      if (!watchedWhatsappCountryCode || watchedWhatsappCountryCode.trim().length === 0) {
+        setError('whatsappCountryCode', { 
+          type: 'manual', 
+          message: 'Country code is required when WhatsApp number is provided' 
+        });
+      } else {
+        clearErrors('whatsappCountryCode');
+      }
+    } else {
+      // WhatsApp number is empty, clear country code error
+      clearErrors('whatsappCountryCode');
+    }
+  }, [watchedWhatsappNumber, watchedWhatsappCountryCode, setError, clearErrors]);
+
+  const onSubmit = async (data) => {
+    try {
+      // Additional validation: WhatsApp country code required if WhatsApp number provided
+      if (data.whatsappNumber && data.whatsappNumber.trim().length > 0) {
+        if (!data.whatsappCountryCode || data.whatsappCountryCode.trim().length === 0) {
+          setError('whatsappCountryCode', { 
+            type: 'manual', 
+            message: 'Country code is required when WhatsApp number is provided' 
+          });
+          toastHelper.showTost('Please provide WhatsApp country code', 'error');
+          return;
+        }
+      }
+      
+      await onSave(data);
+    } catch (error) {
+      console.error('Error saving profile:', error);
+    }
+  };
+
+  // Helper function to filter only digits
+  const filterDigitsOnly = (value) => {
+    return value.replace(/[^0-9]/g, '');
+  };
+
+  const handleFieldChange = (field, value) => {
+    // Filter non-digit characters for mobile and WhatsApp numbers
+    let filteredValue = value;
+    if (field === 'mobileNumber' || field === 'whatsappNumber') {
+      filteredValue = filterDigitsOnly(value);
+    }
+    
+    setValue(field, filteredValue);
+    onChange(field, filteredValue);
+    
+    // Custom validation for WhatsApp fields
+    if (field === 'whatsappNumber' && filteredValue && filteredValue.trim().length > 0) {
+      // Validate WhatsApp number format
+      if (filteredValue.length < 7) {
+        setError('whatsappNumber', { 
+          type: 'manual', 
+          message: 'WhatsApp number must be at least 7 digits' 
+        });
+      } else {
+        clearErrors('whatsappNumber');
+      }
+      
+      // If WhatsApp number is provided, country code becomes required
+      if (!watchedWhatsappCountryCode) {
+        setError('whatsappCountryCode', { 
+          type: 'manual', 
+          message: 'Country code is required when WhatsApp number is provided' 
+        });
+      }
+    } else if (field === 'whatsappCountryCode') {
+      // Clear WhatsApp country code error if country code is provided
+      if (watchedWhatsappNumber && watchedWhatsappNumber.trim().length > 0) {
+        clearErrors('whatsappCountryCode');
+      }
+    } else if (field === 'whatsappNumber' && (!filteredValue || filteredValue.trim().length === 0)) {
+      // Clear errors if WhatsApp number is empty
+      clearErrors('whatsappNumber');
+      clearErrors('whatsappCountryCode');
+    }
+    
+    // Trigger validation for the field
+    trigger(field);
+  };
   
   return (
-    <div className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="pb-4 border-b border-gray-200">
         <h2 className="text-xl font-semibold text-gray-800">Personal Information</h2>
         <p className="text-sm text-gray-500 mt-1">Update your personal details and how others see you on the platform</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {inputFields.map(({ key, label, icon, type, width }) => (
-          <div key={key} className={`space-y-2 ${width === "full" ? "md:col-span-2" : ""}`}>
-            <label className="text-sm font-medium text-gray-700 flex items-center">
-              <i className={`${icon} w-4 h-4 mr-2`} style={{ color: "#0071E0" }}></i>
-              {label}
-            </label>
-            <input
-              type={type}
-              value={formData[key] ?? ""}
-              onChange={(e) => onChange(key, e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 text-sm"
-              placeholder={`Enter your ${label.toLowerCase()}`}
-            />
+        {/* Name Field */}
+        <div className="md:col-span-2 space-y-2">
+          <label className="text-sm font-medium text-gray-700 flex items-center">
+            <i className="fas fa-user w-4 h-4 mr-2" style={{ color: "#0071E0" }}></i>
+            Name <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            {...register('name', {
+              onChange: (e) => handleFieldChange('name', e.target.value)
+            })}
+            className={`w-full px-4 py-2 rounded-lg border transition-colors duration-200 text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
+              errors.name 
+                ? 'border-red-500 focus:border-red-500' 
+                : 'border-gray-300 focus:border-[#0071E0]'
+            }`}
+            placeholder="Enter your name"
+          />
+          {errors.name && (
+            <p className="text-red-500 text-xs mt-1 flex items-center">
+              <i className="fas fa-exclamation-circle mr-1"></i>
+              {errors.name.message}
+            </p>
+          )}
+        </div>
+
+        {/* Email Field */}
+        <div className="md:col-span-2 space-y-2">
+          <label className="text-sm font-medium text-gray-700 flex items-center">
+            <i className="fas fa-envelope w-4 h-4 mr-2" style={{ color: "#0071E0" }}></i>
+            Email Address <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="email"
+            {...register('email', {
+              onChange: (e) => handleFieldChange('email', e.target.value)
+            })}
+            className={`w-full px-4 py-2 rounded-lg border transition-colors duration-200 text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
+              errors.email 
+                ? 'border-red-500 focus:border-red-500' 
+                : 'border-gray-300 focus:border-[#0071E0]'
+            }`}
+            placeholder="Enter your email address"
+          />
+          {errors.email && (
+            <p className="text-red-500 text-xs mt-1 flex items-center">
+              <i className="fas fa-exclamation-circle mr-1"></i>
+              {errors.email.message}
+            </p>
+          )}
+        </div>
+
+        {/* Mobile Number with Country Code */}
+        <div className="md:col-span-2 space-y-2">
+          <label className="text-sm font-medium text-gray-700 flex items-center">
+            <i className="fas fa-phone w-4 h-4 mr-2" style={{ color: "#0071E0" }}></i>
+            Mobile Number <span className="text-red-500">*</span>
+          </label>
+          <div className="flex gap-2">
+            <div className="w-32">
+              <CountrySelector
+                value={formData.mobileCountryCode}
+                onChange={(code) => handleFieldChange("mobileCountryCode", code)}
+                placeholder="Code"
+                error={!!errors.mobileCountryCode}
+              />
+            </div>
+            <div className="flex-1">
+              <input
+                type="tel"
+                {...register('mobileNumber', {
+                  onChange: (e) => handleFieldChange('mobileNumber', e.target.value)
+                })}
+                className={`w-full px-4 py-2 rounded-lg border transition-colors duration-200 text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
+                  errors.mobileNumber 
+                    ? 'border-red-500 focus:border-red-500' 
+                    : 'border-gray-300 focus:border-[#0071E0]'
+                }`}
+                placeholder="Enter mobile number"
+              />
+            </div>
           </div>
-        ))}
+          {(errors.mobileNumber || errors.mobileCountryCode) && (
+            <p className="text-red-500 text-xs mt-1 flex items-center">
+              <i className="fas fa-exclamation-circle mr-1"></i>
+              {errors.mobileNumber?.message || errors.mobileCountryCode?.message}
+            </p>
+          )}
+        </div>
+
+        {/* WhatsApp Number with Country Code */}
+        <div className="md:col-span-2 space-y-2">
+          <label className="text-sm font-medium text-gray-700 flex items-center">
+            <i className="fab fa-whatsapp w-4 h-4 mr-2" style={{ color: "#0071E0" }}></i>
+            WhatsApp Number <span className="text-gray-400 ml-1">(Optional)</span>
+          </label>
+          <div className="flex gap-2">
+            <div className="w-32">
+              <CountrySelector
+                value={formData.whatsappCountryCode}
+                onChange={(code) => handleFieldChange("whatsappCountryCode", code)}
+                placeholder="Code"
+                error={!!errors.whatsappCountryCode}
+              />
+            </div>
+            <div className="flex-1">
+              <input
+                type="tel"
+                {...register('whatsappNumber', {
+                  onChange: (e) => handleFieldChange('whatsappNumber', e.target.value)
+                })}
+                className={`w-full px-4 py-2 rounded-lg border transition-colors duration-200 text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
+                  errors.whatsappNumber 
+                    ? 'border-red-500 focus:border-red-500' 
+                    : 'border-gray-300 focus:border-[#0071E0]'
+                }`}
+                placeholder="Enter WhatsApp number"
+              />
+            </div>
+          </div>
+          {(errors.whatsappNumber || errors.whatsappCountryCode) && (
+            <p className="text-red-500 text-xs mt-1 flex items-center">
+              <i className="fas fa-exclamation-circle mr-1"></i>
+              {errors.whatsappNumber?.message || errors.whatsappCountryCode?.message}
+            </p>
+          )}
+        </div>
       </div>
       <div className="flex justify-end pt-4">
-        <button onClick={onSave} className="px-6 py-2 cursor-pointer bg-[#0071E0] text-white rounded-lg flex items-center space-x-2 hover:bg-[#005BB5] transition-colors duration-200 shadow-sm hover:shadow-md">
-          <i className="fas fa-save"></i>
-          <span>Save Changes</span>
+        <button 
+          type="submit"
+          disabled={isSubmitting}
+          className={`px-6 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200 shadow-sm hover:shadow-md ${
+            isSubmitting 
+              ? 'bg-gray-400 cursor-not-allowed' 
+              : 'bg-[#0071E0] text-white cursor-pointer hover:bg-[#005BB5]'
+          }`}
+        >
+          {isSubmitting ? (
+            <>
+              <i className="fas fa-spinner fa-spin"></i>
+              <span>Saving...</span>
+            </>
+          ) : (
+            <>
+              <i className="fas fa-save"></i>
+              <span>Save Changes</span>
+            </>
+          )}
         </button>
       </div>
-    </div>
+    </form>
   );
 };
 
 const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSave, status }) => {
   const [logoImageError, setLogoImageError] = useState(false);
   const [certificateImageError, setCertificateImageError] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setValue,
+    trigger
+  } = useForm({
+    resolver: yupResolver(businessSchema),
+    defaultValues: formData,
+    mode: 'onBlur'
+  });
+
+  // Update form values when formData changes
+  useEffect(() => {
+    Object.keys(formData).forEach(key => {
+      setValue(key, formData[key]);
+    });
+  }, [formData, setValue]);
+
+  const onSubmit = async (data) => {
+    try {
+      await onSave(data);
+    } catch (error) {
+      console.error('Error saving business profile:', error);
+    }
+  };
+
+  const handleFieldChange = (field, value) => {
+    setValue(field, value);
+    onChangeField(field, value);
+    // Trigger validation for the field
+    trigger(field);
+  };
 
   const handleLogoImageError = () => {
     setLogoImageError(true);
@@ -171,7 +496,7 @@ const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSa
   const certificateIsImage = typeof formData.certificate === 'object' && formData.certificate?.type?.startsWith('image/');
 
   return (
-    <div className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="pb-4 border-b border-gray-200">
         <h2 className="text-xl font-semibold text-gray-800">Business Information</h2>
         <p className="text-sm text-gray-500 mt-1">Manage your business details and credentials</p>
@@ -198,33 +523,49 @@ const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSa
         <div className="md:col-span-2 space-y-2">
           <label className="text-sm font-medium text-gray-700 flex items-center">
             <i className="fas fa-building w-4 h-4 mr-2" style={{ color: "#0071E0" }}></i>
-            Business Name
+            Business Name <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
-            value={formData.businessName ?? ""}
-            onChange={(e) => onChangeField("businessName", e.target.value)}
-            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 text-sm"
+            {...register('businessName')}
+            className={`w-full px-4 py-2 rounded-lg border transition-colors duration-200 text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
+              errors.businessName 
+                ? 'border-red-500 focus:border-red-500' 
+                : 'border-gray-300 focus:border-[#0071E0]'
+            }`}
             placeholder="Enter your business name"
-            required
           />
+          {errors.businessName && (
+            <p className="text-red-500 text-xs mt-1 flex items-center">
+              <i className="fas fa-exclamation-circle mr-1"></i>
+              {errors.businessName.message}
+            </p>
+          )}
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700 flex items-center">
             <i className="fas fa-globe w-4 h-4 mr-2" style={{ color: "#0071E0" }}></i>
-            Country
+            Country <span className="text-red-500">*</span>
           </label>
           <select
-            value={formData.country ?? ""}
-            onChange={(e) => onChangeField("country", e.target.value)}
-            required
-            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 text-sm"
+            {...register('country')}
+            className={`w-full px-4 py-2 rounded-lg border transition-colors duration-200 text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
+              errors.country 
+                ? 'border-red-500 focus:border-red-500' 
+                : 'border-gray-300 focus:border-[#0071E0]'
+            }`}
           >
             <option value="">Select your country</option>
             {countries.map((country) => (
               <option key={country} value={country}>{country}</option>
             ))}
           </select>
+          {errors.country && (
+            <p className="text-red-500 text-xs mt-1 flex items-center">
+              <i className="fas fa-exclamation-circle mr-1"></i>
+              {errors.country.message}
+            </p>
+          )}
         </div>
         <div className="md:col-span-2 space-y-2">
           <label className="text-sm font-medium text-gray-700 flex items-center">
@@ -232,8 +573,7 @@ const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSa
             Business Address <span className="text-gray-400 ml-1">(Optional)</span>
           </label>
           <textarea
-            value={formData.address ?? ""}
-            onChange={(e) => onChangeField("address", e.target.value)}
+            {...register('address')}
             rows="3"
             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 text-sm"
             placeholder="Enter your business address"
@@ -340,69 +680,178 @@ const BusinessProfile = ({ formData, previews, onChangeField, onChangeFile, onSa
       </div>
       <div className="flex justify-end pt-4">
         <button
-          onClick={onSave}
-          className="px-6 py-2 bg-[#0071E0] text-white cursor-pointer rounded-lg flex items-center space-x-2 hover:bg-[#005BB5] transition-colors duration-200 shadow-sm hover:shadow-md"
+          type="submit"
+          disabled={isSubmitting}
+          className={`px-6 py-2 rounded-lg flex items-center space-x-2 transition-colors duration-200 shadow-sm hover:shadow-md ${
+            isSubmitting 
+              ? 'bg-gray-400 cursor-not-allowed' 
+              : 'bg-[#0071E0] text-white cursor-pointer hover:bg-[#005BB5]'
+          }`}
         >
-          <i className="fas fa-save"></i>
-          <span>Save Business Profile</span>
+          {isSubmitting ? (
+            <>
+              <i className="fas fa-spinner fa-spin"></i>
+              <span>Saving...</span>
+            </>
+          ) : (
+            <>
+              <i className="fas fa-save"></i>
+              <span>Save Business Profile</span>
+            </>
+          )}
         </button>
       </div>
-    </div>
+    </form>
   );
 };
 
-const ChangePassword = ({ passwords, showPasswords, onChange, onToggle, onSubmit, userEmail }) => (
-  <div className="space-y-6">
-    <div className="pb-4 border-b border-gray-200">
-      <h2 className="text-xl font-semibold text-gray-800">Security Settings</h2>
-      <p className="text-sm text-gray-500 mt-1">Manage your password and account security</p>
-    </div>
-    {/* Hidden username to help browser autofill associate account */}
-    <input type="email" name="username" autoComplete="username" value={userEmail || ''} readOnly style={{ display: 'none' }} />
-    <div className="space-y-5">
-      {[{ key: "current", label: "Current Password" }, { key: "new", label: "New Password" }, { key: "confirm", label: "Confirm New Password" }].map(({ key, label }) => (
-        <div key={key} className="space-y-2">
-          <label className="text-sm font-medium text-gray-700 flex items-center">
-            <i className="fas fa-lock w-4 h-4 mr-2" style={{ color: "#0071E0" }}></i>
-            {label}
-          </label>
-          <div className="relative">
-            <input
-              type={showPasswords[key] ? "text" : "password"}
-              name={key === 'current' ? 'current-password' : key === 'new' ? 'new-password' : 'new-password-confirm'}
-              autoComplete={key === 'current' ? 'current-password' : 'new-password'}
-              value={passwords[key]}
-              onChange={(e) => onChange(key, e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 pr-12 text-sm"
-              placeholder={`Enter your ${label.toLowerCase()}`}
-              autoCapitalize="off"
-              autoCorrect="off"
-              spellCheck={false}
-            />
-            <button type="button" onClick={() => onToggle(key)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#0071E0] transition-colors duration-200 text-sm">
-              <i className={showPasswords[key] ? "fas fa-eye" : "fas fa-eye-slash"}></i>
-            </button>
+const ChangePassword = ({ passwords, showPasswords, onChange, onToggle, onSubmit, userEmail }) => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setValue,
+    watch,
+    trigger,
+    reset
+  } = useForm({
+    resolver: yupResolver(passwordSchema),
+    defaultValues: {
+      current: "",
+      new: "",
+      confirm: ""
+    },
+    mode: 'onChange'
+  });
+
+  const watchedCurrent = watch('current');
+  const watchedNew = watch('new');
+
+  // Update form values when passwords change
+  useEffect(() => {
+    reset(passwords);
+  }, [passwords, reset]);
+
+  // Debug: Log current form values
+  useEffect(() => {
+  }, [watchedCurrent, watchedNew, watch]);
+
+  const onFormSubmit = async (data) => {
+    try {
+      await onSubmit(data);
+    } catch (error) {
+      console.error('Error changing password:', error);
+    }
+  };
+
+  const handleFieldChange = (field, value) => {
+    setValue(field, value);
+    onChange(field, value);
+    // Trigger validation for all fields to clear errors from other fields
+    trigger();
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
+      <div className="pb-4 border-b border-gray-200">
+        <h2 className="text-xl font-semibold text-gray-800">Security Settings</h2>
+        <p className="text-sm text-gray-500 mt-1">Manage your password and account security</p>
+      </div>
+      {/* Hidden username to help browser autofill associate account */}
+      <input type="email" name="username" autoComplete="username" value={userEmail || ''} readOnly style={{ display: 'none' }} />
+      <div className="space-y-5">
+        {[{ key: "current", label: "Current Password" }, { key: "new", label: "New Password" }, { key: "confirm", label: "Confirm New Password" }].map(({ key, label }) => (
+          <div key={key} className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <i className="fas fa-lock w-4 h-4 mr-2" style={{ color: "#0071E0" }}></i>
+              {label} <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <input
+                type={showPasswords[key] ? "text" : "password"}
+                {...register(key)}
+                onChange={(e) => {
+                  handleFieldChange(key, e.target.value);
+                }}
+                name={key === 'current' ? 'current-password' : key === 'new' ? 'new-password' : 'new-password-confirm'}
+                autoComplete={key === 'current' ? 'current-password' : 'new-password'}
+                className={`w-full px-4 py-2 rounded-lg border transition-colors duration-200 pr-12 text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
+                  errors[key] 
+                    ? 'border-red-500 focus:border-red-500' 
+                    : 'border-gray-300 focus:border-[#0071E0]'
+                }`}
+                placeholder={`Enter your ${label.toLowerCase()}`}
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
+              />
+              <button type="button" onClick={() => onToggle(key)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-[#0071E0] transition-colors duration-200 text-sm">
+                <i className={showPasswords[key] ? "fas fa-eye" : "fas fa-eye-slash"}></i>
+              </button>
+            </div>
+            {errors[key] && (
+              <p className="text-red-500 text-xs mt-1 flex items-center">
+                <i className="fas fa-exclamation-circle mr-1"></i>
+                {errors[key].message}
+              </p>
+            )}
           </div>
-        </div>
-      ))}
-    </div>
-    <div className="flex justify-end pt-4">
-      <button onClick={onSubmit} className="px-6 py-3 bg-[#0071E0] cursor-pointer text-white rounded-lg flex items-center space-x-2 hover:bg-[#005BB5] transition-colors duration-200 shadow-sm hover:shadow-md">
-        <i className="fas fa-lock"></i>
-        <span>Update Password</span>
-      </button>
-    </div>
-  </div>
-);
+        ))}
+      </div>
+      <div className="flex justify-end pt-4">
+        <button 
+          type="submit"
+          disabled={isSubmitting}
+          className={`px-6 py-3 rounded-lg flex items-center space-x-2 transition-colors duration-200 shadow-sm hover:shadow-md ${
+            isSubmitting 
+              ? 'bg-gray-400 cursor-not-allowed' 
+              : 'bg-[#0071E0] text-white cursor-pointer hover:bg-[#005BB5]'
+          }`}
+        >
+          {isSubmitting ? (
+            <>
+              <i className="fas fa-spinner fa-spin"></i>
+              <span>Updating...</span>
+            </>
+          ) : (
+            <>
+              <i className="fas fa-lock"></i>
+              <span>Update Password</span>
+            </>
+          )}
+        </button>
+      </div>
+    </form>
+  );
+};
 
 const ProfilePage = () => {
-  const [activeTab, setActiveTab] = useState("profile");
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  
+  // Get active tab from query params, default to "profile" if not specified
+  const activeTab = searchParams.get('tab') || 'profile';
+  
+  // Check if user came from Google login and profile is incomplete
+  const [isIncompleteProfile, setIsIncompleteProfile] = useState(false);
+  
+  // Set default tab in URL if no tab parameter is present
+  useEffect(() => {
+    if (!searchParams.get('tab')) {
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.set('tab', 'profile');
+      navigate({ search: newSearchParams.toString() }, { replace: true });
+    }
+  }, [searchParams, navigate]);
+  
   const [profileImage, setProfileImage] = useState(null);
   const [profileFormData, setProfileFormData] = useState({
     name: "",
     email: "",
     mobileNumber: "",
+    mobileCountryCode: "",
     whatsappNumber: "",
+    whatsappCountryCode: "",
   });
   const [passwords, setPasswords] = useState({
     current: "",
@@ -467,6 +916,22 @@ const ProfilePage = () => {
     }
   };
 
+  // Check if profile is incomplete on mount
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        if (userData.platformName === 'google') {
+          const isProfileComplete = AuthService.isProfileComplete(userData);
+          setIsIncompleteProfile(!isProfileComplete);
+        }
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+  }, []);
+
   // Load profile on mount
   useEffect(() => {
     const toAbsoluteUrl = (p) => {
@@ -482,7 +947,9 @@ const ProfilePage = () => {
       const name = container?.name ?? '';
       const email = container?.email ?? '';
       const mobileNumber = container?.mobileNumber ?? container?.phone ?? '';
+      const mobileCountryCode = container?.mobileCountryCode ?? '';
       const whatsappNumber = container?.whatsappNumber ?? '';
+      const whatsappCountryCode = container?.whatsappCountryCode ?? '';
       const profileImage = toAbsoluteUrl(container?.profileImage ?? container?.avatar ?? null);
       const businessName = business?.businessName ?? business?.companyName ?? '';
       const country = business?.country ?? business?.businessCountry ?? '';
@@ -490,7 +957,7 @@ const ProfilePage = () => {
       const logo = toAbsoluteUrl(business?.logo ?? business?.businessLogo ?? null);
       const certificate = toAbsoluteUrl(business?.certificate ?? business?.businessCertificate ?? null);
       const status = business?.status ?? null;
-      return { name, email, mobileNumber, whatsappNumber, profileImage, business: { businessName, country, address, logo, certificate, status } };
+      return { name, email, mobileNumber, mobileCountryCode, whatsappNumber, whatsappCountryCode, profileImage, business: { businessName, country, address, logo, certificate, status } };
     };
     const loadProfile = async () => {
       try {
@@ -500,7 +967,9 @@ const ProfilePage = () => {
           name: normalized.name,
           email: normalized.email,
           mobileNumber: normalized.mobileNumber,
+          mobileCountryCode: normalized.mobileCountryCode,
           whatsappNumber: normalized.whatsappNumber,
+          whatsappCountryCode: normalized.whatsappCountryCode,
         });
         setBusinessFormData((prev) => ({
           ...prev,
@@ -526,13 +995,15 @@ const ProfilePage = () => {
     loadProfile();
   }, []);
 
-  const handleSaveProfile = async () => {
+  const handleSaveProfile = async (formData) => {
     try {
       const payload = {
-        name: profileFormData.name,
-        email: profileFormData.email,
-        mobileNumber: profileFormData.mobileNumber,
-        whatsappNumber: profileFormData.whatsappNumber || "",
+        name: formData.name,
+        email: formData.email,
+        mobileNumber: formData.mobileNumber,
+        mobileCountryCode: formData.mobileCountryCode,
+        whatsappNumber: formData.whatsappNumber || "",
+        whatsappCountryCode: formData.whatsappCountryCode || "",
       };
       
       await AuthService.updateProfile(payload);
@@ -547,8 +1018,19 @@ const ProfilePage = () => {
           name: container?.name || "",
           email: container?.email || "",
           mobileNumber: (container?.mobileNumber ?? container?.phone) || "",
+          mobileCountryCode: container?.mobileCountryCode || "",
           whatsappNumber: container?.whatsappNumber || "",
+          whatsappCountryCode: container?.whatsappCountryCode || "",
         });
+        
+        // Check if profile is now complete
+        const updatedUserData = {
+          ...container,
+          businessProfile: container?.businessProfile || {}
+        };
+        const isProfileComplete = AuthService.isProfileComplete(updatedUserData);
+        setIsIncompleteProfile(!isProfileComplete);
+        
         toastHelper.showTost('Profile updated successfully', 'success');
       } catch (refreshError) {
         console.error('Error refreshing profile data:', refreshError);
@@ -560,12 +1042,12 @@ const ProfilePage = () => {
     }
   };
 
-  const handleSaveBusiness = async () => {
+  const handleSaveBusiness = async (formData) => {
     try {
       await AuthService.updateProfile({
-        businessName: businessFormData.businessName,
-        country: businessFormData.country,
-        address: businessFormData.address,
+        businessName: formData.businessName,
+        country: formData.country,
+        address: formData.address,
         logo: businessFormData.businessLogo,
         certificate: businessFormData.certificate,
       });
@@ -590,6 +1072,21 @@ const ProfilePage = () => {
             : prev.certificate,
         }));
         setBusinessStatus( normalized.business.status ? normalized.business.status.charAt(0).toUpperCase() + normalized.business.status.slice(1).toLowerCase() : null );
+        
+        // Check if profile is now complete
+        const updatedUserData = {
+          name: normalized.name,
+          email: normalized.email,
+          mobileNumber: normalized.mobileNumber,
+          mobileCountryCode: normalized.mobileCountryCode,
+          businessProfile: {
+            businessName: normalized.business.businessName,
+            country: normalized.business.country
+          }
+        };
+        const isProfileComplete = AuthService.isProfileComplete(updatedUserData);
+        setIsIncompleteProfile(!isProfileComplete);
+        
         toastHelper.showTost('Business profile updated successfully', 'success');
       } catch (refreshError) {
         console.error('Error refreshing business profile data:', refreshError);
@@ -608,7 +1105,9 @@ const ProfilePage = () => {
     const name = container?.name ?? '';
     const email = container?.email ?? '';
     const mobileNumber = container?.mobileNumber ?? container?.phone ?? '';
+    const mobileCountryCode = container?.mobileCountryCode ?? '';
     const whatsappNumber = container?.whatsappNumber ?? '';
+    const whatsappCountryCode = container?.whatsappCountryCode ?? '';
     const profileImage = toAbsoluteUrl(container?.profileImage ?? container?.avatar ?? null);
     const businessName = business?.businessName ?? business?.companyName ?? '';
     const country = business?.country ?? business?.businessCountry ?? '';
@@ -616,7 +1115,7 @@ const ProfilePage = () => {
     const logo = toAbsoluteUrl(business?.logo ?? business?.businessLogo ?? null);
     const certificate = toAbsoluteUrl(business?.certificate ?? business?.businessCertificate ?? null);
     const status = business?.status ?? null;
-    return { name, email, mobileNumber, whatsappNumber, profileImage, business: { businessName, country, address, logo, certificate, status } };
+    return { name, email, mobileNumber, mobileCountryCode, whatsappNumber, whatsappCountryCode, profileImage, business: { businessName, country, address, logo, certificate, status } };
   };
 
   const toAbsoluteUrl = (p) => {
@@ -660,23 +1159,9 @@ const ProfilePage = () => {
     setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
-  const handleChangePassword = async () => {
-    const currentPassword = passwords.current?.trim();
-    const newPassword = passwords.new?.trim();
-    const confirmPassword = passwords.confirm?.trim();
-
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      toastHelper.showTost('Please fill all password fields', 'error');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      toastHelper.showTost('New password and confirm password do not match', 'error');
-      return;
-    }
-    if (currentPassword === newPassword) {
-      toastHelper.showTost('New password must be different from current password', 'error');
-      return;
-    }
+  const handleChangePassword = async (formData) => {
+    const currentPassword = formData.current?.trim();
+    const newPassword = formData.new?.trim();
 
     try {
       await AuthService.changePassword({ currentPassword, newPassword });
@@ -693,6 +1178,35 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Profile Completion Banner */}
+      {isIncompleteProfile && (
+        <div className="bg-amber-50 border-l-4 border-amber-400 p-4">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <i className="fas fa-exclamation-triangle text-amber-400"></i>
+              </div>
+              <div className="ml-3 flex-1">
+                <p className="text-sm text-amber-700">
+                  <strong>Complete your profile:</strong> Please fill in your personal and business information to access all features of the platform.
+                </p>
+              </div>
+              {!isIncompleteProfile && (
+                <div className="ml-3">
+                  <button
+                    onClick={() => navigate('/ready-stock')}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+                  >
+                    <i className="fas fa-check mr-2"></i>
+                    Continue to Dashboard
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left sidebar with profile picture and navigation */}
@@ -701,7 +1215,7 @@ const ProfilePage = () => {
               <ProfilePictureUpload profileImage={profileImage} displayName={profileFormData.name} onChangeImage={handleImageChange} />
             </div>
             
-            <ProfileNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+            <ProfileNavigation activeTab={activeTab} />
           </div>
           
           {/* Right content area */}

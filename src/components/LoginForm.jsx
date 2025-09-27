@@ -113,6 +113,16 @@ const LoginForm = ({ onLogin }) => {
         }
         localStorage.setItem("isLoggedIn", "true");
         if (onLogin) onLogin();
+        
+        // Check if profile is complete for Google login users
+        if (res.data.customer && res.data.customer.platformName === 'google') {
+          const isProfileComplete = AuthService.isProfileComplete(res.data.customer);
+          if (!isProfileComplete) {
+            navigate("/profile");
+            return;
+          }
+        }
+        
         navigate("/ready-stock");
       }
     } catch (err) {
@@ -166,6 +176,16 @@ const LoginForm = ({ onLogin }) => {
         }
         localStorage.setItem("isLoggedIn", "true");
         if (onLogin) onLogin();
+        
+        // Check if profile is complete for Google login users
+        if (res.data.customer && res.data.customer.platformName === 'google') {
+          const isProfileComplete = AuthService.isProfileComplete(res.data.customer);
+          if (!isProfileComplete) {
+            navigate("/profile");
+            return;
+          }
+        }
+        
         navigate("/ready-stock");
       }
     } catch (err) {
@@ -415,7 +435,7 @@ const LoginForm = ({ onLogin }) => {
                       </span>
                     </div>
                   ) : (
-                    <div id="googleSignInDiv" className="w-full [&>div]:rounded-lg [&>div>div]:rounded-lg [&>div>div>div]:rounded-lg"></div>
+                    <div id="googleSignInDiv" className="w-fit mx-auto [&>div]:rounded-lg [&>div>div]:rounded-lg [&>div>div>div]:rounded-lg"></div>
                   )}
                 </div>
               </motion.form>

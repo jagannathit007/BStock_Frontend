@@ -10,6 +10,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import axios from "axios";
 import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 
 const MainContent = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -27,6 +28,7 @@ const MainContent = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('');
 
+  const navigate = useNavigate();
   const mapApiProductToUi = (p) => {
     const id = p._id || p.id || "";
     const name = p.skuFamilyId?.name || p.specification || "Product";
@@ -168,14 +170,16 @@ const MainContent = () => {
       const { businessProfile } = user;
 
       if (!businessProfile?.businessName || businessProfile.businessName.trim() === "") {
-        window.location.href = "/profile";
-        await Swal.fire({
+        
+        const confirm = await Swal.fire({
           icon: "warning",
           title: "Business Details Required",
           text: "Please add your business details before making an offer.",
           confirmButtonText: "Go to Settings",
           confirmButtonColor: "#0071E0",
         });
+        if(confirm.isConfirmed) navigate("/profile?tab=business");
+
         return;
       }
 
