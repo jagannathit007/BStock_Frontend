@@ -22,7 +22,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
   const [imageErrors, setImageErrors] = useState({});
 
   const handleImageError = (productId) => {
-    setImageErrors(prev => ({ ...prev, [productId]: true }));
+    setImageErrors((prev) => ({ ...prev, [productId]: true }));
   };
   const itemsPerPage = 10;
   const totalPages = Math.max(Math.ceil(totalProductsCount / itemsPerPage), 1);
@@ -218,7 +218,11 @@ const WishlistModal = ({ isOpen, onClose }) => {
                     <div className="flex items-center gap-4">
                       <div className="flex-shrink-0">
                         <img
-                          src={imageErrors[product.id] ? iphoneImage : product.imageUrl}
+                          src={
+                            imageErrors[product.id]
+                              ? iphoneImage
+                              : product.imageUrl
+                          }
                           alt={product.name}
                           className="w-20 h-20 object-cover rounded-lg border border-gray-100"
                           onError={() => handleImageError(product.id)}
@@ -226,7 +230,10 @@ const WishlistModal = ({ isOpen, onClose }) => {
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between">
+                        <div className="flex items-center justify-between">
+                          {/* 👆 aa jagya e items-center add karyu */}
+
+                          {/* Product Details */}
                           <div className="flex-1">
                             <h3 className="text-lg font-medium text-gray-900 mb-1">
                               {product.name}
@@ -256,13 +263,12 @@ const WishlistModal = ({ isOpen, onClose }) => {
                             </div>
                           </div>
 
-                          <div className="text-right ml-4">
+                          {/* Price & Buttons - Center Aligned */}
+                          <div className="flex items-center gap-4 ml-4">
                             <div className="text-xl font-semibold text-gray-900">
                               ${product.price}
                             </div>
-                          </div>
 
-                          <div className="flex items-center gap-2 ml-4">
                             {product.notify && (
                               <button className="px-3 py-2 text-sm border cursor-pointer border-orange-300 text-orange-700 bg-orange-50 rounded hover:bg-orange-100 transition-colors flex items-center gap-2">
                                 <FontAwesomeIcon icon={faBell} />
@@ -279,7 +285,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
                               onClick={() =>
                                 handleWishlistChange(product.id, false)
                               }
-                              className="p-2 text-red-500 hover:text-red-700 cursor-pointer  rounded transition-colors"
+                              className="p-2 text-red-500 hover:text-red-700 cursor-pointer rounded transition-colors"
                               title="Remove from wishlist"
                             >
                               <FontAwesomeIcon icon={faHeart} />

@@ -9,28 +9,19 @@ import {
   faHandshake,
   faBell,
   faBellSlash,
-  // faXmark,
-  // faCheck,
-  // faChevronLeft,
-  // faChevronRight,
   faMicrochip,
-  // faMemory,
   faHdd,
   faPalette,
   faShield,
   faGlobe,
   faTag,
-  // faCertificate,
   faSimCard,
   faWifi,
-  // faBoxes,
   faBarcode,
   faTruck,
   faCheckCircle,
   faExclamationTriangle,
   faTimesCircle,
-  // faSquareCheck,
-  // faSquareFull,
   faDatabase,
   faCircleDot,
   faMinus,
@@ -249,7 +240,10 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
 
   const handleQuantityChange = (amount) => {
     const newQuantity = quantity + amount;
-    if (newQuantity >= processedProduct.moq) {
+    if (
+      newQuantity >= processedProduct.moq &&
+      newQuantity <= processedProduct.stockCount
+    ) {
       setQuantity(newQuantity);
     }
   };
@@ -472,7 +466,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Left Column - Images (Unchanged) */}
+          {/* Left Column - Images */}
           <div className="space-y-6">
             <div className="relative">
               <div className="absolute top-6 left-6 z-20">
@@ -506,9 +500,9 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   }`}
                 />
               </button>
-              <div className="aspect-square relative rounded-xl overflow-hidden shadow-sm ">
+              <div className="aspect-square relative rounded-xl overflow-hidden shadow-sm">
                 <img
-                  className="w-full h-full object-cover" // p-6 remove kari ne object-cover add kari
+                  className="w-full h-full object-cover"
                   src={
                     imageError ? iphoneImage : productImages[selectedImageIndex]
                   }
@@ -523,7 +517,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                 <button
                   key={index + 1}
                   onClick={() => handleThumbnailClick(index + 1)}
-                  className={`aspect-square rounded-lg  overflow-hidden transition-all ${
+                  className={`aspect-square rounded-lg overflow-hidden transition-all ${
                     selectedImageIndex === index + 1
                       ? "border-blue-500 ring-2 ring-blue-200 shadow-md"
                       : "border-gray-200 hover:border-gray-300 hover:shadow-sm"
@@ -532,7 +526,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   <img
                     src={image}
                     alt={`${processedProduct.name} ${index + 2}`}
-                    className="w-full h-full object-cover" // p-2 remove kari ne object-cover add kari
+                    className="w-full h-full object-cover"
                     onError={handleImageError}
                   />
                 </button>
@@ -554,7 +548,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
             </div>
           </div>
 
-          {/* Right Column - Product Details (Unchanged) */}
+          {/* Right Column - Product Details */}
           <div className="space-y-6">
             <div className="border-b border-gray-200 pb-4">
               <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
@@ -716,11 +710,16 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                     onChange={(e) => {
                       const newValue =
                         parseInt(e.target.value) || processedProduct.moq;
-                      if (newValue >= processedProduct.moq)
+                      if (
+                        newValue >= processedProduct.moq &&
+                        newValue <= processedProduct.stockCount
+                      ) {
                         setQuantity(newValue);
+                      }
                     }}
                     className="mx-3 w-20 text-center font-semibold text-gray-900 border border-gray-300 rounded-lg py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     min={processedProduct.moq}
+                    max={processedProduct.stockCount}
                     disabled={
                       processedProduct.isOutOfStock ||
                       processedProduct.isExpired
@@ -732,6 +731,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                     className="w-8 h-8 flex items-center cursor-pointer justify-center rounded-full border border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-default transition"
                     onClick={() => handleQuantityChange(1)}
                     disabled={
+                      quantity >= processedProduct.stockCount ||
                       processedProduct.isOutOfStock ||
                       processedProduct.isExpired
                     }
@@ -761,7 +761,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
               ) : processedProduct.isOutOfStock ? (
                 <>
                   <button
-                    className="w-full bg-gray-200  text-gray-600 py-4 rounded-lg text-base font-semibold cursor-not-allowed shadow-sm"
+                    className="w-full bg-gray-200 text-gray-600 py-4 rounded-lg text-base font-semibold cursor-not-allowed shadow-sm"
                     disabled
                   >
                     Out of Stock
@@ -815,7 +815,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
           </div>
         </div>
 
-        {/* Product Specifications Section (Redesigned) */}
+        {/* Product Specifications Section */}
         <div className="mt-12 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
             Product Specifications
