@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import ProductCard from "./ProductCard";
 import SideFilter from "../SideFilter";
 import ViewControls from "./ViewControls";
@@ -107,7 +107,7 @@ const MainContent = () => {
           setTotalProductsCount(0);
         }
       } catch (e) {
-        if (e.name !== "AbortError") {
+        if (!axios.isCancel(e)) {
           setFetchedProducts([]);
           setTotalProductsCount(0);
           console.error("Fetch products error:", e);
@@ -149,10 +149,10 @@ const MainContent = () => {
     };
   }, []);
 
-  const handleFilterChange = (newFilters) => {
+  const handleFilterChange = useCallback((newFilters) => {
     setFilters(newFilters);
     setCurrentPage(1);
-  };
+  }, []);
 
   const handleRefresh = () => {
     setRefreshTick((prev) => !prev);
