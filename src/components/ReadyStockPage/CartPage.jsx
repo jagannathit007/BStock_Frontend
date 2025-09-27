@@ -304,7 +304,7 @@ const CartPage = () => {
                           <div className="flex items-center gap-3">
                             <button
                               onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                              disabled={item.quantity <= 1}
+                              disabled={item.quantity <= item.moq}
                               className="w-8 h-8 flex items-center cursor-pointer justify-center rounded-full border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               <FontAwesomeIcon icon={faMinus} className="w-4 h-4 text-gray-600" />
