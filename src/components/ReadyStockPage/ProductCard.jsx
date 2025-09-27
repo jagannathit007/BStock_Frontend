@@ -10,12 +10,14 @@ import {
   faXmark,
   faCalendarXmark,
   faBellSlash,
+  faClock,
 } from "@fortawesome/free-solid-svg-icons";
 import AddToCartPopup from "./AddToCartPopup";
 import CartService from "../../services/cart/cart.services";
 import { ProductService } from "../../services/products/products.services";
 import iphoneImage from "../../assets/iphone.png";
 import Swal from "sweetalert2";
+import Countdown from "react-countdown";
 
 const ProductCard = ({
   product,
@@ -24,6 +26,7 @@ const ProductCard = ({
   onWishlistChange,
   isInModal = false,
   onOpenBiddingForm, // New prop for opening BiddingForm
+  isFlashDeal = false, // New prop to indicate flash deal context
 }) => {
   const navigate = useNavigate();
   const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
@@ -150,8 +153,8 @@ const ProductCard = ({
           confirmButtonText: "Go to Settings",
           confirmButtonColor: "#0071E0",
         });
-        if(confirm.isConfirmed) navigate("/profile?tab=business");
-        
+        if (confirm.isConfirmed) navigate("/profile?tab=business");
+
         return;
       }
 
@@ -190,38 +193,38 @@ const ProductCard = ({
     e.stopPropagation();
     if (!canNotify) return;
     const user = JSON.parse(localStorage.getItem("user") || "{}");
-      const { businessProfile } = user;
+    const { businessProfile } = user;
 
     if (
-        !businessProfile?.businessName ||
-        businessProfile.businessName.trim() === ""
-      ) {
-        console.log('asdas')
-        const confirm = await Swal.fire({
-          icon: "warning",
-          title: "Business Details Required",
-          text: "Please add your business details before adding products to the cart.",
-          confirmButtonText: "Go to Settings",
-          confirmButtonColor: "#0071E0",
-        });
-        if(confirm.isConfirmed) navigate("/profile?tab=business");
-        
-        return;
-      }
+      !businessProfile?.businessName ||
+      businessProfile.businessName.trim() === ""
+    ) {
+      console.log("asdas");
+      const confirm = await Swal.fire({
+        icon: "warning",
+        title: "Business Details Required",
+        text: "Please add your business details before adding products to the cart.",
+        confirmButtonText: "Go to Settings",
+        confirmButtonColor: "#0071E0",
+      });
+      if (confirm.isConfirmed) navigate("/profile?tab=business");
+
+      return;
+    }
 
     if (
-        businessProfile?.status === "pending" ||
-        businessProfile?.status === "rejected"
-      ) {
-        await Swal.fire({
-          icon: "info",
-          title: "Pending Approval",
-          text: "Your business profile is not approved. Please wait for approval.",
-          confirmButtonText: "OK",
-          confirmButtonColor: "#0071E0",
-        });
-        return;
-      }
+      businessProfile?.status === "pending" ||
+      businessProfile?.status === "rejected"
+    ) {
+      await Swal.fire({
+        icon: "info",
+        title: "Pending Approval",
+        text: "Your business profile is not approved. Please wait for approval.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#0071E0",
+      });
+      return;
+    }
 
     const productId = id || product?._id;
 
@@ -533,6 +536,29 @@ const ProductCard = ({
           )}
         </div>
 
+{(!isExpired && !isOutOfStock && isFlashDeal) && (
+  <div className="mb-3 flex justify-center">
+    <div className="inline-flex items-center bg-red-50 text-red-700 px-3 py-1.5 rounded-full text-xs font-medium shadow-sm hover:shadow-md transition-shadow duration-200 w-full justify-center ">
+      <FontAwesomeIcon icon={faClock} className="w-3 h-3 mr-2" />
+      <Countdown
+        date={product.expiryTime}
+        renderer={({ days, hours, minutes, seconds, completed }) => {
+          if (completed) {
+            return <span>Flash Deal Ended</span>;
+          }
+          return (
+            <span className="font-semibold">
+              {days > 0 ? `${days} days ` : ""}
+              {String(hours).padStart(2, "0")}:
+              {String(minutes).padStart(2, "0")}:
+              {String(seconds).padStart(2, "0")}
+            </span>
+          );
+        }}
+      />
+    </div>
+  </div>
+)}
         <div className="flex space-x-2">
           {isExpired ? (
             <>

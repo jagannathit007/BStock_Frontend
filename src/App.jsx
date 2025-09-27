@@ -19,6 +19,7 @@ import CartPage from "./components/ReadyStockPage/CartPage";
 import ProfilePage from "./pages/ProfilePage";
 import Order from "./components/Order";
 import { AuthService } from "./services/auth/auth.services";
+import FlashDeals from "./components/ReadyStockPage/FlashDeals";
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(
@@ -87,6 +88,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <MainContent />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/flash-deals"
+            element={
+              <ProtectedRoute>
+                <FlashDeals />
               </ProtectedRoute>
             }
           />
