@@ -448,14 +448,18 @@ const CartPage = () => {
                           className="w-full p-2 border border-gray-300 rounded-lg"
                           required
                         />
-                        <input
-                          type="text"
-                          placeholder="Country"
+                        <select
                           value={billingAddress.country}
                           onChange={(e) => handleAddressChange("billing", "country", e.target.value)}
                           className="w-full p-2 border border-gray-300 rounded-lg"
                           required
-                        />
+                        >
+                          <option value="">Select Country</option>
+                          <option value="Hongkong">Hongkong</option>
+                          <option value="Dubai">Dubai</option>
+                          <option value="Singapore">Singapore</option>
+                          <option value="India">India</option>
+                        </select>
                       </div>
                     </div>
                     <div>
@@ -485,14 +489,18 @@ const CartPage = () => {
                           className="w-full p-2 border border-gray-300 rounded-lg"
                           required
                         />
-                        <input
-                          type="text"
-                          placeholder="Country"
+                        <select
                           value={shippingAddress.country}
                           onChange={(e) => handleAddressChange("shipping", "country", e.target.value)}
                           className="w-full p-2 border border-gray-300 rounded-lg"
                           required
-                        />
+                        >
+                          <option value="">Select Country</option>
+                          <option value="Hongkong">Hongkong</option>
+                          <option value="Dubai">Dubai</option>
+                          <option value="Singapore">Singapore</option>
+                          <option value="India">India</option>
+                        </select>
                       </div>
                     </div>
                     <div className="md:col-span-2 flex justify-end gap-3">
