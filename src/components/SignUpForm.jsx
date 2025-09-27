@@ -600,7 +600,7 @@ const SignUpForm = () => {
                     className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   >
                     <FontAwesomeIcon
-                      icon={showPassword ? faEyeSlash : faEye}
+                      icon={showPassword ?  faEye :  faEyeSlash }
                       className="text-gray-400 hover:text-indigo-600 transition-colors text-sm"
                     />
                   </button>
@@ -634,7 +634,7 @@ const SignUpForm = () => {
                     className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   >
                     <FontAwesomeIcon
-                      icon={showConfirmPassword ? faEyeSlash : faEye}
+                      icon={showConfirmPassword ?  faEye : faEyeSlash }
                       className="text-gray-400 hover:text-indigo-600 transition-colors text-sm"
                     />
                   </button>
