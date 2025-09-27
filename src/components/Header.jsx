@@ -216,7 +216,7 @@ const Header = ({ onLogout }) => {
             </div>
 
             {/* Search bar */}
-            <div className="flex-1 mx-4 max-w-2xl">
+            {/* <div className="flex-1 mx-4 max-w-2xl">
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg
@@ -233,7 +233,7 @@ const Header = ({ onLogout }) => {
                   placeholder="Search iPhone models..."
                 />
               </div>
-            </div>
+            </div> */}
 
             {/* Right Side */}
             <div className="flex items-center space-x-2 sm:space-x-4">
