@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHeart as solidHeart,
@@ -9,8 +9,32 @@ import {
   faHandshake,
   faBell,
   faBellSlash,
-  faXmark,
-  faCheck,
+  // faXmark,
+  // faCheck,
+  // faChevronLeft,
+  // faChevronRight,
+  faMicrochip,
+  // faMemory,
+  faHdd,
+  faPalette,
+  faShield,
+  faGlobe,
+  faTag,
+  // faCertificate,
+  faSimCard,
+  faWifi,
+  // faBoxes,
+  faBarcode,
+  faTruck,
+  faCheckCircle,
+  faExclamationTriangle,
+  faTimesCircle,
+  // faSquareCheck,
+  // faSquareFull,
+  faDatabase,
+  faCircleDot,
+  faMinus,
+  faPlus,
 } from "@fortawesome/free-solid-svg-icons";
 import { ProductService } from "../../../services/products/products.services";
 import NotifyMePopup from "../NotifyMePopup";
@@ -25,14 +49,63 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
   const [isBuyNowCheckoutOpen, setIsBuyNowCheckoutOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const handleImageError = () => {
     setImageError(true);
   };
 
-  // Process product data
+  const getProductImages = () => {
+    const images = [];
+
+    if (currentProduct.mainImage) {
+      images.push(currentProduct.mainImage);
+    }
+
+    if (
+      currentProduct.skuFamilyId?.images &&
+      Array.isArray(currentProduct.skuFamilyId.images)
+    ) {
+      currentProduct.skuFamilyId.images.forEach((img) => {
+        if (!images.includes(img)) {
+          images.push(img);
+        }
+      });
+    }
+
+    while (images.length < 5) {
+      images.push(iphoneImage);
+    }
+
+    return images.slice(0, 5);
+  };
+
+  const productImages = getProductImages();
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSelectedImageIndex((prev) => (prev + 1) % productImages.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [productImages.length]);
+
   const processedProduct = {
     ...currentProduct,
+    name: currentProduct.skuFamilyId?.name || currentProduct.name,
+    brand: currentProduct.skuFamilyId?.brand || currentProduct.brand,
+    code: currentProduct.skuFamilyId?.code || currentProduct.code,
+    description:
+      currentProduct.skuFamilyId?.description || currentProduct.description,
+    colorVariant: Array.isArray(currentProduct.skuFamilyId?.colorVariant)
+      ? currentProduct.skuFamilyId.colorVariant.join(", ")
+      : currentProduct.skuFamilyId?.colorVariant ||
+        currentProduct.colorVariant ||
+        "",
+    networkBands: Array.isArray(currentProduct.skuFamilyId?.networkBands)
+      ? currentProduct.skuFamilyId.networkBands.join(", ")
+      : currentProduct.skuFamilyId?.networkBands ||
+        currentProduct.networkBands ||
+        "",
     stockCount: Number(currentProduct.stock || 0),
     isOutOfStock: Number(currentProduct.stock || 0) <= 0,
     isExpired: currentProduct.expiryTime
@@ -48,12 +121,6 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       if (stock <= 10) return "Low Stock";
       return "In Stock";
     })(),
-    colorVariant: Array.isArray(currentProduct.colorVariant)
-      ? currentProduct.colorVariant.join(", ")
-      : currentProduct.colorVariant || "",
-    networkBands: Array.isArray(currentProduct.networkBands)
-      ? currentProduct.networkBands.join(", ")
-      : currentProduct.networkBands || "",
   };
 
   const [isFavorite, setIsFavorite] = useState(() => {
@@ -88,12 +155,15 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
           const freshProduct = await ProductService.getProductById(productId);
           console.log("ProductInfo - Fresh product from API:", freshProduct);
           let productToSet = initialProduct;
-          if (freshProduct && typeof freshProduct === 'object' && freshProduct.name) {
+          if (
+            freshProduct &&
+            typeof freshProduct === "object" &&
+            freshProduct.name
+          ) {
             productToSet = freshProduct;
           }
           setCurrentProduct(productToSet);
 
-          // Set wishlist status from fresh API data
           const wishlistStatus =
             productToSet.WishList || productToSet.wishList || false;
           console.log(
@@ -102,7 +172,6 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
           );
           setIsFavorite(wishlistStatus);
         } else {
-          // Fallback to initial product data
           setCurrentProduct(initialProduct);
           const wishlistStatus =
             initialProduct.WishList ||
@@ -121,7 +190,6 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
         }
       } catch (error) {
         console.error("ProductInfo - Error fetching fresh product:", error);
-        // Fallback to initial product data
         setCurrentProduct(initialProduct);
         const wishlistStatus =
           initialProduct.WishList ||
@@ -137,7 +205,6 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
 
   useEffect(() => {
     setNotify(Boolean(currentProduct?.notify));
-    // Check all possible wishlist fields from the backend
     const wishlistStatus =
       currentProduct.WishList ||
       currentProduct.wishList ||
@@ -153,16 +220,13 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     setIsFavorite(wishlistStatus);
   }, [currentProduct]);
 
-  // Listen for wishlist updates from other components
   useEffect(() => {
     const handleWishlistUpdate = async (event) => {
       const productId = processedProduct.id || processedProduct._id;
 
       if (event.detail && event.detail.productId === productId) {
-        // Update from event detail
         setIsFavorite(event.detail.isWishlisted);
       } else if (!event.detail || !event.detail.productId) {
-        // General wishlist update - refresh product data
         try {
           const refreshed = await ProductService.getProductById(productId);
           setCurrentProduct(refreshed);
@@ -203,7 +267,6 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       });
       setNotify(nextValue);
 
-      // Refresh from backend
       try {
         const refreshed = await ProductService.getProductById(productId);
         setCurrentProduct(refreshed);
@@ -219,7 +282,6 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       }
     } catch (err) {
       console.error("Notification toggle error:", err);
-      // errors are toasted in service
     }
   };
 
@@ -228,7 +290,6 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     const productId = processedProduct._id || processedProduct.id;
     const newWishlistStatus = !isFavorite;
 
-    // Optimistic update
     setIsFavorite(newWishlistStatus);
 
     try {
@@ -238,7 +299,6 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       });
     } catch (error) {
       console.error("Failed to toggle wishlist:", error);
-      // Revert optimistic update on error
       setIsFavorite(!newWishlistStatus);
     }
   };
@@ -255,9 +315,9 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const handleAddToCartClick = (e) => {
     e.stopPropagation();
     if (processedProduct.isOutOfStock || processedProduct.isExpired) return;
-    const customerId = localStorage.getItem('userId') || '';
+    const customerId = localStorage.getItem("userId") || "";
     if (!customerId) {
-      return navigate('/signin');
+      return navigate("/signin");
     }
     setIsAddToCartPopupOpen(true);
   };
@@ -265,16 +325,15 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const handleBuyNowClick = (e) => {
     e.stopPropagation();
     if (processedProduct.isOutOfStock || processedProduct.isExpired) return;
-    const customerId = localStorage.getItem('userId') || '';
+    const customerId = localStorage.getItem("userId") || "";
     if (!customerId) {
-      return navigate('/signin');
+      return navigate("/signin");
     }
     setIsBuyNowCheckoutOpen(true);
   };
 
   const handleBuyNowSuccess = () => {
     console.log("Order placed successfully!");
-    // The modal will show success message and close automatically
   };
 
   const popupProduct = {
@@ -293,304 +352,526 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     parseInt(processedProduct.price.toString().replace(/,/g, "")) * quantity
   ).toLocaleString();
 
+  const handleThumbnailClick = (index) => {
+    setSelectedImageIndex(index);
+  };
+
+  const professionalSpecs = [
+    {
+      icon: faShield,
+      label: "Condition",
+      value: processedProduct.condition,
+      color: "text-green-600",
+    },
+    {
+      icon: faCircleDot,
+      label: "Color",
+      value: processedProduct.color,
+      color: "text-blue-600",
+    },
+    {
+      icon: faMicrochip,
+      label: "RAM",
+      value: processedProduct.ram,
+      color: "text-purple-600",
+    },
+    {
+      icon: faDatabase,
+      label: "Storage",
+      value: processedProduct.storage,
+      color: "text-orange-600",
+    },
+    {
+      icon: faTag,
+      label: "Brand",
+      value: processedProduct.brand,
+      color: "text-indigo-600",
+    },
+    {
+      icon: faBarcode,
+      label: "Product Code",
+      value: processedProduct.code,
+      color: "text-gray-600",
+    },
+    {
+      icon: faSimCard,
+      label: "SIM Type",
+      value: processedProduct.simType,
+      color: "text-red-600",
+    },
+    {
+      icon: faGlobe,
+      label: "Country",
+      value: processedProduct.country,
+      color: "text-teal-600",
+    },
+    {
+      icon: faWifi,
+      label: "Network Bands",
+      value: processedProduct.networkBands,
+      color: "text-cyan-600",
+    },
+    {
+      icon: faTruck,
+      label: "Purchase Type",
+      value: processedProduct.purchaseType,
+      color: "text-yellow-600",
+    },
+  ].filter((spec) => spec.value && spec.value !== "");
+
+  const getStockIcon = () => {
+    if (processedProduct.isExpired) return faTimesCircle;
+    if (processedProduct.stockStatus === "In Stock") return faCheckCircle;
+    if (processedProduct.stockStatus === "Low Stock")
+      return faExclamationTriangle;
+    return faTimesCircle;
+  };
+
+  const getStockColor = () => {
+    if (processedProduct.isExpired) return "text-gray-600";
+    if (processedProduct.stockStatus === "In Stock") return "text-green-600";
+    if (processedProduct.stockStatus === "Low Stock") return "text-yellow-600";
+    return "text-red-600";
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-          {/* Enhanced Left Column - Image */}
-          <div className="xl:col-span-6">
-            <div className="relative group">
-              <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 overflow-hidden">
-               <img
-                  className="w-full h-96 lg:h-[500px] object-cover rounded-xl hover:scale-105 transition-transform duration-500"
-                  src={imageError ? iphoneImage : processedProduct.mainImage}
+    <div className="min-h-screen bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          {/* Left Column - Images (Unchanged) */}
+          <div className="space-y-6">
+            <div className="relative">
+              <div className="absolute top-6 left-6 z-20">
+                <span
+                  className={`inline-flex items-center px-3 py-2 rounded-full text-sm font-medium backdrop-blur-md shadow-lg ${
+                    processedProduct.isExpired
+                      ? "bg-gray-800/90 text-white"
+                      : processedProduct.stockStatus === "In Stock"
+                      ? "bg-green-600/90 text-white"
+                      : processedProduct.stockStatus === "Low Stock"
+                      ? "bg-yellow-600/90 text-white"
+                      : "bg-red-600/90 text-white"
+                  }`}
+                >
+                  {processedProduct.isExpired
+                    ? "Expired"
+                    : processedProduct.stockStatus}
+                </span>
+              </div>
+
+              <button
+                className="absolute flex justify-center cursor-pointer top-6 right-6 z-20 p-3 bg-white/90 backdrop-blur-md rounded-full shadow-lg hover:bg-white transition-all transform hover:scale-110"
+                onClick={handleToggleWishlist}
+              >
+                <FontAwesomeIcon
+                  icon={isFavorite ? solidHeart : regularHeart}
+                  className={`text-xl ${
+                    isFavorite
+                      ? "text-red-500"
+                      : "text-gray-600 hover:text-red-500"
+                  }`}
+                />
+              </button>
+              <div className="aspect-square relative rounded-xl overflow-hidden shadow-sm ">
+                <img
+                  className="w-full h-full object-cover" // p-6 remove kari ne object-cover add kari
+                  src={
+                    imageError ? iphoneImage : productImages[selectedImageIndex]
+                  }
                   alt={processedProduct.name}
                   onError={handleImageError}
                 />
-                
-                {/* Enhanced Status Badges */}
-                <div className="absolute top-8 left-8 flex flex-col space-y-3">
-                  <div
-                    className={`${
-                      processedProduct.isExpired
-                        ? "bg-gradient-to-r from-gray-400 to-gray-500"
-                        : processedProduct.stockStatus === "In Stock"
-                        ? "bg-gradient-to-r from-green-500 to-emerald-500"
-                        : processedProduct.stockStatus === "Low Stock"
-                        ? "bg-gradient-to-r from-yellow-500 to-orange-500"
-                        : "bg-gradient-to-r from-red-500 to-pink-500"
-                    } text-white text-sm font-semibold px-4 py-2 rounded-full shadow-lg flex items-center`}
-                  >
-                    {processedProduct.isExpired && (
-                      <FontAwesomeIcon icon={faCalendarXmark} className="mr-2 text-xs" />
-                    )}
-                    {processedProduct.isExpired ? "Expired" : processedProduct.stockStatus}
-                  </div>
-                </div>
-
-                {/* Enhanced Wishlist Button */}
-                <button
-                  className="absolute top-8 right-8 p-3 cursor-pointer bg-white rounded-full shadow-xl hover:shadow-2xl border border-gray-100 hover:scale-110 transition-all duration-300 group"
-                  onClick={handleToggleWishlist}
-                >
-                  <FontAwesomeIcon
-                    icon={isFavorite ? solidHeart : regularHeart}
-                    className={`text-lg transition-all cursor-pointer duration-300 ${
-                      isFavorite ? "text-red-500 " : "text-gray-400 "
-                    }`}
-                  />
-                </button>
-              </div>
-
-            {/* Enhanced Product Details */}
-            <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 my-6">
-              <div className="border-l-4 border-purple-500 pl-4 mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Product Specifications</h2>
-              </div>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                {[
-                  { label: "Brand", value: processedProduct.brand },
-                  { label: "Product Code", value: processedProduct.code },
-                  { label: "Color", value: processedProduct.color },
-                  { label: "Color Variants", value: processedProduct.colorVariant },
-                  { label: "Storage", value: processedProduct.storage },
-                  { label: "RAM", value: processedProduct.ram },
-                  { label: "Condition", value: processedProduct.condition },
-                  { label: "SIM Type", value: processedProduct.simType },
-                  { label: "Country", value: processedProduct.country },
-                  { label: "Country Variant", value: processedProduct.countryVariant },
-                  { label: "Network Bands", value: processedProduct.networkBands },
-                  { label: "Negotiable", value: processedProduct.isNegotiable ? "Yes" : "No" },
-                  { label: "Purchase Type", value: processedProduct.purchaseType },
-                  { label: "Status", value: processedProduct.status },
-                ].filter(item => item.value).map((item, index) => (
-                  <div key={index} className="bg-gray-50 rounded-lg p-2 hover:bg-gray-100 transition-colors flex justify-between items-center">
-                    <p className="text-sm font-medium text-gray-600 ">{item.label}</p>
-                    <p className="text-base font-semibold text-gray-900 capitalize">{item.value}</p>
-                  </div>
-                ))}
               </div>
             </div>
+
+            <div className="grid grid-cols-4 gap-3">
+              {productImages.slice(1, 5).map((image, index) => (
+                <button
+                  key={index + 1}
+                  onClick={() => handleThumbnailClick(index + 1)}
+                  className={`aspect-square rounded-lg  overflow-hidden transition-all ${
+                    selectedImageIndex === index + 1
+                      ? "border-blue-500 ring-2 ring-blue-200 shadow-md"
+                      : "border-gray-200 hover:border-gray-300 hover:shadow-sm"
+                  }`}
+                >
+                  <img
+                    src={image}
+                    alt={`${processedProduct.name} ${index + 2}`}
+                    className="w-full h-full object-cover" // p-2 remove kari ne object-cover add kari
+                    onError={handleImageError}
+                  />
+                </button>
+              ))}
+            </div>
+
+            <div className="flex justify-center space-x-2">
+              {productImages.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleThumbnailClick(index)}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    selectedImageIndex === index
+                      ? "bg-blue-500"
+                      : "bg-gray-300 hover:bg-gray-400"
+                  }`}
+                />
+              ))}
             </div>
           </div>
 
-          {/* Enhanced Right Column */}
-          <div className="xl:col-span-6">
-            {/* Enhanced Header */}
-            <div className="bg-white rounded-2xl px-6 py-3 shadow-xl border border-gray-100 mb-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-3 leading-tight">
-                    {processedProduct.name}
-                  </h1>
-                  <p className="text-gray-600 text-lg leading-relaxed">
-                    {processedProduct.description}
+          {/* Right Column - Product Details (Unchanged) */}
+          <div className="space-y-6">
+            <div className="border-b border-gray-200 pb-4">
+              <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
+                {processedProduct.name}
+              </h1>
+              <p className="mt-1 text-lg text-gray-600 font-medium">
+                by {processedProduct.brand}
+              </p>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <span className="text-4xl font-bold text-gray-900">
+                ${processedProduct.price}
+              </span>
+              {processedProduct.isNegotiable && (
+                <span className="inline-flex items-center px-3 py-1 text-sm font-semibold text-blue-600 bg-blue-100 rounded-full">
+                  Negotiable
+                </span>
+              )}
+            </div>
+
+            {(processedProduct.storage ||
+              processedProduct.ram ||
+              processedProduct.color ||
+              processedProduct.condition) && (
+              <div className="mt-6 bg-gray-50 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Key Features
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {processedProduct.condition && (
+                    <div className="flex flex-col items-center bg-white rounded-lg p-3 shadow-sm border border-gray-100">
+                      <FontAwesomeIcon
+                        icon={faShield}
+                        className="text-blue-900 text-xl mb-2"
+                      />
+                      <span className="text-sm text-gray-500">Condition</span>
+                      <span className="text-base font-medium text-gray-900 capitalize">
+                        <strong>{processedProduct.condition}</strong>
+                      </span>
+                    </div>
+                  )}
+                  {processedProduct.color && (
+                    <div className="flex flex-col items-center bg-white rounded-lg p-3 shadow-sm border border-gray-100">
+                      <FontAwesomeIcon
+                        icon={faCircleDot}
+                        className="text-blue-900 text-xl mb-2"
+                      />
+                      <span className="text-sm text-gray-500">Color</span>
+                      <span className="text-base font-medium text-gray-900 capitalize">
+                        <strong>{processedProduct.color}</strong>
+                      </span>
+                    </div>
+                  )}
+                  {processedProduct.ram && (
+                    <div className="flex flex-col items-center bg-white rounded-lg p-3 shadow-sm border border-gray-100">
+                      <FontAwesomeIcon
+                        icon={faMicrochip}
+                        className="text-blue-900 text-xl mb-2"
+                      />
+                      <span className="text-sm text-gray-500">RAM</span>
+                      <span className="text-base font-medium text-gray-900">
+                        <strong>{processedProduct.ram}</strong>
+                      </span>
+                    </div>
+                  )}
+                  {processedProduct.storage && (
+                    <div className="flex flex-col items-center bg-white rounded-lg p-3 shadow-sm border border-gray-100">
+                      <FontAwesomeIcon
+                        icon={faDatabase}
+                        className="text-blue-900 text-xl mb-2"
+                      />
+                      <span className="text-sm text-gray-500">Storage</span>
+                      <span className="text-base font-medium text-gray-900">
+                        <strong>{processedProduct.storage}</strong>
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {processedProduct.description && (
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Description
+                </h3>
+                <p className="text-base text-gray-600 leading-relaxed">
+                  {processedProduct.description}
+                </p>
+              </div>
+            )}
+
+            <div className="mt-6 grid grid-cols-2 gap-4">
+              <div className="bg-gray-50 rounded-lg p-4 shadow-sm">
+                <span className="text-sm text-gray-500 block">
+                  Minimum Order Quantity
+                </span>
+                <span className="text-lg font-semibold text-gray-900">
+                  {processedProduct.moq} units
+                </span>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4 shadow-sm">
+                <span className="text-sm text-gray-500 block">
+                  Available Stock
+                </span>
+                <span className={`text-lg font-semibold ${getStockColor()}`}>
+                  <FontAwesomeIcon icon={getStockIcon()} className="mr-2" />
+                  {processedProduct.stockCount} units
+                </span>
+              </div>
+            </div>
+
+            {processedProduct.expiryTime && (
+              <div
+                className={`mt-4 p-4 rounded-lg text-sm font-medium ${
+                  processedProduct.isExpired
+                    ? "bg-red-50 text-red-700"
+                    : "bg-yellow-50 text-yellow-700"
+                }`}
+              >
+                <FontAwesomeIcon icon={faCalendarXmark} className="mr-2" />
+                {processedProduct.isExpired
+                  ? `Expired on ${new Date(
+                      processedProduct.expiryTime
+                    ).toLocaleDateString()}`
+                  : `Expires on ${new Date(
+                      processedProduct.expiryTime
+                    ).toLocaleDateString()}`}
+              </div>
+            )}
+
+            <div className="mt-6 grid grid-cols-2 gap-4 items-center">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-2">
+                  Quantity
+                </label>
+                <div className="flex items-center">
+                  {/* Minus Button */}
+                  <button
+                    className="w-8 h-8 flex items-center cursor-pointer justify-center rounded-full border border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-default transition"
+                    onClick={() => handleQuantityChange(-1)}
+                    disabled={
+                      quantity <= processedProduct.moq ||
+                      processedProduct.isOutOfStock ||
+                      processedProduct.isExpired
+                    }
+                  >
+                    <FontAwesomeIcon icon={faMinus} className="cursor-pointer"/>
+                  </button>
+
+                  {/* Quantity Display */}
+                  <input
+                    type="number"
+                    value={quantity}
+                    onChange={(e) => {
+                      const newValue =
+                        parseInt(e.target.value) || processedProduct.moq;
+                      if (newValue >= processedProduct.moq)
+                        setQuantity(newValue);
+                    }}
+                    className="mx-3 w-20 text-center font-semibold text-gray-900 border border-gray-300 rounded-lg py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    min={processedProduct.moq}
+                    disabled={
+                      processedProduct.isOutOfStock ||
+                      processedProduct.isExpired
+                    }
+                  />
+
+                  {/* Plus Button */}
+                  <button
+                    className="w-8 h-8 flex items-center cursor-pointer justify-center rounded-full border border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-default transition"
+                    onClick={() => handleQuantityChange(1)}
+                    disabled={
+                      processedProduct.isOutOfStock ||
+                      processedProduct.isExpired
+                    }
+                  >
+                    <FontAwesomeIcon icon={faPlus} className="cursor-pointer"/>
+                  </button>
+                </div>
+              </div>
+              <div>
+                <span className="block text-sm font-medium text-gray-600 mb-2">
+                  Total Amount
+                </span>
+                <span className="text-2xl font-bold text-gray-900">
+                  ${totalAmount}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6 flex space-x-3">
+              {processedProduct.isExpired ? (
+                <button
+                  className="w-full bg-gray-200 text-gray-600 py-4 rounded-lg text-base font-semibold cursor-not-allowed shadow-sm"
+                  disabled
+                >
+                  Product Expired
+                </button>
+              ) : processedProduct.isOutOfStock ? (
+                <>
+                  <button
+                    className="w-full bg-gray-200  text-gray-600 py-4 rounded-lg text-base font-semibold cursor-not-allowed shadow-sm"
+                    disabled
+                  >
+                    Out of Stock
+                  </button>
+                  {notify ? (
+                    <button
+                      className="w-full bg-red-600 cursor-pointer text-white py-4 rounded-lg text-base font-semibold hover:bg-red-700 shadow-md transition-all"
+                      onClick={(ev) => handleNotifyToggle(ev, false)}
+                    >
+                      <FontAwesomeIcon icon={faBellSlash} className="mr-2" />
+                      Turn Off Notifications
+                    </button>
+                  ) : (
+                    <button
+                      className="w-full bg-[#0071E0] cursor-pointer text-white py-4 rounded-lg text-base font-semibold hover:bg-blue-700 shadow-md transition-all"
+                      onClick={(ev) => handleNotifyToggle(ev, true)}
+                    >
+                      <FontAwesomeIcon icon={faBell} className="mr-2" />
+                      Notify When Available
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={handleBuyNowClick}
+                    className="w-full cursor-pointer text-black py-4 rounded-lg text-base font-semibold border border-black hover:bg-gray-100 shadow-md transition-all flex items-center justify-center"
+                  >
+                    <FontAwesomeIcon icon={faBolt} className="mr-2" />
+                    Buy Now
+                  </button>
+                  <button
+                    onClick={handleAddToCartClick}
+                    className="w-full cursor-pointer text-black py-4 rounded-lg text-base font-semibold border border-black hover:bg-gray-100 shadow-md transition-all flex items-center justify-center"
+                  >
+                    <FontAwesomeIcon icon={faCartShopping} className="mr-2" />
+                    Add to Cart
+                  </button>
+                  {processedProduct.isNegotiable && (
+                    <button
+                      onClick={handleBiddingClick}
+                      className="w-full bg-[#0071E0] cursor-pointer text-white py-4 rounded-lg text-base font-semibold hover:bg-blue-700 shadow-md transition-all flex items-center justify-center"
+                    >
+                      <FontAwesomeIcon icon={faHandshake} className="mr-2" />
+                      Make an Offer
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Product Specifications Section (Redesigned) */}
+        <div className="mt-12 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            Product Specifications
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              { label: "Brand", value: processedProduct.brand, icon: faTag },
+              {
+                label: "Product Code",
+                value: processedProduct.code,
+                icon: faBarcode,
+              },
+              {
+                label: "Color",
+                value: processedProduct.color,
+                icon: faPalette,
+              },
+              {
+                label: "Color Variants",
+                value: processedProduct.colorVariant,
+                icon: faPalette,
+              },
+              {
+                label: "Storage",
+                value: processedProduct.storage,
+                icon: faHdd,
+              },
+              { label: "RAM", value: processedProduct.ram, icon: faMicrochip },
+              {
+                label: "Condition",
+                value: processedProduct.condition,
+                icon: faShield,
+              },
+              {
+                label: "SIM Type",
+                value: processedProduct.simType,
+                icon: faSimCard,
+              },
+              {
+                label: "Country",
+                value: processedProduct.country,
+                icon: faGlobe,
+              },
+              {
+                label: "Country Variant",
+                value: processedProduct.countryVariant,
+                icon: faGlobe,
+              },
+              {
+                label: "Network Bands",
+                value: processedProduct.networkBands,
+                icon: faWifi,
+              },
+              {
+                label: "Negotiable",
+                value: processedProduct.isNegotiable ? "Yes" : "No",
+                icon: faHandshake,
+              },
+              {
+                label: "Purchase Type",
+                value: processedProduct.purchaseType,
+                icon: faTruck,
+              },
+              {
+                label: "Status",
+                value: processedProduct.status,
+                icon: faCheckCircle,
+              },
+            ]
+              .filter((item) => item.value)
+              .map((item, index) => (
+                <div
+                  key={index}
+                  className="bg-gray-50 p-4 rounded-lg border border-gray-100 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-center mb-2">
+                    <FontAwesomeIcon
+                      icon={item.icon}
+                      className="text-blue-900 mr-2"
+                    />
+                    <h3 className="text-sm font-medium text-gray-700">
+                      {item.label}
+                    </h3>
+                  </div>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {item.value}
                   </p>
                 </div>
-              </div>
-            </div>
-
-            {/* Enhanced Price Section */}
-            <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 mb-4">
-              <div className="border-l-4 border-blue-500 pl-4 mb-4">
-                <h2 className="text-xl font-semibold text-gray-900 mb-3">Pricing Details</h2>
-              </div>
-              
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-3">
-                <div className="mb-4 lg:mb-0">
-                  <span className="text-4xl font-bold text-gray-900 mr-3">
-                    ${processedProduct.price}
-                  </span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mb-3">
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-2 border border-blue-100">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700">Minimum Order</span>
-                    <span className="font-bold text-blue-600 text-lg">
-                      {processedProduct.moq} units
-                    </span>
-                  </div>
-                </div>
-                <div
-                  className={`${
-                    processedProduct.isExpired
-                      ? "bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200"
-                      : processedProduct.stockCount > 10
-                      ? "bg-gradient-to-br from-green-50 to-emerald-50 border-green-200"
-                      : processedProduct.stockCount > 0
-                      ? "bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200"
-                      : "bg-gradient-to-br from-red-50 to-pink-50 border-red-200"
-                  } rounded-xl p-2 border`}
-                >
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700">Available Stock</span>
-                    <span
-                      className={`font-bold text-lg ${
-                        processedProduct.isExpired
-                          ? "text-gray-500"
-                          : processedProduct.stockCount > 10
-                          ? "text-green-600"
-                          : processedProduct.stockCount > 0
-                          ? "text-yellow-600"
-                          : "text-red-600"
-                      }`}
-                    >
-                      {processedProduct.stockCount} units
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {processedProduct.expiryTime && (
-                <div
-                  className={`p-2 rounded-xl mb-4 border ${
-                    processedProduct.isExpired
-                      ? "bg-gradient-to-r from-red-50 to-pink-50 border-red-200"
-                      : "bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200"
-                  }`}
-                >
-                  <div className="flex items-center">
-                    <FontAwesomeIcon
-                      icon={faCalendarXmark}
-                      className={`mr-3 text-lg ${
-                        processedProduct.isExpired ? "text-red-600" : "text-yellow-600"
-                      }`}
-                    />
-                    <span
-                      className={`font-medium ${
-                        processedProduct.isExpired ? "text-red-700" : "text-yellow-700"
-                      }`}
-                    >
-                      {processedProduct.isExpired
-                        ? `Expired on ${new Date(processedProduct.expiryTime).toLocaleDateString()}`
-                        : `Expires on ${new Date(processedProduct.expiryTime).toLocaleDateString()}`}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              <div className="border-t border-gray-200 pt-4">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-lg font-semibold text-gray-900">Quantity</span>
-                  <div className="flex items-center bg-gray-50 rounded-xl border border-gray-200">
-                    <button
-                      className="px-3 py-1 hover:bg-gray-100 cursor-pointer  rounded-l-xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      onClick={() => handleQuantityChange(-1)}
-                      disabled={
-                        quantity <= processedProduct.moq ||
-                        processedProduct.isOutOfStock ||
-                        processedProduct.isExpired
-                      }
-                    >
-                      <FontAwesomeIcon icon={faXmark} className="text-gray-600" />
-                    </button>
-                    <span className="px-4 py-1 font-bold text-lg bg-white border-x border-gray-200">
-                      {quantity}
-                    </span>
-                    <button
-                      className="px-3 py-1 hover:bg-gray-100 cursor-pointer  rounded-r-xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      onClick={() => handleQuantityChange(1)}
-                      disabled={processedProduct.isOutOfStock || processedProduct.isExpired}
-                    >
-                      <FontAwesomeIcon icon={faCheck} className="text-gray-600" />
-                    </button>
-                  </div>
-                </div>
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-2 border border-blue-100">
-                  <div className="flex justify-between items-center">
-                    <span className="text-lg font-semibold text-gray-900">Total Amount:</span>
-                    <span className="text-2xl font-bold text-blue-600">${totalAmount}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Enhanced Action Buttons */}
-            <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
-              <div className="space-y-4">
-                {processedProduct.isExpired ? (
-                  <>
-                    <button
-                      className="w-full bg-gradient-to-r from-gray-400  to-gray-500 text-white py-4 px-6 rounded-xl text-lg font-semibold cursor-not-allowed flex items-center justify-center"
-                      disabled
-                    >
-                      <FontAwesomeIcon icon={faCalendarXmark} className="mr-3 text-xl" />
-                      Product Expired
-                    </button>
-                    <button
-                      className="w-full bg-gradient-to-r from-gray-300 to-gray-400 text-gray-600 py-4 px-6 rounded-xl text-lg font-semibold cursor-not-allowed flex items-center justify-center"
-                      disabled
-                    >
-                      <FontAwesomeIcon icon={faXmark} className="mr-3 text-xl" />
-                      Currently Unavailable
-                    </button>
-                  </>
-                ) : processedProduct.isOutOfStock ? (
-                  <>
-                    <button
-                      className="w-full bg-gradient-to-r from-gray-400  to-gray-500 text-white py-4 px-6 rounded-xl text-lg font-semibold cursor-not-allowed flex items-center justify-center"
-                      disabled
-                    >
-                      <FontAwesomeIcon icon={faXmark} className="mr-3 text-xl" />
-                      Out of Stock
-                    </button>
-                    {notify ? (
-                      <button
-                        className="w-full bg-gradient-to-r from-red-500 cursor-pointer to-pink-500 hover:from-red-600 hover:to-pink-600 text-white py-4 px-6 rounded-xl text-lg font-semibold transition-all duration-300 flex items-center justify-center transform hover:scale-105 shadow-lg"
-                        onClick={(ev) => handleNotifyToggle(ev, false)}
-                        title="Turn off notifications"
-                      >
-                        <FontAwesomeIcon icon={faBellSlash} className="mr-3 text-xl" />
-                        Turn Off Notifications
-                      </button>
-                    ) : (
-                      <button
-                        className="w-full bg-gradient-to-r from-blue-500 cursor-pointer to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white py-4 px-6 rounded-xl text-lg font-semibold transition-all duration-300 flex items-center justify-center transform hover:scale-105 shadow-lg"
-                        onClick={(ev) => handleNotifyToggle(ev, true)}
-                        title="Notify me when back in stock"
-                      >
-                        <FontAwesomeIcon icon={faBell} className="mr-3 text-xl" />
-                        Notify When Available
-                      </button>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <button 
-                      onClick={handleAddToCartClick} 
-                      className="w-full bg-gradient-to-r from-orange-500 to-red-500 cursor-pointer hover:from-orange-600 hover:to-red-600 text-white py-4 px-6 rounded-xl text-lg font-semibold transition-all duration-300 flex items-center justify-center transform hover:scale-105 shadow-lg hover:shadow-xl"
-                    >
-                      <FontAwesomeIcon icon={faCartShopping} className="mr-3 text-xl" />
-                      Add to Cart
-                    </button>
-                    <button 
-                      onClick={handleBuyNowClick}
-                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 cursor-pointer hover:from-blue-700 hover:to-indigo-700 text-white py-4 px-6 rounded-xl text-lg font-semibold transition-all duration-300 flex items-center justify-center transform hover:scale-105 shadow-lg hover:shadow-xl"
-                    >
-                      <FontAwesomeIcon icon={faBolt} className="mr-3 text-xl" />
-                      Buy Now
-                    </button>
-                    {processedProduct.isNegotiable && (
-                      <button
-                        onClick={handleBiddingClick}
-                        className="w-full bg-gradient-to-r from-purple-600 cursor-pointer to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-4 px-6 rounded-xl text-lg font-semibold transition-all duration-300 flex items-center justify-center transform hover:scale-105 shadow-lg hover:shadow-xl"
-                      >
-                        <FontAwesomeIcon icon={faHandshake} className="mr-3 text-xl" />
-                        Make an Offer
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
+              ))}
           </div>
         </div>
       </div>
 
-      {/* All existing modals remain unchanged */}
       {isNotifyMePopupOpen && (
         <NotifyMePopup
           product={processedProduct}

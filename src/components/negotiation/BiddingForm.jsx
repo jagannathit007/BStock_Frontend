@@ -370,7 +370,8 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
                                       ? 'bg-green-100 text-green-800' 
                                       : 'bg-yellow-100 text-yellow-800'
                                   }`}>
-                                    {bid.status === 'accepted' ? 'Accepted' : 'Pending'}
+                                    {bid.status === 'accepted' ? 'Accepted' : hasAcceptedNegotiation(bidGroup) ? 'Other bid accepted' : 'pending'}
+                                    {/* {bid.status === 'accepted' ? 'Accepted' : 'Pending'} */}
                                   </span>
                                 </div>
                                 {bid.message && (
@@ -395,11 +396,11 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
                                         <span>Accept</span>
                                       </button>
                                     )}
-                                    {hasAcceptedNegotiation(bidGroup) && (
+                                    {/* {hasAcceptedNegotiation(bidGroup) && (
                                       <div className="text-xs text-gray-500 text-center">
                                         Other bid accepted
                                       </div>
-                                    )}
+                                    )} */}
                                   </>
                                 )}
                               </div>
