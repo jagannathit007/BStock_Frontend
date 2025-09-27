@@ -42,6 +42,7 @@ import BiddingForm from "../../negotiation/BiddingForm";
 import AddToCartPopup from "../AddToCartPopup";
 import BuyNowCheckoutModal from "../BuyNowCheckoutModal";
 import iphoneImage from "../../../assets/iphone.png";
+import Swal from "sweetalert2";
 
 const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [currentProduct, setCurrentProduct] = useState(initialProduct);
@@ -303,8 +304,41 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     }
   };
 
-  const handleBiddingClick = (e) => {
+  const handleBiddingClick = async (e) => {
     e.stopPropagation();
+
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const { businessProfile } = user;
+
+    if (
+      !businessProfile?.businessName ||
+      businessProfile.businessName.trim() === ""
+    ) {
+      const confirm = await Swal.fire({
+        icon: "warning",
+        title: "Business Details Required",
+        text: "Please add your business details before making an offer.",
+        confirmButtonText: "Go to Settings",
+        confirmButtonColor: "#0071E0",
+      });
+      if (confirm.isConfirmed) navigate("/profile?tab=business");
+      return;
+    }
+
+    if (
+      businessProfile?.status === "pending" ||
+      businessProfile?.status === "rejected"
+    ) {
+      await Swal.fire({
+        icon: "info",
+        title: "Pending Approval",
+        text: "Your business profile is not approved. Please wait for approval.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#0071E0",
+      });
+      return;
+    }
+
     setIsBiddingFormOpen(true);
   };
 
@@ -669,7 +703,10 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                       processedProduct.isExpired
                     }
                   >
-                    <FontAwesomeIcon icon={faMinus} className="cursor-pointer"/>
+                    <FontAwesomeIcon
+                      icon={faMinus}
+                      className="cursor-pointer"
+                    />
                   </button>
 
                   {/* Quantity Display */}
@@ -699,7 +736,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                       processedProduct.isExpired
                     }
                   >
-                    <FontAwesomeIcon icon={faPlus} className="cursor-pointer"/>
+                    <FontAwesomeIcon icon={faPlus} className="cursor-pointer" />
                   </button>
                 </div>
               </div>
