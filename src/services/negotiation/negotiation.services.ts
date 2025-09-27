@@ -116,6 +116,20 @@ export class NegotiationService {
     }
   }
 
+  static async getProductBids(productId: string, page = 1, limit = 50): Promise<NegotiationListResponse> {
+    try {
+      const res = await api.post('/api/customer/negotiation/product-bids', { productId, page, limit });
+      if (res.data?.status !== 200) {
+        throw new Error(res.data?.message || 'Failed to fetch product bids');
+      }
+      return res.data.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to fetch product bids';
+      console.error('Error fetching product bids:', errorMessage);
+      throw new Error(errorMessage);
+    }
+  }
+
   static async respondToNegotiation(responseData: RespondToNegotiationRequest): Promise<NegotiationResponse> {
     try {
       const res = await api.post('/api/customer/negotiation/respond', responseData);
