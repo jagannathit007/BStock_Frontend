@@ -2,17 +2,21 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Handshake } from "lucide-react";
 import CartService from "../services/cart/cart.services";
+import { WalletService } from "../services/wallet/wallet.services";
 import { env } from "../utils/env";
 import NegotiationModal from "./negotiation/NegotiationModal";
 import WishlistModal from "./WishListPage/WishListModal";
+import WalletModal from "./WalletTransactionsPage/WalletTransactions";
 
 const Header = ({ onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [cartItemCount, setCartItemCount] = useState(0);
+  const [walletBalance, setWalletBalance] = useState(0);
   const [isNegotiationModalOpen, setIsNegotiationModalOpen] = useState(false);
-  const [isWishlistModalOpen, setIsWishlistModalOpen] = useState(false); // <-- NEW STATE
+  const [isWishlistModalOpen, setIsWishlistModalOpen] = useState(false);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   // Fetch cart count
@@ -26,12 +30,29 @@ const Header = ({ onLogout }) => {
     }
   };
 
+  // Fetch wallet balance
+  const fetchWalletBalance = async () => {
+    try {
+      const response = await WalletService.getWallet();
+      if (response.status === 200 && response.data) {
+        setWalletBalance(parseFloat(response.data.balance) || 0);
+      } else {
+        setWalletBalance(0);
+      }
+    } catch (error) {
+      console.error("Fetch wallet balance error:", error);
+      setWalletBalance(0);
+    }
+  };
+
   useEffect(() => {
     fetchCartCount();
+    fetchWalletBalance();
   }, []);
 
   useEffect(() => {
     fetchCartCount();
+    fetchWalletBalance();
   }, [location.pathname]);
 
   useEffect(() => {
@@ -74,6 +95,10 @@ const Header = ({ onLogout }) => {
 
   const handleWishlistClick = () => {
     setIsWishlistModalOpen(true);
+  };
+
+  const handleWalletClick = () => {
+    setIsWalletModalOpen(true);
   };
 
   const toAbsoluteUrl = (p) => {
@@ -142,7 +167,6 @@ const Header = ({ onLogout }) => {
     applyAvatar();
     applyUserName();
 
-    // Listen for storage events from other tabs/windows
     const onStorage = (e) => {
       if (e.key === "profileImageUrl" || e.key === "user") {
         applyAvatar();
@@ -150,7 +174,6 @@ const Header = ({ onLogout }) => {
       }
     };
 
-    // Listen for custom events from the same page
     const onProfileUpdate = () => {
       applyAvatar();
       applyUserName();
@@ -171,7 +194,6 @@ const Header = ({ onLogout }) => {
     setImageError(true);
   };
 
-  // Reset image error when avatarUrl changes
   useEffect(() => {
     setImageError(false);
   }, [avatarUrl]);
@@ -238,7 +260,11 @@ const Header = ({ onLogout }) => {
             {/* Right Side */}
             <div className="flex items-center space-x-2 sm:space-x-4">
               {/* Wallet Info */}
-              <div className="hidden sm:flex items-center space-x-2 cursor-pointer">
+              <button
+                onClick={handleWalletClick}
+                className="hidden sm:flex items-center space-x-2 cursor-pointer p-2 hover:bg-gray-50 rounded-lg"
+                title="My Wallet"
+              >
                 <svg
                   className="h-5 w-5 text-gray-600"
                   fill="currentColor"
@@ -247,9 +273,9 @@ const Header = ({ onLogout }) => {
                   <path d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V192c0-35.3-28.7-64-64-64H80c-8.8 0-16-7.2-16-16s7.2-16 16-16H448c17.7 0 32-14.3 32-32s-14.3-32-32-32H64zM416 272a32 32 0 1 1 0 64 32 32 0 1 1 0-64z" />
                 </svg>
                 <span className="text-sm font-medium text-gray-900">
-                  $0
+                  ${walletBalance.toFixed(2)}
                 </span>
-              </div>
+              </button>
 
               {/* Negotiations */}
               <button
@@ -273,6 +299,7 @@ const Header = ({ onLogout }) => {
               <button
                 className="p-2 text-gray-600 hover:text-gray-900 relative cursor-pointer"
                 onClick={handleCartClick}
+                title="My Cart"
               >
                 <svg
                   className="h-5 w-5"
@@ -365,6 +392,12 @@ const Header = ({ onLogout }) => {
       <WishlistModal
         isOpen={isWishlistModalOpen}
         onClose={() => setIsWishlistModalOpen(false)}
+      />
+
+      {/* Wallet Modal */}
+      <WalletModal
+        isOpen={isWalletModalOpen}
+        onClose={() => setIsWalletModalOpen(false)}
       />
     </>
   );

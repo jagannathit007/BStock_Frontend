@@ -252,7 +252,7 @@ const LoginForm = ({ onLogin }) => {
                 </p>
               </motion.div>
 
-              {error && (
+              {/* {error && (
                 <motion.div
                   className="p-4 bg-amber-50 text-amber-800 rounded-lg text-sm border border-amber-200 flex items-start space-x-3"
                   variants={childVariants}
@@ -266,7 +266,7 @@ const LoginForm = ({ onLogin }) => {
                     <p className="mt-1">{error}</p>
                   </div>
                 </motion.div>
-              )}
+              )} */}
 
               <motion.form
                 className="space-y-6"
@@ -326,7 +326,7 @@ const LoginForm = ({ onLogin }) => {
                       className="absolute inset-y-0 right-0 pr-3 flex items-center"
                     >
                       <FontAwesomeIcon
-                        icon={showPassword ? faEyeSlash : faEye}
+                        icon={showPassword ? faEye :  faEyeSlash }
                         className="text-gray-400 hover:text-indigo-600 text-sm"
                       />
                     </button>
