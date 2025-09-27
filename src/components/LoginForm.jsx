@@ -415,7 +415,7 @@ const LoginForm = ({ onLogin }) => {
                       </span>
                     </div>
                   ) : (
-                    <div id="googleSignInDiv" className="w-full [&>div]:rounded-lg [&>div>div]:rounded-lg [&>div>div>div]:rounded-lg"></div>
+                    <div id="googleSignInDiv" className="w-fit mx-auto [&>div]:rounded-lg [&>div>div]:rounded-lg [&>div>div>div]:rounded-lg"></div>
                   )}
                 </div>
               </motion.form>
