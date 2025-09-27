@@ -86,6 +86,7 @@ const FlashDeals = () => {
             limit: itemsPerPage,
             search: searchQuery,
             sort: getSortObject(sortOption),
+            isFlashDeal:true,
             ...filters,
           },
           {
