@@ -189,6 +189,39 @@ const ProductCard = ({
   const handleNotifyToggle = async (e, nextValue) => {
     e.stopPropagation();
     if (!canNotify) return;
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const { businessProfile } = user;
+
+    if (
+        !businessProfile?.businessName ||
+        businessProfile.businessName.trim() === ""
+      ) {
+        console.log('asdas')
+        const confirm = await Swal.fire({
+          icon: "warning",
+          title: "Business Details Required",
+          text: "Please add your business details before adding products to the cart.",
+          confirmButtonText: "Go to Settings",
+          confirmButtonColor: "#0071E0",
+        });
+        if(confirm.isConfirmed) navigate("/profile?tab=business");
+        
+        return;
+      }
+
+    if (
+        businessProfile?.status === "pending" ||
+        businessProfile?.status === "rejected"
+      ) {
+        await Swal.fire({
+          icon: "info",
+          title: "Pending Approval",
+          text: "Your business profile is not approved. Please wait for approval.",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#0071E0",
+        });
+        return;
+      }
 
     const productId = id || product?._id;
 
