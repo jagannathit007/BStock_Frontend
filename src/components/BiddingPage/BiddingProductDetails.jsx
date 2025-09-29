@@ -8,6 +8,7 @@ import {
   faArrowLeft,
   faCheckCircle,
 } from "@fortawesome/free-solid-svg-icons";
+import { convertPrice } from "../../utils/currencyUtils";
 
 const BiddingProductDetails = ({ product, onBack }) => {
   if (!product) return null;
@@ -157,10 +158,10 @@ const BiddingProductDetails = ({ product, onBack }) => {
                 Current Highest Bid
               </h3>
               <div className="text-2xl sm:text-3xl font-bold text-[#0071E0] mb-1">
-                {product.currentBid}
+                {convertPrice(parseFloat(product.currentBid.replace(/[$,]/g, '')))}
               </div>
               <p className="text-xs sm:text-sm text-gray-600">
-                Starting bid: {product.startingPrice}
+                Starting bid: {convertPrice(parseFloat(product.startingPrice.replace(/[$,]/g, '')))}
               </p>
             </div>
 

@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes, faCheck } from "@fortawesome/free-solid-svg-icons";
 import OrderService from "../../services/order/order.services";
 import iphoneImage from "../../assets/iphone.png";
+import { convertPrice } from "../../utils/currencyUtils";
 
 const BuyNowCheckoutModal = ({
   isOpen,
@@ -105,7 +106,7 @@ const BuyNowCheckoutModal = ({
   };
 
   // Calculate total price
-  const totalPrice = (product.price * quantity).toFixed(2);
+  const totalPrice = product.price * quantity;
 
   if (!isOpen) return null;
 
@@ -154,13 +155,13 @@ const BuyNowCheckoutModal = ({
                     Quantity: {quantity}
                   </span>
                   <span className="text-sm text-gray-600">
-                    Price: ${product.price}
+                    Price: {convertPrice(product.price)}
                   </span>
                 </div>
               </div>
               <div className="text-right">
                 <div className="text-lg font-semibold text-gray-900">
-                  ${totalPrice}
+                  {convertPrice(totalPrice)}
                 </div>
                 <div className="text-sm text-gray-600">Total</div>
               </div>

@@ -7,6 +7,7 @@ import { env } from "../utils/env";
 import NegotiationModal from "./negotiation/NegotiationModal";
 import WishlistModal from "./WishListPage/WishListModal";
 import WalletModal from "./WalletTransactionsPage/WalletTransactions";
+import { convertPrice } from "../utils/currencyUtils";
 
 const Header = ({ onLogout }) => {
   const navigate = useNavigate();
@@ -273,7 +274,7 @@ const Header = ({ onLogout }) => {
                   <path d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V192c0-35.3-28.7-64-64-64H80c-8.8 0-16-7.2-16-16s7.2-16 16-16H448c17.7 0 32-14.3 32-32s-14.3-32-32-32H64zM416 272a32 32 0 1 1 0 64 32 32 0 1 1 0-64z" />
                 </svg>
                 <span className="text-sm font-medium text-gray-900">
-                  ${walletBalance.toFixed(2)}
+                  {convertPrice(walletBalance)}
                 </span>
               </button>
 
@@ -363,7 +364,7 @@ const Header = ({ onLogout }) => {
           </div>
         </div>
 
-        <style jsx>{`
+        <style>{`
           @keyframes fadeIn {
             from {
               opacity: 0;

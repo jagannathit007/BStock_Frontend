@@ -22,6 +22,7 @@ import {
 import BiddingProductDetails from "./BiddingProductDetails";
 import SideFilter from "../SideFilter";
 import BusinessDetailsPopup from "./BusinessDetailsPopup";
+import { convertPrice } from "../../utils/currencyUtils";
 
 const BiddingContent = () => {
   const [viewMode, setViewMode] = useState("grid");
@@ -144,6 +145,18 @@ const BiddingContent = () => {
         </span>
       );
     }
+    
+    // Check if the value is a price (contains $ or is a number)
+    if (typeof value === 'string' && value.includes('$')) {
+      // Extract numeric value from string like "$1,245"
+      const numericValue = parseFloat(value.replace(/[$,]/g, ''));
+      if (!isNaN(numericValue)) {
+        return convertPrice(numericValue);
+      }
+    } else if (typeof value === 'number') {
+      return convertPrice(value);
+    }
+    
     return value;
   };
 

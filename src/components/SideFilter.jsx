@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import { ProductService } from "../services/products/products.services"; // Adjust the import path to your ProductService
+import { convertPrice } from "../utils/currencyUtils";
 
 const SideFilter = ({ onClose, onFilterChange }) => {
   const [minPrice, setMinPrice] = useState("");
@@ -268,8 +269,8 @@ const SideFilter = ({ onClose, onFilterChange }) => {
             ></div>
           </div>
           <div className="flex justify-between text-sm text-gray-600 mt-2">
-            <span>${minPrice || priceRange.min}</span>
-            <span>${maxPrice || priceRange.max}</span>
+            <span>{convertPrice(parseFloat(minPrice || priceRange.min))}</span>
+            <span>{convertPrice(parseFloat(maxPrice || priceRange.max))}</span>
           </div>
         </div>
 

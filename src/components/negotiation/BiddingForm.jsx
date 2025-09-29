@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import NegotiationService from "../../services/negotiation/negotiation.services";
 import iphoneImage from "../../assets/iphone.png";
+import { convertPrice } from "../../utils/currencyUtils";
 
 const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
   const [activeTab, setActiveTab] = useState("history"); // Default to history tab
@@ -176,10 +177,7 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
   };
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(price);
+    return convertPrice(price);
   };
 
   const formatDate = (dateString) => {
@@ -290,7 +288,7 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
               <p className="text-sm text-gray-600">
                 Current Price:{" "}
                 <span className="font-medium text-green-600">
-                  ${product.price}
+                  {convertPrice(product.price)}
                 </span>
               </p>
             </div>

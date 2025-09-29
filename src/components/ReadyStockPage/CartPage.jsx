@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import CartService from "../../services/cart/cart.services";
 import OrderService from "../../services/order/order.services";
 import iphoneImage from "../../assets/iphone.png";
+import { convertPrice } from "../../utils/currencyUtils";
 
 const CartPage = () => {
   const navigate = useNavigate();
@@ -253,8 +254,7 @@ const CartPage = () => {
 
   // Calculate total price
   const totalPrice = cartItems
-    .reduce((sum, item) => sum + item.price * item.quantity, 0)
-    .toFixed(2);
+    .reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -346,7 +346,7 @@ const CartPage = () => {
                         </td>
                         <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
                           <div className="text-base sm:text-lg font-bold text-gray-900">
-                            ${item.price.toFixed(2)}
+                            {convertPrice(item.price)}
                           </div>
                         </td>
                         <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
@@ -393,7 +393,7 @@ const CartPage = () => {
                         </td>
                         <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
                           <div className="text-base sm:text-lg font-bold text-gray-900">
-                            ${(item.price * item.quantity).toFixed(2)}
+                            {convertPrice(item.price * item.quantity)}
                           </div>
                         </td>
                         <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
@@ -418,7 +418,7 @@ const CartPage = () => {
               <div>
                 <div className="text-lg font-medium text-gray-700">Total:</div>
                 <div className="text-2xl font-bold text-gray-900">
-                  ${totalPrice}
+                  {convertPrice(totalPrice)}
                 </div>
               </div>
               <div className="flex gap-3">
@@ -501,10 +501,10 @@ const CartPage = () => {
                           </div>
                           <div className="text-right">
                             <p className="text-sm font-semibold text-gray-900">
-                              ${(item.price * item.quantity).toFixed(2)}
+                              {convertPrice(item.price * item.quantity)}
                             </p>
                             <p className="text-xs text-gray-600">
-                              (${item.price.toFixed(2)} x {item.quantity})
+                              ({convertPrice(item.price)} x {item.quantity})
                             </p>
                           </div>
                         </div>
@@ -514,7 +514,7 @@ const CartPage = () => {
                           Total:
                         </p>
                         <p className="text-lg font-bold text-gray-900">
-                          ${totalPrice}
+                          {convertPrice(totalPrice)}
                         </p>
                       </div>
                     </div>

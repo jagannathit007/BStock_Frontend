@@ -38,6 +38,7 @@ const businessSchema = yup.object({
   country: yup.string().required("Country is required"),
   address: yup.string().optional(),
   currency: yup.string().required("Currency is required"),
+  currencyCode: yup.string().optional(),
 });
 
 const passwordSchema = yup.object({
@@ -567,6 +568,9 @@ const BusinessProfile = ({
       if (curr) {
         setValue("currency", curr);
         onChangeField("currency", curr);
+        // Also set currencyCode to match the currency
+        setValue("currencyCode", curr);
+        onChangeField("currencyCode", curr);
       }
     }
   }, [watchedCountry, setValue, onChangeField]);
@@ -695,7 +699,9 @@ const BusinessProfile = ({
             Country <span className="text-red-500">*</span>
           </label>
           <select
-            {...register("country")}
+            {...register("country", {
+              onChange: (e) => handleFieldChange("country", e.target.value),
+            })}
             className={`w-full px-4 py-2 rounded-lg border transition-colors duration-200 text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
               errors.country
                 ? "border-red-500 focus:border-red-500"
@@ -725,7 +731,9 @@ const BusinessProfile = ({
             Currency <span className="text-red-500">*</span>
           </label>
           <select
-            {...register("currency")}
+            {...register("currency", {
+              onChange: (e) => handleFieldChange("currency", e.target.value),
+            })}
             className={`w-full px-4 py-2 rounded-lg border transition-colors duration-200 text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
               errors.currency
                 ? "border-red-500 focus:border-red-500"
@@ -746,6 +754,7 @@ const BusinessProfile = ({
             </p>
           )}
         </div>
+
         <div className="md:col-span-2 space-y-2">
           <label className="text-sm font-medium text-gray-700 flex items-center">
             <i
@@ -1160,6 +1169,7 @@ const ProfilePage = () => {
     businessLogo: null,
     certificate: null,
     currency: "",
+    currencyCode: "",
   });
   const [businessPreviews, setBusinessPreviews] = useState({
     businessLogo: null,
@@ -1257,6 +1267,7 @@ const ProfilePage = () => {
         business?.certificate ?? business?.businessCertificate ?? null
       );
       const currency = business?.currency ?? "";
+      const currencyCode = business?.currencyCode ?? "";
       const status = business?.status ?? null;
       return {
         name,
@@ -1273,6 +1284,7 @@ const ProfilePage = () => {
           logo,
           certificate,
           currency,
+          currencyCode,
           status,
         },
       };
@@ -1297,6 +1309,7 @@ const ProfilePage = () => {
           businessLogo: normalized.business.logo,
           certificate: normalized.business.certificate,
           currency: normalized.business.currency,
+          currencyCode: normalized.business.currencyCode,
         }));
         setBusinessPreviews({
           businessLogo:
@@ -1384,6 +1397,7 @@ const ProfilePage = () => {
         logo: businessFormData.businessLogo,
         certificate: businessFormData.certificate,
         currency: formData.currency,
+        currencyCode: formData.currencyCode,
       });
       // refresh data to reflect persisted values
       try {
@@ -1397,6 +1411,7 @@ const ProfilePage = () => {
           businessLogo: normalized.business.logo ?? prev.businessLogo,
           certificate: normalized.business.certificate ?? prev.certificate,
           currency: normalized.business.currency || prev.currency,
+          currencyCode: normalized.business.currencyCode || prev.currencyCode,
         }));
         setBusinessPreviews((prev) => ({
           businessLogo:
@@ -1467,6 +1482,7 @@ const ProfilePage = () => {
       business?.certificate ?? business?.businessCertificate ?? null
     );
     const currency = business?.currency ?? "";
+    const currencyCode = business?.currencyCode ?? "";
     const status = business?.status ?? null;
     return {
       name,
@@ -1483,6 +1499,7 @@ const ProfilePage = () => {
         logo,
         certificate,
         currency,
+        currencyCode,
         status,
       },
     };

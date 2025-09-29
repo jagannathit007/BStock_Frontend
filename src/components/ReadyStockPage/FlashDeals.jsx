@@ -11,6 +11,7 @@ import {
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
+import { convertPrice } from "../../utils/currencyUtils";
 
 const FlashDeals = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);

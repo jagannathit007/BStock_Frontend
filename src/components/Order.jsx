@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faShoppingBag, faTimes } from "@fortawesome/free-solid-svg-icons";
 import OrderService from "../services/order/order.services";
+import { convertPrice } from "../utils/currencyUtils";
 
 const Order = () => {
   const [orders, setOrders] = useState([]);
@@ -157,7 +158,7 @@ const Order = () => {
                         </td>
                         <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
                           <div className="text-sm font-bold text-gray-900">
-                            ${order.totalAmount}
+                            {convertPrice(order.totalAmount)}
                           </div>
                         </td>
                         <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">

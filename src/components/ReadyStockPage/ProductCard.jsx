@@ -18,6 +18,7 @@ import { ProductService } from "../../services/products/products.services";
 import iphoneImage from "../../assets/iphone.png";
 import Swal from "sweetalert2";
 import Countdown from "react-countdown";
+import { convertPrice } from "../../utils/currencyUtils";
 
 const ProductCard = ({
   product,
@@ -334,7 +335,7 @@ const ProductCard = ({
           </td>
           <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
             <div className="text-base sm:text-lg font-bold text-gray-900">
-              ${price}
+              {convertPrice(price)}
             </div>
           </td>
           <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
@@ -524,7 +525,7 @@ const ProductCard = ({
 
         <div className="flex items-center mb-2">
           <span className="text-base sm:text-lg font-bold text-gray-900">
-            ${price}
+            {convertPrice(price)}
           </span>
         </div>
 

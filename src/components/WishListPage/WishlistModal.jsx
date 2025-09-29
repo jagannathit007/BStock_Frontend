@@ -15,6 +15,7 @@ import AddToCartPopup from "../ReadyStockPage/AddToCartPopup";
 import CartService from "../../services/cart/cart.services";
 import iphoneImage from "../../assets/iphone.png";
 import Swal from "sweetalert2";
+import { convertPrice } from "../../utils/currencyUtils";
 
 const WishlistModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
@@ -341,7 +342,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
                           {/* Price & Buttons - Center Aligned */}
                           <div className="flex items-center gap-4 ml-4">
                             <div className="text-xl font-semibold text-gray-900">
-                              ${product.price}
+                              {convertPrice(product.price)}
                             </div>
 
                             {product.notify && (

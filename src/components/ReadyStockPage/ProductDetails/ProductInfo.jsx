@@ -34,6 +34,7 @@ import AddToCartPopup from "../AddToCartPopup";
 import BuyNowCheckoutModal from "../BuyNowCheckoutModal";
 import iphoneImage from "../../../assets/iphone.png";
 import Swal from "sweetalert2";
+import { convertPrice } from "../../../utils/currencyUtils";
 
 const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [currentProduct, setCurrentProduct] = useState(initialProduct);
@@ -376,9 +377,9 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     purchaseType: processedProduct.purchaseType,
   };
 
-  const totalAmount = (
-    parseInt(processedProduct.price.toString().replace(/,/g, "")) * quantity
-  ).toLocaleString();
+  const totalAmount = parseInt(processedProduct.price.toString().replace(/,/g, "")) * quantity;
+
+
 
   const handleThumbnailClick = (index) => {
     setSelectedImageIndex(index);
@@ -561,7 +562,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
 
             <div className="flex items-center space-x-4">
               <span className="text-4xl font-bold text-gray-900">
-                ${processedProduct.price}
+                {convertPrice(processedProduct.price)}
               </span>
               {processedProduct.isNegotiable && (
                 <span className="inline-flex items-center px-3 py-1 text-sm font-semibold text-blue-600 bg-blue-100 rounded-full">
@@ -745,7 +746,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   Total Amount
                 </span>
                 <span className="text-2xl font-bold text-gray-900">
-                  ${totalAmount}
+                  {convertPrice(totalAmount)}
                 </span>
               </div>
             </div>
