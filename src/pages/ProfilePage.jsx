@@ -566,14 +566,20 @@ const BusinessProfile = ({
     if (watchedCountry) {
       const curr = countryToCurrency[watchedCountry];
       if (curr) {
+        // Set form values
         setValue("currency", curr);
-        onChangeField("currency", curr);
-        // Also set currencyCode to match the currency
         setValue("currencyCode", curr);
+        
+        // Update the parent component state
+        onChangeField("currency", curr);
         onChangeField("currencyCode", curr);
+        
+        // Trigger validation to ensure the form recognizes the change
+        trigger("currency");
+        trigger("currencyCode");
       }
     }
-  }, [watchedCountry, setValue, onChangeField]);
+  }, [watchedCountry, setValue, onChangeField, trigger]);
 
   // Update form values when formData changes
   useEffect(() => {
@@ -699,9 +705,22 @@ const BusinessProfile = ({
             Country <span className="text-red-500">*</span>
           </label>
           <select
-            {...register("country", {
-              onChange: (e) => handleFieldChange("country", e.target.value),
-            })}
+            {...register("country")}
+            onChange={(e) => {
+              const selectedCountry = e.target.value;
+              handleFieldChange("country", selectedCountry);
+              
+              // Auto-select currency based on country
+              const curr = countryToCurrency[selectedCountry];
+              if (curr) {
+                setValue("currency", curr);
+                setValue("currencyCode", curr);
+                onChangeField("currency", curr);
+                onChangeField("currencyCode", curr);
+                trigger("currency");
+                trigger("currencyCode");
+              }
+            }}
             className={`w-full px-4 py-2 rounded-lg border transition-colors duration-200 text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
               errors.country
                 ? "border-red-500 focus:border-red-500"
@@ -731,9 +750,14 @@ const BusinessProfile = ({
             Currency <span className="text-red-500">*</span>
           </label>
           <select
-            {...register("currency", {
-              onChange: (e) => handleFieldChange("currency", e.target.value),
-            })}
+            {...register("currency")}
+            onChange={(e) => {
+              const selectedCurrency = e.target.value;
+              handleFieldChange("currency", selectedCurrency);
+              // Also update currencyCode to match
+              setValue("currencyCode", selectedCurrency);
+              onChangeField("currencyCode", selectedCurrency);
+            }}
             className={`w-full px-4 py-2 rounded-lg border transition-colors duration-200 text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
               errors.currency
                 ? "border-red-500 focus:border-red-500"
