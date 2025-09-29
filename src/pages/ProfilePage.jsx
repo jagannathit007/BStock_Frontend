@@ -1390,6 +1390,9 @@ const ProfilePage = () => {
 
   const handleSaveBusiness = async (formData) => {
     try {
+      // Store the current status before update
+      const currentStatus = businessStatus;
+      
       await AuthService.updateProfile({
         businessName: formData.businessName,
         country: formData.country,
@@ -1398,6 +1401,7 @@ const ProfilePage = () => {
         certificate: businessFormData.certificate,
         currency: formData.currency,
         currencyCode: formData.currencyCode,
+        resetBusinessStatus: true, // Signal to backend to reset status to pending
       });
       // refresh data to reflect persisted values
       try {
@@ -1423,12 +1427,13 @@ const ProfilePage = () => {
               ? normalized.business.certificate
               : prev.certificate,
         }));
-        setBusinessStatus(
-          normalized.business.status
-            ? normalized.business.status.charAt(0).toUpperCase() +
-                normalized.business.status.slice(1).toLowerCase()
-            : null
-        );
+        
+        // Update business status from the API response
+        const newStatus = normalized.business.status
+          ? normalized.business.status.charAt(0).toUpperCase() +
+              normalized.business.status.slice(1).toLowerCase()
+          : null;
+        setBusinessStatus(newStatus);
 
         // Check if profile is now complete
         const updatedUserData = {
@@ -1445,10 +1450,18 @@ const ProfilePage = () => {
           AuthService.isProfileComplete(updatedUserData);
         setIsIncompleteProfile(!isProfileComplete);
 
-        toastHelper.showTost(
-          "Business profile updated successfully",
-          "success"
-        );
+        // Show appropriate success message based on status change
+        if (currentStatus === "Approved" && newStatus === "Pending") {
+          toastHelper.showTost(
+            "Business profile updated successfully. Your profile status has been reset to Pending for re-verification.",
+            "success"
+          );
+        } else {
+          toastHelper.showTost(
+            "Business profile updated successfully",
+            "success"
+          );
+        }
       } catch (refreshError) {
         console.error("Error refreshing business profile data:", refreshError);
         // toastHelper.showTost('Failed to refresh business profile data', 'error');

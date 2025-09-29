@@ -453,7 +453,7 @@ const ProductCard = ({
               ) : (
                 <button
                   disabled
-                  className="bg-gray-200 cursor-pointer text-gray-400 p-1 sm:p-2 rounded-lg cursor-not-allowed"
+                  className="bg-gray-200  text-gray-400 p-1 sm:p-2 rounded-lg cursor-not-allowed"
                 >
                   <FontAwesomeIcon
                     icon={faXmark}

@@ -33,6 +33,8 @@ export interface ProfileData {
   whatsappNumber?: string;
   whatsappCountryCode?: string;
   currencyCode?: string;
+  currency?: string;
+  resetBusinessStatus?: boolean;
 }
 
 export interface ProfileResponse<T = any> {
@@ -221,6 +223,8 @@ export class AuthService {
     if (payload.whatsappNumber !== undefined) form.append('whatsappNumber', String(payload.whatsappNumber));
     if (payload.whatsappCountryCode !== undefined) form.append('whatsappCountryCode', String(payload.whatsappCountryCode));
     if (payload.currencyCode !== undefined) form.append('currencyCode', String(payload.currencyCode));
+    if (payload.currency !== undefined) form.append('currency', String(payload.currency));
+    if (payload.resetBusinessStatus !== undefined) form.append('resetBusinessStatus', String(payload.resetBusinessStatus));
 
 
     if (payload.logo instanceof File) {
