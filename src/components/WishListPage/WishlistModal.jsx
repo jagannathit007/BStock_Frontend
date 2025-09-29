@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ProductService } from "../../services/products/products.services";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -10,16 +11,22 @@ import {
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import ProductCard from "../ReadyStockPage/ProductCard";
+import AddToCartPopup from "../ReadyStockPage/AddToCartPopup";
+import CartService from "../../services/cart/cart.services";
 import iphoneImage from "../../assets/iphone.png";
+import Swal from "sweetalert2";
 
 const WishlistModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProductsCount, setTotalProductsCount] = useState(0);
   const [imageErrors, setImageErrors] = useState({});
+  const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   const handleImageError = (productId) => {
     setImageErrors((prev) => ({ ...prev, [productId]: true }));
@@ -160,9 +167,77 @@ const WishlistModal = ({ isOpen, onClose }) => {
     return `${baseClasses} bg-green-100 text-green-700`;
   };
 
+  const handleAddToCart = async (e, product) => {
+    e.stopPropagation();
+    if (product.isOutOfStock || product.isExpired) return;
+
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const { businessProfile } = user;
+
+      if (
+        !businessProfile?.businessName ||
+        businessProfile.businessName.trim() === ""
+      ) {
+        const confirm = await Swal.fire({
+          icon: "warning",
+          title: "Business Details Required",
+          text: "Please add your business details before adding products to the cart.",
+          confirmButtonText: "Go to Settings",
+          confirmButtonColor: "#0071E0",
+        });
+        if (confirm.isConfirmed) navigate("/profile?tab=business");
+
+        return;
+      }
+
+      if (
+        businessProfile?.status === "pending" ||
+        businessProfile?.status === "rejected"
+      ) {
+        await Swal.fire({
+          icon: "info",
+          title: "Pending Approval",
+          text: "Your business profile is not approved. Please wait for approval.",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#0071E0",
+        });
+        return;
+      }
+
+      const customerId = user._id || "";
+      if (!customerId) {
+        return navigate("/signin");
+      }
+      setSelectedProduct(product);
+      setIsAddToCartPopupOpen(true);
+    } catch (error) {
+      console.error("Error in add to cart:", error);
+      await Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "An error occurred while adding to cart. Please try again.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#0071E0",
+      });
+    }
+  };
+
+  const handlePopupClose = async () => {
+    setIsAddToCartPopupOpen(false);
+    setSelectedProduct(null);
+    try {
+      const count = await CartService.count();
+      console.log(`Cart count updated: ${count}`);
+    } catch (error) {
+      console.error("Refresh cart count error:", error);
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-7xl h-[80vh] flex flex-col relative overflow-hidden">
+    <>
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={(e) => !isAddToCartPopupOpen && onClose(e)}>
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-7xl h-[80vh] flex flex-col relative overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="bg-white border-b border-gray-200 p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <FontAwesomeIcon icon={faHeart} className="text-xl text-red-500" />
@@ -276,7 +351,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
                               </button>
                             )}
                             {!product.isOutOfStock && !product.isExpired && (
-                              <button className="px-3 py-2 text-sm bg-blue-600 cursor-pointer text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-2">
+                              <button className="px-3 py-2 text-sm bg-[#0071E0] cursor-pointer text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-2" onClick={(e) => handleAddToCart(e, product)}>
                                 <FontAwesomeIcon icon={faShoppingCart} />
                                 Add to Cart
                               </button>
@@ -334,8 +409,12 @@ const WishlistModal = ({ isOpen, onClose }) => {
             </button>
           </div>
         )}
+        </div>
       </div>
-    </div>
+      {isAddToCartPopupOpen && selectedProduct && (
+        <AddToCartPopup product={selectedProduct} onClose={handlePopupClose} />
+      )}
+    </>
   );
 };
 

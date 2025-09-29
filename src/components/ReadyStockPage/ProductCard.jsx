@@ -536,29 +536,29 @@ const ProductCard = ({
           )}
         </div>
 
-{(!isExpired && !isOutOfStock && isFlashDeal) && (
-  <div className="mb-3 flex justify-center">
-    <div className="inline-flex items-center bg-red-50 text-red-700 px-3 py-1.5 rounded-full text-xs font-medium shadow-sm hover:shadow-md transition-shadow duration-200 w-full justify-center ">
-      <FontAwesomeIcon icon={faClock} className="w-3 h-3 mr-2" />
-      <Countdown
-        date={product.expiryTime}
-        renderer={({ days, hours, minutes, seconds, completed }) => {
-          if (completed) {
-            return <span>Flash Deal Ended</span>;
-          }
-          return (
-            <span className="font-semibold">
-              {days > 0 ? `${days} days ` : ""}
-              {String(hours).padStart(2, "0")}:
-              {String(minutes).padStart(2, "0")}:
-              {String(seconds).padStart(2, "0")}
-            </span>
-          );
-        }}
-      />
-    </div>
-  </div>
-)}
+        {!isExpired && !isOutOfStock && isFlashDeal && (
+          <div className="mb-3 flex justify-center">
+            <div className="inline-flex items-center bg-red-50 text-red-700 px-3 py-1.5 rounded-full text-xs font-medium shadow-sm hover:shadow-md transition-shadow duration-200 w-full justify-center ">
+              <FontAwesomeIcon icon={faClock} className="w-3 h-3 mr-2" />
+              <Countdown
+                date={product.expiryTime}
+                renderer={({ days, hours, minutes, seconds, completed }) => {
+                  if (completed) {
+                    return <span>Flash Deal Ended</span>;
+                  }
+                  return (
+                    <span className="font-semibold">
+                      {days > 0 ? `${days} days ` : ""}
+                      {String(hours).padStart(2, "0")}:
+                      {String(minutes).padStart(2, "0")}:
+                      {String(seconds).padStart(2, "0")}
+                    </span>
+                  );
+                }}
+              />
+            </div>
+          </div>
+        )}
         <div className="flex space-x-2">
           {isExpired ? (
             <>

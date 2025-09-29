@@ -105,16 +105,18 @@ const SignUpForm = () => {
       const res = await AuthService.register(registerData);
       if (res.data && res.data.token) {
         localStorage.setItem("token", res.data.token);
-        
+
         // Check if profile is complete for Google signup users
-        if (res.data.customer && res.data.customer.platformName === 'google') {
-          const isProfileComplete = AuthService.isProfileComplete(res.data.customer);
+        if (res.data.customer && res.data.customer.platformName === "google") {
+          const isProfileComplete = AuthService.isProfileComplete(
+            res.data.customer
+          );
           if (!isProfileComplete) {
             navigate("/profile");
             return;
           }
         }
-        
+
         navigate("/dashboard");
       }
     } catch (err) {
@@ -161,9 +163,10 @@ const SignUpForm = () => {
   // Filter countries based on search term
   const getFilteredCountries = (searchTerm) => {
     if (!searchTerm) return countries;
-    return countries.filter(country => 
-      country.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      country.phone_code.includes(searchTerm)
+    return countries.filter(
+      (country) =>
+        country.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        country.phone_code.includes(searchTerm)
     );
   };
 
@@ -324,7 +327,7 @@ const SignUpForm = () => {
                     name="fullName"
                     value={formData.fullName}
                     onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white text-sm"
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg  transition-colors bg-white text-sm"
                     placeholder="Enter your full name"
                     required
                   />
@@ -348,7 +351,7 @@ const SignUpForm = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white text-sm"
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg  transition-colors bg-white text-sm"
                     placeholder="Enter your email"
                     required
                   />
@@ -357,7 +360,6 @@ const SignUpForm = () => {
             </div>
             {/* Phone and WhatsApp Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Phone Number */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
                   Phone Number <span className="text-red-500">*</span>
@@ -369,11 +371,9 @@ const SignUpForm = () => {
                       type="button"
                       onClick={() => {
                         setShowPhoneDropdown(!showPhoneDropdown);
-                        if (showPhoneDropdown) {
-                          setPhoneSearchTerm(""); // Clear search when closing
-                        }
+                        if (showPhoneDropdown) setPhoneSearchTerm(""); // Clear search when closing
                       }}
-                      className="flex items-center justify-between cursor-pointer w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-gray-700 text-sm hover:bg-gray-100 transition-colors"
+                      className="flex items-center justify-between cursor-pointer w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black-500 text-gray-700 text-sm hover:bg-gray-100 transition-colors"
                     >
                       <div className="flex items-center">
                         {countries.find(
@@ -410,8 +410,10 @@ const SignUpForm = () => {
                             <input
                               type="text"
                               value={phoneSearchTerm}
-                              onChange={(e) => setPhoneSearchTerm(e.target.value)}
-                              className="block w-full pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                              onChange={(e) =>
+                                setPhoneSearchTerm(e.target.value)
+                              }
+                              className="block w-full pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-md "
                               placeholder="Search countries..."
                               onClick={(e) => e.stopPropagation()}
                             />
@@ -419,26 +421,29 @@ const SignUpForm = () => {
                         </div>
                         {/* Countries List */}
                         <div className="max-h-48 overflow-y-auto">
-                          {getFilteredCountries(phoneSearchTerm).map((country) => (
-                            <div
-                              key={country.code}
-                              onClick={() =>
-                                handlePhoneCodeChange(country.phone_code)
-                              }
-                              className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                            >
-                              <img
-                                src={country.flag}
-                                alt={country.name}
-                                className="w-4 h-4 mr-2"
-                              />
-                              <span className="truncate">{country.name}</span>
-                              <span className="ml-auto text-gray-500">
-                                {country.phone_code}
-                              </span>
-                            </div>
-                          ))}
-                          {getFilteredCountries(phoneSearchTerm).length === 0 && (
+                          {getFilteredCountries(phoneSearchTerm).map(
+                            (country) => (
+                              <div
+                                key={country.code}
+                                onClick={() =>
+                                  handlePhoneCodeChange(country.phone_code)
+                                }
+                                className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                              >
+                                <img
+                                  src={country.flag}
+                                  alt={country.name}
+                                  className="w-4 h-4 mr-2"
+                                />
+                                <span className="truncate">{country.name}</span>
+                                <span className="ml-auto text-gray-500">
+                                  {country.phone_code}
+                                </span>
+                              </div>
+                            )
+                          )}
+                          {getFilteredCountries(phoneSearchTerm).length ===
+                            0 && (
                             <div className="px-3 py-2 text-sm text-gray-500 text-center">
                               No countries found
                             </div>
@@ -456,16 +461,21 @@ const SignUpForm = () => {
                       value={
                         formData.mobileNumber.replace(formData.phoneCode, "") ||
                         ""
-                      } // Display without phoneCode
-                      onChange={handleChange}
-                      className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white"
+                      }
+                      onChange={(e) => {
+                        const numericValue = e.target.value.replace(/\D/g, ""); // Only numbers
+                        handleChange({
+                          target: { name: "mobileNumber", value: numericValue },
+                        });
+                      }}
+                      className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg  transition-colors bg-white"
                       placeholder="Phone number"
                       required
                     />
                   </div>
                 </div>
               </div>
-              {/* WhatsApp Number */}
+
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
                   WhatsApp Number
@@ -477,11 +487,9 @@ const SignUpForm = () => {
                       type="button"
                       onClick={() => {
                         setShowWhatsappDropdown(!showWhatsappDropdown);
-                        if (showWhatsappDropdown) {
-                          setWhatsappSearchTerm(""); // Clear search when closing
-                        }
+                        if (showWhatsappDropdown) setWhatsappSearchTerm(""); // Clear search when closing
                       }}
-                      className="flex items-center justify-between cursor-pointer w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-gray-700 text-sm hover:bg-gray-100 transition-colors"
+                      className="flex items-center justify-between cursor-pointer w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black text-gray-700 text-sm hover:bg-gray-100 transition-colors"
                     >
                       <div className="flex items-center">
                         {countries.find(
@@ -518,8 +526,10 @@ const SignUpForm = () => {
                             <input
                               type="text"
                               value={whatsappSearchTerm}
-                              onChange={(e) => setWhatsappSearchTerm(e.target.value)}
-                              className="block w-full pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                              onChange={(e) =>
+                                setWhatsappSearchTerm(e.target.value)
+                              }
+                              className="block w-full pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-md "
                               placeholder="Search countries..."
                               onClick={(e) => e.stopPropagation()}
                             />
@@ -527,26 +537,29 @@ const SignUpForm = () => {
                         </div>
                         {/* Countries List */}
                         <div className="max-h-48 overflow-y-auto">
-                          {getFilteredCountries(whatsappSearchTerm).map((country) => (
-                            <div
-                              key={country.code}
-                              onClick={() =>
-                                handleWhatsappCodeChange(country.phone_code)
-                              }
-                              className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                            >
-                              <img
-                                src={country.flag}
-                                alt={country.name}
-                                className="w-4 h-4 mr-2"
-                              />
-                              <span className="truncate">{country.name}</span>
-                              <span className="ml-auto text-gray-500">
-                                {country.phone_code}
-                              </span>
-                            </div>
-                          ))}
-                          {getFilteredCountries(whatsappSearchTerm).length === 0 && (
+                          {getFilteredCountries(whatsappSearchTerm).map(
+                            (country) => (
+                              <div
+                                key={country.code}
+                                onClick={() =>
+                                  handleWhatsappCodeChange(country.phone_code)
+                                }
+                                className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                              >
+                                <img
+                                  src={country.flag}
+                                  alt={country.name}
+                                  className="w-4 h-4 mr-2"
+                                />
+                                <span className="truncate">{country.name}</span>
+                                <span className="ml-auto text-gray-500">
+                                  {country.phone_code}
+                                </span>
+                              </div>
+                            )
+                          )}
+                          {getFilteredCountries(whatsappSearchTerm).length ===
+                            0 && (
                             <div className="px-3 py-2 text-sm text-gray-500 text-center">
                               No countries found
                             </div>
@@ -562,8 +575,13 @@ const SignUpForm = () => {
                       id="whatsapp"
                       name="whatsapp"
                       value={formData.whatsapp}
-                      onChange={handleChange}
-                      className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white"
+                      onChange={(e) => {
+                        const numericValue = e.target.value.replace(/\D/g, ""); // Only numbers
+                        handleChange({
+                          target: { name: "whatsapp", value: numericValue },
+                        });
+                      }}
+                      className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg  transition-colors bg-white"
                       placeholder="WhatsApp number"
                     />
                   </div>
@@ -590,7 +608,7 @@ const SignUpForm = () => {
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    className="block w-full pl-10 pr-10 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white"
+                    className="block w-full pl-10 pr-10 py-2 text-sm border border-gray-300 rounded-lg  transition-colors bg-white"
                     placeholder="Create password"
                     required
                   />
@@ -600,7 +618,7 @@ const SignUpForm = () => {
                     className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   >
                     <FontAwesomeIcon
-                      icon={showPassword ?  faEye :  faEyeSlash }
+                      icon={showPassword ? faEye : faEyeSlash}
                       className="text-gray-400 hover:text-indigo-600 transition-colors text-sm"
                     />
                   </button>
@@ -624,7 +642,7 @@ const SignUpForm = () => {
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="block w-full pl-10 pr-10 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white"
+                    className="block w-full pl-10 pr-10 py-2 text-sm border border-gray-300 rounded-lg  transition-colors bg-white"
                     placeholder="Confirm password"
                     required
                   />
@@ -634,7 +652,7 @@ const SignUpForm = () => {
                     className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   >
                     <FontAwesomeIcon
-                      icon={showConfirmPassword ?  faEye : faEyeSlash }
+                      icon={showConfirmPassword ? faEye : faEyeSlash}
                       className="text-gray-400 hover:text-indigo-600 transition-colors text-sm"
                     />
                   </button>
@@ -649,7 +667,7 @@ const SignUpForm = () => {
                   name="terms"
                   type="checkbox"
                   required
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded transition-colors"
+                  className="h-4 w-4 cursor-pointer text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded transition-colors"
                 />
               </div>
               <label
@@ -735,7 +753,10 @@ const SignUpForm = () => {
                   </span>
                 </div>
               ) : (
-                <div id="googleSignInDiv" className="w-fit mx-auto [&>div]:rounded-lg [&>div>div]:rounded-lg [&>div>div>div]:rounded-lg"></div>
+                <div
+                  id="googleSignInDiv"
+                  className="w-fit mx-auto [&>div]:rounded-lg [&>div>div]:rounded-lg [&>div>div>div]:rounded-lg"
+                ></div>
               )}
             </div>
           </motion.form>

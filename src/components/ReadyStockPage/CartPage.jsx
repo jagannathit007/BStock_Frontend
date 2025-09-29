@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCartShopping, faPlus, faMinus, faTrash } from "@fortawesome/free-solid-svg-icons"; // Corrected import
+import {
+  faCartShopping,
+  faPlus,
+  faMinus,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons"; // Corrected import
 import { useNavigate } from "react-router-dom";
 import CartService from "../../services/cart/cart.services";
 import OrderService from "../../services/order/order.services";
@@ -27,7 +32,7 @@ const CartPage = () => {
   const [imageErrors, setImageErrors] = useState({});
 
   const handleImageError = (itemId) => {
-    setImageErrors(prev => ({ ...prev, [itemId]: true }));
+    setImageErrors((prev) => ({ ...prev, [itemId]: true }));
   };
 
   // Map backend cart item to frontend format
@@ -35,14 +40,22 @@ const CartPage = () => {
     const id = item.productId;
     const skuFamilyId = item.skuFamilyId?._id || item.productId; // Fallback to productId if skuFamilyId is missing
     const name = item.skuFamilyId?.name || "Product";
-    const imageUrl = item.skuFamilyId?.images?.[0] || "https://via.placeholder.com/400x300.png?text=Product";
+    const imageUrl =
+      item.skuFamilyId?.images?.[0] ||
+      "https://via.placeholder.com/400x300.png?text=Product";
     const storage = item.storage || "";
     const color = item.color || "";
-    const description = [storage, color].filter(Boolean).join(" • ") || (item.specification || "");
+    const description =
+      [storage, color].filter(Boolean).join(" • ") || item.specification || "";
     const price = Number(item.price) || 0;
     const stockCount = Number(item.stock) || 0;
     const moq = Number(item.moq) || 1;
-    const stockStatus = stockCount <= 0 ? "Out of Stock" : stockCount <= 10 ? "Low Stock" : "In Stock";
+    const stockStatus =
+      stockCount <= 0
+        ? "Out of Stock"
+        : stockCount <= 10
+        ? "Low Stock"
+        : "In Stock";
 
     return {
       id,
@@ -71,7 +84,11 @@ const CartPage = () => {
         setError(response.message || "Failed to fetch cart");
       }
     } catch (error) {
-      setError(error.response?.data?.message || error.message || "An error occurred while fetching cart");
+      setError(
+        error.response?.data?.message ||
+          error.message ||
+          "An error occurred while fetching cart"
+      );
       console.error("Fetch cart error:", error);
     } finally {
       setIsLoading(false);
@@ -92,7 +109,10 @@ const CartPage = () => {
 
       const minQty = 1;
       const maxQty = Number(item.stockCount) || Infinity;
-      const clampedQty = Math.min(Math.max(Number(newQuantity) || minQty, minQty), maxQty);
+      const clampedQty = Math.min(
+        Math.max(Number(newQuantity) || minQty, minQty),
+        maxQty
+      );
 
       if (clampedQty === item.quantity) return;
 
@@ -108,7 +128,11 @@ const CartPage = () => {
         setError(response?.message || "Failed to update quantity");
       }
     } catch (error) {
-      setError(error.response?.data?.message || error.message || "An error occurred while updating quantity");
+      setError(
+        error.response?.data?.message ||
+          error.message ||
+          "An error occurred while updating quantity"
+      );
       console.error("Update quantity error:", error);
     }
   };
@@ -124,7 +148,11 @@ const CartPage = () => {
         setError(response?.message || "Failed to remove item");
       }
     } catch (error) {
-      setError(error.response?.data?.message || error.message || "An error occurred while removing item");
+      setError(
+        error.response?.data?.message ||
+          error.message ||
+          "An error occurred while removing item"
+      );
       console.error("Remove item error:", error);
     }
   };
@@ -140,7 +168,11 @@ const CartPage = () => {
         setError(response?.message || "Failed to clear cart");
       }
     } catch (error) {
-      setError(error.response?.data?.message || error.message || "An error occurred while clearing cart");
+      setError(
+        error.response?.data?.message ||
+          error.message ||
+          "An error occurred while clearing cart"
+      );
       console.error("Clear cart error:", error);
     }
   };
@@ -208,7 +240,10 @@ const CartPage = () => {
         response: error.response?.data,
         status: error.response?.status,
       });
-      const errorMessage = error.response?.data?.errors?.map((e) => e.message).join(', ') || error.response?.data?.message || "An error occurred while creating order";
+      const errorMessage =
+        error.response?.data?.errors?.map((e) => e.message).join(", ") ||
+        error.response?.data?.message ||
+        "An error occurred while creating order";
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -226,9 +261,14 @@ const CartPage = () => {
       <div className="flex flex-col gap-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
-            <FontAwesomeIcon icon={faCartShopping} className="w-5 h-5 text-blue-600" />
+            <FontAwesomeIcon
+              icon={faCartShopping}
+              className="w-5 h-5 text-blue-600"
+            />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">Your Cart</h1>
+          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">
+            Your Cart
+          </h1>
         </div>
 
         {error && (
@@ -238,13 +278,18 @@ const CartPage = () => {
         )}
 
         {isLoading ? (
-          <div className="text-center py-12 text-sm text-gray-500">Loading cart...</div>
+          <div className="text-center py-12 text-sm text-gray-500">
+            Loading cart...
+          </div>
         ) : cartItems.length === 0 ? (
           <div className="text-center py-12">
-            <FontAwesomeIcon icon={faCartShopping} className="w-16 h-16 text-gray-400 mb-4" />
+            <FontAwesomeIcon
+              icon={faCartShopping}
+              className="w-16 h-16 text-gray-400 mb-4"
+            />
             <p className="text-lg text-gray-600">Your cart is empty.</p>
             <button
-              className="mt-4 bg-[#0071E0] text-white py-2 px-6 rounded-lg font-medium hover:bg-blue-600 transition-all duration-200"
+              className="mt-4 bg-[#0071E0] cursor-pointer text-white py-2 px-6 rounded-lg font-medium hover:bg-blue-600 transition-all duration-200"
               onClick={() => navigate("/")}
             >
               Continue Shopping
@@ -281,7 +326,11 @@ const CartPage = () => {
                           <div className="flex items-center min-w-[200px]">
                             <img
                               className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg mr-4"
-                              src={imageErrors[item.id] ? iphoneImage : item.imageUrl}
+                              src={
+                                imageErrors[item.id]
+                                  ? iphoneImage
+                                  : item.imageUrl
+                              }
                               alt={item.name}
                               onError={() => handleImageError(item.id)}
                             />
@@ -303,17 +352,25 @@ const CartPage = () => {
                         <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
                             <button
-                              onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                              onClick={() =>
+                                handleQuantityChange(item.id, item.quantity - 1)
+                              }
                               disabled={item.quantity <= item.moq}
                               className="w-8 h-8 flex items-center cursor-pointer justify-center rounded-full border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              <FontAwesomeIcon icon={faMinus} className="w-4 h-4 text-gray-600" />
+                              <FontAwesomeIcon
+                                icon={faMinus}
+                                className="w-4 h-4 text-gray-600"
+                              />
                             </button>
                             <input
                               type="number"
                               value={item.quantity}
                               onChange={(e) =>
-                                handleQuantityChange(item.id, parseInt(e.target.value, 10) || item.moq)
+                                handleQuantityChange(
+                                  item.id,
+                                  parseInt(e.target.value, 10) || item.moq
+                                )
                               }
                               min={1}
                               max={item.stockCount}
@@ -321,11 +378,16 @@ const CartPage = () => {
                               className="w-16 text-center text-lg font-semibold py-1 px-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50"
                             />
                             <button
-                              onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                              onClick={() =>
+                                handleQuantityChange(item.id, item.quantity + 1)
+                              }
                               disabled={item.quantity >= item.stockCount}
                               className="w-8 h-8 flex items-center cursor-pointer justify-center rounded-full border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              <FontAwesomeIcon icon={faPlus} className="w-4 h-4 text-gray-600" />
+                              <FontAwesomeIcon
+                                icon={faPlus}
+                                className="w-4 h-4 text-gray-600"
+                              />
                             </button>
                           </div>
                         </td>
@@ -339,7 +401,10 @@ const CartPage = () => {
                             onClick={() => handleRemoveItem(item.id)}
                             className="text-red-600 hover:text-red-800 p-2 cursor-pointer rounded-lg hover:bg-red-50 transition-all duration-200"
                           >
-                            <FontAwesomeIcon icon={faTrash} className="w-5 h-5" />
+                            <FontAwesomeIcon
+                              icon={faTrash}
+                              className="w-5 h-5"
+                            />
                           </button>
                         </td>
                       </tr>
@@ -352,7 +417,9 @@ const CartPage = () => {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex justify-between items-center">
               <div>
                 <div className="text-lg font-medium text-gray-700">Total:</div>
-                <div className="text-2xl font-bold text-gray-900">${totalPrice}</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  ${totalPrice}
+                </div>
               </div>
               <div className="flex gap-3">
                 <button
@@ -374,61 +441,106 @@ const CartPage = () => {
               <div className="fixed inset-0 bg-[#00000057] bg-opacity-50 flex items-center justify-center z-50">
                 <div className="bg-white rounded-xl shadow-lg p-6 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
                   <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold text-gray-900">Checkout</h2>
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      Checkout
+                    </h2>
                     <button
                       className="text-gray-500 hover:text-gray-700"
                       onClick={() => setShowCheckoutForm(false)}
                     >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M6 18L18 6M6 6l12 12"
+                        ></path>
                       </svg>
                     </button>
                   </div>
 
                   {/* Order Summary Section */}
                   <div className="mb-6">
-                    <h3 className="text-lg font-medium text-gray-700 mb-4">Order Summary</h3>
+                    <h3 className="text-lg font-medium text-gray-700 mb-4">
+                      Order Summary
+                    </h3>
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                       {cartItems.map((item) => (
-                        <div key={item.id} className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
+                        <div
+                          key={item.id}
+                          className="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0"
+                        >
                           <div className="flex items-center">
                             <img
                               className="w-12 h-12 object-cover rounded-lg mr-4"
-                              src={imageErrors[item.id] ? iphoneImage : item.imageUrl}
+                              src={
+                                imageErrors[item.id]
+                                  ? iphoneImage
+                                  : item.imageUrl
+                              }
                               alt={item.name}
                               onError={() => handleImageError(item.id)}
                             />
                             <div>
-                              <p className="text-sm font-semibold text-gray-900">{item.name}</p>
-                              <p className="text-xs text-gray-600">{item.description}</p>
-                              <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {item.name}
+                              </p>
+                              <p className="text-xs text-gray-600">
+                                {item.description}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                Qty: {item.quantity}
+                              </p>
                             </div>
                           </div>
                           <div className="text-right">
                             <p className="text-sm font-semibold text-gray-900">
                               ${(item.price * item.quantity).toFixed(2)}
                             </p>
-                            <p className="text-xs text-gray-600">(${(item.price).toFixed(2)} x {item.quantity})</p>
+                            <p className="text-xs text-gray-600">
+                              (${item.price.toFixed(2)} x {item.quantity})
+                            </p>
                           </div>
                         </div>
                       ))}
                       <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
-                        <p className="text-lg font-medium text-gray-700">Total:</p>
-                        <p className="text-lg font-bold text-gray-900">${totalPrice}</p>
+                        <p className="text-lg font-medium text-gray-700">
+                          Total:
+                        </p>
+                        <p className="text-lg font-bold text-gray-900">
+                          ${totalPrice}
+                        </p>
                       </div>
                     </div>
                   </div>
 
                   {/* Address Form */}
-                  <form onSubmit={handleCheckout} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <form
+                    onSubmit={handleCheckout}
+                    className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                  >
                     <div>
-                      <h3 className="text-lg font-medium text-gray-700 mb-2">Billing Address</h3>
+                      <h3 className="text-lg font-medium text-gray-700 mb-2">
+                        Billing Address
+                      </h3>
                       <div className="space-y-4">
                         <input
                           type="text"
                           placeholder="Address (e.g., 123 Main St, Apt 4B)"
                           value={billingAddress.address}
-                          onChange={(e) => handleAddressChange("billing", "address", e.target.value)}
+                          onChange={(e) =>
+                            handleAddressChange(
+                              "billing",
+                              "address",
+                              e.target.value
+                            )
+                          }
                           className="w-full p-2 border border-gray-300 rounded-lg"
                           required
                         />
@@ -436,7 +548,13 @@ const CartPage = () => {
                           type="text"
                           placeholder="City"
                           value={billingAddress.city}
-                          onChange={(e) => handleAddressChange("billing", "city", e.target.value)}
+                          onChange={(e) =>
+                            handleAddressChange(
+                              "billing",
+                              "city",
+                              e.target.value
+                            )
+                          }
                           className="w-full p-2 border border-gray-300 rounded-lg"
                           required
                         />
@@ -444,13 +562,25 @@ const CartPage = () => {
                           type="text"
                           placeholder="Postal Code"
                           value={billingAddress.postalCode}
-                          onChange={(e) => handleAddressChange("billing", "postalCode", e.target.value)}
+                          onChange={(e) =>
+                            handleAddressChange(
+                              "billing",
+                              "postalCode",
+                              e.target.value
+                            )
+                          }
                           className="w-full p-2 border border-gray-300 rounded-lg"
                           required
                         />
                         <select
                           value={billingAddress.country}
-                          onChange={(e) => handleAddressChange("billing", "country", e.target.value)}
+                          onChange={(e) =>
+                            handleAddressChange(
+                              "billing",
+                              "country",
+                              e.target.value
+                            )
+                          }
                           className="w-full p-2 border border-gray-300 rounded-lg"
                           required
                         >
@@ -463,13 +593,21 @@ const CartPage = () => {
                       </div>
                     </div>
                     <div>
-                      <h3 className="text-lg font-medium text-gray-700 mb-2">Shipping Address</h3>
+                      <h3 className="text-lg font-medium text-gray-700 mb-2">
+                        Shipping Address
+                      </h3>
                       <div className="space-y-4">
                         <input
                           type="text"
                           placeholder="Address (e.g., 123 Main St, Apt 4B)"
                           value={shippingAddress.address}
-                          onChange={(e) => handleAddressChange("shipping", "address", e.target.value)}
+                          onChange={(e) =>
+                            handleAddressChange(
+                              "shipping",
+                              "address",
+                              e.target.value
+                            )
+                          }
                           className="w-full p-2 border border-gray-300 rounded-lg"
                           required
                         />
@@ -477,7 +615,13 @@ const CartPage = () => {
                           type="text"
                           placeholder="City"
                           value={shippingAddress.city}
-                          onChange={(e) => handleAddressChange("shipping", "city", e.target.value)}
+                          onChange={(e) =>
+                            handleAddressChange(
+                              "shipping",
+                              "city",
+                              e.target.value
+                            )
+                          }
                           className="w-full p-2 border border-gray-300 rounded-lg"
                           required
                         />
@@ -485,13 +629,25 @@ const CartPage = () => {
                           type="text"
                           placeholder="Postal Code"
                           value={shippingAddress.postalCode}
-                          onChange={(e) => handleAddressChange("shipping", "postalCode", e.target.value)}
+                          onChange={(e) =>
+                            handleAddressChange(
+                              "shipping",
+                              "postalCode",
+                              e.target.value
+                            )
+                          }
                           className="w-full p-2 border border-gray-300 rounded-lg"
                           required
                         />
                         <select
                           value={shippingAddress.country}
-                          onChange={(e) => handleAddressChange("shipping", "country", e.target.value)}
+                          onChange={(e) =>
+                            handleAddressChange(
+                              "shipping",
+                              "country",
+                              e.target.value
+                            )
+                          }
                           className="w-full p-2 border border-gray-300 rounded-lg"
                           required
                         >
@@ -506,17 +662,43 @@ const CartPage = () => {
                     <div className="md:col-span-2 flex justify-end gap-3">
                       <button
                         type="button"
-                        className="bg-gray-500 text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-600 transition-all duration-200"
+                        className="bg-gray-500 cursor-pointer text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-600 transition-all duration-200"
                         onClick={() => setShowCheckoutForm(false)}
                       >
                         Cancel
                       </button>
                       <button
                         type="submit"
-                        className="bg-[#0071E0] text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-600 transition-all duration-200"
                         disabled={isLoading}
+                        className="min-w-[160px] bg-[#0071E0] cursor-pointer text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-600 transition-all duration-200 flex items-center justify-center"
                       >
-                        {isLoading ? "Processing..." : "Place Order"}
+                        {isLoading ? (
+                          <svg
+                            className="animate-spin h-5 w-5 text-white"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 
+           0 5.373 0 12h4zm2 5.291A7.962 
+           7.962 0 014 12H0c0 3.042 1.135 
+           5.824 3 7.938l3-2.647z"
+                            ></path>
+                          </svg>
+                        ) : (
+                          "Place Order"
+                        )}
                       </button>
                     </div>
                   </form>

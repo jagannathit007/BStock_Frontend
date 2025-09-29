@@ -77,7 +77,7 @@ const AddToCartPopup = ({ product, onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center bg-black/60 z-50 transition-opacity duration-300 p-4"
+      className="fixed inset-0 flex items-center justify-center bg-black/60 z-[70] transition-opacity duration-300 p-4"
       onClick={onClose}
     >
       <div
