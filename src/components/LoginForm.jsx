@@ -1,4 +1,7 @@
 import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faEnvelope,
@@ -16,11 +19,22 @@ import ForgotPasswordModal from "./ForgotPasswordModal";
 import { AuthService } from "../services/auth/auth.services";
 import loginImage from "../../public/images/login.png";
 
+// Validation schema
+const loginSchema = yup.object({
+  email: yup
+    .string()
+    .required("Email is required")
+    .email("Please enter a valid email address")
+    .trim(),
+  password: yup
+    .string()
+    .required("Password is required")
+    .min(6, "Password must be at least 6 characters"),
+});
+
 
 const LoginForm = ({ onLogin }) => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,6 +42,25 @@ const LoginForm = ({ onLogin }) => {
   const [error, setError] = useState("");
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const [showLoginForm, setShowLoginForm] = useState(true);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setValue,
+    watch,
+    trigger,
+  } = useForm({
+    resolver: yupResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+    mode: "onBlur",
+  });
+
+  const watchedEmail = watch("email");
+  const watchedPassword = watch("password");
 
 
   useEffect(() => {
@@ -133,21 +166,13 @@ const LoginForm = ({ onLogin }) => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const onSubmit = async (data) => {
     setIsLoading(true);
     setError("");
 
-    // Basic validation
-    if (!email || !password) {
-      setError("Please enter both email and password");
-      setIsLoading(false);
-      return;
-    }
-
     const loginData = {
-      email: email.trim().toLowerCase(),
-      password,
+      email: data.email.trim().toLowerCase(),
+      password: data.password,
     };
 
     try {
@@ -169,7 +194,7 @@ const LoginForm = ({ onLogin }) => {
 
         if (rememberMe) {
           localStorage.setItem("rememberMe", "true");
-          localStorage.setItem("email", email);
+          localStorage.setItem("email", data.email);
         } else {
           localStorage.removeItem("rememberMe");
           localStorage.removeItem("email");
@@ -290,7 +315,7 @@ const LoginForm = ({ onLogin }) => {
 
               <motion.form
                 className="space-y-6"
-                onSubmit={handleSubmit}
+                onSubmit={handleSubmit(onSubmit)}
                 variants={childVariants}
               >
                 <div className="space-y-2">
@@ -306,16 +331,27 @@ const LoginForm = ({ onLogin }) => {
                     </div>
                     <input
                       type="email"
-                      value={email}
-                      onChange={(e) => {
-                        setEmail(e.target.value);
-                        setError("");
-                      }}
-                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg  transition-colors bg-white text-sm"
+                      {...register("email", {
+                        onChange: (e) => {
+                          setValue("email", e.target.value);
+                          setError("");
+                          trigger("email");
+                        },
+                      })}
+                      className={`block w-full pl-10 pr-3 py-2 border rounded-lg transition-colors bg-white text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
+                        errors.email
+                          ? "border-red-500 focus:border-red-500"
+                          : "border-gray-300 focus:border-[#0071E0]"
+                      }`}
                       placeholder="Enter your mail address"
-                      required
                     />
                   </div>
+                  {errors.email && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center">
+                      <i className="fas fa-exclamation-circle mr-1"></i>
+                      {errors.email.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -331,14 +367,19 @@ const LoginForm = ({ onLogin }) => {
                     </div>
                     <input
                       type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        setError("");
-                      }}
-                      className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg  transition-colors bg-white text-sm"
+                      {...register("password", {
+                        onChange: (e) => {
+                          setValue("password", e.target.value);
+                          setError("");
+                          trigger("password");
+                        },
+                      })}
+                      className={`block w-full pl-10 pr-10 py-2 border rounded-lg transition-colors bg-white text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
+                        errors.password
+                          ? "border-red-500 focus:border-red-500"
+                          : "border-gray-300 focus:border-[#0071E0]"
+                      }`}
                       placeholder="Enter password"
-                      required
                     />
                     <button
                       type="button"
@@ -351,6 +392,12 @@ const LoginForm = ({ onLogin }) => {
                       />
                     </button>
                   </div>
+                  {errors.password && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center">
+                      <i className="fas fa-exclamation-circle mr-1"></i>
+                      {errors.password.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -376,12 +423,12 @@ const LoginForm = ({ onLogin }) => {
                 <motion.button
                   type="submit"
                   className="w-full bg-[#0071E0] text-white cursor-pointer py-2 px-4 rounded-lg font-medium focus:ring-4 flex items-center justify-center disabled:opacity-70"
-                  disabled={isLoading}
+                  disabled={isLoading || isSubmitting}
                   variants={buttonVariants}
                   whileHover="hover"
                   whileTap="tap"
                 >
-                  {isLoading ? (
+                  {isLoading || isSubmitting ? (
                     <div className="flex items-center gap-2">
                       <svg
                         className="animate-spin h-5 w-5 text-white"

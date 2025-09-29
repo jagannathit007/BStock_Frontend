@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faStore,
@@ -20,18 +23,37 @@ import { jwtDecode } from "jwt-decode";
 import { AuthService } from "../services/auth/auth.services";
 import loginImage from "../../public/images/login.png";
 
+// Validation schema
+const signupSchema = yup.object({
+  fullName: yup
+    .string()
+    .required("Full name is required")
+    .min(2, "Full name must be at least 2 characters")
+    .trim(),
+  email: yup
+    .string()
+    .required("Email is required")
+    .email("Please enter a valid email address")
+    .trim(),
+  mobileNumber: yup
+    .string()
+    .required("Mobile number is required")
+    .min(7, "Mobile number must be at least 7 digits"),
+  phoneCode: yup.string().required("Country code is required"),
+  whatsapp: yup.string().optional(),
+  whatsappCode: yup.string().optional(),
+  password: yup
+    .string()
+    .required("Password is required")
+    .min(6, "Password must be at least 6 characters"),
+  confirmPassword: yup
+    .string()
+    .required("Confirm password is required")
+    .oneOf([yup.ref("password")], "Passwords do not match"),
+});
+
 const SignUpForm = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    mobileNumber: "", // Changed from phone to mobileNumber
-    phoneCode: "+91", // Temporary field for phone code selection
-    whatsapp: "",
-    whatsappCode: "+91",
-    password: "",
-    confirmPassword: "",
-  });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -42,6 +64,35 @@ const SignUpForm = () => {
   const [error, setError] = useState(null);
   const [phoneSearchTerm, setPhoneSearchTerm] = useState("");
   const [whatsappSearchTerm, setWhatsappSearchTerm] = useState("");
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setValue,
+    watch,
+    trigger,
+    setError: setFormError,
+    clearErrors,
+  } = useForm({
+    resolver: yupResolver(signupSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      mobileNumber: "",
+      phoneCode: "+91",
+      whatsapp: "",
+      whatsappCode: "+91",
+      password: "",
+      confirmPassword: "",
+    },
+    mode: "onBlur",
+  });
+
+  const watchedWhatsapp = watch("whatsapp");
+  const watchedWhatsappCode = watch("whatsappCode");
+  const watchedPassword = watch("password");
+  const watchedConfirmPassword = watch("confirmPassword");
 
   useEffect(() => {
     // Sort countries alphabetically
@@ -127,37 +178,62 @@ const SignUpForm = () => {
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    if (name === "mobileNumber") {
-      // Combine phoneCode with mobileNumber when updating
-      setFormData((prev) => ({
-        ...prev,
-        [name]: `${prev.phoneCode}${value.replace(/[^0-9]/g, "")}`, // Ensure only digits are appended
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
+  const handleFieldChange = (field, value) => {
+    // Filter non-digit characters for mobile and WhatsApp numbers
+    let filteredValue = value;
+    if (field === "mobileNumber" || field === "whatsapp") {
+      filteredValue = value.replace(/[^0-9]/g, "");
     }
+
+    setValue(field, filteredValue);
     if (error) setError(null); // Clear error on input change
+
+    // Custom validation for WhatsApp fields
+    if (field === "whatsapp" && filteredValue && filteredValue.trim().length > 0) {
+      // Validate WhatsApp number format
+      if (filteredValue.length < 7) {
+        setFormError("whatsapp", {
+          type: "manual",
+          message: "WhatsApp number must be at least 7 digits",
+        });
+      } else {
+        clearErrors("whatsapp");
+      }
+
+      // If WhatsApp number is provided, country code becomes required
+      if (!watchedWhatsappCode) {
+        setFormError("whatsappCode", {
+          type: "manual",
+          message: "Country code is required when WhatsApp number is provided",
+        });
+      }
+    } else if (field === "whatsappCode") {
+      // Clear WhatsApp country code error if country code is provided
+      if (watchedWhatsapp && watchedWhatsapp.trim().length > 0) {
+        clearErrors("whatsappCode");
+      }
+    } else if (field === "whatsapp" && (!filteredValue || filteredValue.trim().length === 0)) {
+      // Clear errors if WhatsApp number is empty
+      clearErrors("whatsapp");
+      clearErrors("whatsappCode");
+    }
+
+    // Trigger validation for the field
+    trigger(field);
   };
 
   const handlePhoneCodeChange = (code) => {
-    setFormData((prev) => ({
-      ...prev,
-      phoneCode: code,
-      mobileNumber: `${code}${prev.mobileNumber.replace(/^\+\d+/, "") || ""}`, // Update mobileNumber with new code
-    }));
+    setValue("phoneCode", code);
     setShowPhoneDropdown(false);
     setPhoneSearchTerm(""); // Clear search when selection is made
+    trigger("phoneCode");
   };
 
   const handleWhatsappCodeChange = (code) => {
-    setFormData((prev) => ({ ...prev, whatsappCode: code }));
+    setValue("whatsappCode", code);
     setShowWhatsappDropdown(false);
     setWhatsappSearchTerm(""); // Clear search when selection is made
+    trigger("whatsappCode");
   };
 
   // Filter countries based on search term
@@ -170,34 +246,30 @@ const SignUpForm = () => {
     );
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const onSubmit = async (data) => {
     setIsLoading(true);
     setError(null);
 
-    // Basic validation
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      setIsLoading(false);
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters");
-      setIsLoading(false);
-      return;
+    // Additional validation: WhatsApp country code required if WhatsApp number provided
+    if (data.whatsapp && data.whatsapp.trim().length > 0) {
+      if (!data.whatsappCode || data.whatsappCode.trim().length === 0) {
+        setFormError("whatsappCode", {
+          type: "manual",
+          message: "Country code is required when WhatsApp number is provided",
+        });
+        setIsLoading(false);
+        return;
+      }
     }
 
     const registerData = {
-      name: formData.fullName.trim(),
-      email: formData.email.trim().toLowerCase(),
-      password: formData.password,
-      mobileNumber: formData.mobileNumber,
-      mobileCountryCode: formData.phoneCode,
-      whatsappNumber: `${formData.whatsappCode}${(
-        formData.whatsapp || ""
-      ).replace(/[^0-9]/g, "")}`,
-      whatsappCountryCode: formData.whatsappCode,
+      name: data.fullName.trim(),
+      email: data.email.trim().toLowerCase(),
+      password: data.password,
+      mobileNumber: `${data.phoneCode}${data.mobileNumber}`,
+      mobileCountryCode: data.phoneCode,
+      whatsappNumber: data.whatsapp ? `${data.whatsappCode}${data.whatsapp}` : "",
+      whatsappCountryCode: data.whatsapp ? data.whatsappCode : "",
     };
 
     try {
@@ -304,7 +376,7 @@ const SignUpForm = () => {
           {/* Signup Form */}
           <motion.form
             className="space-y-6"
-            onSubmit={handleSubmit}
+            onSubmit={handleSubmit(onSubmit)}
             variants={childVariants}
           >
             {/* Name and Email Row */}
@@ -323,15 +395,25 @@ const SignUpForm = () => {
                   </div>
                   <input
                     type="text"
-                    id="fullName"
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg  transition-colors bg-white text-sm"
+                    {...register("fullName", {
+                      onChange: (e) => {
+                        handleFieldChange("fullName", e.target.value);
+                      },
+                    })}
+                    className={`block w-full pl-10 pr-3 py-2 border rounded-lg transition-colors bg-white text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
+                      errors.fullName
+                        ? "border-red-500 focus:border-red-500"
+                        : "border-gray-300 focus:border-[#0071E0]"
+                    }`}
                     placeholder="Enter your full name"
-                    required
                   />
                 </div>
+                {errors.fullName && (
+                  <p className="text-red-500 text-xs mt-1 flex items-center">
+                    <i className="fas fa-exclamation-circle mr-1"></i>
+                    {errors.fullName.message}
+                  </p>
+                )}
               </div>
               {/* Email */}
               <div className="space-y-2">
@@ -347,15 +429,25 @@ const SignUpForm = () => {
                   </div>
                   <input
                     type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg  transition-colors bg-white text-sm"
+                    {...register("email", {
+                      onChange: (e) => {
+                        handleFieldChange("email", e.target.value);
+                      },
+                    })}
+                    className={`block w-full pl-10 pr-3 py-2 border rounded-lg transition-colors bg-white text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
+                      errors.email
+                        ? "border-red-500 focus:border-red-500"
+                        : "border-gray-300 focus:border-[#0071E0]"
+                    }`}
                     placeholder="Enter your email"
-                    required
                   />
                 </div>
+                {errors.email && (
+                  <p className="text-red-500 text-xs mt-1 flex items-center">
+                    <i className="fas fa-exclamation-circle mr-1"></i>
+                    {errors.email.message}
+                  </p>
+                )}
               </div>
             </div>
             {/* Phone and WhatsApp Row */}
@@ -373,23 +465,27 @@ const SignUpForm = () => {
                         setShowPhoneDropdown(!showPhoneDropdown);
                         if (showPhoneDropdown) setPhoneSearchTerm(""); // Clear search when closing
                       }}
-                      className="flex items-center justify-between cursor-pointer w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black-500 text-gray-700 text-sm hover:bg-gray-100 transition-colors"
+                      className={`flex items-center justify-between cursor-pointer w-full px-3 py-2 bg-gray-50 border rounded-lg focus:ring-2 text-gray-700 text-sm hover:bg-gray-100 transition-colors ${
+                        errors.phoneCode
+                          ? "border-red-500 focus:ring-red-500"
+                          : "border-gray-300 focus:ring-[#0071E0]"
+                      }`}
                     >
                       <div className="flex items-center">
                         {countries.find(
-                          (c) => c.phone_code === formData.phoneCode
+                          (c) => c.phone_code === watch("phoneCode")
                         )?.flag && (
                           <img
                             src={
                               countries.find(
-                                (c) => c.phone_code === formData.phoneCode
+                                (c) => c.phone_code === watch("phoneCode")
                               ).flag
                             }
                             alt="flag"
                             className="w-4 h-4 mr-1"
                           />
                         )}
-                        <span>{formData.phoneCode}</span>
+                        <span>{watch("phoneCode")}</span>
                       </div>
                       <FontAwesomeIcon
                         icon={faChevronDown}
@@ -456,24 +552,26 @@ const SignUpForm = () => {
                   <div className="relative flex-1">
                     <input
                       type="tel"
-                      id="mobileNumber"
-                      name="mobileNumber"
-                      value={
-                        formData.mobileNumber.replace(formData.phoneCode, "") ||
-                        ""
-                      }
-                      onChange={(e) => {
-                        const numericValue = e.target.value.replace(/\D/g, ""); // Only numbers
-                        handleChange({
-                          target: { name: "mobileNumber", value: numericValue },
-                        });
-                      }}
-                      className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg  transition-colors bg-white"
+                      {...register("mobileNumber", {
+                        onChange: (e) => {
+                          handleFieldChange("mobileNumber", e.target.value);
+                        },
+                      })}
+                      className={`block w-full px-3 py-2 text-sm border rounded-lg transition-colors bg-white focus:ring-2 focus:ring-[#0071E0]/20 ${
+                        errors.mobileNumber
+                          ? "border-red-500 focus:border-red-500"
+                          : "border-gray-300 focus:border-[#0071E0]"
+                      }`}
                       placeholder="Phone number"
-                      required
                     />
                   </div>
                 </div>
+                {(errors.mobileNumber || errors.phoneCode) && (
+                  <p className="text-red-500 text-xs mt-1 flex items-center">
+                    <i className="fas fa-exclamation-circle mr-1"></i>
+                    {errors.mobileNumber?.message || errors.phoneCode?.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -489,23 +587,27 @@ const SignUpForm = () => {
                         setShowWhatsappDropdown(!showWhatsappDropdown);
                         if (showWhatsappDropdown) setWhatsappSearchTerm(""); // Clear search when closing
                       }}
-                      className="flex items-center justify-between cursor-pointer w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black text-gray-700 text-sm hover:bg-gray-100 transition-colors"
+                      className={`flex items-center justify-between cursor-pointer w-full px-3 py-2 bg-gray-50 border rounded-lg focus:ring-2 text-gray-700 text-sm hover:bg-gray-100 transition-colors ${
+                        errors.whatsappCode
+                          ? "border-red-500 focus:ring-red-500"
+                          : "border-gray-300 focus:ring-[#0071E0]"
+                      }`}
                     >
                       <div className="flex items-center">
                         {countries.find(
-                          (c) => c.phone_code === formData.whatsappCode
+                          (c) => c.phone_code === watch("whatsappCode")
                         )?.flag && (
                           <img
                             src={
                               countries.find(
-                                (c) => c.phone_code === formData.whatsappCode
+                                (c) => c.phone_code === watch("whatsappCode")
                               ).flag
                             }
                             alt="flag"
                             className="w-4 h-4 mr-1"
                           />
                         )}
-                        <span>{formData.whatsappCode}</span>
+                        <span>{watch("whatsappCode")}</span>
                       </div>
                       <FontAwesomeIcon
                         icon={faChevronDown}
@@ -572,20 +674,26 @@ const SignUpForm = () => {
                   <div className="relative flex-1">
                     <input
                       type="tel"
-                      id="whatsapp"
-                      name="whatsapp"
-                      value={formData.whatsapp}
-                      onChange={(e) => {
-                        const numericValue = e.target.value.replace(/\D/g, ""); // Only numbers
-                        handleChange({
-                          target: { name: "whatsapp", value: numericValue },
-                        });
-                      }}
-                      className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg  transition-colors bg-white"
+                      {...register("whatsapp", {
+                        onChange: (e) => {
+                          handleFieldChange("whatsapp", e.target.value);
+                        },
+                      })}
+                      className={`block w-full px-3 py-2 text-sm border rounded-lg transition-colors bg-white focus:ring-2 focus:ring-[#0071E0]/20 ${
+                        errors.whatsapp
+                          ? "border-red-500 focus:border-red-500"
+                          : "border-gray-300 focus:border-[#0071E0]"
+                      }`}
                       placeholder="WhatsApp number"
                     />
                   </div>
                 </div>
+                {(errors.whatsapp || errors.whatsappCode) && (
+                  <p className="text-red-500 text-xs mt-1 flex items-center">
+                    <i className="fas fa-exclamation-circle mr-1"></i>
+                    {errors.whatsapp?.message || errors.whatsappCode?.message}
+                  </p>
+                )}
               </div>
             </div>
             {/* Password and Confirm Password Row */}
@@ -604,13 +712,17 @@ const SignUpForm = () => {
                   </div>
                   <input
                     type={showPassword ? "text" : "password"}
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="block w-full pl-10 pr-10 py-2 text-sm border border-gray-300 rounded-lg  transition-colors bg-white"
+                    {...register("password", {
+                      onChange: (e) => {
+                        handleFieldChange("password", e.target.value);
+                      },
+                    })}
+                    className={`block w-full pl-10 pr-10 py-2 text-sm border rounded-lg transition-colors bg-white focus:ring-2 focus:ring-[#0071E0]/20 ${
+                      errors.password
+                        ? "border-red-500 focus:border-red-500"
+                        : "border-gray-300 focus:border-[#0071E0]"
+                    }`}
                     placeholder="Create password"
-                    required
                   />
                   <button
                     type="button"
@@ -623,6 +735,12 @@ const SignUpForm = () => {
                     />
                   </button>
                 </div>
+                {errors.password && (
+                  <p className="text-red-500 text-xs mt-1 flex items-center">
+                    <i className="fas fa-exclamation-circle mr-1"></i>
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
               {/* Confirm Password */}
               <div className="space-y-2">
@@ -638,13 +756,17 @@ const SignUpForm = () => {
                   </div>
                   <input
                     type={showConfirmPassword ? "text" : "password"}
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    className="block w-full pl-10 pr-10 py-2 text-sm border border-gray-300 rounded-lg  transition-colors bg-white"
+                    {...register("confirmPassword", {
+                      onChange: (e) => {
+                        handleFieldChange("confirmPassword", e.target.value);
+                      },
+                    })}
+                    className={`block w-full pl-10 pr-10 py-2 text-sm border rounded-lg transition-colors bg-white focus:ring-2 focus:ring-[#0071E0]/20 ${
+                      errors.confirmPassword
+                        ? "border-red-500 focus:border-red-500"
+                        : "border-gray-300 focus:border-[#0071E0]"
+                    }`}
                     placeholder="Confirm password"
-                    required
                   />
                   <button
                     type="button"
@@ -657,6 +779,12 @@ const SignUpForm = () => {
                     />
                   </button>
                 </div>
+                {errors.confirmPassword && (
+                  <p className="text-red-500 text-xs mt-1 flex items-center">
+                    <i className="fas fa-exclamation-circle mr-1"></i>
+                    {errors.confirmPassword.message}
+                  </p>
+                )}
               </div>
             </div>
             {/* Terms Checkbox */}
@@ -694,12 +822,12 @@ const SignUpForm = () => {
             <motion.button
               type="submit"
               className="w-full bg-[#0071E0] text-white py-2 px-4 rounded-lg font-medium focus:ring-4 cursor-pointer transition-colors flex items-center justify-center disabled:opacity-70"
-              disabled={isLoading}
+              disabled={isLoading || isSubmitting}
               variants={buttonVariants}
               whileHover="hover"
               whileTap="tap"
             >
-              {isLoading ? (
+              {isLoading || isSubmitting ? (
                 <div className="flex items-center gap-2">
                   <svg
                     className="animate-spin h-5 w-5 text-white"
