@@ -26,9 +26,9 @@ const SignUpForm = () => {
     fullName: "",
     email: "",
     mobileNumber: "", // Changed from phone to mobileNumber
-    phoneCode: "+1", // Temporary field for phone code selection
+    phoneCode: "+91", // Temporary field for phone code selection
     whatsapp: "",
-    whatsappCode: "+1",
+    whatsappCode: "+91",
     password: "",
     confirmPassword: "",
   });

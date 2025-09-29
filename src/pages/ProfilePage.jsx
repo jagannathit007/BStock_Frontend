@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -1168,7 +1168,7 @@ const ProfilePage = () => {
   const [businessStatus, setBusinessStatus] = useState(null);
 
   // Profile Picture Upload Handler
-  const handleImageChange = async (e) => {
+  const handleImageChange = useCallback(async (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       const previousImage = profileImage; // Store previous image for rollback
@@ -1207,7 +1207,7 @@ const ProfilePage = () => {
         // Error already handled via toast in AuthService
       }
     }
-  };
+  }, [profileImage]);
 
   // Check if profile is incomplete on mount
   useEffect(() => {
@@ -1496,41 +1496,41 @@ const ProfilePage = () => {
   };
 
   // Profile Details Handler
-  const handleProfileChange = (field, value) => {
+  const handleProfileChange = useCallback((field, value) => {
     setProfileFormData((prev) => ({ ...prev, [field]: value }));
-  };
+  }, []);
 
   // Password Change Handler
-  const handlePasswordChange = (field, value) => {
+  const handlePasswordChange = useCallback((field, value) => {
     setPasswords((prev) => ({ ...prev, [field]: value }));
-  };
+  }, []);
 
   // Business Profile Handler
-  const handleBusinessChange = (field, value) => {
+  const handleBusinessChange = useCallback((field, value) => {
     setBusinessFormData((prev) => ({ ...prev, [field]: value }));
-  };
+  }, []);
 
   // Business File Upload Handler
-  const handleBusinessFileChange = (field, file) => {
+  const handleBusinessFileChange = useCallback((field, file) => {
     setBusinessFormData((prev) => ({ ...prev, [field]: file }));
 
     if (file) {
       const reader = new FileReader();
+      reader.readAsDataURL(file);
       reader.onload = (event) => {
         setBusinessPreviews((prev) => ({
           ...prev,
           [field]: event.target.result,
         }));
       };
-      reader.readAsDataURL(file);
     } else {
       setBusinessPreviews((prev) => ({ ...prev, [field]: null }));
     }
-  };
+  }, []);
 
-  const togglePasswordVisibility = (field) => {
+  const togglePasswordVisibility = useCallback((field) => {
     setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
-  };
+  }, []);
 
   const handleChangePassword = async (formData) => {
     const currentPassword = formData.current?.trim();
@@ -1545,11 +1545,11 @@ const ProfilePage = () => {
     }
   };
 
-  const onChangeProfileField = (key, value) => handleProfileChange(key, value);
-  const onChangeBusinessField = (key, value) =>
-    handleBusinessChange(key, value);
-  const onChangeBusinessFile = (key, file) =>
-    handleBusinessFileChange(key, file);
+  const onChangeProfileField = useCallback((key, value) => handleProfileChange(key, value), [handleProfileChange]);
+  const onChangeBusinessField = useCallback((key, value) =>
+    handleBusinessChange(key, value), [handleBusinessChange]);
+  const onChangeBusinessFile = useCallback((key, file) =>
+    handleBusinessFileChange(key, file), [handleBusinessFileChange]);
 
   return (
     <div className="min-h-screen bg-gray-50">
