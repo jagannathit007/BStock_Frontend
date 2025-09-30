@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { AuthService } from "../services/auth/auth.services";
@@ -538,6 +538,8 @@ const BusinessProfile = ({
   const [logoImageError, setLogoImageError] = useState(false);
   const [certificateImageError, setCertificateImageError] = useState(false);
 
+  const isInitial = useRef(true);
+
   const {
     register,
     handleSubmit,
@@ -545,6 +547,7 @@ const BusinessProfile = ({
     setValue,
     trigger,
     watch,
+    control,
   } = useForm({
     resolver: yupResolver(businessSchema),
     defaultValues: formData,
@@ -552,6 +555,7 @@ const BusinessProfile = ({
   });
 
   const watchedCountry = watch("country");
+  const watchedCurrency = watch("currency");
 
   // Currency auto-selection map
   const countryToCurrency = {
@@ -563,23 +567,32 @@ const BusinessProfile = ({
 
   // Auto-set currency when country changes
   useEffect(() => {
-    if (watchedCountry) {
-      const curr = countryToCurrency[watchedCountry];
-      if (curr) {
-        // Set form values
+    if (!watchedCountry) return;
+
+    const curr = countryToCurrency[watchedCountry];
+    if (!curr) return;
+
+    if (isInitial.current) {
+      if (!watchedCurrency) {
         setValue("currency", curr);
         setValue("currencyCode", curr);
-        
-        // Update the parent component state
         onChangeField("currency", curr);
         onChangeField("currencyCode", curr);
-        
-        // Trigger validation to ensure the form recognizes the change
         trigger("currency");
         trigger("currencyCode");
       }
+      isInitial.current = false;
+      return;
     }
-  }, [watchedCountry, setValue, onChangeField, trigger]);
+
+    // For subsequent changes, always set to default
+    setValue("currency", curr);
+    setValue("currencyCode", curr);
+    onChangeField("currency", curr);
+    onChangeField("currencyCode", curr);
+    trigger("currency");
+    trigger("currencyCode");
+  }, [watchedCountry, watchedCurrency, setValue, onChangeField, trigger]);
 
   // Update form values when formData changes
   useEffect(() => {
@@ -682,6 +695,8 @@ const BusinessProfile = ({
           <input
             type="text"
             {...register("businessName")}
+            value={watch("businessName")}
+            onChange={(e) => handleFieldChange("businessName", e.target.value)}
             className={`w-full px-4 py-2 rounded-lg border transition-colors duration-200 text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
               errors.businessName
                 ? "border-red-500 focus:border-red-500"
@@ -706,20 +721,10 @@ const BusinessProfile = ({
           </label>
           <select
             {...register("country")}
+            value={watch("country")}
             onChange={(e) => {
               const selectedCountry = e.target.value;
               handleFieldChange("country", selectedCountry);
-              
-              // Auto-select currency based on country
-              const curr = countryToCurrency[selectedCountry];
-              if (curr) {
-                setValue("currency", curr);
-                setValue("currencyCode", curr);
-                onChangeField("currency", curr);
-                onChangeField("currencyCode", curr);
-                trigger("currency");
-                trigger("currencyCode");
-              }
             }}
             className={`w-full px-4 py-2 rounded-lg border transition-colors duration-200 text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
               errors.country
@@ -751,10 +756,10 @@ const BusinessProfile = ({
           </label>
           <select
             {...register("currency")}
+            value={watch("currency")}
             onChange={(e) => {
               const selectedCurrency = e.target.value;
               handleFieldChange("currency", selectedCurrency);
-              // Also update currencyCode to match
               setValue("currencyCode", selectedCurrency);
               onChangeField("currencyCode", selectedCurrency);
             }}
@@ -790,6 +795,8 @@ const BusinessProfile = ({
           </label>
           <textarea
             {...register("address")}
+            value={watch("address")}
+            onChange={(e) => handleFieldChange("address", e.target.value)}
             rows="3"
             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 text-sm"
             placeholder="Enter your business address"
@@ -1325,8 +1332,7 @@ const ProfilePage = () => {
           whatsappNumber: normalized.whatsappNumber,
           whatsappCountryCode: normalized.whatsappCountryCode,
         });
-        setBusinessFormData((prev) => ({
-          ...prev,
+        setBusinessFormData({
           businessName: normalized.business.businessName,
           country: normalized.business.country,
           address: normalized.business.address,
@@ -1334,7 +1340,7 @@ const ProfilePage = () => {
           certificate: normalized.business.certificate,
           currency: normalized.business.currency,
           currencyCode: normalized.business.currencyCode,
-        }));
+        });
         setBusinessPreviews({
           businessLogo:
             typeof normalized.business.logo === "string"
@@ -1431,26 +1437,25 @@ const ProfilePage = () => {
       try {
         const res = await AuthService.getProfile();
         const normalized = normalize(res);
-        setBusinessFormData((prev) => ({
-          ...prev,
-          businessName: normalized.business.businessName || prev.businessName,
-          country: normalized.business.country || prev.country,
-          address: normalized.business.address || prev.address,
-          businessLogo: normalized.business.logo ?? prev.businessLogo,
-          certificate: normalized.business.certificate ?? prev.certificate,
-          currency: normalized.business.currency || prev.currency,
-          currencyCode: normalized.business.currencyCode || prev.currencyCode,
-        }));
-        setBusinessPreviews((prev) => ({
+        setBusinessFormData({
+          businessName: normalized.business.businessName,
+          country: normalized.business.country,
+          address: normalized.business.address,
+          businessLogo: normalized.business.logo,
+          certificate: normalized.business.certificate,
+          currency: normalized.business.currency,
+          currencyCode: normalized.business.currencyCode,
+        });
+        setBusinessPreviews({
           businessLogo:
             typeof normalized.business.logo === "string"
               ? normalized.business.logo
-              : prev.businessLogo,
+              : null,
           certificate:
             typeof normalized.business.certificate === "string"
               ? normalized.business.certificate
-              : prev.certificate,
-        }));
+              : null,
+        });
         
         // Update business status from the API response
         const newStatus = normalized.business.status
