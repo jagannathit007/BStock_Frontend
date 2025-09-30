@@ -339,7 +339,7 @@ const MainContent = () => {
                   </div>
                 )}
                 {!isLoading && currentProducts.length === 0 && (
-                  <div className="col-span-3 text-center text-sm text-gray-500">
+                  <div className="col-span-3 text-center text-2xl text-gray-500 font-bold">
                     No products found.
                   </div>
                 )}
@@ -449,7 +449,7 @@ const MainContent = () => {
                         <tr>
                           <td
                             colSpan={6}
-                            className="px-4 py-6 text-center text-sm text-gray-500"
+                            className="px-4 py-6 text-center text-2xl text-gray-500 font-bold"
                           >
                             No products found.
                           </td>
