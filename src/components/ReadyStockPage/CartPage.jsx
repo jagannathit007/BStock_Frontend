@@ -364,19 +364,40 @@ const CartPage = () => {
                               />
                             </button>
                             <input
-                              type="number"
-                              value={item.quantity}
-                              onChange={(e) =>
-                                handleQuantityChange(
-                                  item.id,
-                                  parseInt(e.target.value, 10) || item.moq
-                                )
-                              }
-                              min={1}
-                              max={item.stockCount}
-                              step={1}
-                              className="w-16 text-center text-lg font-semibold py-1 px-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50"
-                            />
+  type="text"
+  value={item.quantity}
+  onChange={(e) => {
+    const value = e.target.value;
+
+    // Allow only digits
+    if (!/^\d*$/.test(value)) return;
+
+    // If empty, don't update immediately (let user type)
+    if (value === "") {
+      handleQuantityChange(item.id, "");
+      return;
+    }
+
+    let num = parseInt(value, 10);
+
+    // Apply conditions
+    if (isNaN(num) || num < item.moq) {
+      num = item.moq;
+    } else if (num > item.stockCount) {
+      num = item.stockCount;
+    }
+
+    handleQuantityChange(item.id, num);
+  }}
+  onBlur={(e) => {
+    let num = parseInt(e.target.value, 10);
+    if (isNaN(num) || num < item.moq) num = item.moq;
+    if (num > item.stockCount) num = item.stockCount;
+    handleQuantityChange(item.id, num);
+  }}
+  className="w-16 text-center text-lg font-semibold py-1 px-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50"
+/>
+
                             <button
                               onClick={() =>
                                 handleQuantityChange(item.id, item.quantity + 1)
