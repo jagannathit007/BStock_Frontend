@@ -32,6 +32,9 @@ export interface ProfileData {
   profileImage?: File | string | null;
   whatsappNumber?: string;
   whatsappCountryCode?: string;
+  currencyCode?: string;
+  currency?: string;
+  resetBusinessStatus?: boolean;
 }
 
 export interface ProfileResponse<T = any> {
@@ -103,6 +106,17 @@ export class AuthService {
         if (absoluteUrl) {
           localStorage.setItem("profileImageUrl", absoluteUrl);
         }
+      }
+
+      // Save currency information separately for easy access
+      // Check multiple possible locations for currency data
+      const currencyData = userData.currency || 
+                          userData.businessProfile?.currency || 
+                          userData.customer?.currency ||
+                          userData.data?.currency;
+      
+      if (currencyData) {
+        localStorage.setItem("userCurrency", JSON.stringify(currencyData));
       }
 
       // Dispatch custom event to notify components about the update
@@ -208,6 +222,9 @@ export class AuthService {
     if (payload.mobileCountryCode !== undefined) form.append('mobileCountryCode', String(payload.mobileCountryCode));
     if (payload.whatsappNumber !== undefined) form.append('whatsappNumber', String(payload.whatsappNumber));
     if (payload.whatsappCountryCode !== undefined) form.append('whatsappCountryCode', String(payload.whatsappCountryCode));
+    if (payload.currencyCode !== undefined) form.append('currencyCode', String(payload.currencyCode));
+    if (payload.currency !== undefined) form.append('currency', String(payload.currency));
+    if (payload.resetBusinessStatus !== undefined) form.append('resetBusinessStatus', String(payload.resetBusinessStatus));
 
 
     if (payload.logo instanceof File) {
@@ -274,6 +291,7 @@ export class AuthService {
       localStorage.removeItem('userId');
       localStorage.removeItem('token');
       localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('userCurrency');
     } catch (error) {
       console.error('Failed to clear user data from localStorage:', error);
     }

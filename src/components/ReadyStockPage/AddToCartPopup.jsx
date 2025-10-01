@@ -10,6 +10,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import CartService from "../../services/cart/cart.services";
 import iphoneImage from "../../assets/iphone.png";
+import { convertPrice } from "../../utils/currencyUtils";
 
 const AddToCartPopup = ({ product, onClose }) => {
   const { id, name, price, imageUrl, moq, stockCount, description } = product;
@@ -73,11 +74,11 @@ const AddToCartPopup = ({ product, onClose }) => {
     }
   };
 
-  const totalPrice = (validPrice * quantity).toFixed(2);
+  const totalPrice = validPrice * quantity;
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center bg-black/60 z-50 transition-opacity duration-300 p-4"
+      className="fixed inset-0 flex items-center justify-center bg-black/60 z-[70] transition-opacity duration-300 p-4"
       onClick={onClose}
     >
       <div
@@ -135,7 +136,7 @@ const AddToCartPopup = ({ product, onClose }) => {
                   icon={faDollarSign}
                   className="w-5 h-5 text-green-600"
                 />
-                {validPrice.toFixed(2)}
+                {convertPrice(validPrice)}
               </div>
               <div className="flex flex-wrap gap-3 text-sm">
                 <div className="flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-full">
@@ -208,11 +209,11 @@ const AddToCartPopup = ({ product, onClose }) => {
                   icon={faDollarSign}
                   className="w-5 h-5 text-green-600"
                 />
-                {totalPrice}
+                {convertPrice(totalPrice)}
               </div>
             </div>
             <div className="text-sm text-gray-500 mt-1">
-              {quantity} × ${validPrice.toFixed(2)} per unit
+              {quantity} × {convertPrice(validPrice)} per unit
             </div>
           </div>
         </div>

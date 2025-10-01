@@ -11,6 +11,7 @@ import {
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
+import { convertPrice } from "../../utils/currencyUtils";
 
 const MainContent = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -338,7 +339,7 @@ const MainContent = () => {
                   </div>
                 )}
                 {!isLoading && currentProducts.length === 0 && (
-                  <div className="col-span-3 text-center text-sm text-gray-500">
+                  <div className="col-span-3 text-center text-2xl text-gray-500 font-bold">
                     No products found.
                   </div>
                 )}
@@ -448,7 +449,7 @@ const MainContent = () => {
                         <tr>
                           <td
                             colSpan={6}
-                            className="px-4 py-6 text-center text-sm text-gray-500"
+                            className="px-4 py-6 text-center text-2xl text-gray-500 font-bold"
                           >
                             No products found.
                           </td>

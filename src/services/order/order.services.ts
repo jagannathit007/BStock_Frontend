@@ -46,6 +46,11 @@ export interface OrderListResponse {
     totalDocs: number;
     page: number;
     limit: number;
+    totalPages: number;
+    hasPrevPage: boolean;
+    hasNextPage: boolean;
+    prevPage: number | null;
+    nextPage: number | null;
   };
 }
 

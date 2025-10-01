@@ -65,7 +65,7 @@ const ViewControls = ({
         <select 
           value={sortOption}
           onChange={handleSortChange}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+          className="border border-gray-300 cursor-pointer rounded-lg px-3 py-2 text-sm"
         >
           {/* <option value="">Sort by: Featured</option> */}
           <option value="price_asc">Sort by: Price Low to High</option>

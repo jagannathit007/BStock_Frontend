@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
-import { ProductService } from '../services/products/products.services'; // Adjust the import path to your ProductService
+import { ProductService } from "../services/products/products.services"; // Adjust the import path to your ProductService
+import { convertPrice } from "../utils/currencyUtils";
 
 const SideFilter = ({ onClose, onFilterChange }) => {
   const [minPrice, setMinPrice] = useState("");
@@ -84,17 +85,13 @@ const SideFilter = ({ onClose, onFilterChange }) => {
 
   const handleGradeChange = (grade) => {
     setSelectedGrades((prev) =>
-      prev.includes(grade)
-        ? prev.filter((g) => g !== grade)
-        : [...prev, grade]
+      prev.includes(grade) ? prev.filter((g) => g !== grade) : [...prev, grade]
     );
   };
 
   const handleColorChange = (color) => {
     setSelectedColors((prev) =>
-      prev.includes(color)
-        ? prev.filter((c) => c !== color)
-        : [...prev, color]
+      prev.includes(color) ? prev.filter((c) => c !== color) : [...prev, color]
     );
   };
 
@@ -231,7 +228,9 @@ const SideFilter = ({ onClose, onFilterChange }) => {
 
         {/* Price Range */}
         <div className="mb-6">
-          <h4 className="text-sm font-medium text-gray-900 mb-3">Price Range</h4>
+          <h4 className="text-sm font-medium text-gray-900 mb-3">
+            Price Range
+          </h4>
           <div className="range-container">
             <input
               type="range"
@@ -260,8 +259,9 @@ const SideFilter = ({ onClose, onFilterChange }) => {
                   ((minPrice || priceRange.min) / priceRange.max) * 100
                 }%`,
                 width: `${
-                  ((maxPrice || priceRange.max) - (minPrice || priceRange.min)) /
-                  priceRange.max *
+                  (((maxPrice || priceRange.max) -
+                    (minPrice || priceRange.min)) /
+                    priceRange.max) *
                   100
                 }%`,
                 zIndex: 0,
@@ -269,8 +269,8 @@ const SideFilter = ({ onClose, onFilterChange }) => {
             ></div>
           </div>
           <div className="flex justify-between text-sm text-gray-600 mt-2">
-            <span>${minPrice || priceRange.min}</span>
-            <span>${maxPrice || priceRange.max}</span>
+            <span>{convertPrice(parseFloat(minPrice || priceRange.min))}</span>
+            <span>{convertPrice(parseFloat(maxPrice || priceRange.max))}</span>
           </div>
         </div>
 
@@ -303,8 +303,8 @@ const SideFilter = ({ onClose, onFilterChange }) => {
               style={{
                 left: `${((minMoq || moqRange.min) / moqRange.max) * 100}%`,
                 width: `${
-                  ((maxMoq || moqRange.max) - (minMoq || moqRange.min)) /
-                  moqRange.max *
+                  (((maxMoq || moqRange.max) - (minMoq || moqRange.min)) /
+                    moqRange.max) *
                   100
                 }%`,
                 zIndex: 0,
@@ -319,7 +319,9 @@ const SideFilter = ({ onClose, onFilterChange }) => {
 
         {/* Stock Range */}
         <div className="mb-6">
-          <h4 className="text-sm font-medium text-gray-900 mb-3">Stock Range</h4>
+          <h4 className="text-sm font-medium text-gray-900 mb-3">
+            Stock Range
+          </h4>
           <div className="range-container">
             <input
               type="range"
@@ -348,8 +350,9 @@ const SideFilter = ({ onClose, onFilterChange }) => {
                   ((minStock || stockRange.min) / stockRange.max) * 100
                 }%`,
                 width: `${
-                  ((maxStock || stockRange.max) - (minStock || stockRange.min)) /
-                  stockRange.max *
+                  (((maxStock || stockRange.max) -
+                    (minStock || stockRange.min)) /
+                    stockRange.max) *
                   100
                 }%`,
                 zIndex: 0,
@@ -372,7 +375,7 @@ const SideFilter = ({ onClose, onFilterChange }) => {
                   type="checkbox"
                   checked={selectedSimTypes.includes(simType)}
                   onChange={() => handleSimTypeChange(simType)}
-                  className="rounded border-gray-300 text-primary focus:ring-primary"
+                  className="rounded cursor-pointer border-gray-300 text-primary focus:ring-primary"
                 />
                 <span className="ml-2 text-sm text-gray-700">{simType}</span>
               </label>
@@ -390,7 +393,7 @@ const SideFilter = ({ onClose, onFilterChange }) => {
                   type="checkbox"
                   checked={selectedStorage.includes(storage)}
                   onChange={() => handleStorageChange(storage)}
-                  className="rounded border-gray-300 text-primary focus:ring-primary"
+                  className="rounded cursor-pointer border-gray-300 text-primary focus:ring-primary"
                 />
                 <span className="ml-2 text-sm text-gray-700">{storage}</span>
               </label>
@@ -408,7 +411,7 @@ const SideFilter = ({ onClose, onFilterChange }) => {
                   type="checkbox"
                   checked={selectedGrades.includes(grade)}
                   onChange={() => handleGradeChange(grade)}
-                  className="rounded border-gray-300 text-primary focus:ring-primary"
+                  className="rounded border-gray-300 cursor-pointer text-primary focus:ring-primary"
                 />
                 <span className="ml-2 text-sm text-gray-700">{grade}</span>
               </label>
@@ -426,7 +429,7 @@ const SideFilter = ({ onClose, onFilterChange }) => {
                   type="checkbox"
                   checked={selectedColors.includes(color.name)}
                   onChange={() => handleColorChange(color.name)}
-                  className="rounded border-gray-300 text-primary focus:ring-primary"
+                  className="rounded border-gray-300 cursor-pointer text-primary focus:ring-primary"
                 />
                 <span className="ml-2 text-sm text-gray-700">{color.name}</span>
               </label>
@@ -437,14 +440,14 @@ const SideFilter = ({ onClose, onFilterChange }) => {
         {/* RAM */}
         <div className="mb-6">
           <h4 className="text-sm font-medium text-gray-900 mb-3">RAM</h4>
-          <div className="space-y-2">
+          <div className="space-y-2 ">
             {rams.map((ram) => (
               <label key={ram} className="flex items-center">
                 <input
                   type="checkbox"
                   checked={selectedRams.includes(ram)}
                   onChange={() => handleRamChange(ram)}
-                  className="rounded border-gray-300 text-primary focus:ring-primary"
+                  className="rounded cursor-pointer border-gray-300 text-primary focus:ring-primary"
                 />
                 <span className="ml-2 text-sm text-gray-700">{ram}</span>
               </label>
@@ -455,7 +458,7 @@ const SideFilter = ({ onClose, onFilterChange }) => {
         {/* Clear Filters */}
         <button
           onClick={clearAllFilters}
-          className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg text-sm font-medium hover:bg-gray-200"
+          className="w-full cursor-pointer bg-[#0071E0] text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-blue-600"
         >
           Clear All Filters
         </button>
