@@ -121,46 +121,101 @@ const LoginForm = ({ onLogin }) => {
         platformName: "google",
       };
 
-      const res = await AuthService.login(loginData);
-      if (res.data && res.data.token) {
-        localStorage.setItem("token", res.data.token);
+      try {
+        // First, try to login
+        const res = await AuthService.login(loginData);
+        if (res.data && res.data.token) {
+          localStorage.setItem("token", res.data.token);
 
-        // Save customer data to localStorage
-        if (res.data.customer) {
-          localStorage.setItem("user", JSON.stringify(res.data.customer));
+          // Save customer data to localStorage
+          if (res.data.customer) {
+            localStorage.setItem("user", JSON.stringify(res.data.customer));
 
-          // Save profile image URL separately if available
-          if (res.data.customer.profileImage || res.data.customer.avatar) {
-            const profileImage =
-              res.data.customer.profileImage || res.data.customer.avatar;
-            localStorage.setItem("profileImageUrl", profileImage);
+            // Save profile image URL separately if available
+            if (res.data.customer.profileImage || res.data.customer.avatar) {
+              const profileImage =
+                res.data.customer.profileImage || res.data.customer.avatar;
+              localStorage.setItem("profileImageUrl", profileImage);
+            }
           }
-        }
 
-        if (rememberMe) {
-          localStorage.setItem("rememberMe", "true");
-          localStorage.setItem("email", email);
-        } else {
-          localStorage.removeItem("rememberMe");
-          localStorage.removeItem("email");
+          if (rememberMe) {
+            localStorage.setItem("rememberMe", "true");
+            localStorage.setItem("email", userData.email);
+          } else {
+            localStorage.removeItem("rememberMe");
+            localStorage.removeItem("email");
+          }
+          localStorage.setItem("isLoggedIn", "true");
+          if (onLogin) onLogin();
+          
+          // Check if profile is complete for Google login users
+          if (res.data.customer && res.data.customer.platformName === 'google') {
+            const isProfileComplete = AuthService.isProfileComplete(res.data.customer);
+            if (!isProfileComplete) {
+              navigate("/profile");
+              return;
+            }
+          }
+          
+          navigate("/ready-stock");
         }
-        localStorage.setItem("isLoggedIn", "true");
-        if (onLogin) onLogin();
+      } catch (loginErr) {
+        // If login fails, try to register the user automatically
+        console.log("Login failed, attempting auto-registration:", loginErr.message);
         
-        // Check if profile is complete for Google login users
-        if (res.data.customer && res.data.customer.platformName === 'google') {
-          const isProfileComplete = AuthService.isProfileComplete(res.data.customer);
-          if (!isProfileComplete) {
+        const registrationData = {
+          name: userData.name || userData.given_name || userData.email.split('@')[0],
+          email: userData.email || "",
+          socialId: userData.sub,
+          platformName: "google",
+          // Set default values for required fields
+          mobileNumber: "",
+          mobileCountryCode: "+1", // Default country code
+          whatsappNumber: "",
+          whatsappCountryCode: "+1",
+        };
+
+        try {
+          const registerRes = await AuthService.register(registrationData);
+          
+          if (registerRes.data && registerRes.data.token) {
+            // Auto-registration successful, now login
+            localStorage.setItem("token", registerRes.data.token);
+
+            // Save customer data to localStorage
+            if (registerRes.data.customer) {
+              localStorage.setItem("user", JSON.stringify(registerRes.data.customer));
+
+              // Save profile image URL separately if available
+              if (registerRes.data.customer.profileImage || registerRes.data.customer.avatar) {
+                const profileImage =
+                  registerRes.data.customer.profileImage || registerRes.data.customer.avatar;
+                localStorage.setItem("profileImageUrl", profileImage);
+              }
+            }
+
+            if (rememberMe) {
+              localStorage.setItem("rememberMe", "true");
+              localStorage.setItem("email", userData.email);
+            } else {
+              localStorage.removeItem("rememberMe");
+              localStorage.removeItem("email");
+            }
+            localStorage.setItem("isLoggedIn", "true");
+            if (onLogin) onLogin();
+            
+            // For newly registered users, redirect to profile to complete setup
             navigate("/profile");
-            return;
           }
+        } catch (registerErr) {
+          console.error("Auto-registration failed:", registerErr);
+          setError(registerErr.message || "Failed to create account. Please try again.");
         }
-        
-        navigate("/ready-stock");
       }
     } catch (err) {
-      console.error("Google login failed:", err);
-      setError(err.message || "Google login failed. Please try again.");
+      console.error("Google authentication failed:", err);
+      setError(err.message || "Google authentication failed. Please try again.");
     } finally {
       setGoogleLoading(false);
     }
