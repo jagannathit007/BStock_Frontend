@@ -43,6 +43,8 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [isBuyNowCheckoutOpen, setIsBuyNowCheckoutOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   const handleImageError = () => {
     setImageError(true);
@@ -239,6 +241,40 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     };
   }, [processedProduct.id, processedProduct._id, onRefresh]);
 
+  // Countdown timer and current time logic
+  useEffect(() => {
+    const updateTimers = () => {
+      // Update current time
+      setCurrentTime(new Date());
+
+      // Update countdown timer for expiry
+      if (processedProduct.expiryTime && !processedProduct.isExpired) {
+        const expiryDate = new Date(processedProduct.expiryTime);
+        const now = new Date();
+        const difference = expiryDate - now;
+
+        if (difference <= 0) {
+          setTimeLeft(null);
+          return;
+        }
+
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+        const minutes = Math.floor((difference / (1000 * 60)) % 60);
+        const seconds = Math.floor((difference / 1000) % 60);
+
+        setTimeLeft({ days, hours, minutes, seconds });
+      } else {
+        setTimeLeft(null);
+      }
+    };
+
+    updateTimers();
+    const timer = setInterval(updateTimers, 1000);
+
+    return () => clearInterval(timer);
+  }, [processedProduct.expiryTime, processedProduct.isExpired]);
+
   const handleQuantityChange = (amount) => {
     const newQuantity = quantity + amount;
     if (
@@ -377,9 +413,8 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     purchaseType: processedProduct.purchaseType,
   };
 
-  const totalAmount = parseInt(processedProduct.price.toString().replace(/,/g, "")) * quantity;
-
-
+  const totalAmount =
+    parseInt(processedProduct.price.toString().replace(/,/g, "")) * quantity;
 
   const handleThumbnailClick = (index) => {
     setSelectedImageIndex(index);
@@ -461,6 +496,25 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     if (processedProduct.stockStatus === "In Stock") return "text-green-600";
     if (processedProduct.stockStatus === "Low Stock") return "text-yellow-600";
     return "text-red-600";
+  };
+
+  // Format current time in hh:mm:ss
+  const formatCurrentTime = () => {
+    return currentTime.toLocaleTimeString("en-IN", {
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  };
+
+  // Format current date
+  const formatCurrentDate = () => {
+    return currentTime.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
   };
 
   return (
@@ -672,13 +726,33 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                 }`}
               >
                 <FontAwesomeIcon icon={faCalendarXmark} className="mr-2" />
-                {processedProduct.isExpired
-                  ? `Expired on ${new Date(
-                      processedProduct.expiryTime
-                    ).toLocaleDateString()}`
-                  : `Expires on ${new Date(
-                      processedProduct.expiryTime
-                    ).toLocaleDateString()}`}
+                {processedProduct.isExpired ? (
+                  <span>
+                    Expired on{" "}
+                    {new Date(processedProduct.expiryTime).toLocaleString(
+                      "en-IN",
+                      {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                        hour12: false,
+                      }
+                    )}
+                  </span>
+                ) : timeLeft ? (
+                  <span>
+                    Expires in{" "}
+                    <span className="font-bold">
+                      {timeLeft.days}days {timeLeft.hours}h: {timeLeft.minutes}m{" "}:
+                      {timeLeft.seconds}s
+                    </span>{" "}
+                  </span>
+                ) : (
+                  <span>Calculating...</span>
+                )}
               </div>
             )}
 
