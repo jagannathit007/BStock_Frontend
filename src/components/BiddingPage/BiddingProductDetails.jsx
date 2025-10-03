@@ -29,7 +29,8 @@ const BiddingProductDetails = ({ product, onBack }) => {
 
   // Sample images array - you can replace this with actual product images
   const productImages = [
-    product.imageUrl || "/images/iphone15.png",
+    //  product.imageUrl || "/images/iphone15.png",
+    "/images/iphone15.png",
     "/images/iphone15.png",
     "/images/iphone15.png",
     "/images/iphone15.png",
@@ -154,7 +155,7 @@ const BiddingProductDetails = ({ product, onBack }) => {
                   </div>
 
                   {/* Favorite Button */}
-                  <div className="absolute top-4 right-4">
+                  {/* <div className="absolute top-4 right-4">
                     <button
                       onClick={() => setIsLiked(!isLiked)}
                       className="bg-white/95 backdrop-blur-md rounded-full p-2 hover:bg-white hover:scale-110 transition-all duration-300 shadow-lg"
@@ -166,7 +167,7 @@ const BiddingProductDetails = ({ product, onBack }) => {
                         } text-lg transition-all duration-300`}
                       />
                     </button>
-                  </div>
+                  </div> */}
 
                   {/* Navigation Arrows */}
                   <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
@@ -374,7 +375,7 @@ const BiddingProductDetails = ({ product, onBack }) => {
                   Minimum bid: $1,246
                 </p>
 
-                <button className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg shadow flex items-center justify-center gap-2 transition-all">
+                <button className="mt-4 w-full bg-[#0071E0] hover:bg-blue-600 text-white font-semibold py-2.5 rounded-3xl shadow flex items-center justify-center gap-2 transition-all">
                   <FaGavel className="text-sm" />
                   Place Bid
                 </button>
