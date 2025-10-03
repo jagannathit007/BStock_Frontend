@@ -84,21 +84,22 @@ const BiddingProductCard = ({
                   {name}
                 </div>
                 <div className="text-xs sm:text-sm text-gray-600 mt-1">
-                  <div>{description} • { grade}</div>
-                  {/* {grade && <div>Grade: {grade}</div>} */}
+                  <div>{description}</div>
+                  {grade && <div>Grade: {grade}</div>}
+                  
                   {/* {color && <div>Color: {color}</div>} */}
                   {/* {lotInfo && <div>{lotInfo}</div>} */}
                 </div>
               </div>
             </div>
           </td>
-          <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
+          {/* <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
             <div className="flex items-center mt-1 sm:mt-2">
               <span className="inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                 Live Auction
               </span>
             </div>
-          </td>
+          </td> */}
           <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
             <div className="text-base sm:text-lg font-bold text-[#0071E0]">
               {renderBidValue ? renderBidValue(currentBid) : currentBid}
