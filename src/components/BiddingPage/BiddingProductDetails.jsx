@@ -374,7 +374,7 @@ const BiddingProductDetails = ({ product, onBack }) => {
                   Minimum bid: $1,246
                 </p>
 
-                <button className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg shadow flex items-center justify-center gap-2 transition-all">
+                <button className="mt-4 w-full  bg-[#0071E0]  hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg shadow flex items-center justify-center gap-2 transition-all">
                   <FaGavel className="text-sm" />
                   Place Bid
                 </button>
