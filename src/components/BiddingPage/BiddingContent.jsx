@@ -2,8 +2,6 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faTableCellsLarge,
-  faList,
   faChevronLeft,
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
@@ -11,6 +9,7 @@ import BiddingProductDetails from "./BiddingProductDetails";
 import SideFilter from "../SideFilter";
 import BusinessDetailsPopup from "./BusinessDetailsPopup";
 import BiddingProductCard from "./BiddingProductCard";
+import ViewControls from "./ViewControls";
 import { convertPrice } from "../../utils/currencyUtils";
 
 const BiddingContent = () => {
@@ -28,8 +27,8 @@ const BiddingContent = () => {
   const [errorMessage, setErrorMessage] = useState(null);
   const [filters, setFilters] = useState({});
   const [refreshTick] = useState(false);
-  const [searchQuery] = useState('');
-  const [sortOption] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState('');
 
   const mapApiProductToUi = (p) => {
     const id = p._id || p.id || "";
@@ -92,6 +91,12 @@ const BiddingContent = () => {
         return { price: 1 };
       case 'price_desc':
         return { price: -1 };
+      case 'ending_soon':
+        return { expiryTime: 1 };
+      case 'bids_desc':
+        return { bids: -1 };
+      case 'bids_asc':
+        return { bids: 1 };
       case 'newest':
         return { createdAt: -1 };
       default:
@@ -308,42 +313,15 @@ const BiddingContent = () => {
         {/* Main Content */}
         <main className="flex-1 flex flex-col">
           {/* View Controls */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 sm:gap-0">
-            <div className="flex items-center space-x-4">
-              {/* <span className="text-sm text-gray-600">View:</span> */}
-              <div className="flex bg-gray-100 rounded-lg p-1">
-                <button
-                  className={`px-3 py-1 cursor-pointer text-sm font-medium ${
-                    viewMode === "grid"
-                      ? "bg-white text-[#0071E0] rounded-md shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                  onClick={() => setViewMode("grid")}
-                >
-                  <FontAwesomeIcon icon={faTableCellsLarge} className="mr-2" />
-                  Grid
-                </button>
-                <button
-                  className={`px-3 py-1 text-sm cursor-pointer font-medium ${
-                    viewMode === "list"
-                      ? "bg-white text-[#0071E0] rounded-md shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                  onClick={() => setViewMode("list")}
-                >
-                  <FontAwesomeIcon icon={faList} className="mr-2" />
-                  List
-                </button>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3 text-sm text-gray-600">
-              <select className="border border-gray-300 rounded-lg px-3 py-1 text-sm cursor-pointer">
-                <option>Sort by Ending Soon</option>
-                <option>Sort by Starting Price</option>
-                <option>Sort by Bid Count</option>
-              </select>
-            </div>
-          </div>
+          <ViewControls
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            sortOption={sortOption}
+            setSortOption={setSortOption}
+            setCurrentPage={setCurrentPage}
+          />
 
           {/* Grid View */}
           {viewMode === "grid" ? (

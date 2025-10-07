@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import Header from "./components/Header";
 import NavTabs from "./components/NavTabs";
+import Footer from "./components/Footer";
 import MainContent from "./components/ReadyStockPage/MainContent";
 import "./App.css";
 import ProductDetails from "./components/ReadyStockPage/ProductDetails";
@@ -147,6 +148,7 @@ const App = () => {
           {/* Redirect to login if no matching route */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
+        {isLoggedIn && <Footer />}
       </div>
     </HashRouter>
   );

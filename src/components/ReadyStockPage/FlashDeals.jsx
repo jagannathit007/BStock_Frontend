@@ -128,7 +128,8 @@ const FlashDeals = () => {
   }, [currentPage, itemsPerPage, filters, refreshTick, searchQuery, sortOption]);
 
   useEffect(() => {
-    setItemsPerPage(viewMode === "grid" ? 9 : 10);
+    const newItemsPerPage = viewMode === "grid" ? 9 : 10;
+    setItemsPerPage(newItemsPerPage);
     setCurrentPage(1);
   }, [viewMode]);
 
@@ -259,11 +260,18 @@ const FlashDeals = () => {
     }
   };
 
-  const indexOfLastProduct = useMemo(() => currentPage * itemsPerPage, [currentPage, itemsPerPage]);
-  const indexOfFirstProduct = useMemo(() => indexOfLastProduct - itemsPerPage, [indexOfLastProduct, itemsPerPage]);
   const totalPages = useMemo(() => Math.max(Math.ceil(totalProductsCount / itemsPerPage), 1), [totalProductsCount, itemsPerPage]);
   const currentProducts = useMemo(() => fetchedProducts, [fetchedProducts]);
-  const showingProducts = `${Math.min(indexOfFirstProduct + 1, totalProductsCount)}-${Math.min(indexOfLastProduct, totalProductsCount)}`;
+  
+  // Calculate showing products range for current page
+  const indexOfFirstProduct = useMemo(() => (currentPage - 1) * itemsPerPage, [currentPage, itemsPerPage]);
+  const indexOfLastProduct = useMemo(() => Math.min(currentPage * itemsPerPage, totalProductsCount), [currentPage, itemsPerPage, totalProductsCount]);
+  const showingProducts = useMemo(() => {
+    if (totalProductsCount === 0) return "0-0";
+    const start = Math.min(indexOfFirstProduct + 1, totalProductsCount);
+    const end = Math.min(indexOfLastProduct, totalProductsCount);
+    return `${start}-${end}`;
+  }, [indexOfFirstProduct, indexOfLastProduct, totalProductsCount]);
 
   const paginate = (pageNumber) => {
     if (pageNumber < 1 || pageNumber > totalPages) return;
@@ -356,10 +364,13 @@ const FlashDeals = () => {
                   />
                 ))}
               </div>
-              <div className="text-sm text-gray-600 mt-4 mb-2">
-                Showing {showingProducts} of {totalProductsCount} products
-              </div>
-              <div className="flex items-center justify-between border-t border-gray-200 pt-6 mt-6">
+              {totalPages > 1 && (
+                <div className="text-sm text-gray-600 mt-4 mb-2">
+                  Showing {showingProducts} of {totalProductsCount} products
+                </div>
+              )}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between border-t border-gray-200 pt-6 mt-6">
                 <button
                   onClick={() => paginate(currentPage - 1)}
                   disabled={currentPage === 1}
@@ -407,74 +418,41 @@ const FlashDeals = () => {
                   Next
                   <FontAwesomeIcon icon={faChevronRight} className="ml-2" />
                 </button>
-              </div>
+                </div>
+              )}
             </>
           ) : (
             <>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-max">
-                    <thead className="bg-gray-50 border-b border-gray-200">
-                      <tr>
-                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider">
-                          Product
-                        </th>
-                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          Status
-                        </th>
-                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          Price
-                        </th>
-                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          Stock
-                        </th>
-                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          MOQ
-                        </th>
-                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-center text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {isLoading && currentProducts.length === 0 && (
-                        <tr>
-                          <td
-                            colSpan={6}
-                            className="px-4 py-6 text-center text-sm text-gray-500"
-                          >
-                            Loading products...
-                          </td>
-                        </tr>
-                      )}
-                      {!isLoading && currentProducts.length === 0 && (
-                        <tr>
-                          <td
-                            colSpan={6}
-                            className="px-4 py-6 text-center text-2xl text-gray-500 font-bold"
-                          >
-                            No products found.
-                          </td>
-                        </tr>
-                      )}
-                      {currentProducts.map((product) => (
-                        <ProductCard
-                          key={product.id}
-                          product={product}
-                          viewMode={viewMode}
-                          onRefresh={handleRefresh}
-                          onWishlistChange={handleWishlistChange}
-                          onOpenBiddingForm={handleOpenBiddingForm} // Pass handler
-                        />
-                      ))}
-                    </tbody>
-                  </table>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {isLoading && currentProducts.length === 0 && (
+                  <div className="col-span-2 text-center text-sm text-gray-500">
+                    Loading products...
+                  </div>
+                )}
+                {!isLoading && currentProducts.length === 0 && (
+                  <div className="col-span-2 text-center text-2xl text-gray-500 font-bold">
+                    No products found.
+                  </div>
+                )}
+                {currentProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    viewMode={viewMode}
+                    onRefresh={handleRefresh}
+                    onWishlistChange={handleWishlistChange}
+                    onOpenBiddingForm={handleOpenBiddingForm} // Pass handler
+                    isFlashDeal={true} // Indicate flash deal context
+                  />
+                ))}
+              </div>
+              {totalPages > 1 && (
+                <div className="text-sm text-gray-600 mt-4 mb-2">
+                  Showing {showingProducts} of {totalProductsCount} products
                 </div>
-              </div>
-              <div className="text-sm text-gray-600 mt-4 mb-2">
-                Showing {showingProducts} of {totalProductsCount} products
-              </div>
-              <div className="flex items-center justify-between border-t border-gray-200 pt-6 mt-6">
+              )}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between border-t border-gray-200 pt-6 mt-6">
                 <button
                   onClick={() => paginate(currentPage - 1)}
                   disabled={currentPage === 1}
@@ -522,7 +500,8 @@ const FlashDeals = () => {
                   Next
                   <FontAwesomeIcon icon={faChevronRight} className="ml-2" />
                 </button>
-              </div>
+                </div>
+              )}
             </>
           )}
         </div>

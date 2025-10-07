@@ -257,19 +257,15 @@ const CartPage = () => {
     .reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <div className="flex flex-col gap-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
-            <FontAwesomeIcon
-              icon={faCartShopping}
-              className="w-5 h-5 text-blue-600"
-            />
+    <main className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="space-y-8">
+          <div className="text-center">
+            <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900 tracking-tight">
+              Shopping Cart
+            </h1>
+            <p className="text-gray-600 mt-2">Review your items and proceed to checkout</p>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">
-            Your Cart
-          </h1>
-        </div>
 
         {error && (
           <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm">
@@ -297,160 +293,147 @@ const CartPage = () => {
           </div>
         ) : (
           <>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-max">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                        Product
-                      </th>
-                      <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                        Price
-                      </th>
-                      <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                        Quantity
-                      </th>
-                      <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                        Total
-                      </th>
-                      <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {cartItems.map((item) => (
-                      <tr key={item.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
-                          <div className="flex items-center min-w-[200px]">
-                            <img
-                              className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg mr-4"
-                              src={
-                                imageErrors[item.id]
-                                  ? iphoneImage
-                                  : item.imageUrl
-                              }
-                              alt={item.name}
-                              onError={() => handleImageError(item.id)}
-                            />
-                            <div className="min-w-0">
-                              <div className="text-base sm:text-lg font-bold text-gray-900 truncate">
-                                {item.name}
-                              </div>
-                              <div className="text-xs sm:text-sm text-gray-600 mt-1 truncate">
-                                {item.description}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
-                          <div className="text-base sm:text-lg font-bold text-gray-900">
-                            {convertPrice(item.price)}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-3">
-                            <button
-                              onClick={() =>
-                                handleQuantityChange(item.id, item.quantity - 1)
-                              }
-                              disabled={item.quantity <= item.moq}
-                              className="w-8 h-8 flex items-center cursor-pointer justify-center rounded-full border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <FontAwesomeIcon
-                                icon={faMinus}
-                                className="w-4 h-4 text-gray-600"
-                              />
-                            </button>
-                            <input
-  type="text"
-  value={item.quantity}
-  onChange={(e) => {
-    const value = e.target.value;
-
-    // Allow only digits
-    if (!/^\d*$/.test(value)) return;
-
-    // If empty, don't update immediately (let user type)
-    if (value === "") {
-      handleQuantityChange(item.id, "");
-      return;
-    }
-
-    let num = parseInt(value, 10);
-
-    // Apply conditions
-    if (isNaN(num) || num < item.moq) {
-      num = item.moq;
-    } else if (num > item.stockCount) {
-      num = item.stockCount;
-    }
-
-    handleQuantityChange(item.id, num);
-  }}
-  onBlur={(e) => {
-    let num = parseInt(e.target.value, 10);
-    if (isNaN(num) || num < item.moq) num = item.moq;
-    if (num > item.stockCount) num = item.stockCount;
-    handleQuantityChange(item.id, num);
-  }}
-  className="w-16 text-center text-lg font-semibold py-1 px-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50"
-/>
-
-                            <button
-                              onClick={() =>
-                                handleQuantityChange(item.id, item.quantity + 1)
-                              }
-                              disabled={item.quantity >= item.stockCount}
-                              className="w-8 h-8 flex items-center cursor-pointer justify-center rounded-full border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <FontAwesomeIcon
-                                icon={faPlus}
-                                className="w-4 h-4 text-gray-600"
-                              />
-                            </button>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
-                          <div className="text-base sm:text-lg font-bold text-gray-900">
-                            {convertPrice(item.price * item.quantity)}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
+            <div className="space-y-4">
+              {cartItems.map((item) => (
+                <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                  <div className="flex gap-4">
+                    <div className="flex-shrink-0">
+                      <img
+                        className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-xl"
+                        src={
+                          imageErrors[item.id]
+                            ? iphoneImage
+                            : item.imageUrl
+                        }
+                        alt={item.name}
+                        onError={() => handleImageError(item.id)}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900 truncate">
+                          {item.name}
+                        </h3>
+                        <button
+                          onClick={() => handleRemoveItem(item.id)}
+                          className="text-gray-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-all duration-200"
+                        >
+                          <FontAwesomeIcon
+                            icon={faTrash}
+                            className="w-4 h-4"
+                          />
+                        </button>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                        {item.description}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <div className="text-lg font-semibold text-gray-900">
+                          {convertPrice(item.price)}
+                        </div>
+                        <div className="flex items-center gap-3">
                           <button
-                            onClick={() => handleRemoveItem(item.id)}
-                            className="text-red-600 hover:text-red-800 p-2 cursor-pointer rounded-lg hover:bg-red-50 transition-all duration-200"
+                            onClick={() =>
+                              handleQuantityChange(item.id, item.quantity - 1)
+                            }
+                            disabled={item.quantity <= item.moq}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 hover:border-[#0071E0] hover:bg-[#0071E0]/5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <FontAwesomeIcon
-                              icon={faTrash}
-                              className="w-5 h-5"
+                              icon={faMinus}
+                              className="w-3 h-3 text-gray-600"
                             />
                           </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                          <input
+                            type="text"
+                            value={item.quantity}
+                            onChange={(e) => {
+                              const value = e.target.value;
+
+                              // Allow only digits
+                              if (!/^\d*$/.test(value)) return;
+
+                              // If empty, don't update immediately (let user type)
+                              if (value === "") {
+                                handleQuantityChange(item.id, "");
+                                return;
+                              }
+
+                              let num = parseInt(value, 10);
+
+                              // Apply conditions
+                              if (isNaN(num) || num < item.moq) {
+                                num = item.moq;
+                              } else if (num > item.stockCount) {
+                                num = item.stockCount;
+                              }
+
+                              handleQuantityChange(item.id, num);
+                            }}
+                            onBlur={(e) => {
+                              let num = parseInt(e.target.value, 10);
+                              if (isNaN(num) || num < item.moq) num = item.moq;
+                              if (num > item.stockCount) num = item.stockCount;
+                              handleQuantityChange(item.id, num);
+                            }}
+                            className="w-16 text-center text-base font-semibold py-2 px-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20"
+                          />
+                          <button
+                            onClick={() =>
+                              handleQuantityChange(item.id, item.quantity + 1)
+                            }
+                            disabled={item.quantity >= item.stockCount}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 hover:border-[#0071E0] hover:bg-[#0071E0]/5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <FontAwesomeIcon
+                              icon={faPlus}
+                              className="w-3 h-3 text-gray-600"
+                            />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-gray-100">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-600">Total</span>
+                          <span className="text-xl font-bold text-gray-900">
+                            {convertPrice(item.price * item.quantity)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex justify-between items-center">
-              <div>
-                <div className="text-lg font-medium text-gray-700">Total:</div>
-                <div className="text-2xl font-bold text-gray-900">
-                  {convertPrice(totalPrice)}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center py-4 border-b border-gray-100">
+                  <span className="text-lg font-medium text-gray-900">Subtotal</span>
+                  <span className="text-lg font-semibold text-gray-900">
+                    {convertPrice(totalPrice)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-4 border-b border-gray-100">
+                  <span className="text-lg font-medium text-gray-900">Shipping</span>
+                  <span className="text-lg font-semibold text-gray-900">Free</span>
+                </div>
+                <div className="flex justify-between items-center py-4">
+                  <span className="text-xl font-semibold text-gray-900">Total</span>
+                  <span className="text-2xl font-bold text-gray-900">
+                    {convertPrice(totalPrice)}
+                  </span>
                 </div>
               </div>
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3 mt-6">
                 <button
-                  className="bg-red-600 text-white py-3 cursor-pointer px-6 rounded-lg font-medium hover:bg-red-700 transition-all duration-200"
+                  className="flex-1 px-6 py-3 text-gray-700 border border-gray-200 rounded-xl font-medium hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
                   onClick={handleClearCart}
                 >
                   Clear Cart
                 </button>
                 <button
-                  className="bg-[#0071E0] text-white cursor-pointer py-3 px-6 rounded-lg font-medium hover:bg-blue-600 transition-all duration-200"
+                  className="flex-1 px-6 py-3 bg-[#0071E0] text-white rounded-xl font-medium hover:bg-[#0056B3] transition-all duration-200 shadow-sm hover:shadow-md"
                   onClick={() => setShowCheckoutForm(true)}
                 >
                   Proceed to Checkout
@@ -728,6 +711,7 @@ const CartPage = () => {
             )}
           </>
         )}
+        </div>
       </div>
     </main>
   );

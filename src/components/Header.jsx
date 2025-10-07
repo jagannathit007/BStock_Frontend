@@ -219,22 +219,22 @@ const Header = ({ onLogout }) => {
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
       />
 
-      <header className="bg-[#fff] shadow-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-4 lg:px-6">
-          <div className="flex justify-between items-center h-16">
+      <header className="bg-white/95 backdrop-blur-xl border-b border-gray-200/50 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex justify-between items-center h-14">
             {/* Logo */}
             <div className="flex items-center flex-shrink-0">
-              <div className="inline-flex items-center justify-center w-10 h-10 bg-[#0071E0] rounded-lg mr-3">
+              <div className="inline-flex items-center justify-center w-8 h-8 bg-gradient-to-br from-[#0071e3] to-[#005bb5] rounded-lg mr-2">
                 <svg
-                  className="w-5 h-5 text-white"
+                  className="w-4 h-4 text-white"
                   fill="currentColor"
                   viewBox="0 0 384 512"
                 >
                   <path d="M16 64C16 28.7 44.7 0 80 0H304c35.3 0 64 28.7 64 64V448c0 35.3-28.7 64-64 64H80c-35.3 0-64-28.7-64-64V64zM224 448a32 32 0 1 0 -64 0 32 32 0 1 0 64 0zM304 64H80V384H304V64z" />
                 </svg>
               </div>
-              <h1 className="text-xl font-bold text-gray-900 hidden sm:block">
-                xGSM Bidding
+              <h1 className="text-lg font-medium text-gray-900 hidden sm:block tracking-tight font-sans">
+                xGSM
               </h1>
             </div>
 
@@ -259,58 +259,64 @@ const Header = ({ onLogout }) => {
             </div> */}
 
             {/* Right Side */}
-            <div className="flex items-center space-x-2 sm:space-x-4">
+            <div className="flex items-center space-x-1">
               {/* Wallet Info */}
               <button
                 onClick={handleWalletClick}
-                className="hidden sm:flex items-center space-x-2 cursor-pointer p-2 hover:bg-gray-50 rounded-lg"
+                className="hidden sm:flex items-center space-x-2 cursor-pointer px-3 py-1.5 hover:bg-gray-50 rounded-lg transition-all duration-200"
                 title="My Wallet"
               >
                 <svg
-                  className="h-5 w-5 text-gray-600"
+                  className="h-4 w-4 text-gray-600"
                   fill="currentColor"
                   viewBox="0 0 512 512"
                 >
                   <path d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V192c0-35.3-28.7-64-64-64H80c-8.8 0-16-7.2-16-16s7.2-16 16-16H448c17.7 0 32-14.3 32-32s-14.3-32-32-32H64zM416 272a32 32 0 1 1 0 64 32 32 0 1 1 0-64z" />
                 </svg>
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm font-medium text-gray-900 font-sans">
                   {convertPrice(walletBalance)}
                 </span>
               </button>
 
               {/* Negotiations */}
               <button
-                className="p-2 text-gray-600 hover:text-gray-900 relative cursor-pointer"
+                className="p-2 text-gray-500 hover:text-[#0071e3] hover:bg-blue-50 rounded-lg relative cursor-pointer transition-all duration-200"
                 onClick={handleNegotiationClick}
                 title="My Negotiations"
               >
-                <Handshake className="h-5 w-5" />
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-handshake h-4 w-4" aria-hidden="true">
+                  <path d="m11 17 2 2a1 1 0 1 0 3-3"></path>
+                  <path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"></path>
+                  <path d="m21 3 1 11h-2"></path>
+                  <path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"></path>
+                  <path d="M3 4h8"></path>
+                </svg>
               </button>
 
               {/* Wishlist */}
               <button
-                className="p-2 text-gray-600 hover:text-gray-900 relative cursor-pointer"
+                className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg relative cursor-pointer transition-all duration-200"
                 onClick={handleWishlistClick}
                 title="My Wishlist"
               >
-                <i className="fas fa-heart h-5 w-5"></i>
+                <i className="fas fa-heart h-4 w-4"></i>
               </button>
 
               {/* Cart */}
               <button
-                className="p-2 text-gray-600 hover:text-gray-900 relative cursor-pointer"
+                className="p-2 text-gray-500 hover:text-[#0071e3] hover:bg-blue-50 rounded-lg relative cursor-pointer transition-all duration-200"
                 onClick={handleCartClick}
                 title="My Cart"
               >
                 <svg
-                  className="h-5 w-5"
+                  className="h-4 w-4"
                   fill="currentColor"
                   viewBox="0 0 576 512"
                 >
                   <path d="M0 24C0 10.7 10.7 0 24 0H69.5c22 0 41.5 12.8 50.6 32h411c26.3 0 45.5 25 38.6 50.4l-41 152.3c-8.5 31.4-37 53.3-69.5 53.3H170.7l5.4 28.5c2.2 11.3 12.1 19.5 23.6 19.5H488c13.3 0 24 10.7 24 24s-10.7 24-24 24H199.7c-34.6 0-64.3-24.6-70.7-58.5L77.4 54.5c-.7-3.8-4-6.5-7.9-6.5H24C10.7 48 0 37.3 0 24zM128 464a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm336-48a48 48 0 1 1 0 96 48 48 0 1 1 0-96z" />
                 </svg>
                 {cartItemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-medium font-sans">
                     {cartItemCount}
                   </span>
                 )}
@@ -319,18 +325,18 @@ const Header = ({ onLogout }) => {
               {/* Profile Dropdown */}
               <div className="relative" ref={dropdownRef}>
                 <div
-                  className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 rounded-lg p-1 transition-colors duration-200"
+                  className="flex items-center cursor-pointer hover:bg-gray-50 rounded-lg p-1 transition-all duration-200"
                   onClick={handleProfileClick}
                 >
                   {hasImage ? (
                     <img
                       src={imageError ? "/images/avtar.jpg" : avatarUrl}
                       alt="Profile"
-                      className="w-8 h-8 rounded-full border-2 border-gray-200 object-cover"
+                      className="w-7 h-7 rounded-full border border-gray-200 object-cover"
                       onError={handleImageError}
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full border-2 border-gray-200 bg-gradient-to-br from-[#0071E0] to-[#005BB5] flex items-center justify-center">
+                    <div className="w-7 h-7 rounded-full border border-gray-200 bg-gradient-to-br from-[#0071E0] to-[#005BB5] flex items-center justify-center">
                       <span className="text-white text-xs font-semibold">
                         {getInitials}
                       </span>
@@ -343,7 +349,7 @@ const Header = ({ onLogout }) => {
                     <div className="py-1">
                       <button
                         onClick={handleProfileNavigation}
-                        className="flex items-center cursor-pointer w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#0071E0] transition-colors duration-150"
+                        className="flex items-center cursor-pointer w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
                       >
                         <i className="fas fa-user w-4 h-4 mr-3 text-gray-400"></i>
                         Profile
@@ -351,9 +357,9 @@ const Header = ({ onLogout }) => {
 
                       <button
                         onClick={handleLogout}
-                        className="flex items-center w-full cursor-pointer px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150"
+                        className="flex items-center w-full cursor-pointer px-4 py-2.5 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
                       >
-                        <i className="fas fa-sign-out-alt w-4 h-4 mr-3 text-red-500"></i>
+                        <i className="fas fa-sign-out-alt w-4 h-4 mr-3 text-gray-400"></i>
                         Logout
                       </button>
                     </div>

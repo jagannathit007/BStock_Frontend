@@ -82,84 +82,73 @@ const AddToCartPopup = ({ product, onClose }) => {
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl max-w-lg w-full transform transition-all duration-300 scale-100 hover:scale-[1.01]"
+        className="bg-white rounded-2xl shadow-xl max-w-md w-full transform transition-all duration-300 scale-100 border border-gray-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
-              <FontAwesomeIcon
-                icon={faCartShopping}
-                className="w-5 h-5 text-blue-600"
-              />
-            </div>
-            <h2 className="text-2xl font-semibold text-gray-900">
-              Add to Cart
-            </h2>
-          </div>
+        <div className="flex justify-between items-center p-4 border-b border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-900 font-apple">
+            Add to Cart
+          </h2>
           <button
-            className="w-8 h-8 flex items-center cursor-pointer justify-center rounded-full hover:bg-gray-100 transition-colors duration-200"
+            className="w-8 h-8 flex items-center cursor-pointer justify-center rounded-lg hover:bg-gray-100 transition-all duration-200"
             onClick={onClose}
           >
-            <FontAwesomeIcon icon={faTimes} className="w-5 h-5 text-gray-500" />
+            <FontAwesomeIcon icon={faTimes} className="w-4 h-4 text-gray-500" />
           </button>
         </div>
 
         {/* Product Info */}
-        <div className="p-6 space-y-6">
+        <div className="p-4 space-y-4">
           {error && (
             <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm">
               {error}
             </div>
           )}
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <div className="flex-shrink-0">
               <img
-                className="w-24 h-24 object-cover rounded-xl shadow-sm border border-gray-100"
+                className="w-16 h-16 object-cover rounded-lg border border-gray-200"
                 src={imageError ? iphoneImage : `${import.meta.env.VITE_BASE_URL}/${imageUrl}`}
                 alt={name || "Product"}
                 onError={handleImageError}
               />
             </div>
-            <div className="flex-1 space-y-2">
-              <h3 className="text-xl font-semibold text-gray-900 leading-tight">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-base font-semibold text-gray-900 leading-tight truncate font-apple">
                 {name || "Unnamed Product"}
               </h3>
               {purchaseType && (
-                <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${isFullPurchase ? 'bg-purple-50 text-purple-700' : 'bg-blue-50 text-blue-700'}`}>
+                <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-1 ${isFullPurchase ? 'bg-purple-50 text-purple-700' : 'bg-blue-50 text-blue-700'}`}>
                   Purchase: {isFullPurchase ? 'Full' : 'Partial'}
                 </div>
               )}
-              <div className="flex items-center gap-2 text-2xl font-bold text-gray-900">
+              <div className="flex items-center gap-2 text-lg font-bold text-gray-900 mt-1">
                 <FontAwesomeIcon
                   icon={faDollarSign}
-                  className="w-5 h-5 text-green-600"
+                  className="w-4 h-4 text-green-600"
                 />
                 {convertPrice(validPrice)}
               </div>
-              <div className="flex flex-wrap gap-3 text-sm">
-                <div className="flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-full">
-                  <FontAwesomeIcon icon={faBox} className="w-3 h-3" />
-                  {validStockCount === Infinity ? "Unlimited" : validStockCount} in stock
-                </div>
-                <div className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full">
-                  MOQ: {validMoq} units
-                </div>
+              <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                <FontAwesomeIcon icon={faBox} className="w-3 h-3" />
+                <span>{validStockCount === Infinity ? "Unlimited" : validStockCount} in stock</span>
+                <span className="mx-1">•</span>
+                <span>MOQ: {validMoq}</span>
               </div>
             </div>
           </div>
 
           {/* Quantity Selector */}
           <div className="space-y-3">
-            <label className="block text-sm font-semibold text-gray-700">
+            <label className="block text-sm font-medium text-gray-700 font-apple">
               {isFullPurchase ? 'Quantity (locked to full stock)' : 'Select Quantity'}
             </label>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => handleQuantityChange(quantity - 1)}
                 disabled={isFullPurchase || quantity <= validMoq}
-                className="w-10 h-10 flex items-center justify-center cursor-pointer rounded-full border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-white"
+                className="w-10 h-10 flex items-center justify-center cursor-pointer rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-white"
               >
                 <FontAwesomeIcon
                   icon={faMinus}
@@ -176,9 +165,9 @@ const AddToCartPopup = ({ product, onClose }) => {
                   max={validStockCount}
                   readOnly={isFullPurchase}
                   disabled={isFullPurchase}
-                  className={`w-full text-center text-lg font-semibold py-3 px-4 border-2 rounded-xl focus:outline-none transition-all duration-200 ${isFullPurchase ? 'border-gray-200 bg-gray-50 text-gray-500' : 'border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-50'}`}
+                  className={`w-full text-center text-lg font-semibold py-3 px-4 border border-gray-200 rounded-lg focus:outline-none transition-all duration-200 font-apple focus:border-primary focus:ring-2 focus:ring-primary/20 ${isFullPurchase ? 'bg-gray-50 text-gray-500' : ''}`}
                 />
-                <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs text-gray-500 px-1">
+                <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-gray-500 px-2 bg-white rounded shadow-sm">
                   {isFullPurchase
                     ? 'Full purchase'
                     : `Min: ${validMoq} | Max: ${validStockCount === Infinity ? 'Unlimited' : validStockCount}`}
@@ -188,7 +177,7 @@ const AddToCartPopup = ({ product, onClose }) => {
               <button
                 onClick={() => handleQuantityChange(quantity + 1)}
                 disabled={isFullPurchase || quantity >= validStockCount}
-                className="w-10 h-10 flex items-center justify-center cursor-pointer rounded-full border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-white"
+                className="w-10 h-10 flex items-center justify-center cursor-pointer rounded-lg border border-gray-200 hover:border-primary hover:bg-primary/5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-white"
               >
                 <FontAwesomeIcon
                   icon={faPlus}
@@ -199,37 +188,37 @@ const AddToCartPopup = ({ product, onClose }) => {
           </div>
 
           {/* Total Price */}
-          <div className="bg-gray-50 rounded-xl p-4">
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
             <div className="flex justify-between items-center">
-              <span className="text-lg font-medium text-gray-700">
+              <span className="text-base font-semibold text-gray-800 font-apple">
                 Total Price:
               </span>
-              <div className="flex items-center gap-1 text-2xl font-bold text-gray-900">
+              <div className="flex items-center gap-1 text-xl font-bold text-gray-900">
                 <FontAwesomeIcon
                   icon={faDollarSign}
-                  className="w-5 h-5 text-green-600"
+                  className="w-4 h-4 text-green-600"
                 />
                 {convertPrice(totalPrice)}
               </div>
             </div>
-            <div className="text-sm text-gray-500 mt-1">
+            <div className="text-xs text-gray-600 mt-1 font-apple">
               {quantity} × {convertPrice(validPrice)} per unit
             </div>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3 p-6 pt-0">
+        <div className="flex gap-3 p-4 pt-0">
           <button
-            className="flex-1 bg-[#0071E0] hover:bg-[#005bb5] cursor-pointer text-white py-3 px-5 rounded-lg font-medium text-base flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+            className="flex-1 bg-[#0071e3] hover:bg-[#0071e3]-dark cursor-pointer text-white py-3 px-4 rounded-lg font-semibold text-base flex items-center justify-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md font-apple"
             onClick={handleConfirm}
           >
-            <FontAwesomeIcon icon={faCartShopping} />
+            <FontAwesomeIcon icon={faCartShopping} className="w-4 h-4" />
             Add to Cart
           </button>
 
           <button
-            className="px-5 py-3 border border-gray-300 text-gray-700 cursor-pointer rounded-lg font-medium text-base hover:bg-gray-100 transition-all duration-200"
+            className="px-4 py-3 border border-gray-200 text-gray-700 cursor-pointer rounded-lg font-semibold text-base hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 font-apple"
             onClick={onClose}
           >
             Cancel
