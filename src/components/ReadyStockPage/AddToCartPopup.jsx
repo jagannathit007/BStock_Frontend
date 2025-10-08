@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCartShopping,
@@ -23,6 +24,19 @@ const AddToCartPopup = ({ product, onClose }) => {
   const [quantity, setQuantity] = useState(isFullPurchase ? validStockCount : validMoq);
   const [error, setError] = useState(null);
   const [imageError, setImageError] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    // Lock body scroll when modal is open
+    document.body.style.overflow = 'hidden';
+    
+    return () => {
+      setMounted(false);
+      // Restore body scroll when modal is closed
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
 
   const handleImageError = () => {
     setImageError(true);
@@ -76,46 +90,49 @@ const AddToCartPopup = ({ product, onClose }) => {
 
   const totalPrice = validPrice * quantity;
 
-  return (
+  if (!mounted) return null;
+
+  const modalContent = (
     <div
-      className="fixed inset-0 flex items-center justify-center bg-black/60 z-[70] transition-opacity duration-300 p-4"
+      className="fixed inset-0 flex items-center justify-center bg-black/60 z-[9999] transition-opacity duration-300 p-4 animate-fadeIn"
+      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-xl max-w-md w-full transform transition-all duration-300 scale-100 border border-gray-200"
+        className="bg-white rounded-2xl shadow-xl max-w-md w-full transform transition-all duration-300 scale-100 border border-gray-200 animate-scaleIn"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex justify-between items-center p-4 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900 font-apple">
+        <div className="flex justify-between items-center p-6 border-b border-gray-100">
+          <h2 className="text-xl font-bold text-gray-900">
             Add to Cart
           </h2>
           <button
-            className="w-8 h-8 flex items-center cursor-pointer justify-center rounded-lg hover:bg-gray-100 transition-all duration-200"
+            className="w-10 h-10 flex items-center cursor-pointer justify-center rounded-lg hover:bg-gray-100 transition-all duration-200 hover:scale-110"
             onClick={onClose}
           >
-            <FontAwesomeIcon icon={faTimes} className="w-4 h-4 text-gray-500" />
+            <FontAwesomeIcon icon={faTimes} className="w-5 h-5 text-gray-500" />
           </button>
         </div>
 
         {/* Product Info */}
-        <div className="p-4 space-y-4">
+        <div className="p-6 space-y-6">
           {error && (
             <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm">
               {error}
             </div>
           )}
-          <div className="flex gap-3">
+          <div className="flex gap-4">
             <div className="flex-shrink-0">
               <img
-                className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                className="w-20 h-20 object-cover rounded-xl border border-gray-200 shadow-sm"
                 src={imageError ? iphoneImage : `${import.meta.env.VITE_BASE_URL}/${imageUrl}`}
                 alt={name || "Product"}
                 onError={handleImageError}
               />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-base font-semibold text-gray-900 leading-tight truncate font-apple">
+              <h3 className="text-lg font-bold text-gray-900 leading-tight">
                 {name || "Unnamed Product"}
               </h3>
               {purchaseType && (
@@ -208,17 +225,17 @@ const AddToCartPopup = ({ product, onClose }) => {
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3 p-4 pt-0">
+        <div className="flex gap-4 p-6 pt-0">
           <button
-            className="flex-1 bg-[#0071e3] hover:bg-[#0071e3]-dark cursor-pointer text-white py-3 px-4 rounded-lg font-semibold text-base flex items-center justify-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md font-apple"
+            className="flex-1 bg-[#0071e3] hover:bg-[#0056B3] cursor-pointer text-white py-4 px-6 rounded-xl font-semibold text-base flex items-center justify-center gap-3 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
             onClick={handleConfirm}
           >
-            <FontAwesomeIcon icon={faCartShopping} className="w-4 h-4" />
+            <FontAwesomeIcon icon={faCartShopping} className="w-5 h-5" />
             Add to Cart
           </button>
 
           <button
-            className="px-4 py-3 border border-gray-200 text-gray-700 cursor-pointer rounded-lg font-semibold text-base hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 font-apple"
+            className="px-6 py-4 border border-gray-200 text-gray-700 cursor-pointer rounded-xl font-semibold text-base hover:bg-gray-50 hover:border-gray-300 transition-all duration-300 hover:scale-105"
             onClick={onClose}
           >
             Cancel
@@ -227,6 +244,8 @@ const AddToCartPopup = ({ product, onClose }) => {
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default AddToCartPopup;

@@ -260,11 +260,11 @@ const CartPage = () => {
     <main className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-8">
-          <div className="text-center">
-            <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900 tracking-tight">
+          <div className="text-center py-8">
+            <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 tracking-tight animate-fadeIn">
               Shopping Cart
             </h1>
-            <p className="text-gray-600 mt-2">Review your items and proceed to checkout</p>
+            <p className="text-xl text-gray-600 mt-4 animate-slideUp animate-stagger-1">Review your items and proceed to checkout</p>
           </div>
 
         {error && (
@@ -274,18 +274,22 @@ const CartPage = () => {
         )}
 
         {isLoading ? (
-          <div className="text-center py-12 text-sm text-gray-500">
-            Loading cart...
+          <div className="text-center py-20">
+            <div className="inline-flex items-center space-x-3 text-gray-600">
+              <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+              <span className="text-lg font-medium">Loading cart...</span>
+            </div>
           </div>
         ) : cartItems.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="text-center py-20">
             <FontAwesomeIcon
               icon={faCartShopping}
-              className="w-16 h-16 text-gray-400 mb-4"
+              className="w-20 h-20 text-gray-400 mb-6 animate-float"
             />
-            <p className="text-lg text-gray-600">Your cart is empty.</p>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Your cart is empty</h2>
+            <p className="text-lg text-gray-600 mb-8">Add some items to get started</p>
             <button
-              className="mt-4 bg-[#0071E0] cursor-pointer text-white py-2 px-6 rounded-lg font-medium hover:bg-blue-600 transition-all duration-200"
+              className="bg-[#0071E0] cursor-pointer text-white py-3 px-8 rounded-lg font-medium hover:bg-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
               onClick={() => navigate("/")}
             >
               Continue Shopping
