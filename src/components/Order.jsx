@@ -79,53 +79,55 @@ const Order = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Title */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
-          <FontAwesomeIcon icon={faShoppingBag} className="w-5 h-5 text-blue-600" />
+      <div className="flex items-center gap-4 mb-8">
+        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+          <FontAwesomeIcon icon={faShoppingBag} className="w-6 h-6 text-white" />
         </div>
-        <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-gray-200">Your Orders</h1>
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">Order Management</h1>
+          <p className="text-gray-600 text-sm mt-1">Track and manage your orders</p>
+        </div>
       </div>
 
       {/* Table Container */}
-      <div className="w-full overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 shadow-sm">
+      <div className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
         {/* Table Header with Controls */}
-        <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-          <div className="flex items-center gap-3 flex-1">
+        <div className="flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+          <div className="flex items-center gap-4 flex-1">
             {/* Search Input */}
-            <div className="relative flex-1">
+            <div className="relative flex-1 max-w-md">
               <FontAwesomeIcon
                 icon={faSearch}
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
               />
               <input
                 type="text"
                 placeholder="Search by Order ID, Date, or Items"
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full"
+                className="pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm w-full shadow-sm"
               />
             </div>
 
             {/* Status Filter */}
             <div className="flex items-center gap-3">
-              <label htmlFor="statusFilter" className="text-sm font-medium text-gray-700 dark:text-gray-200">
+              <label htmlFor="statusFilter" className="text-sm font-semibold text-gray-700">
                 Filter by Status:
               </label>
               <select
                 id="statusFilter"
                 value={statusFilter}
                 onChange={handleStatusChange}
-                className="pl-3 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="pl-4 pr-8 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm shadow-sm"
               >
-                <option value="">All</option>
-                <option value="request">Request</option>
+                <option value="">All Orders</option>
+                <option value="request">Pending</option>
                 <option value="accepted">Accepted</option>
                 <option value="shipped">Shipped</option>
                 <option value="delivered">Delivered</option>
-                <option value="cancel">Cancel</option>
-                <option value="cancelled">Cancelled</option>
+                <option value="cancel">Cancelled</option>
               </select>
             </div>
           </div>
@@ -133,52 +135,57 @@ const Order = () => {
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 p-3 rounded-lg text-sm m-4">
-            {error}
+          <div className="bg-red-50 border-l-4 border-red-400 text-red-700 p-4 m-6 rounded-r-lg">
+            <div className="flex">
+              <div className="ml-3">
+                <p className="text-sm font-medium">{error}</p>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Table */}
         <div className="w-full overflow-x-auto">
           <table className="w-full table-auto">
-            <thead className="bg-gray-100 dark:bg-gray-900">
+            <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-200 border-b border-gray-200 dark:border-gray-700 align-middle">
+                <th className="px-6 py-5 text-left text-sm font-bold text-gray-800 border-b-2 border-gray-200 align-middle tracking-wide">
                   Order ID
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-200 border-b border-gray-200 dark:border-gray-700 align-middle">
+                <th className="px-6 py-5 text-left text-sm font-bold text-gray-800 border-b-2 border-gray-200 align-middle tracking-wide">
                   Date
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-200 border-b border-gray-200 dark:border-gray-700 align-middle">
+                <th className="px-6 py-5 text-left text-sm font-bold text-gray-800 border-b-2 border-gray-200 align-middle tracking-wide">
                   Items
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-200 border-b border-gray-200 dark:border-gray-700 align-middle">
-                  Total
+                <th className="px-6 py-5 text-left text-sm font-bold text-gray-800 border-b-2 border-gray-200 align-middle tracking-wide">
+                  Total Amount
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-200 border-b border-gray-200 dark:border-gray-700 align-middle">
+                <th className="px-6 py-5 text-left text-sm font-bold text-gray-800 border-b-2 border-gray-200 align-middle tracking-wide">
                   Status
                 </th>
-                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 dark:text-gray-200 border-b border-gray-200 dark:border-gray-700 align-middle">
+                <th className="px-6 py-5 text-center text-sm font-bold text-gray-800 border-b-2 border-gray-200 align-middle tracking-wide">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="divide-y divide-gray-200">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="p-12 text-center">
-                    <div className="text-gray-500 dark:text-gray-400 text-lg">
-                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-blue-600 mx-auto mb-4"></div>
-                      Loading Orders...
+                  <td colSpan={6} className="p-16 text-center">
+                    <div className="text-gray-500 text-lg">
+                      <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-blue-600 mx-auto mb-4"></div>
+                      <p className="font-medium">Loading Orders...</p>
                     </div>
                   </td>
                 </tr>
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-12 text-center">
-                    <div className="text-gray-500 dark:text-gray-400 text-lg">
-                      <FontAwesomeIcon icon={faShoppingBag} className="w-16 h-16 text-gray-400 dark:text-gray-500 mb-4" />
-                      <p>No orders found</p>
+                  <td colSpan={6} className="p-16 text-center">
+                    <div className="text-gray-500 text-lg">
+                      <FontAwesomeIcon icon={faShoppingBag} className="w-20 h-20 text-gray-300 mb-4" />
+                      <p className="font-medium text-gray-600">No orders found</p>
+                      <p className="text-sm text-gray-500 mt-2">Try adjusting your search or filter criteria</p>
                     </div>
                   </td>
                 </tr>
@@ -186,49 +193,67 @@ const Order = () => {
                 orders.map((order) => (
                   <tr
                     key={order._id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                    className="hover:bg-blue-50 transition-all duration-200 border-b border-gray-100"
                   >
-                    <td className="px-6 py-4 text-sm font-medium text-gray-800 dark:text-gray-200">
-                      {order._id}
+                    <td className="px-6 py-5 text-sm font-semibold text-gray-900">
+                      <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+                        {order._id}
+                      </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
-                      {new Date(order.createdAt).toLocaleDateString()}
+                    <td className="px-6 py-5 text-sm text-gray-600">
+                      {new Date(order.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
-                      {order.cartItems.map((item) => (
-                        <div key={item.productId._id}>
-                          {item.skuFamilyId?.name || item.productId.name} (x{item.quantity})
-                        </div>
-                      ))}
+                    <td className="px-6 py-5 text-sm text-gray-600">
+                      <div className="space-y-1">
+                        {order.cartItems.map((item, index) => (
+                          <div key={item.productId._id} className="flex items-center gap-2">
+                            <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">
+                              {index + 1}
+                            </span>
+                            <span className="font-medium">
+                              {item.skuFamilyId?.name || item.productId.name}
+                            </span>
+                            <span className="text-gray-500">(x{item.quantity})</span>
+                          </div>
+                        ))}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 text-sm font-bold text-gray-900 dark:text-gray-200">
-                      {convertPrice(order.totalAmount)}
+                    <td className="px-6 py-5 text-sm font-bold text-gray-900">
+                      <span className="text-lg">{convertPrice(order.totalAmount)}</span>
                     </td>
-                    <td className="px-6 py-4 text-sm">
+                    <td className="px-6 py-5 text-sm">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
+                        className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide ${
                           order.status === 'delivered'
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-                            : order.status === 'cancel'
-                            ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-                            : 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
+                            ? 'bg-green-100 text-green-800 border border-green-200'
+                            : order.status === 'cancel' || order.status === 'cancelled'
+                            ? 'bg-red-100 text-red-800 border border-red-200'
+                            : order.status === 'shipped'
+                            ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                            : order.status === 'accepted'
+                            ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                            : 'bg-gray-100 text-gray-800 border border-gray-200'
                         }`}
                       >
                         {order.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-center">
+                    <td className="px-6 py-5 text-sm text-center">
                       {['request', 'accepted'].includes(order.status) && (
                         <button
                           onClick={() => handleCancelOrder(order._id)}
                           disabled={cancellingOrderId === order._id}
-                          className={`flex items-center gap-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                          className={`inline-flex items-center gap-2 px-4 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium ${
                             cancellingOrderId === order._id ? 'animate-pulse' : ''
                           }`}
                           title="Cancel Order"
                         >
                           {cancellingOrderId === order._id ? (
-                            <div className="animate-spin rounded-full h-3 w-3 border-t-2 border-red-600"></div>
+                            <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-red-600"></div>
                           ) : (
                             <FontAwesomeIcon icon={faTimes} className="w-4 h-4" />
                           )}
@@ -245,15 +270,15 @@ const Order = () => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-4 sm:mb-0">
-              Showing {orders.length} of {orders.length} items
+          <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-6 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+            <div className="text-sm text-gray-600 mb-4 sm:mb-0 font-medium">
+              Showing {orders.length} of {orders.length} orders
             </div>
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
               <button
                 onClick={() => handlePageChange(page - 1)}
                 disabled={page === 1 || isLoading}
-                className="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 disabled:bg-gray-100 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-sm transition-colors"
+                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-400 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed text-sm transition-all duration-200 font-medium shadow-sm"
               >
                 Previous
               </button>
@@ -267,11 +292,11 @@ const Order = () => {
                       key={pageNum}
                       onClick={() => handlePageChange(pageNum)}
                       disabled={isLoading}
-                      className={`px-3 py-2 rounded-lg text-sm ${
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                         page === pageNum
-                          ? "bg-[#0071E0] text-white dark:bg-blue-500 dark:text-white border border-blue-600 dark:border-blue-500"
-                          : "bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
-                      } transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+                          ? "bg-blue-600 text-white border border-blue-600 shadow-md"
+                          : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400"
+                      } disabled:opacity-50 disabled:cursor-not-allowed shadow-sm`}
                     >
                       {pageNum}
                     </button>
@@ -282,7 +307,7 @@ const Order = () => {
               <button
                 onClick={() => handlePageChange(page + 1)}
                 disabled={page === totalPages || isLoading}
-                className="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 disabled:bg-gray-100 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-sm transition-colors"
+                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-400 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed text-sm transition-all duration-200 font-medium shadow-sm"
               >
                 Next
               </button>
