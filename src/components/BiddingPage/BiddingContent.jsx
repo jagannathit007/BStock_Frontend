@@ -10,6 +10,7 @@ import SideFilter from "../SideFilter";
 import BusinessDetailsPopup from "./BusinessDetailsPopup";
 import BiddingProductCard from "./BiddingProductCard";
 import ViewControls from "./ViewControls";
+import Loader from "../Loader"; // Import Loader
 import { convertPrice } from "../../utils/currencyUtils";
 
 const BiddingContent = () => {
@@ -23,7 +24,8 @@ const BiddingContent = () => {
   // Real product data state management
   const [fetchedProducts, setFetchedProducts] = useState([]);
   const [totalProductsCount, setTotalProductsCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [filters, setFilters] = useState({});
   const [refreshTick] = useState(false);
@@ -150,6 +152,7 @@ const BiddingContent = () => {
         }
       } finally {
         setIsLoading(false);
+        setHasInitiallyLoaded(true);
       }
     };
     fetchData();
@@ -332,24 +335,25 @@ const BiddingContent = () => {
                 </div>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
-                {isLoading && currentProducts.length === 0 && (
-                  <div className="col-span-3 text-center text-sm text-gray-500">
-                    Loading products...
+                {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
+                  <div className="col-span-3 flex justify-center py-12">
+                    <Loader size="lg" />
                   </div>
                 )}
-                {!isLoading && currentProducts.length === 0 && (
+                {!isLoading && hasInitiallyLoaded && currentProducts.length === 0 && (
                   <div className="col-span-3 text-center text-2xl text-gray-500 font-bold">
                     No products found.
                   </div>
                 )}
-                {currentProducts.map((product) => (
-                  <BiddingProductCard
-                    key={product.id}
-                    product={product}
-                    viewMode={viewMode}
-                    onOpenBiddingForm={handleOpenBiddingForm}
-                    renderBidValue={renderBidValue}
-                  />
+                {currentProducts.map((product, index) => (
+                  <div key={product.id} className="animate-slideUp" style={{animationDelay: `${index * 0.1}s`}}>
+                    <BiddingProductCard
+                      product={product}
+                      viewMode={viewMode}
+                      onOpenBiddingForm={handleOpenBiddingForm}
+                      renderBidValue={renderBidValue}
+                    />
+                  </div>
                 ))}
               </div>
 
@@ -437,17 +441,19 @@ const BiddingContent = () => {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {isLoading && currentProducts.length === 0 && (
+                      {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
                         <tr>
                           <td
                             colSpan={6}
-                            className="px-4 py-6 text-center text-sm text-gray-500"
+                            className="px-4 py-12 text-center"
                           >
-                            Loading products...
+                            <div className="flex justify-center">
+                              <Loader size="lg" />
+                            </div>
                           </td>
                         </tr>
                       )}
-                      {!isLoading && currentProducts.length === 0 && (
+                      {!isLoading && hasInitiallyLoaded && currentProducts.length === 0 && (
                         <tr>
                           <td
                             colSpan={6}
@@ -457,14 +463,15 @@ const BiddingContent = () => {
                           </td>
                         </tr>
                       )}
-                      {currentProducts.map((product) => (
-                        <BiddingProductCard
-                          key={product.id}
-                          product={product}
-                          viewMode={viewMode}
-                          onOpenBiddingForm={handleOpenBiddingForm}
-                          renderBidValue={renderBidValue}
-                        />
+                      {currentProducts.map((product, index) => (
+                        <tr key={product.id} className="animate-slideUp" style={{animationDelay: `${index * 0.1}s`}}>
+                          <BiddingProductCard
+                            product={product}
+                            viewMode={viewMode}
+                            onOpenBiddingForm={handleOpenBiddingForm}
+                            renderBidValue={renderBidValue}
+                          />
+                        </tr>
                       ))}
                     </tbody>
                   </table>

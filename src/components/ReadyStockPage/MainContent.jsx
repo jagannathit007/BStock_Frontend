@@ -3,6 +3,7 @@ import ProductCard from "./ProductCard";
 import SideFilter from "../SideFilter";
 import ViewControls from "./ViewControls";
 import BiddingForm from "../negotiation/BiddingForm"; // Import BiddingForm
+import Loader from "../Loader"; // Import Loader
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChevronLeft,
@@ -11,7 +12,6 @@ import {
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
-import { convertPrice } from "../../utils/currencyUtils";
 
 const MainContent = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -20,7 +20,8 @@ const MainContent = () => {
   const [itemsPerPage, setItemsPerPage] = useState(9);
   const [fetchedProducts, setFetchedProducts] = useState([]);
   const [totalProductsCount, setTotalProductsCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [filters, setFilters] = useState({});
   const [refreshTick, setRefreshTick] = useState(false);
@@ -120,6 +121,7 @@ const MainContent = () => {
         }
       } finally {
         setIsLoading(false);
+        setHasInitiallyLoaded(true);
       }
     };
     fetchData();
@@ -340,25 +342,26 @@ const MainContent = () => {
           {viewMode === "grid" ? (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                {isLoading && currentProducts.length === 0 && (
-                  <div className="col-span-3 text-center text-sm text-gray-500">
-                    Loading products...
+                {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
+                  <div className="col-span-3 flex justify-center py-12">
+                    <Loader size="lg" />
                   </div>
                 )}
-                {!isLoading && currentProducts.length === 0 && (
+                {!isLoading && hasInitiallyLoaded && currentProducts.length === 0 && (
                   <div className="col-span-3 text-center text-2xl text-gray-500 font-bold">
                     No products found.
                   </div>
                 )}
-                {currentProducts.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    viewMode={viewMode}
-                    onRefresh={handleRefresh}
-                    onOpenBiddingForm={handleOpenBiddingForm} // Pass handler
-                    onWishlistChange={handleWishlistChange}
-                  />
+                {currentProducts.map((product, index) => (
+                  <div key={product.id} className="animate-slideUp" style={{animationDelay: `${index * 0.1}s`}}>
+                    <ProductCard
+                      product={product}
+                      viewMode={viewMode}
+                      onRefresh={handleRefresh}
+                      onOpenBiddingForm={handleOpenBiddingForm} // Pass handler
+                      onWishlistChange={handleWishlistChange}
+                    />
+                  </div>
                 ))}
               </div>
               {totalPages > 1 && (
@@ -421,25 +424,26 @@ const MainContent = () => {
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {isLoading && currentProducts.length === 0 && (
-                  <div className="col-span-2 text-center text-sm text-gray-500">
-                    Loading products...
+                {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
+                  <div className="col-span-2 flex justify-center py-12">
+                    <Loader size="lg" />
                   </div>
                 )}
-                {!isLoading && currentProducts.length === 0 && (
+                {!isLoading && hasInitiallyLoaded && currentProducts.length === 0 && (
                   <div className="col-span-2 text-center text-2xl text-gray-500 font-bold">
                     No products found.
                   </div>
                 )}
-                {currentProducts.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    viewMode={viewMode}
-                    onRefresh={handleRefresh}
-                    onWishlistChange={handleWishlistChange}
-                    onOpenBiddingForm={handleOpenBiddingForm} // Pass handler
-                  />
+                {currentProducts.map((product, index) => (
+                  <div key={product.id} className="animate-slideUp" style={{animationDelay: `${index * 0.1}s`}}>
+                    <ProductCard
+                      product={product}
+                      viewMode={viewMode}
+                      onRefresh={handleRefresh}
+                      onWishlistChange={handleWishlistChange}
+                      onOpenBiddingForm={handleOpenBiddingForm} // Pass handler
+                    />
+                  </div>
                 ))}
               </div>
               {totalPages > 1 && (
