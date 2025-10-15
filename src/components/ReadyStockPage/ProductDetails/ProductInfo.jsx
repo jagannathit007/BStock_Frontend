@@ -46,6 +46,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [unavailableVariant, setUnavailableVariant] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState({
     color: initialProduct?.color || "",
     ram: initialProduct?.ram || "",
@@ -155,6 +156,15 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     })(),
   };
 
+  // Effective stock view combining real stock and unavailable variant selection
+  const effectiveIsOutOfStock = processedProduct.isOutOfStock || unavailableVariant;
+  const effectiveStockStatus = processedProduct.isExpired
+    ? "Expired"
+    : effectiveIsOutOfStock
+    ? "Out of Stock"
+    : processedProduct.stockStatus;
+  const effectiveStockCount = effectiveIsOutOfStock ? 0 : processedProduct.stockCount;
+
   const [isFavorite, setIsFavorite] = useState(() => {
     const initialWishlistStatus =
       initialProduct?.WishList ||
@@ -197,6 +207,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
             storage: productToSet?.storage || "",
             simType: productToSet?.simType || "",
           });
+          setUnavailableVariant(false);
 
           const wishlistStatus =
             productToSet.WishList || productToSet.wishList || false;
@@ -213,6 +224,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
             storage: initialProduct?.storage || "",
             simType: initialProduct?.simType || "",
           });
+          setUnavailableVariant(false);
           const wishlistStatus =
             initialProduct.WishList ||
             initialProduct.wishList ||
@@ -258,6 +270,8 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       productId: currentProduct._id || currentProduct.id,
     });
     setIsFavorite(wishlistStatus);
+    // Any change of the backing product should clear unavailable state
+    setUnavailableVariant(false);
   }, [currentProduct]);
 
   // Build variant options (Color, RAM, Storage, SIM Type) from current product and related products
@@ -350,19 +364,29 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     const next = { ...selectedVariant, [key]: value };
     setSelectedVariant(next);
     const match = findMatchingVariant(next);
-    if (match && match._id && match._id !== (currentProduct._id || currentProduct.id)) {
-      try {
-        navigate(`/product/${match._id}`);
-      } catch {}
-      try {
-        const fresh = await ProductService.getProductById(match._id);
-        if (fresh && typeof fresh === "object") {
-          setCurrentProduct(fresh);
-          setSelectedImageIndex(0);
+
+    if (match) {
+      // Valid combination found; clear any previous unavailable state
+      setUnavailableVariant(false);
+
+      // If the match is a different product, navigate/fetch it
+      if (match._id && match._id !== (currentProduct._id || currentProduct.id)) {
+        try {
+          navigate(`/product/${match._id}`);
+        } catch {}
+        try {
+          const fresh = await ProductService.getProductById(match._id);
+          if (fresh && typeof fresh === "object") {
+            setCurrentProduct(fresh);
+            setSelectedImageIndex(0);
+          }
+        } catch (e) {
+          console.error("Failed to fetch variant product", e);
         }
-      } catch (e) {
-        console.error("Failed to fetch variant product", e);
       }
+    } else {
+      // No matching variant exists for the selected combination
+      setUnavailableVariant(true);
     }
   };
 
@@ -654,16 +678,15 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
 
   const getStockIcon = () => {
     if (processedProduct.isExpired) return faTimesCircle;
-    if (processedProduct.stockStatus === "In Stock") return faCheckCircle;
-    if (processedProduct.stockStatus === "Low Stock")
-      return faExclamationTriangle;
+    if (effectiveStockStatus === "In Stock") return faCheckCircle;
+    if (effectiveStockStatus === "Low Stock") return faExclamationTriangle;
     return faTimesCircle;
   };
 
   const getStockColor = () => {
     if (processedProduct.isExpired) return "text-gray-600";
-    if (processedProduct.stockStatus === "In Stock") return "text-green-600";
-    if (processedProduct.stockStatus === "Low Stock") return "text-yellow-600";
+    if (effectiveStockStatus === "In Stock") return "text-green-600";
+    if (effectiveStockStatus === "Low Stock") return "text-yellow-600";
     return "text-red-600";
   };
 
@@ -685,6 +708,8 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       year: "numeric",
     });
   };
+
+  // No early return on unavailableVariant; we show a banner instead within the page
 
   return (
     <div className="min-h-screen bg-white">
@@ -743,15 +768,13 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
                     processedProduct.isExpired
                       ? "bg-gray-600 text-white"
-                      : processedProduct.stockStatus === "In Stock"
+                      : effectiveStockStatus === "In Stock"
                       ? "bg-green-600 text-white"
-                      : processedProduct.stockStatus === "Low Stock"
+                      : effectiveStockStatus === "Low Stock"
                       ? "bg-yellow-600 text-white"
                       : "bg-red-600 text-white"
                   }`}>
-                    {processedProduct.isExpired
-                      ? "Expired"
-                      : processedProduct.stockStatus}
+                    {processedProduct.isExpired ? "Expired" : effectiveStockStatus}
                   </span>
                 </div>
                 {/* Product Specifications under Stock Status (polished with subtle animation) */}
@@ -1048,7 +1071,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                 <span className="text-xs text-gray-500 block font-medium mb-1">Available Stock</span>
                 <span className={`text-lg font-bold ${getStockColor()} flex items-center`}>
                   <FontAwesomeIcon icon={getStockIcon()} className="mr-2" />
-                  {processedProduct.stockCount} units
+                  {effectiveStockCount} units
                 </span>
               </div>
             </div>
@@ -1097,7 +1120,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                     onClick={() => handleQuantityChange(-1)}
                     disabled={
                       quantity <= processedProduct.moq ||
-                      processedProduct.isOutOfStock ||
+                      effectiveIsOutOfStock ||
                       processedProduct.isExpired
                     }
                   >
@@ -1106,20 +1129,20 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   <input
                     className="mx-2 w-16 text-center text-base font-bold text-gray-900 border border-gray-200 rounded-lg py-2 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
                     min={processedProduct.moq}
-                    max={processedProduct.stockCount}
+                    max={effectiveStockCount}
                     type="number"
                     value={quantity}
                     onChange={(e) => {
                       const newValue = parseInt(e.target.value) || processedProduct.moq;
                       if (
                         newValue >= processedProduct.moq &&
-                        newValue <= processedProduct.stockCount
+                        newValue <= effectiveStockCount
                       ) {
                         setQuantity(newValue);
                       }
                     }}
                     disabled={
-                      processedProduct.isOutOfStock ||
+                      effectiveIsOutOfStock ||
                       processedProduct.isExpired
                     }
                   />
@@ -1127,8 +1150,8 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                     className="w-8 h-8 flex items-center cursor-pointer justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 disabled:opacity-50 disabled:cursor-default transition-all duration-200"
                     onClick={() => handleQuantityChange(1)}
                     disabled={
-                      quantity >= processedProduct.stockCount ||
-                      processedProduct.isOutOfStock ||
+                      quantity >= effectiveStockCount ||
+                      effectiveIsOutOfStock ||
                       processedProduct.isExpired
                     }
                   >
@@ -1151,7 +1174,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                 >
                   Product Expired
                 </button>
-              ) : processedProduct.isOutOfStock ? (
+              ) : effectiveIsOutOfStock ? (
                 <>
                   <button
                     className="flex-1 cursor-pointer text-black py-3 rounded-lg text-sm font-semibold border border-gray-200 hover:bg-gray-50 hover:border-gray-300 shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center"
@@ -1159,7 +1182,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   >
                     Out of Stock
                   </button>
-                  {notify ? (
+                  {canNotify && (notify ? (
                     <button
                       className="flex-1 bg-red-600 cursor-pointer text-white py-3 rounded-lg text-sm font-semibold hover:bg-red-700 shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center"
                       onClick={(ev) => handleNotifyToggle(ev, false)}
@@ -1175,7 +1198,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                       <FontAwesomeIcon icon={faBell} className="mr-2" />
                       Notify When Available
                     </button>
-                  )}
+                  ))}
                 </>
               ) : (
                 <>
@@ -1206,6 +1229,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
               )}
             </div>
           </div>
+
         </div>
 
         {/* Product Specifications Section */}
