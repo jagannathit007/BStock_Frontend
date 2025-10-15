@@ -1412,7 +1412,8 @@ const ProfilePage = () => {
       }
     } catch (e) {
       console.error("Error updating profile:", e);
-      // Error already handled via toast in AuthService
+      // Error is already handled by AuthService with toast message
+      // No need to show additional error messages here
     }
   };
 
