@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faHeart as solidHeart,
-  faHeart as regularHeart,
   faCartShopping,
   faBolt,
   faCalendarXmark,
@@ -544,7 +542,16 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
           .thumbs-swiper .swiper-slide:hover {
             opacity: 0.8;
           }
-        `}
+          /* Minimal slide-in-left animation for spec items under stock status */
+          @keyframes slide-in-left {
+            from { opacity: 0; transform: translateX(-12px); }
+            to { opacity: 1; transform: translateX(0); }
+          }
+          .slide-in-left {
+            opacity: 0;
+            animation: slide-in-left 600ms cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+          }
+                  `}
       </style>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -579,12 +586,43 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                       : processedProduct.stockStatus}
                   </span>
                 </div>
+                {/* Product Specifications under Stock Status (polished with subtle animation) */}
+                <div className="absolute top-12 left-3 z-20">
+                  <div className=" px-1 py-2">
+                    <div className="space-y-2">
+                      {processedProduct.condition && (
+                        <div className="flex items-center gap-1 fade-in-up slide-in-left" style={{ animationDelay: '0ms' }}>
+                          <span className="text-xs text-gray-600">Condition:</span>
+                          <span className="text-xs font-semibold text-gray-900 capitalize">{processedProduct.condition}</span>
+                        </div>
+                      )}
+                      {processedProduct.color && (
+                        <div className="flex items-center gap-1 fade-in-up slide-in-left" style={{ animationDelay: '200ms' }}>
+                          <span className="text-xs text-gray-600">Color:</span>
+                          <span className="text-xs font-semibold text-gray-900 capitalize">{processedProduct.color}</span>
+                        </div>
+                      )}
+                      {processedProduct.ram && (
+                        <div className="flex items-center gap-1 fade-in-up slide-in-left" style={{ animationDelay: '400ms' }}>
+                          <span className="text-xs text-gray-600">RAM:</span>
+                          <span className="text-xs font-semibold text-gray-900">{processedProduct.ram}</span>
+                        </div>
+                      )}
+                      {processedProduct.storage && (
+                        <div className="flex items-center gap-1 fade-in-up slide-in-left" style={{ animationDelay: '600ms' }}>
+                          <span className="text-xs text-gray-600">Storage:</span>
+                          <span className="text-xs font-semibold text-gray-900">{processedProduct.storage}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
                 <button
                   className="absolute top-3 right-3 z-20 p-2 bg-white/80 rounded-md hover:bg-white transition-colors duration-200"
                   onClick={handleToggleWishlist}
                 >
                   <FontAwesomeIcon
-                    icon={isFavorite ? solidHeart : regularHeart}
+                    icon={faClock}
                     className={`text-sm ${
                       isFavorite ? "text-red-500" : "text-gray-600"
                     }`}

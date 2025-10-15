@@ -40,6 +40,7 @@ const MainContent = () => {
     const storage = p.storage || "";
     const color = p.color || "";
     const ram = p.ram || "";
+    const condition = p.condition || "";
     const description =
       [storage, color, ram].filter(Boolean).join(" • ") ||
       p.specification ||
@@ -57,6 +58,11 @@ const MainContent = () => {
       id,
       name,
       description,
+      // expose raw specs for card overlay
+      storage,
+      color,
+      ram,
+      condition,
       price,
       originalPrice,
       discount: (Number(originalPrice) - Number(price)).toFixed(2),

@@ -40,6 +40,7 @@ const FlashDeals = () => {
     const storage = p.storage || "";
     const color = p.color || "";
     const ram = p.ram || "";
+    const condition = p.condition || "";
     const description =
       [storage, color, ram].filter(Boolean).join(" • ") ||
       p.specification ||
@@ -57,6 +58,10 @@ const FlashDeals = () => {
       id,
       name,
       description,
+      storage,
+      color,
+      ram,
+      condition,
       price,
       originalPrice,
       discount: (Number(originalPrice) - Number(price)).toFixed(2),
