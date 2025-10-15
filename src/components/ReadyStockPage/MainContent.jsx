@@ -40,6 +40,7 @@ const MainContent = () => {
     const storage = p.storage || "";
     const color = p.color || "";
     const ram = p.ram || "";
+    const condition = p.condition || "";
     const description =
       [storage, color, ram].filter(Boolean).join(" • ") ||
       p.specification ||
@@ -57,6 +58,11 @@ const MainContent = () => {
       id,
       name,
       description,
+      // expose raw specs for card overlay
+      storage,
+      color,
+      ram,
+      condition,
       price,
       originalPrice,
       discount: (Number(originalPrice) - Number(price)).toFixed(2),
@@ -169,6 +175,16 @@ const MainContent = () => {
   // Handle opening BiddingForm
   const handleOpenBiddingForm = async (product) => {
     try {
+      // If not logged in, store intention and redirect to login
+      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      if (!isLoggedIn) {
+        try { localStorage.setItem('postLoginAction', JSON.stringify({ type: 'make_offer', productId: product.id || product._id })); } catch {}
+        const hashPath = window.location.hash?.slice(1) || '/home';
+        const returnTo = encodeURIComponent(hashPath);
+        window.location.href = `/#/login?returnTo=${returnTo}`;
+        return;
+      }
+
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       const { businessProfile } = user;
 
@@ -200,7 +216,9 @@ const MainContent = () => {
 
       const customerId = user._id || "";
       if (!customerId) {
-        window.location.href = "/signin";
+        const hashPath = window.location.hash?.slice(1) || "/home";
+        const returnTo = encodeURIComponent(hashPath);
+        window.location.href = `/#/login?returnTo=${returnTo}`;
         return;
       }
 
@@ -223,6 +241,50 @@ const MainContent = () => {
     setIsBiddingFormOpen(false);
     setSelectedProduct(null);
   };
+
+  // Derived collections and pagination helpers (declare BEFORE effects that use them)
+  const totalPages = useMemo(
+    () => Math.max(Math.ceil(totalProductsCount / itemsPerPage), 1),
+    [totalProductsCount, itemsPerPage]
+  );
+  const currentProducts = useMemo(() => fetchedProducts, [fetchedProducts]);
+  const indexOfFirstProduct = useMemo(
+    () => (currentPage - 1) * itemsPerPage,
+    [currentPage, itemsPerPage]
+  );
+  const indexOfLastProduct = useMemo(
+    () => Math.min(currentPage * itemsPerPage, totalProductsCount),
+    [currentPage, itemsPerPage, totalProductsCount]
+  );
+  const showingProducts = useMemo(() => {
+    if (totalProductsCount === 0) return "0-0";
+    const start = Math.min(indexOfFirstProduct + 1, totalProductsCount);
+    const end = Math.min(indexOfLastProduct, totalProductsCount);
+    return `${start}-${end}`;
+  }, [indexOfFirstProduct, indexOfLastProduct, totalProductsCount]);
+
+  // After login, auto-open requested action captured pre-login
+  useEffect(() => {
+    try {
+      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      const raw = localStorage.getItem('postLoginAction');
+      if (!isLoggedIn || !raw) return;
+      const { type, productId } = JSON.parse(raw);
+      if (type === 'make_offer' && productId) {
+        const product = currentProducts.find(p => (p.id || p._id) === productId);
+        if (product) {
+          setSelectedProduct(product);
+          setIsBiddingFormOpen(true);
+          localStorage.removeItem('postLoginAction');
+        }
+      }
+      if (type === 'add_to_cart' && productId) {
+        // We can't auto-open the AddToCartPopup here reliably for cards not mounted yet.
+        // Instead, just clear the intent; the user can click again after returning.
+        localStorage.removeItem('postLoginAction');
+      }
+    } catch {}
+  }, [currentProducts]);
 
   const handleWishlistChange = (productId, newStatus) => {
     // Update local state immediately
@@ -260,18 +322,7 @@ const MainContent = () => {
     }
   };
 
-  const totalPages = useMemo(() => Math.max(Math.ceil(totalProductsCount / itemsPerPage), 1), [totalProductsCount, itemsPerPage]);
-  const currentProducts = useMemo(() => fetchedProducts, [fetchedProducts]);
-  
-  // Calculate showing products range for current page
-  const indexOfFirstProduct = useMemo(() => (currentPage - 1) * itemsPerPage, [currentPage, itemsPerPage]);
-  const indexOfLastProduct = useMemo(() => Math.min(currentPage * itemsPerPage, totalProductsCount), [currentPage, itemsPerPage, totalProductsCount]);
-  const showingProducts = useMemo(() => {
-    if (totalProductsCount === 0) return "0-0";
-    const start = Math.min(indexOfFirstProduct + 1, totalProductsCount);
-    const end = Math.min(indexOfLastProduct, totalProductsCount);
-    return `${start}-${end}`;
-  }, [indexOfFirstProduct, indexOfLastProduct, totalProductsCount]);
+  // (moved derived helpers above)
 
   const paginate = (pageNumber) => {
     if (pageNumber < 1 || pageNumber > totalPages) return;

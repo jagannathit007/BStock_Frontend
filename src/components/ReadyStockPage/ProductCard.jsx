@@ -2,8 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faHeart as solidHeart,
-  faHeart as regularHeart,
+  faStopwatch,
   faCartShopping,
   faHandshake,
   faBell,
@@ -140,6 +139,14 @@ const ProductCard = ({
     if (isOutOfStock || isExpired) return;
 
     try {
+      // Redirect unauthenticated users to login before any business checks
+      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      if (!isLoggedIn) {
+        try { localStorage.setItem('postLoginAction', JSON.stringify({ type: 'add_to_cart', productId: id || product?._id })); } catch {}
+        const hashPath = window.location.hash?.slice(1) || '/home';
+        const returnTo = encodeURIComponent(hashPath);
+        return navigate(`/login?returnTo=${returnTo}`);
+      }
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       const { businessProfile } = user;
 
@@ -175,7 +182,9 @@ const ProductCard = ({
 
       const customerId = user._id || "";
       if (!customerId) {
-        return navigate("/signin");
+        const hashPath = window.location.hash?.slice(1) || "/home";
+        const returnTo = encodeURIComponent(hashPath);
+        return navigate(`/login?returnTo=${returnTo}`);
       }
       setIsAddToCartPopupOpen(true);
     } catch (error) {
@@ -249,6 +258,12 @@ const ProductCard = ({
     const productId = id || product._id;
 
     try {
+      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      if (!isLoggedIn) {
+        const hashPath = window.location.hash?.slice(1) || '/home';
+        const returnTo = encodeURIComponent(hashPath);
+        return navigate(`/login?returnTo=${returnTo}`);
+      }
       const newWishlistStatus = !isFavorite;
       setIsFavorite(newWishlistStatus); // Optimistic update
 
@@ -458,10 +473,7 @@ const ProductCard = ({
                   }
                   onClick={handleToggleWishlist}
                 >
-                  <FontAwesomeIcon
-                    icon={isFavorite ? solidHeart : regularHeart}
-                    className="text-sm"
-                  />
+                  <FontAwesomeIcon icon={faClock} className="text-sm" />
                 </button>
                 {isExpired ? (
                   <button
@@ -522,6 +534,13 @@ const ProductCard = ({
                       title="Make an offer"
                       onClick={(e) => {
                         e.stopPropagation();
+                        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+                        if (!isLoggedIn) {
+                          try { localStorage.setItem('postLoginAction', JSON.stringify({ type: 'make_offer', productId: id || product?._id })); } catch {}
+                          const hashPath = window.location.hash?.slice(1) || '/home';
+                          const returnTo = encodeURIComponent(hashPath);
+                          return navigate(`/login?returnTo=${returnTo}`);
+                        }
                         onOpenBiddingForm(product);
                       }}
                     >
@@ -563,10 +582,7 @@ const ProductCard = ({
             } w-11 h-11 flex items-center justify-center`}
             onClick={handleToggleWishlist}
           >
-            <FontAwesomeIcon
-              icon={isFavorite ? solidHeart : regularHeart}
-              className="text-sm"
-            />
+            <FontAwesomeIcon icon={faClock} className="text-sm" />
           </button>
         </div>
         <div className="absolute top-3 left-3">
@@ -596,6 +612,46 @@ const ProductCard = ({
             {getDisplayStatus()}
           </span>
         </div>
+        {(() => {
+          const descParts = (description || "")
+            .split("•")
+            .map((s) => s.trim())
+            .filter(Boolean);
+          const storageVal = product?.storage || descParts[0];
+          const colorVal = product?.color || descParts[1];
+          const ramVal = product?.ram || descParts[2];
+          const conditionVal = product?.condition || undefined;
+          const hasAny =
+            Boolean(conditionVal) ||
+            Boolean(colorVal) ||
+            Boolean(ramVal) ||
+            Boolean(storageVal);
+          if (!hasAny) return null;
+          return (
+            <div className="absolute top-12 left-3 z-10 flex flex-col gap-1">
+              {conditionVal && (
+                <span className="inline-flex items-center px-1.5 py-0.5 text-[11px] font-semibold text-gray-900 bg-white/90 backdrop-blur-sm rounded shadow-sm">
+                  Condition: {conditionVal}
+                </span>
+              )}
+              {colorVal && (
+                <span className="inline-flex items-center px-1.5 py-0.5 text-[11px] font-semibold text-gray-900 bg-white/90 backdrop-blur-sm rounded shadow-sm">
+                  Color: {colorVal}
+                </span>
+              )}
+              {ramVal && (
+                <span className="inline-flex items-center px-1.5 py-0.5 text-[11px] font-semibold text-gray-900 bg-white/90 backdrop-blur-sm rounded shadow-sm">
+                  RAM: {ramVal}
+                </span>
+              )}
+              {storageVal && (
+                <span className="inline-flex items-center px-1.5 py-0.5 text-[11px] font-semibold text-gray-900 bg-white/90 backdrop-blur-sm rounded shadow-sm">
+                  Storage: {storageVal}
+                </span>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       <div className="p-4">
@@ -697,6 +753,12 @@ const ProductCard = ({
                 className="flex-1 bg-[#0071e3] text-white py-2 px-3 rounded-lg text-xs font-semibold hover:bg-[#005bb5] cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md"
                 onClick={(e) => {
                   e.stopPropagation();
+                  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+                  if (!isLoggedIn) {
+                    const hashPath = window.location.hash?.slice(1) || '/home';
+                    const returnTo = encodeURIComponent(hashPath);
+                    return navigate(`/login?returnTo=${returnTo}`);
+                  }
                   onOpenBiddingForm(product); // Call handler with product
                 }}
               >

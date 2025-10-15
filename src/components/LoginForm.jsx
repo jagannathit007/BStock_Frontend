@@ -12,7 +12,7 @@ import {
   faShieldHalved,
   faExclamationTriangle,
 } from "@fortawesome/free-solid-svg-icons";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { jwtDecode } from "jwt-decode";
 import ForgotPasswordModal from "./ForgotPasswordModal";
@@ -35,6 +35,7 @@ const loginSchema = yup.object({
 
 const LoginForm = ({ onLogin }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -157,8 +158,10 @@ const LoginForm = ({ onLogin }) => {
               return;
             }
           }
-          
-          navigate("/ready-stock");
+          // Navigate back to intended page if provided
+          const search = new URLSearchParams(location.search);
+          const returnTo = search.get('returnTo');
+          navigate(returnTo || "/ready-stock");
         }
       } catch (loginErr) {
         // If login fails, try to register the user automatically
@@ -265,8 +268,10 @@ const LoginForm = ({ onLogin }) => {
             return;
           }
         }
-        
-        navigate("/ready-stock");
+        // Navigate back to intended page if provided
+        const search = new URLSearchParams(location.search);
+        const returnTo = search.get('returnTo');
+        navigate(returnTo || "/ready-stock");
       }
     } catch (err) {
       setError(err.message || "Login failed. Please try again.");

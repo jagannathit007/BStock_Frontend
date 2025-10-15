@@ -23,12 +23,14 @@ import Order from "./components/Order";
 import { AuthService } from "./services/auth/auth.services";
 import FlashDeals from "./components/ReadyStockPage/FlashDeals";
 
-// Move ProtectedRoute outside the component to avoid creating it during render
+// Route guard: redirects unauthenticated users to login with returnTo
 const ProtectedRoute = ({ children, isLoggedIn }) => {
   if (!isLoggedIn) {
-    return <Navigate to="/login" replace />;
+    const currentPath = window.location.hash.replace('#', '') || '/home';
+    const returnTo = encodeURIComponent(currentPath);
+    return <Navigate to={`/login?returnTo=${returnTo}`} replace />;
   }
-  
+
   // Check profile completion for Google users on protected routes (except profile page)
   const currentPath = window.location.hash.replace('#', '');
   if (currentPath !== '/profile') {
@@ -39,10 +41,8 @@ const ProtectedRoute = ({ children, isLoggedIn }) => {
         userData = JSON.parse(user);
       } catch (error) {
         console.error('Error parsing user data:', error);
-        // If there's an error parsing user data, allow access
         return children;
       }
-      
       if (userData && userData.platformName === 'google') {
         const isProfileComplete = AuthService.isProfileComplete(userData);
         if (!isProfileComplete) {
@@ -51,7 +51,6 @@ const ProtectedRoute = ({ children, isLoggedIn }) => {
       }
     }
   }
-  
   return children;
 };
 
@@ -73,12 +72,10 @@ const App = () => {
   return (
     <HashRouter>
       <div className="min-h-screen flex flex-col">
-        {isLoggedIn && (
-          <>
-            <Header onLogout={handleLogout} />
-            <NavTabs />
-          </>
-        )}
+        <>
+          <Header onLogout={handleLogout} />
+          <NavTabs />
+        </>
 
         <main className="flex-1">
           <Routes>
@@ -88,33 +85,11 @@ const App = () => {
             <Route path="/verify-email" element={<VerifyEmailPrompt />} />
             <Route path="/api/customer/verify-email/:token" element={<VerifyEmail />} />
             <Route path="/customer/:token" element={<VerifyEmail />} />
-            {/* <Route path="/dashboard" element={<Dashboard />} /> */}
-            {/* Add this route */}
-            {/* Protected Routes */}
-            <Route
-              path="/home"
-              element={
-                <ProtectedRoute isLoggedIn={isLoggedIn}>
-                  <HomePage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/ready-stock"
-              element={
-                <ProtectedRoute isLoggedIn={isLoggedIn}>
-                  <MainContent />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/flash-deals"
-              element={
-                <ProtectedRoute isLoggedIn={isLoggedIn}>
-                  <FlashDeals />
-                </ProtectedRoute>
-              }
-            />
+            {/* Public pages (browsable without login) */}
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/ready-stock" element={<MainContent />} />
+            <Route path="/flash-deals" element={<FlashDeals />} />
+            {/* Profile remains protected */}
             <Route
               path="/profile"
               element={
@@ -123,11 +98,9 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
-            {/* Redirect root to appropriate page */}
-            <Route
-              path="/"
-              element={<Navigate to={isLoggedIn ? "/home" : "/login"} replace />}
-            />
+            {/* Default root to Home for all users */}
+            <Route path="/" element={<Navigate to="/home" replace /> } />
+            {/* Restricted actions require login */}
             <Route
               path="/product/:id"
               element={
@@ -160,12 +133,12 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
-            {/* Redirect to login if no matching route */}
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            {/* Fallback to Home for unknown routes */}
+            <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>
         </main>
         
-        {isLoggedIn && <Footer />}
+        <Footer />
       </div>
     </HashRouter>
   );

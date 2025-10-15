@@ -40,6 +40,7 @@ const FlashDeals = () => {
     const storage = p.storage || "";
     const color = p.color || "";
     const ram = p.ram || "";
+    const condition = p.condition || "";
     const description =
       [storage, color, ram].filter(Boolean).join(" • ") ||
       p.specification ||
@@ -57,6 +58,10 @@ const FlashDeals = () => {
       id,
       name,
       description,
+      storage,
+      color,
+      ram,
+      condition,
       price,
       originalPrice,
       discount: (Number(originalPrice) - Number(price)).toFixed(2),
@@ -202,7 +207,9 @@ const FlashDeals = () => {
 
       const customerId = user._id || "";
       if (!customerId) {
-        window.location.href = "/signin";
+        const hashPath = window.location.hash?.slice(1) || "/home";
+        const returnTo = encodeURIComponent(hashPath);
+        window.location.href = `/#/login?returnTo=${returnTo}`;
         return;
       }
 

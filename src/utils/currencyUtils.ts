@@ -75,6 +75,23 @@ export const convertPrice = (priceInUSD: any): string => {
     return '$0.00';
   }
   
+  // If user is not logged in, always show USD pricing
+  try {
+    const isLoggedIn = typeof window !== 'undefined' && localStorage.getItem('isLoggedIn') === 'true';
+    if (!isLoggedIn) {
+      return `$${numericPrice.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
+    }
+  } catch (_) {
+    // Fallback silently to USD formatting if localStorage is unavailable
+    return `$${numericPrice.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  }
+
   const userCurrency = getCurrency();
   
   if (!userCurrency || !userCurrency.rate) {

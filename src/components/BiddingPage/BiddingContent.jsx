@@ -226,7 +226,9 @@ const BiddingContent = () => {
 
       const customerId = user._id || "";
       if (!customerId) {
-        window.location.href = "/signin";
+        const hashPath = window.location.hash?.slice(1) || "/home";
+        const returnTo = encodeURIComponent(hashPath);
+        window.location.href = `/#/login?returnTo=${returnTo}`;
         return;
       }
 

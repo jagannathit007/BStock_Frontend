@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faHeart as solidHeart,
-  faHeart as regularHeart,
   faCartShopping,
   faBolt,
   faCalendarXmark,
@@ -48,6 +46,18 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [selectedVariant, setSelectedVariant] = useState({
+    color: initialProduct?.color || "",
+    ram: initialProduct?.ram || "",
+    storage: initialProduct?.storage || "",
+    simType: initialProduct?.simType || "",
+  });
+  const [variantOptions, setVariantOptions] = useState({
+    colors: [],
+    rams: [],
+    storages: [],
+    simTypes: [],
+  });
 
   const handleImageError = () => {
     setImageError(true);
@@ -55,6 +65,14 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
 
   const getProductImages = () => {
     const images = [];
+    const toAbsolute = (path) => {
+      if (!path) return path;
+      // If already absolute (http/https or data uri), return as-is
+      if (/^https?:\/\//i.test(path) || /^data:/i.test(path)) return path;
+      const base = import.meta.env.VITE_BASE_URL || "";
+      if (!base) return path;
+      return `${base}/${path.replace(/^\/+/, "")}`;
+    };
 
     if (currentProduct.mainImage) {
       images.push(currentProduct.mainImage);
@@ -65,8 +83,21 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       Array.isArray(currentProduct.skuFamilyId.images)
     ) {
       currentProduct.skuFamilyId.images.forEach((img) => {
-        if (!images.includes(img)) {
-          images.push(img);
+        const abs = toAbsolute(img);
+        if (!images.includes(abs)) {
+          images.push(abs);
+        }
+      });
+    }
+
+    if (
+      currentProduct.subSkuFamilyId?.images &&
+      Array.isArray(currentProduct.subSkuFamilyId.images)
+    ) {
+      currentProduct.subSkuFamilyId.images.forEach((img) => {
+        const abs = toAbsolute(img);
+        if (!images.includes(abs)) {
+          images.push(abs);
         }
       });
     }
@@ -89,7 +120,10 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
 
   const processedProduct = {
     ...currentProduct,
-    name: currentProduct.skuFamilyId?.name || currentProduct.name,
+    name:
+      currentProduct.subSkuFamilyId?.name ||
+      currentProduct.skuFamilyId?.name ||
+      currentProduct.name,
     brand: currentProduct.skuFamilyId?.brand || currentProduct.brand,
     code: currentProduct.skuFamilyId?.code || currentProduct.code,
     description:
@@ -153,14 +187,16 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
           const freshProduct = await ProductService.getProductById(productId);
           console.log("ProductInfo - Fresh product from API:", freshProduct);
           let productToSet = initialProduct;
-          if (
-            freshProduct &&
-            typeof freshProduct === "object" &&
-            freshProduct.name
-          ) {
+          if (freshProduct && typeof freshProduct === "object") {
             productToSet = freshProduct;
           }
           setCurrentProduct(productToSet);
+          setSelectedVariant({
+            color: productToSet?.color || "",
+            ram: productToSet?.ram || "",
+            storage: productToSet?.storage || "",
+            simType: productToSet?.simType || "",
+          });
 
           const wishlistStatus =
             productToSet.WishList || productToSet.wishList || false;
@@ -171,6 +207,12 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
           setIsFavorite(wishlistStatus);
         } else {
           setCurrentProduct(initialProduct);
+          setSelectedVariant({
+            color: initialProduct?.color || "",
+            ram: initialProduct?.ram || "",
+            storage: initialProduct?.storage || "",
+            simType: initialProduct?.simType || "",
+          });
           const wishlistStatus =
             initialProduct.WishList ||
             initialProduct.wishList ||
@@ -217,6 +259,112 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     });
     setIsFavorite(wishlistStatus);
   }, [currentProduct]);
+
+  // Build variant options (Color, RAM, Storage, SIM Type) from current product and related products
+  useEffect(() => {
+    const pool = [];
+    if (currentProduct && (currentProduct._id || currentProduct.id)) {
+      pool.push({
+        _id: currentProduct._id || currentProduct.id,
+        color: currentProduct.color,
+        ram: currentProduct.ram,
+        storage: currentProduct.storage,
+        simType: currentProduct.simType,
+      });
+    }
+    if (Array.isArray(currentProduct?.relatedProducts)) {
+      currentProduct.relatedProducts.forEach((p) => {
+        pool.push({
+          _id: p._id || p.id,
+          color: p.color,
+          ram: p.ram,
+          storage: p.storage,
+          simType: p.simType,
+        });
+      });
+    }
+
+    const uniq = (arr) => Array.from(new Set(arr.filter(Boolean)));
+    setVariantOptions({
+      colors: uniq(pool.map((p) => (p.color || "").toString())),
+      rams: uniq(pool.map((p) => (p.ram || "").toString())),
+      storages: uniq(pool.map((p) => (p.storage || "").toString())),
+      simTypes: uniq(pool.map((p) => (p.simType || "").toString())),
+    });
+
+    // Sync selected variant with current product
+    setSelectedVariant({
+      color: currentProduct?.color || "",
+      ram: currentProduct?.ram || "",
+      storage: currentProduct?.storage || "",
+      simType: currentProduct?.simType || "",
+    });
+  }, [currentProduct]);
+
+  const findMatchingVariant = (next) => {
+    const pool = [];
+    if (currentProduct && (currentProduct._id || currentProduct.id)) {
+      pool.push({
+        _id: currentProduct._id || currentProduct.id,
+        color: currentProduct.color,
+        ram: currentProduct.ram,
+        storage: currentProduct.storage,
+        simType: currentProduct.simType,
+      });
+    }
+    if (Array.isArray(currentProduct?.relatedProducts)) {
+      currentProduct.relatedProducts.forEach((p) => {
+        pool.push({
+          _id: p._id || p.id,
+          color: p.color,
+          ram: p.ram,
+          storage: p.storage,
+          simType: p.simType,
+        });
+      });
+    }
+    return (
+      pool.find(
+        (p) =>
+          (next.color ? p.color === next.color : true) &&
+          (next.ram ? p.ram === next.ram : true) &&
+          (next.storage ? p.storage === next.storage : true) &&
+          (next.simType ? p.simType === next.simType : true)
+      ) || null
+    );
+  };
+
+  // On hover: reflect the matching product id in the URL without full navigation
+  const handleVariantHover = (key, value) => {
+    const next = { ...selectedVariant, [key]: value };
+    const match = findMatchingVariant(next);
+    if (!match || !match._id) return;
+    try {
+      const { origin, pathname, search } = window.location;
+      const newUrl = `${origin}${pathname}${search}#/product/${match._id}`;
+      window.history.replaceState(null, "", newUrl);
+    } catch {}
+  };
+
+  const handleVariantClick = async (key, value) => {
+    const next = { ...selectedVariant, [key]: value };
+    setSelectedVariant(next);
+    const match = findMatchingVariant(next);
+    if (match && match._id && match._id !== (currentProduct._id || currentProduct.id)) {
+      try {
+        navigate(`/product/${match._id}`);
+      } catch {}
+      try {
+        const fresh = await ProductService.getProductById(match._id);
+        if (fresh && typeof fresh === "object") {
+          setCurrentProduct(fresh);
+          setSelectedImageIndex(0);
+        }
+      } catch (e) {
+        console.error("Failed to fetch variant product", e);
+      }
+    }
+  };
 
   useEffect(() => {
     const handleWishlistUpdate = async (event) => {
@@ -325,6 +473,13 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     const productId = processedProduct._id || processedProduct.id;
     const newWishlistStatus = !isFavorite;
 
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    if (!isLoggedIn) {
+      const hashPath = window.location.hash?.slice(1) || '/home';
+      const returnTo = encodeURIComponent(hashPath);
+      return navigate(`/login?returnTo=${returnTo}`);
+    }
+
     setIsFavorite(newWishlistStatus);
 
     try {
@@ -340,6 +495,13 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
 
   const handleBiddingClick = async (e) => {
     e.stopPropagation();
+    // Require auth for making an offer
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    if (!isLoggedIn) {
+      const hashPath = window.location.hash?.slice(1) || '/home';
+      const returnTo = encodeURIComponent(hashPath);
+      return navigate(`/login?returnTo=${returnTo}`);
+    }
 
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     const { businessProfile } = user;
@@ -385,7 +547,9 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     if (processedProduct.isOutOfStock || processedProduct.isExpired) return;
     const customerId = localStorage.getItem("userId") || "";
     if (!customerId) {
-      return navigate("/signin");
+      const hashPath = window.location.hash?.slice(1) || "/home";
+      const returnTo = encodeURIComponent(hashPath);
+      return navigate(`/login?returnTo=${returnTo}`);
     }
     setIsAddToCartPopupOpen(true);
   };
@@ -395,7 +559,9 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     if (processedProduct.isOutOfStock || processedProduct.isExpired) return;
     const customerId = localStorage.getItem("userId") || "";
     if (!customerId) {
-      return navigate("/signin");
+      const hashPath = window.location.hash?.slice(1) || "/home";
+      const returnTo = encodeURIComponent(hashPath);
+      return navigate(`/login?returnTo=${returnTo}`);
     }
     setIsBuyNowCheckoutOpen(true);
   };
@@ -544,7 +710,16 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
           .thumbs-swiper .swiper-slide:hover {
             opacity: 0.8;
           }
-        `}
+          /* Minimal slide-in-left animation for spec items under stock status */
+          @keyframes slide-in-left {
+            from { opacity: 0; transform: translateX(-12px); }
+            to { opacity: 1; transform: translateX(0); }
+          }
+          .slide-in-left {
+            opacity: 0;
+            animation: slide-in-left 600ms cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+          }
+                  `}
       </style>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -579,12 +754,43 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                       : processedProduct.stockStatus}
                   </span>
                 </div>
+                {/* Product Specifications under Stock Status (polished with subtle animation) */}
+                <div className="absolute top-12 left-3 z-20">
+                  <div className=" px-1 py-2">
+                    <div className="space-y-2">
+                      {processedProduct.condition && (
+                        <div className="flex items-center gap-1 fade-in-up slide-in-left" style={{ animationDelay: '0ms' }}>
+                          <span className="text-xs text-gray-600">Condition:</span>
+                          <span className="text-xs font-semibold text-gray-900 capitalize">{processedProduct.condition}</span>
+                        </div>
+                      )}
+                      {processedProduct.color && (
+                        <div className="flex items-center gap-1 fade-in-up slide-in-left" style={{ animationDelay: '200ms' }}>
+                          <span className="text-xs text-gray-600">Color:</span>
+                          <span className="text-xs font-semibold text-gray-900 capitalize">{processedProduct.color}</span>
+                        </div>
+                      )}
+                      {processedProduct.ram && (
+                        <div className="flex items-center gap-1 fade-in-up slide-in-left" style={{ animationDelay: '400ms' }}>
+                          <span className="text-xs text-gray-600">RAM:</span>
+                          <span className="text-xs font-semibold text-gray-900">{processedProduct.ram}</span>
+                        </div>
+                      )}
+                      {processedProduct.storage && (
+                        <div className="flex items-center gap-1 fade-in-up slide-in-left" style={{ animationDelay: '600ms' }}>
+                          <span className="text-xs text-gray-600">Storage:</span>
+                          <span className="text-xs font-semibold text-gray-900">{processedProduct.storage}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
                 <button
                   className="absolute top-3 right-3 z-20 p-2 bg-white/80 rounded-md hover:bg-white transition-colors duration-200"
                   onClick={handleToggleWishlist}
                 >
                   <FontAwesomeIcon
-                    icon={isFavorite ? solidHeart : regularHeart}
+                    icon={faClock}
                     className={`text-sm ${
                       isFavorite ? "text-red-500" : "text-gray-600"
                     }`}
@@ -739,6 +945,98 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                 <p className="text-sm text-gray-600 leading-relaxed">
                   {processedProduct.description}
                 </p>
+              </div>
+            )}
+            {/* Variant selectors under description (Color, RAM, Storage, SIM Type) */}
+            {(variantOptions.colors.length > 0 ||
+              variantOptions.rams.length > 0 ||
+              variantOptions.storages.length > 0 ||
+              variantOptions.simTypes.length > 0) && (
+              <div className="space-y-3">
+                {variantOptions.colors.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-600 mb-2">Color</label>
+                    <div className="flex flex-wrap gap-2">
+                      {variantOptions.colors.map((c) => (
+                        <button
+                          key={c}
+                          className={`px-3 py-1.5 rounded-lg border text-sm font-semibold cursor-pointer transition-colors ${
+                            selectedVariant.color === c
+                              ? "border-blue-500 text-blue-600 bg-blue-50"
+                              : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50"
+                          }`}
+                          onMouseEnter={() => handleVariantHover("color", c)}
+                          onClick={() => handleVariantClick("color", c)}
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {variantOptions.rams.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-600 mb-2">RAM</label>
+                    <div className="flex flex-wrap gap-2">
+                      {variantOptions.rams.map((r) => (
+                        <button
+                          key={r}
+                          className={`px-3 py-1.5 rounded-lg border text-sm font-semibold cursor-pointer transition-colors ${
+                            selectedVariant.ram === r
+                              ? "border-blue-500 text-blue-600 bg-blue-50"
+                              : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50"
+                          }`}
+                          onMouseEnter={() => handleVariantHover("ram", r)}
+                          onClick={() => handleVariantClick("ram", r)}
+                        >
+                          {r}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {variantOptions.storages.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-600 mb-2">Storage</label>
+                    <div className="flex flex-wrap gap-2">
+                      {variantOptions.storages.map((s) => (
+                        <button
+                          key={s}
+                          className={`px-3 py-1.5 rounded-lg border text-sm font-semibold cursor-pointer transition-colors ${
+                            selectedVariant.storage === s
+                              ? "border-blue-500 text-blue-600 bg-blue-50"
+                              : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50"
+                          }`}
+                          onMouseEnter={() => handleVariantHover("storage", s)}
+                          onClick={() => handleVariantClick("storage", s)}
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {variantOptions.simTypes.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-600 mb-2">SIM Type</label>
+                    <div className="flex flex-wrap gap-2">
+                      {variantOptions.simTypes.map((t) => (
+                        <button
+                          key={t}
+                          className={`px-3 py-1.5 rounded-lg border text-sm font-semibold cursor-pointer transition-colors ${
+                            selectedVariant.simType === t
+                              ? "border-blue-500 text-blue-600 bg-blue-50"
+                              : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50"
+                          }`}
+                          onMouseEnter={() => handleVariantHover("simType", t)}
+                          onClick={() => handleVariantClick("simType", t)}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             <div className="grid grid-cols-2 gap-3">

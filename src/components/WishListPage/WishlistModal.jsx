@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChevronLeft,
   faChevronRight,
-  faHeart,
+  faClock,
   faBell,
   faShoppingCart,
   faTimes,
@@ -173,6 +173,13 @@ const WishlistModal = ({ isOpen, onClose }) => {
     if (product.isOutOfStock || product.isExpired) return;
 
     try {
+      // Redirect unauthenticated users to login before any business checks
+      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      if (!isLoggedIn) {
+        const hashPath = window.location.hash?.slice(1) || '/home';
+        const returnTo = encodeURIComponent(hashPath);
+        return navigate(`/login?returnTo=${returnTo}`);
+      }
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       const { businessProfile } = user;
 
@@ -208,7 +215,9 @@ const WishlistModal = ({ isOpen, onClose }) => {
 
       const customerId = user._id || "";
       if (!customerId) {
-        return navigate("/signin");
+        const hashPath = window.location.hash?.slice(1) || "/home";
+        const returnTo = encodeURIComponent(hashPath);
+        return navigate(`/login?returnTo=${returnTo}`);
       }
       setSelectedProduct(product);
       setIsAddToCartPopupOpen(true);
@@ -242,11 +251,11 @@ const WishlistModal = ({ isOpen, onClose }) => {
         <div className="bg-white border-b border-gray-100 px-4 sm:px-8 py-4 sm:py-6 flex items-center justify-between">
           <div className="flex items-center gap-3 sm:gap-4">
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-red-50 rounded-full flex items-center justify-center">
-              <FontAwesomeIcon icon={faHeart} className="text-sm sm:text-lg text-red-500" />
+              <FontAwesomeIcon icon={faClock} className="text-sm sm:text-lg text-red-500" />
             </div>
             <div>
               <h2 className="text-lg sm:text-2xl font-semibold text-gray-900 tracking-tight">
-                Wishlist
+                Watch list
               </h2>
               <p className="text-xs sm:text-sm text-gray-500 font-medium">
                 {totalProductsCount}{" "}
@@ -274,11 +283,11 @@ const WishlistModal = ({ isOpen, onClose }) => {
             <div className="flex items-center justify-center py-20">
               <div className="text-center">
                 <FontAwesomeIcon
-                  icon={faHeart}
+                  icon={faClock}
                   className="text-4xl text-gray-300 mb-4"
                 />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Your wishlist is empty
+                  Your watch list is empty
                 </h3>
                 <p className="text-gray-500">
                   Start adding products to keep track of them!
@@ -330,7 +339,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
                           className="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-colors flex items-center justify-center"
                           title="Remove from wishlist"
                         >
-                          <FontAwesomeIcon icon={faHeart} className="text-xs" />
+                          <FontAwesomeIcon icon={faClock} className="text-xs" />
                         </button>
                       </div>
                       <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -457,7 +466,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
                                   className="w-10 h-10 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-colors flex items-center justify-center group/remove"
                                   title="Remove from wishlist"
                                 >
-                                  <FontAwesomeIcon icon={faHeart} className="text-sm group-hover/remove:scale-110 transition-transform" />
+                                  <FontAwesomeIcon icon={faClock} className="text-sm group-hover/remove:scale-110 transition-transform" />
                                 </button>
                               </div>
                             </div>
