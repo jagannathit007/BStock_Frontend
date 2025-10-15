@@ -325,7 +325,7 @@ const SignUpForm = () => {
 
   // Right side image section
   const ImageSection = () => (
-    <div className="relative w-full h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 flex items-center justify-center overflow-hidden">
+    <div className="relative w-full h-full min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 flex items-center justify-center overflow-hidden">
       <img
         src={loginImage}
         alt="Premium GSM Bidding Platform"
@@ -334,20 +334,20 @@ const SignUpForm = () => {
       <div className="absolute inset-0 bg-gradient-to-br from-blue-600/90 via-blue-700/80 to-indigo-800/90"></div>
       
       {/* Floating elements */}
-      <div className="absolute top-20 left-10 w-20 h-20 bg-white/10 rounded-full animate-float"></div>
-      <div className="absolute top-40 right-20 w-16 h-16 bg-white/5 rounded-full animate-float" style={{animationDelay: '1s'}}></div>
-      <div className="absolute bottom-40 left-20 w-12 h-12 bg-white/10 rounded-full animate-float" style={{animationDelay: '2s'}}></div>
+      <div className="absolute top-20 left-10 w-16 lg:w-20 h-16 lg:h-20 bg-white/10 rounded-full animate-float"></div>
+      <div className="absolute top-40 right-20 w-12 lg:w-16 h-12 lg:h-16 bg-white/5 rounded-full animate-float" style={{animationDelay: '1s'}}></div>
+      <div className="absolute bottom-40 left-20 w-10 lg:w-12 h-10 lg:h-12 bg-white/10 rounded-full animate-float" style={{animationDelay: '2s'}}></div>
       
-      <div className="relative z-10 text-center text-white px-8 max-w-2xl">
-        <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 rounded-3xl mb-8 backdrop-blur-sm">
-          <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+      <div className="relative z-10 text-center text-white px-6 lg:px-8 max-w-2xl">
+        <div className="inline-flex items-center justify-center w-16 lg:w-20 h-16 lg:h-20 bg-white/20 rounded-2xl lg:rounded-3xl mb-6 lg:mb-8 backdrop-blur-sm">
+          <svg className="w-8 lg:w-10 h-8 lg:h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
           </svg>
         </div>
-        <h2 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">
+        <h2 className="text-2xl lg:text-3xl xl:text-5xl font-bold mb-4 lg:mb-6 leading-tight">
           Join the xGSM community
         </h2>
-        <p className="text-xl text-blue-100 leading-relaxed">
+        <p className="text-lg lg:text-xl text-blue-100 leading-relaxed">
           Create your account to access exclusive deals, trusted sellers, and unbeatable prices on mobile devices.
         </p>
       </div>
@@ -355,73 +355,96 @@ const SignUpForm = () => {
   );
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-gray-50 to-blue-50 fixed inset-0 overflow-auto">
-      {/* Left Side - Signup Form */}
-      <div className="flex-1 flex items-center justify-center px-4 sm:px-4 lg:px-6 bg-transparent overflow-y-auto py-8">
-        <motion.div
-          className="w-full max-w-2xl space-y-10 px-6 sm:px-8"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          {/* Logo and Header */}
-          <motion.div className="text-center" variants={childVariants}>
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl shadow-lg mb-6 animate-float">
-              <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-              </svg>
-            </div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-3 tracking-tight">
-              Create your account
-            </h1>
-            <p className="text-lg text-gray-600 leading-relaxed">
-              Join the world's leading mobile trading platform
-            </p>
+    <>
+      <style jsx>{`
+        .scroll-container {
+          height: 100vh;
+          max-height: 100vh;
+          overflow-y: auto;
+          overflow-x: hidden;
+          -webkit-overflow-scrolling: touch;
+        }
+        .scroll-container::-webkit-scrollbar {
+          width: 6px;
+        }
+        .scroll-container::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .scroll-container::-webkit-scrollbar-thumb {
+          background: rgba(0, 0, 0, 0.2);
+          border-radius: 3px;
+        }
+        .scroll-container::-webkit-scrollbar-thumb:hover {
+          background: rgba(0, 0, 0, 0.3);
+        }
+      `}</style>
+      <div className="h-screen flex bg-gradient-to-br from-gray-50 to-blue-50 overflow-hidden" style={{height: '100vh', maxHeight: '100vh'}}>
+        <div className="flex-1 flex justify-center px-2 sm:px-4 lg:px-6 bg-transparent py-2 sm:py-3 lg:py-4 items-start min-w-0 min-h-0 scroll-container" style={{height: '100%', maxHeight: '100vh'}}>
+          <div className="w-full flex justify-center items-start min-h-full">
+            <motion.div
+              className="max-w-xl w-full space-y-4 sm:space-y-5 lg:space-y-6 px-2 sm:px-3 lg:px-4 py-3 sm:py-4"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {/* Logo and Header */}
+              <motion.div className="text-center" variants={childVariants}>
+                <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg sm:rounded-xl shadow-lg mb-3 sm:mb-4 animate-float">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                  </svg>
+                </div>
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2 sm:mb-3 tracking-tight">
+                  Create your account
+                </h1>
+                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+                  Join the world's leading mobile trading platform
+                </p>
             {error && (
               <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-xl border border-red-200">
                 <p className="text-sm font-medium">{error}</p>
               </div>
             )}
           </motion.div>
-          {/* Form Card */}
-          <motion.div
-            className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-8"
-            variants={childVariants}
-          >
-            <motion.form
-              className="space-y-6"
-              onSubmit={handleSubmit(onSubmit)}
-              variants={childVariants}
-            >
-            {/* Name and Email Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Full Name */}
-              <div className="space-y-3">
-                <label className="block text-sm font-semibold text-gray-800">
-                  Full Name
-                </label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <FontAwesomeIcon
-                      icon={faUser}
-                      className="text-gray-400 group-focus-within:text-blue-500 transition-colors"
-                    />
-                  </div>
-                  <input
-                    type="text"
-                    {...register("fullName", {
-                      onChange: (e) => {
-                        handleFieldChange("fullName", e.target.value);
-                      },
-                    })}
-                    className={`block w-full pl-12 pr-4 py-4 border-2 rounded-xl transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:bg-white ${
-                      errors.fullName
-                        ? "border-red-400 focus:border-red-500"
-                        : "border-gray-200 focus:border-blue-500"
-                    }`}
-                    placeholder="Enter your full name"
-                  />
-                </div>
+              {/* Form Card */}
+              <motion.div
+                className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-xl border border-white/20 p-3 sm:p-4 lg:p-5"
+                variants={childVariants}
+              >
+                <motion.form
+                  className="space-y-3 sm:space-y-4 lg:space-y-5"
+                  onSubmit={handleSubmit(onSubmit)}
+                  variants={childVariants}
+                >
+                {/* Name and Email Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                  {/* Full Name */}
+                  <div className="space-y-1 sm:space-y-2">
+                    <label className="block text-xs sm:text-sm font-semibold text-gray-800">
+                      Full Name
+                    </label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FontAwesomeIcon
+                          icon={faUser}
+                          className="text-gray-400 group-focus-within:text-blue-500 transition-colors text-sm"
+                        />
+                      </div>
+                      <input
+                        type="text"
+                        {...register("fullName", {
+                          onChange: (e) => {
+                            handleFieldChange("fullName", e.target.value);
+                          },
+                        })}
+                        className={`block w-full pl-10 pr-4 py-1 sm:py-2 border-2 rounded-lg transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:bg-white text-xs sm:text-sm ${
+                          errors.fullName
+                            ? "border-red-400 focus:border-red-500"
+                            : "border-gray-200 focus:border-blue-500"
+                        }`}
+                        placeholder="Enter your full name"
+                      />
+                    </div>
                 {errors.fullName && (
                   <p className="text-red-500 text-xs mt-1 flex items-center">
                     <i className="fas fa-exclamation-circle mr-1"></i>
@@ -429,33 +452,33 @@ const SignUpForm = () => {
                   </p>
                 )}
               </div>
-              {/* Email */}
-              <div className="space-y-3">
-                <label className="block text-sm font-semibold text-gray-800">
-                  Email Address
-                </label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <FontAwesomeIcon
-                      icon={faEnvelope}
-                      className="text-gray-400 group-focus-within:text-blue-500 transition-colors"
-                    />
-                  </div>
-                  <input
-                    type="email"
-                    {...register("email", {
-                      onChange: (e) => {
-                        handleFieldChange("email", e.target.value);
-                      },
-                    })}
-                    className={`block w-full pl-12 pr-4 py-4 border-2 rounded-xl transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:bg-white ${
-                      errors.email
-                        ? "border-red-400 focus:border-red-500"
-                        : "border-gray-200 focus:border-blue-500"
-                    }`}
-                    placeholder="Enter your email address"
-                  />
-                </div>
+                  {/* Email */}
+                  <div className="space-y-1 sm:space-y-2">
+                    <label className="block text-xs sm:text-sm font-semibold text-gray-800">
+                      Email Address
+                    </label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FontAwesomeIcon
+                          icon={faEnvelope}
+                          className="text-gray-400 group-focus-within:text-blue-500 transition-colors text-sm"
+                        />
+                      </div>
+                      <input
+                        type="email"
+                        {...register("email", {
+                          onChange: (e) => {
+                            handleFieldChange("email", e.target.value);
+                          },
+                        })}
+                        className={`block w-full pl-10 pr-4 py-1 sm:py-2 border-2 rounded-lg transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:bg-white text-xs sm:text-sm ${
+                          errors.email
+                            ? "border-red-400 focus:border-red-500"
+                            : "border-gray-200 focus:border-blue-500"
+                        }`}
+                        placeholder="Enter your email address"
+                      />
+                    </div>
                 {errors.email && (
                   <p className="text-red-500 text-xs mt-1 flex items-center">
                     <i className="fas fa-exclamation-circle mr-1"></i>
@@ -464,12 +487,12 @@ const SignUpForm = () => {
                 )}
               </div>
             </div>
-            {/* Phone and WhatsApp Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <label className="block text-sm font-semibold text-gray-800">
-                  Phone Number
-                </label>
+                {/* Phone and WhatsApp Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                  <div className="space-y-1 sm:space-y-2">
+                    <label className="block text-xs sm:text-sm font-semibold text-gray-800">
+                      Phone Number
+                    </label>
                 <div className="relative flex">
                   {/* Country Code Selector */}
                   <div className="relative w-28 mr-3">
@@ -479,7 +502,7 @@ const SignUpForm = () => {
                         setShowPhoneDropdown(!showPhoneDropdown);
                         if (showPhoneDropdown) setPhoneSearchTerm(""); // Clear search when closing
                       }}
-                      className={`flex items-center justify-between cursor-pointer w-full px-4 py-4 bg-gray-50/50 border-2 rounded-xl focus:ring-4 focus:ring-blue-500/20 text-gray-700 text-sm hover:bg-gray-100 transition-all duration-300 ${
+                      className={`flex items-center justify-between cursor-pointer w-full px-3 py-1 sm:py-2 bg-gray-50/50 border-2 rounded-lg focus:ring-4 focus:ring-blue-500/20 text-gray-700 text-xs sm:text-sm hover:bg-gray-100 transition-all duration-300 ${
                         errors.phoneCode
                           ? "border-red-400 focus:border-red-500"
                           : "border-gray-200 focus:border-blue-500"
@@ -571,7 +594,7 @@ const SignUpForm = () => {
                           handleFieldChange("mobileNumber", e.target.value);
                         },
                       })}
-                      className={`block w-full px-4 py-4 text-sm border-2 rounded-xl transition-all duration-300 bg-gray-50/50 focus:ring-4 focus:ring-blue-500/20 focus:bg-white ${
+                      className={`block w-full px-3 py-1 sm:py-2 text-xs sm:text-sm border-2 rounded-lg transition-all duration-300 bg-gray-50/50 focus:ring-4 focus:ring-blue-500/20 focus:bg-white ${
                         errors.mobileNumber
                           ? "border-red-400 focus:border-red-500"
                           : "border-gray-200 focus:border-blue-500"
@@ -588,10 +611,10 @@ const SignUpForm = () => {
                 )}
               </div>
 
-              <div className="space-y-3">
-                <label className="block text-sm font-semibold text-gray-800">
-                  WhatsApp Number
-                </label>
+                  <div className="space-y-1 sm:space-y-2">
+                    <label className="block text-xs sm:text-sm font-semibold text-gray-800">
+                      WhatsApp Number
+                    </label>
                 <div className="relative flex">
                   {/* Country Code Selector */}
                   <div className="relative w-28 mr-3">
@@ -601,7 +624,7 @@ const SignUpForm = () => {
                         setShowWhatsappDropdown(!showWhatsappDropdown);
                         if (showWhatsappDropdown) setWhatsappSearchTerm(""); // Clear search when closing
                       }}
-                      className={`flex items-center justify-between cursor-pointer w-full px-4 py-4 bg-gray-50/50 border-2 rounded-xl focus:ring-4 focus:ring-blue-500/20 text-gray-700 text-sm hover:bg-gray-100 transition-all duration-300 ${
+                      className={`flex items-center justify-between cursor-pointer w-full px-3 py-1 sm:py-2 bg-gray-50/50 border-2 rounded-lg focus:ring-4 focus:ring-blue-500/20 text-gray-700 text-xs sm:text-sm hover:bg-gray-100 transition-all duration-300 ${
                         errors.whatsappCode
                           ? "border-red-400 focus:border-red-500"
                           : "border-gray-200 focus:border-blue-500"
@@ -693,7 +716,7 @@ const SignUpForm = () => {
                           handleFieldChange("whatsapp", e.target.value);
                         },
                       })}
-                      className={`block w-full px-4 py-4 text-sm border-2 rounded-xl transition-all duration-300 bg-gray-50/50 focus:ring-4 focus:ring-blue-500/20 focus:bg-white ${
+                      className={`block w-full px-3 py-1 sm:py-2 text-xs sm:text-sm border-2 rounded-lg transition-all duration-300 bg-gray-50/50 focus:ring-4 focus:ring-blue-500/20 focus:bg-white ${
                         errors.whatsapp
                           ? "border-red-400 focus:border-red-500"
                           : "border-gray-200 focus:border-blue-500"
@@ -710,45 +733,45 @@ const SignUpForm = () => {
                 )}
               </div>
             </div>
-            {/* Password and Confirm Password Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Password */}
-              <div className="space-y-3">
-                <label className="block text-sm font-semibold text-gray-800">
-                  Password
-                </label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <FontAwesomeIcon
-                      icon={faLock}
-                      className="text-gray-400 group-focus-within:text-blue-500 transition-colors"
-                    />
-                  </div>
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    {...register("password", {
-                      onChange: (e) => {
-                        handleFieldChange("password", e.target.value);
-                      },
-                    })}
-                    className={`block w-full pl-12 pr-12 py-4 border-2 rounded-xl transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:bg-white ${
-                      errors.password
-                        ? "border-red-400 focus:border-red-500"
-                        : "border-gray-200 focus:border-blue-500"
-                    }`}
-                    placeholder="Create password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center hover:bg-gray-100 rounded-r-xl transition-colors"
-                  >
-                    <FontAwesomeIcon
-                      icon={showPassword ? faEye : faEyeSlash}
-                      className="text-gray-400 hover:text-blue-600 transition-colors"
-                    />
-                  </button>
-                </div>
+                {/* Password and Confirm Password Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                  {/* Password */}
+                  <div className="space-y-1 sm:space-y-2">
+                    <label className="block text-xs sm:text-sm font-semibold text-gray-800">
+                      Password
+                    </label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FontAwesomeIcon
+                          icon={faLock}
+                          className="text-gray-400 group-focus-within:text-blue-500 transition-colors text-sm"
+                        />
+                      </div>
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        {...register("password", {
+                          onChange: (e) => {
+                            handleFieldChange("password", e.target.value);
+                          },
+                        })}
+                        className={`block w-full pl-10 pr-10 py-1 sm:py-2 border-2 rounded-lg transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:bg-white text-xs sm:text-sm ${
+                          errors.password
+                            ? "border-red-400 focus:border-red-500"
+                            : "border-gray-200 focus:border-blue-500"
+                        }`}
+                        placeholder="Create password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center hover:bg-gray-100 rounded-r-lg transition-colors"
+                      >
+                        <FontAwesomeIcon
+                          icon={showPassword ? faEye : faEyeSlash}
+                          className="text-gray-400 hover:text-blue-600 transition-colors text-sm"
+                        />
+                      </button>
+                    </div>
                 {errors.password && (
                   <p className="text-red-500 text-xs mt-1 flex items-center">
                     <i className="fas fa-exclamation-circle mr-1"></i>
@@ -756,43 +779,43 @@ const SignUpForm = () => {
                   </p>
                 )}
               </div>
-              {/* Confirm Password */}
-              <div className="space-y-3">
-                <label className="block text-sm font-semibold text-gray-800">
-                  Confirm Password
-                </label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <FontAwesomeIcon
-                      icon={faLock}
-                      className="text-gray-400 group-focus-within:text-blue-500 transition-colors"
-                    />
-                  </div>
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    {...register("confirmPassword", {
-                      onChange: (e) => {
-                        handleFieldChange("confirmPassword", e.target.value);
-                      },
-                    })}
-                    className={`block w-full pl-12 pr-12 py-4 border-2 rounded-xl transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:bg-white ${
-                      errors.confirmPassword
-                        ? "border-red-400 focus:border-red-500"
-                        : "border-gray-200 focus:border-blue-500"
-                    }`}
-                    placeholder="Confirm password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center hover:bg-gray-100 rounded-r-xl transition-colors"
-                  >
-                    <FontAwesomeIcon
-                      icon={showConfirmPassword ? faEye : faEyeSlash}
-                      className="text-gray-400 hover:text-blue-600 transition-colors"
-                    />
-                  </button>
-                </div>
+                  {/* Confirm Password */}
+                  <div className="space-y-1 sm:space-y-2">
+                    <label className="block text-xs sm:text-sm font-semibold text-gray-800">
+                      Confirm Password
+                    </label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FontAwesomeIcon
+                          icon={faLock}
+                          className="text-gray-400 group-focus-within:text-blue-500 transition-colors text-sm"
+                        />
+                      </div>
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        {...register("confirmPassword", {
+                          onChange: (e) => {
+                            handleFieldChange("confirmPassword", e.target.value);
+                          },
+                        })}
+                        className={`block w-full pl-10 pr-10 py-1 sm:py-2 border-2 rounded-lg transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:bg-white text-xs sm:text-sm ${
+                          errors.confirmPassword
+                            ? "border-red-400 focus:border-red-500"
+                            : "border-gray-200 focus:border-blue-500"
+                        }`}
+                        placeholder="Confirm password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center hover:bg-gray-100 rounded-r-lg transition-colors"
+                      >
+                        <FontAwesomeIcon
+                          icon={showConfirmPassword ? faEye : faEyeSlash}
+                          className="text-gray-400 hover:text-blue-600 transition-colors text-sm"
+                        />
+                      </button>
+                    </div>
                 {errors.confirmPassword && (
                   <p className="text-red-500 text-xs mt-1 flex items-center">
                     <i className="fas fa-exclamation-circle mr-1"></i>
@@ -832,15 +855,15 @@ const SignUpForm = () => {
                 </a>
               </label>
             </div>
-            {/* Create Account Button */}
-            <motion.button
-              type="submit"
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-xl font-semibold text-lg focus:ring-4 focus:ring-blue-500/30 cursor-pointer transition-all duration-300 flex items-center justify-center disabled:opacity-70 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
-              disabled={isLoading || isSubmitting}
-              variants={buttonVariants}
-              whileHover="hover"
-              whileTap="tap"
-            >
+                {/* Create Account Button */}
+                <motion.button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-1 sm:py-2 px-6 rounded-lg font-semibold text-xs sm:text-sm focus:ring-4 focus:ring-blue-500/30 cursor-pointer transition-all duration-300 flex items-center justify-center disabled:opacity-70 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                  disabled={isLoading || isSubmitting}
+                  variants={buttonVariants}
+                  whileHover="hover"
+                  whileTap="tap"
+                >
               {isLoading || isSubmitting ? (
                 <div className="flex items-center gap-2">
                   <svg
@@ -872,7 +895,7 @@ const SignUpForm = () => {
             </motion.button>
 
             {/* Divider */}
-            <div className="relative my-8">
+            <div className="relative my-6.5">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-200"></div>
               </div>
@@ -901,39 +924,42 @@ const SignUpForm = () => {
                 ></div>
               )}
             </div>
-            </motion.form>
-          </motion.div>
+                </motion.form>
+              </motion.div>
 
-          {/* Login Link */}
-          <motion.div className="text-center" variants={childVariants}>
-            <p className="text-gray-600 text-base font-medium">
-              Already have an account?{" "}
-              <Link
-                to="/login"
-                className="text-blue-600 hover:text-blue-800 font-semibold transition-colors hover:underline"
-              >
-                Sign in here
-              </Link>
-            </p>
-          </motion.div>
+              {/* Login Link */}
+              <motion.div className="text-center" variants={childVariants}>
+                <p className="text-gray-600 text-sm font-medium">
+                  Already have an account?{" "}
+                  <Link
+                    to="/login"
+                    className="text-blue-600 hover:text-blue-800 font-semibold transition-colors hover:underline"
+                  >
+                    Sign in here
+                  </Link>
+                </p>
+              </motion.div>
 
-          {/* Security Notice */}
-          <motion.div className="text-center" variants={childVariants}>
-            <div className="inline-flex items-center px-4 py-2 bg-green-50 text-green-700 rounded-full text-sm font-medium">
-              <FontAwesomeIcon
-                icon={faShieldHalved}
-                className="mr-2 text-green-600"
-              />
-              Enterprise-grade security
-            </div>
-          </motion.div>
-        </motion.div>
+              {/* Security Notice */}
+              {/* <motion.div className="text-center" variants={childVariants}>
+                <div className="inline-flex items-center px-3 py-2 bg-green-50 text-green-700 rounded-full text-xs font-medium">
+                  <FontAwesomeIcon
+                    icon={faShieldHalved}
+                    className="mr-2 text-green-600"
+                  />
+                  Enterprise-grade security
+                </div>
+              </motion.div> */}
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Right Side - Image Section */}
+        <div className="hidden lg:flex flex-1 relative min-w-0">
+          <ImageSection />
+        </div>
       </div>
-      {/* Right Side - Image Section */}
-      <div className="hidden lg:flex flex-1 relative">
-        <ImageSection />
-      </div>
-    </div>
+    </>
   );
 };
 
