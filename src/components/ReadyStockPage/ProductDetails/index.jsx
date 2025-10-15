@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import ProductInfo from "./ProductInfo";
-import ProductSpecs from "./ProductSpecs";
 import { ProductService } from "../../../services/products/products.services";
 import {
   faMicrochip,

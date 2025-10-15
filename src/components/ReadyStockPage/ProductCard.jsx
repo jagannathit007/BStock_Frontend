@@ -287,183 +287,252 @@ const ProductCard = ({
   if (viewMode === "list") {
     return (
       <>
-        <tr
-          className="hover:bg-gray-50 cursor-pointer"
+        <div
+          className="bg-white-25 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group border border-gray-100 overflow-hidden mb-3"
           onClick={!isInModal ? handleProductClick : undefined}
         >
-          <td className="px-3 py-3 sm:px-6 sm:py-4">
-            <div className="flex items-center min-w-[200px]">
-              <img
-                className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg mr-4"
-                src={
-                  imageError
-                    ? iphoneImage
-                    : `${import.meta.env.VITE_BASE_URL}/${imageUrl}`
-                }
-                alt={name}
-                onError={handleImageError}
-              />
-              <div className="min-w-0">
-                <div className="text-base sm:text-lg font-bold text-gray-900 truncate">
-                  {name}
+          <div className="p-3">
+            <div className="flex items-center space-x-3">
+              <div className="relative flex-shrink-0">
+                <div className="w-14 h-14 flex items-center justify-center rounded-lg overflow-hidden bg-gray-50">
+                  <img
+                    className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                    alt={name}
+                    src={
+                      imageError
+                        ? iphoneImage
+                        : `${import.meta.env.VITE_BASE_URL}/${imageUrl}`
+                    }
+                    onError={handleImageError}
+                  />
                 </div>
-                <div className="text-xs sm:text-sm text-gray-600 mt-1">
-                  {description.split(" • ").map((part, index) => (
-                    <div key={index}>{part.trim()}</div>
-                  ))}
-                  {purchaseTypeLabel && (
-                    <div>Purchase: {purchaseTypeLabel}</div>
-                  )}
+
+                {/* ✅ status badge */}
+                <div className="absolute -top-1 -right-1">
+                  <span
+                    className={`inline-flex items-center px-0.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass()}`}
+                  >
+                    {isExpired ? (
+                      <FontAwesomeIcon
+                        icon={faCalendarXmark}
+                        className="w-2.5 h-2.5"
+                      />
+                    ) : (
+                      <svg
+                        data-prefix="fas"
+                        data-icon="circle-check"
+                        className="svg-inline--fa fa-circle-check w-2.5 h-2.5"
+                        role="img"
+                        viewBox="0 0 512 512"
+                        aria-hidden="true"
+                      >
+                        <path
+                          fill="currentColor"
+                          d="M256 512a256 256 0 1 1 0-512 256 256 0 1 1 0 512zM374 145.7c-10.7-7.8-25.7-5.4-33.5 5.3L221.1 315.2 169 263.1c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l72 72c5 5 11.8 7.5 18.8 7s13.4-4.1 17.5-9.8L379.3 179.2c7.8-10.7 5.4-25.7-5.3-33.5z"
+                        ></path>
+                      </svg>
+                    )}
+                  </span>
                 </div>
               </div>
-            </div>
-          </td>
-          <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
-            <div className="flex items-center mt-1 sm:mt-2">
-              <span
-                className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass()}`}
-              >
-                {isExpired && (
-                  <FontAwesomeIcon
-                    icon={faCalendarXmark}
-                    className="w-3 h-3 mr-1"
-                  />
-                )}
-                {getDisplayStatus()}
-              </span>
-            </div>
-          </td>
-          <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
-            <div className="text-base sm:text-lg font-bold text-gray-900">
-              {convertPrice(price)}
-            </div>
-          </td>
-          <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
-            <div
-              className={`text-sm font-medium ${
-                stockStatus === "In Stock"
-                  ? "text-green-600"
-                  : stockStatus === "Low Stock"
-                  ? "text-yellow-600"
-                  : "text-red-600"
-              }`}
-            >
-              {stockCount} units
-            </div>
-            <div className="text-xs text-gray-500">
-              {isExpired
-                ? "Expired"
-                : stockStatus === "Low Stock"
-                ? "Low stock"
-                : "Available"}
-            </div>
-          </td>
-          <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
-            <div className="text-sm font-medium text-gray-900">{moq} units</div>
-            <div className="text-xs text-gray-500">Minimum</div>
-          </td>
-          <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
-            <div className="flex space-x-1 sm:space-x-2">
-              <button
-                className={`p-1 sm:p-2 cursor-pointer rounded-lg ${
-                  isFavorite ? "text-red-500" : "text-gray-400"
-                } `}
-                onClick={handleToggleWishlist}
-              >
-                <FontAwesomeIcon
-                  icon={isFavorite ? solidHeart : regularHeart}
-                  className="text-sm sm:text-base"
-                />
-              </button>
-              {isExpired ? (
-                <button
-                  disabled
-                  className="bg-gray-300 text-gray-500 p-1 sm:p-2 rounded-lg cursor-not-allowed"
-                >
-                  <FontAwesomeIcon
-                    icon={faCalendarXmark}
-                    className="text-sm sm:text-base"
-                  />
-                </button>
-              ) : isOutOfStock ? (
-                <button
-                  disabled
-                  className="bg-gray-300 text-gray-500 p-1 sm:p-2 rounded-lg cursor-not-allowed"
-                >
-                  <FontAwesomeIcon
-                    icon={faXmark}
-                    className="text-sm sm:text-base"
-                  />
-                </button>
-              ) : (
-                <button
-                  className="bg-[#0071E0] cursor-pointer text-white p-1 sm:p-2 rounded-lg hover:bg-blue-600"
-                  onClick={handleAddToCart}
-                >
-                  <FontAwesomeIcon
-                    icon={faCartShopping}
-                    className="text-sm sm:text-base"
-                  />
-                </button>
-              )}
 
-              {canNotify ? (
-                notify ? (
-                  <button
-                    className="border border-red-300 cursor-pointer text-red-700 bg-red-50 p-1 sm:p-2 rounded-lg hover:bg-red-100 transition-colors duration-200"
-                    onClick={(ev) => handleNotifyToggle(ev, false)}
-                    title="Turn off notifications"
-                  >
-                    <FontAwesomeIcon
-                      icon={faBellSlash}
-                      className="text-sm sm:text-base mr-1"
-                    />
-                    <span className="hidden sm:inline text-xs font-medium">
-                      Off
+              {/* ✅ right content */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-semibold text-gray-900 group-hover:text-[#0071e3] transition-colors duration-200 truncate">
+                      {name}
+                    </h3>
+                    <div className="flex items-center space-x-2 mt-0.5">
+                      <span className="text-xs text-gray-500"></span>
+                      <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                      <span className="text-xs text-gray-500">
+                        {purchaseTypeLabel || "Partial"}
+                      </span>
+                      {!isExpired && !isOutOfStock && !isFlashDeal && (
+                        <>
+                          <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                          <span className="text-xs bg-blue-50 text-[#0071e3] px-1.5 py-0.5 rounded-md font-medium">
+                            Negotiable
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right ml-3">
+                    <div className="text-base font-semibold text-gray-900 group-hover:text-[#0071e3] transition-colors duration-200">
+                      {convertPrice(price)}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-0.5">
+                      {isExpired
+                        ? "Expired"
+                        : isOutOfStock
+                        ? "Out of stock"
+                        : "Starting price"}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {description.split(" • ").map((part, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-1.5 py-0.5 bg-gray-50 text-gray-600 text-xs rounded font-medium"
+                    >
+                      {part.trim()}
                     </span>
-                  </button>
-                ) : (
+                  ))}
+                </div>
+
+                {!isExpired && !isOutOfStock && isFlashDeal && (
+                  <div className="mt-3 flex justify-center">
+                    <div className="inline-flex items-center bg-gradient-to-r from-red-50 to-pink-50 text-red-700 px-4 py-2 rounded-full text-xs font-semibold shadow-sm border border-red-200">
+                      <FontAwesomeIcon
+                        icon={faClock}
+                        className="w-3 h-3 mr-2"
+                      />
+                      <Countdown
+                        date={product.expiryTime}
+                        renderer={({
+                          days,
+                          hours,
+                          minutes,
+                          seconds,
+                          completed,
+                        }) => {
+                          if (completed) {
+                            return (
+                              <span className="font-semibold">
+                                Flash Deal Ended
+                              </span>
+                            );
+                          }
+                          return (
+                            <span className="font-semibold">
+                              {days > 0 ? `${days} days ` : ""}
+                              {String(hours).padStart(2, "0")}:
+                              {String(minutes).padStart(2, "0")}:
+                              {String(seconds).padStart(2, "0")}
+                            </span>
+                          );
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-3 flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="text-center">
+                  <div
+                    className={`text-xs font-semibold ${
+                      stockStatus === "In Stock"
+                        ? "text-green-600"
+                        : stockStatus === "Low Stock"
+                        ? "text-yellow-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    {stockCount} units
+                  </div>
+                  <div className="text-xs text-gray-500">Available</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xs font-semibold text-gray-900">
+                    {moq}
+                  </div>
+                  <div className="text-xs text-gray-500">Min Order</div>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  className={`p-2 rounded-xl transition-all duration-200 hover:scale-105 ${
+                    isFavorite
+                      ? "text-red-500 bg-red-50 hover:bg-red-100"
+                      : "text-gray-400 hover:text-red-500 hover:bg-red-50"
+                  }`}
+                  title={
+                    isFavorite ? "Remove from wishlist" : "Add to wishlist"
+                  }
+                  onClick={handleToggleWishlist}
+                >
+                  <FontAwesomeIcon
+                    icon={isFavorite ? solidHeart : regularHeart}
+                    className="text-sm"
+                  />
+                </button>
+                {isExpired ? (
                   <button
-                    className="flex items-center justify-center 
-             border border-blue-300 text-blue-700 bg-blue-50 cursor-pointer
-             w-8 h-8 sm:w-9 sm:h-10 
-             rounded-lg hover:bg-blue-100 transition-colors duration-200"
-                    onClick={(ev) => handleNotifyToggle(ev, true)}
-                    title="Notify me when back in stock"
+                    disabled
+                    className="bg-gray-300 text-gray-500 p-2 rounded-xl cursor-not-allowed"
+                    title="Expired"
                   >
                     <FontAwesomeIcon
-                      icon={faBell}
-                      className="text-sm sm:text-base"
+                      icon={faCalendarXmark}
+                      className="text-sm"
                     />
                   </button>
-                )
-              ) : !isExpired && !isOutOfStock ? (
-                <button
-                  className="border border-gray-300 cursor-pointer text-gray-700 p-1 sm:p-2 rounded-lg hover:bg-gray-50"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenBiddingForm(product);
-                  }}
-                >
-                  <FontAwesomeIcon
-                    icon={faHandshake}
-                    className="text-sm sm:text-base"
-                  />
-                </button>
-              ) : (
-                <button
-                  disabled
-                  className="bg-gray-200  text-gray-400 p-1 sm:p-2 rounded-lg cursor-not-allowed"
-                >
-                  <FontAwesomeIcon
-                    icon={faXmark}
-                    className="text-sm sm:text-base"
-                  />
-                </button>
-              )}
+                ) : isOutOfStock ? (
+                  canNotify ? (
+                    notify ? (
+                      <button
+                        className="border border-red-300 text-red-700 bg-red-50 p-2 rounded-xl hover:bg-red-100 transition-all duration-200"
+                        onClick={(ev) => handleNotifyToggle(ev, false)}
+                        title="Turn off notifications"
+                      >
+                        <FontAwesomeIcon
+                          icon={faBellSlash}
+                          className="text-sm"
+                        />
+                      </button>
+                    ) : (
+                      <button
+                        className="border border-blue-300 text-blue-700 bg-blue-50 p-2 rounded-xl hover:bg-blue-100 transition-all duration-200"
+                        onClick={(ev) => handleNotifyToggle(ev, true)}
+                        title="Notify me when back in stock"
+                      >
+                        <FontAwesomeIcon icon={faBell} className="text-sm" />
+                      </button>
+                    )
+                  ) : (
+                    <button
+                      disabled
+                      className="bg-gray-300 text-gray-500 p-2 rounded-xl cursor-not-allowed"
+                      title="Out of stock"
+                    >
+                      <FontAwesomeIcon icon={faXmark} className="text-sm" />
+                    </button>
+                  )
+                ) : (
+                  <>
+                    <button
+                      className="p-2 rounded-xl bg-[#0071e3] text-white hover:bg-[#005bb5] transition-all duration-200 shadow-sm hover:shadow-md hover:scale-105"
+                      title="Add to cart"
+                      onClick={handleAddToCart}
+                    >
+                      <FontAwesomeIcon
+                        icon={faCartShopping}
+                        className="text-sm"
+                      />
+                    </button>
+                    <button
+                      className="p-2 rounded-xl border border-gray-200 text-gray-600 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 transition-all duration-200 hover:scale-105"
+                      title="Make an offer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenBiddingForm(product);
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faHandshake} className="text-sm" />
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
-          </td>
-        </tr>
+          </div>
+        </div>
         {isAddToCartPopupOpen && (
           <AddToCartPopup product={product} onClose={handlePopupClose} />
         )}
@@ -473,12 +542,12 @@ const ProductCard = ({
 
   return (
     <div
-      className={`rounded-[18px] shadow-[2px_4px_12px_#00000014] hover:shadow-[6px_8px_24px_#00000026] transition-shadow duration-200 h-full flex flex-col cursor-pointer ${getCardBackgroundClass()}`}
+      className={`bg-white-25 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 h-full flex flex-col cursor-pointer group border border-gray-100 overflow-hidden ${getCardBackgroundClass()}`}
       onClick={!isInModal ? handleProductClick : undefined}
     >
-      <div className="relative flex-1">
+      <div className="relative flex-1 overflow-hidden rounded-t-xl">
         <img
-          className="w-full h-40 sm:h-48 object-cover rounded-t-[18px]"
+          className="w-full h-48 sm:h-56 object-cover group-hover:scale-105 transition-transform duration-300"
           src={
             imageError
               ? iphoneImage
@@ -487,65 +556,88 @@ const ProductCard = ({
           alt={name}
           onError={handleImageError}
         />
-        <div className="absolute top-2 right-2">
+        <div className="absolute top-3 right-3">
           <button
-            className={`p-2 bg-white rounded-full cursor-pointer shadow-md ${
-              isFavorite ? "text-red-500" : "text-gray-400"
-            } w-10 h-10 flex items-center justify-center`}
+            className={`p-2.5 bg-white/90 backdrop-blur-sm rounded-full cursor-pointer shadow-lg hover:shadow-xl transition-all duration-200 ${
+              isFavorite ? "text-red-500" : "text-gray-400 hover:text-red-500"
+            } w-11 h-11 flex items-center justify-center`}
             onClick={handleToggleWishlist}
           >
             <FontAwesomeIcon
               icon={isFavorite ? solidHeart : regularHeart}
-              className="text-sm sm:text-base"
+              className="text-sm"
             />
           </button>
         </div>
-        <div className="absolute top-2 left-2">
+        <div className="absolute top-3 left-3">
           <span
-            className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${getStatusBadgeClass()}`}
+            className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-sm ${getStatusBadgeClass()}`}
           >
-            {isExpired && (
+            {isExpired ? (
               <FontAwesomeIcon
                 icon={faCalendarXmark}
-                className="w-3 h-3 mr-1"
+                className="w-3 h-3 mr-1.5"
               />
+            ) : (
+              <svg
+                data-prefix="fas"
+                data-icon="circle-check"
+                className="w-3 h-3 mr-1.5"
+                role="img"
+                viewBox="0 0 512 512"
+                aria-hidden="true"
+              >
+                <path
+                  fill="currentColor"
+                  d="M256 512a256 256 0 1 1 0-512 256 256 0 1 1 0 512zM374 145.7c-10.7-7.8-25.7-5.4-33.5 5.3L221.1 315.2 169 263.1c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l72 72c5 5 11.8 7.5 18.8 7s13.4-4.1 17.5-9.8L379.3 179.2c7.8-10.7 5.4-25.7-5.3-33.5z"
+                ></path>
+              </svg>
             )}
             {getDisplayStatus()}
           </span>
         </div>
       </div>
 
-      <div className="p-3 sm:p-4">
-        <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-1 truncate">
+      <div className="p-4">
+        <h3 className="font-semibold text-gray-900 text-base mb-2 truncate">
           {name}
         </h3>
-        <p className="text-xs sm:text-sm text-gray-600 mb-2 truncate">
-          {description}
-        </p>
+        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{description}</p>
 
         <div className="flex items-center mb-2">
-          <span className="text-base sm:text-lg font-bold text-gray-900">
+          <span className="text-lg font-semibold text-gray-900">
             {convertPrice(price)}
           </span>
         </div>
 
-        <div className="text-xs text-gray-500 mb-3">
-          • MOQ: {moq} units • {stockCount} available
-          <br />
+        <div className="text-xs text-gray-500 mb-3 space-y-1">
+          <div className="flex items-center">
+            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+            MOQ: {moq} units
+          </div>
+          <div className="flex items-center">
+            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+            {stockCount} available
+          </div>
           {purchaseTypeLabel && (
-            <span className="">• Purchase: {purchaseTypeLabel}</span>
+            <div className="flex items-center">
+              <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
+              Purchase: {purchaseTypeLabel}
+            </div>
           )}
         </div>
 
         {!isExpired && !isOutOfStock && isFlashDeal && (
           <div className="mb-3 flex justify-center">
-            <div className="inline-flex items-center bg-red-50 text-red-700 px-3 py-1.5 rounded-full text-xs font-medium shadow-sm hover:shadow-md transition-shadow duration-200 w-full justify-center ">
+            <div className="inline-flex items-center bg-gradient-to-r from-red-50 to-pink-50 text-red-700 px-4 py-2 rounded-full text-xs font-semibold shadow-sm border border-red-200 w-full justify-center">
               <FontAwesomeIcon icon={faClock} className="w-3 h-3 mr-2" />
               <Countdown
                 date={product.expiryTime}
                 renderer={({ days, hours, minutes, seconds, completed }) => {
                   if (completed) {
-                    return <span>Flash Deal Ended</span>;
+                    return (
+                      <span className="font-semibold">Flash Deal Ended</span>
+                    );
                   }
                   return (
                     <span className="font-semibold">
@@ -560,11 +652,11 @@ const ProductCard = ({
             </div>
           </div>
         )}
-        <div className="flex space-x-2">
+        <div className="flex space-x-3">
           {isExpired ? (
             <>
               <button
-                className="flex-1 bg-gray-300  text-gray-500 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium cursor-not-allowed"
+                className="flex-1 bg-gray-300 text-gray-500 py-2 px-3 rounded-lg text-xs font-semibold cursor-not-allowed"
                 onClick={(e) => e.stopPropagation()}
               >
                 <FontAwesomeIcon icon={faCalendarXmark} className="mr-1" />
@@ -575,7 +667,7 @@ const ProductCard = ({
             <>
               {notify ? (
                 <button
-                  className="flex-1 border border-red-300  text-red-700 bg-red-50 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium hover:bg-red-100 cursor-pointer transition-colors duration-200 flex items-center justify-center"
+                  className="flex-1 border-2 border-red-300 text-red-700 bg-red-50 py-2 px-3 rounded-lg text-xs font-semibold hover:bg-red-100 cursor-pointer transition-all duration-200 flex items-center justify-center"
                   onClick={(ev) => handleNotifyToggle(ev, false)}
                   title="Turn off notifications for notifying me when back in stock"
                 >
@@ -584,7 +676,7 @@ const ProductCard = ({
                 </button>
               ) : (
                 <button
-                  className="flex-1 border border-blue-300 text-blue-700 bg-blue-50 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium hover:bg-blue-100 cursor-pointer transition-colors duration-200 flex items-center justify-center"
+                  className="flex-1 border-2 border-blue-300 text-blue-700 bg-blue-50 py-2 px-3 rounded-lg text-xs font-semibold hover:bg-blue-100 cursor-pointer transition-all duration-200 flex items-center justify-center"
                   onClick={(ev) => handleNotifyToggle(ev, true)}
                   title="Notify me when back in stock"
                 >
@@ -596,19 +688,19 @@ const ProductCard = ({
           ) : (
             <>
               <button
-                className="flex-1 border border-gray-300  text-gray-700 py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium hover:bg-gray-50 cursor-pointer"
+                className="flex-1 border-2 border-gray-200 text-gray-700 py-2 px-3 rounded-lg text-xs font-semibold hover:bg-gray-50 hover:border-gray-300 cursor-pointer transition-all duration-200"
                 onClick={handleAddToCart}
               >
                 Add to Cart
               </button>
               <button
-                className="flex-1 bg-[#0071E0] text-white  py-1 sm:py-2 px-2 sm:px-3 rounded-3xl text-xs sm:text-sm font-medium hover:bg-blue-600 cursor-pointer"
+                className="flex-1 bg-[#0071e3] text-white py-2 px-3 rounded-lg text-xs font-semibold hover:bg-[#005bb5] cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md"
                 onClick={(e) => {
                   e.stopPropagation();
                   onOpenBiddingForm(product); // Call handler with product
                 }}
               >
-                Offer
+                Make Offer
               </button>
             </>
           )}

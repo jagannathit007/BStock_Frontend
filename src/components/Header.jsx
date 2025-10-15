@@ -47,13 +47,19 @@ const Header = ({ onLogout }) => {
   };
 
   useEffect(() => {
-    fetchCartCount();
-    fetchWalletBalance();
+    const loadData = async () => {
+      await fetchCartCount();
+      await fetchWalletBalance();
+    };
+    loadData();
   }, []);
 
   useEffect(() => {
-    fetchCartCount();
-    fetchWalletBalance();
+    const loadData = async () => {
+      await fetchCartCount();
+      await fetchWalletBalance();
+    };
+    loadData();
   }, [location.pathname]);
 
   useEffect(() => {
@@ -102,6 +108,11 @@ const Header = ({ onLogout }) => {
     setIsWalletModalOpen(true);
   };
 
+  const handleOrderHistoryClick = () => {
+    navigate("/order");
+    setIsDropdownOpen(false);
+  };
+
   const toAbsoluteUrl = (p) => {
     if (!p || typeof p !== "string") return null;
     const normalized = p.replace(/\\/g, "/");
@@ -119,7 +130,9 @@ const Header = ({ onLogout }) => {
         const url = toAbsoluteUrl(user?.profileImage || user?.avatar);
         if (url) return url;
       }
-    } catch {}
+    } catch (error) {
+      console.error('Error parsing user data for avatar:', error);
+    }
     return "";
   });
 
@@ -130,7 +143,9 @@ const Header = ({ onLogout }) => {
         const user = JSON.parse(raw);
         return user?.name || "";
       }
-    } catch {}
+    } catch (error) {
+      console.error('Error parsing user data for name:', error);
+    }
     return "";
   });
 
@@ -151,7 +166,9 @@ const Header = ({ onLogout }) => {
             return;
           }
         }
-      } catch {}
+      } catch (error) {
+        console.error('Error parsing user data in applyAvatar:', error);
+      }
       setAvatarUrl("");
     };
 
@@ -162,7 +179,9 @@ const Header = ({ onLogout }) => {
           const user = JSON.parse(raw);
           setUserName(user?.name || "");
         }
-      } catch {}
+      } catch (error) {
+        console.error('Error parsing user data in applyUserName:', error);
+      }
     };
 
     applyAvatar();
@@ -196,7 +215,10 @@ const Header = ({ onLogout }) => {
   };
 
   useEffect(() => {
-    setImageError(false);
+    const resetImageError = () => {
+      setImageError(false);
+    };
+    resetImageError();
   }, [avatarUrl]);
 
   const hasImage = useMemo(() => {
@@ -219,107 +241,131 @@ const Header = ({ onLogout }) => {
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
       />
 
-      <header className="bg-[#fff] shadow-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-4 lg:px-6">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center flex-shrink-0">
-              <div className="inline-flex items-center justify-center w-10 h-10 bg-[#0071E0] rounded-lg mr-3">
-                <svg
-                  className="w-5 h-5 text-white"
-                  fill="currentColor"
-                  viewBox="0 0 384 512"
-                >
-                  <path d="M16 64C16 28.7 44.7 0 80 0H304c35.3 0 64 28.7 64 64V448c0 35.3-28.7 64-64 64H80c-35.3 0-64-28.7-64-64V64zM224 448a32 32 0 1 0 -64 0 32 32 0 1 0 64 0zM304 64H80V384H304V64z" />
-                </svg>
+              <div className="flex items-center space-x-3 animate-fadeIn">
+                <div className="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl shadow-sm animate-float">
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                  </svg>
+                </div>
+                <div className="flex flex-col">
+                  <h1 className="text-xl font-bold text-gray-900 tracking-tight">
+                    XGSM
+                  </h1>
+                  <p className="text-xs text-gray-500 font-medium hidden sm:block">
+                    Electronics Trading Platform
+                  </p>
+                </div>
               </div>
-              <h1 className="text-xl font-bold text-gray-900 hidden sm:block">
-                xGSM Bidding
-              </h1>
             </div>
 
             {/* Search bar */}
-            {/* <div className="flex-1 mx-4 max-w-2xl">
+            <div className="flex-1 mx-6 max-w-2xl hidden md:block">
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <svg
-                    className="h-4 w-4 text-gray-400"
-                    fill="currentColor"
-                    viewBox="0 0 512 512"
+                    className="h-5 w-5 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    <path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </div>
                 <input
                   type="text"
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm sm:text-base focus:border-[#0071E0] focus:ring-1 focus:ring-[#0071E0] outline-none"
-                  placeholder="Search iPhone models..."
+                  className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all duration-200"
+                  placeholder="Search products, brands, models..."
                 />
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  <kbd className="hidden sm:inline-flex items-center px-2 py-1 border border-gray-200 rounded text-xs font-mono text-gray-500 bg-gray-100">
+                    ⌘K
+                  </kbd>
+                </div>
               </div>
-            </div> */}
+            </div>
 
             {/* Right Side */}
-            <div className="flex items-center space-x-2 sm:space-x-4">
+            <div className="flex items-center space-x-2">
+              {/* Mobile Search Button */}
+              <button className="md:hidden p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+
               {/* Wallet Info */}
               <button
                 onClick={handleWalletClick}
-                className="hidden sm:flex items-center space-x-2 cursor-pointer p-2 hover:bg-gray-50 rounded-lg"
+                className="hidden lg:flex items-center space-x-2 cursor-pointer px-4 py-2 hover:bg-gray-50 rounded-lg transition-all duration-200 border border-gray-200"
                 title="My Wallet"
               >
-                <svg
-                  className="h-5 w-5 text-gray-600"
-                  fill="currentColor"
-                  viewBox="0 0 512 512"
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                    <svg className="h-4 w-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"/>
+                    </svg>
+                  </div>
+                  <div className="flex flex-col items-start">
+                    <span className="text-xs text-gray-500 font-medium">Balance</span>
+                    <span className="text-sm font-semibold text-gray-900">
+                      {convertPrice(walletBalance)}
+                    </span>
+                  </div>
+                </div>
+              </button>
+
+              {/* Navigation Buttons */}
+              <div className="flex items-center space-x-1">
+                {/* Negotiations */}
+                <button
+                  className="p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg relative cursor-pointer transition-all duration-200 group"
+                  onClick={handleNegotiationClick}
+                  title="My Negotiations"
                 >
-                  <path d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V192c0-35.3-28.7-64-64-64H80c-8.8 0-16-7.2-16-16s7.2-16 16-16H448c17.7 0 32-14.3 32-32s-14.3-32-32-32H64zM416 272a32 32 0 1 1 0 64 32 32 0 1 1 0-64z" />
-                </svg>
-                <span className="text-sm font-medium text-gray-900">
-                  {convertPrice(walletBalance)}
-                </span>
-              </button>
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </button>
 
-              {/* Negotiations */}
-              <button
-                className="p-2 text-gray-600 hover:text-gray-900 relative cursor-pointer"
-                onClick={handleNegotiationClick}
-                title="My Negotiations"
-              >
-                <Handshake className="h-5 w-5" />
-              </button>
-
-              {/* Wishlist */}
-              <button
-                className="p-2 text-gray-600 hover:text-gray-900 relative cursor-pointer"
-                onClick={handleWishlistClick}
-                title="My Wishlist"
-              >
-                <i className="fas fa-heart h-5 w-5"></i>
-              </button>
-
-              {/* Cart */}
-              <button
-                className="p-2 text-gray-600 hover:text-gray-900 relative cursor-pointer"
-                onClick={handleCartClick}
-                title="My Cart"
-              >
-                <svg
-                  className="h-5 w-5"
-                  fill="currentColor"
-                  viewBox="0 0 576 512"
+                {/* Wishlist */}
+                <button
+                  className="p-2.5 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg relative cursor-pointer transition-all duration-200 group"
+                  onClick={handleWishlistClick}
+                  title="My Wishlist"
                 >
-                  <path d="M0 24C0 10.7 10.7 0 24 0H69.5c22 0 41.5 12.8 50.6 32h411c26.3 0 45.5 25 38.6 50.4l-41 152.3c-8.5 31.4-37 53.3-69.5 53.3H170.7l5.4 28.5c2.2 11.3 12.1 19.5 23.6 19.5H488c13.3 0 24 10.7 24 24s-10.7 24-24 24H199.7c-34.6 0-64.3-24.6-70.7-58.5L77.4 54.5c-.7-3.8-4-6.5-7.9-6.5H24C10.7 48 0 37.3 0 24zM128 464a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm336-48a48 48 0 1 1 0 96 48 48 0 1 1 0-96z" />
-                </svg>
-                {cartItemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {cartItemCount}
-                  </span>
-                )}
-              </button>
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                </button>
+
+                {/* Cart */}
+                <button
+                  className="p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg relative cursor-pointer transition-all duration-200 group"
+                  onClick={handleCartClick}
+                  title="My Cart"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shopping-cart-icon lucide-shopping-cart"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+                  {cartItemCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold shadow-sm">
+                      {cartItemCount > 99 ? '99+' : cartItemCount}
+                    </span>
+                  )}
+                </button>
+              </div>
 
               {/* Profile Dropdown */}
-              <div className="relative" ref={dropdownRef}>
-                <div
-                  className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 rounded-lg p-1 transition-colors duration-200"
+              <div className="relative ml-2" ref={dropdownRef}>
+                <button
+                  className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-all duration-200 border border-gray-200"
                   onClick={handleProfileClick}
                 >
                   {hasImage ? (
@@ -330,31 +376,89 @@ const Header = ({ onLogout }) => {
                       onError={handleImageError}
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full border-2 border-gray-200 bg-gradient-to-br from-[#0071E0] to-[#005BB5] flex items-center justify-center">
-                      <span className="text-white text-xs font-semibold">
+                    <div className="w-8 h-8 rounded-full border-2 border-gray-200 bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                      <span className="text-white text-sm font-semibold">
                         {getInitials}
                       </span>
                     </div>
                   )}
-                </div>
+                  <div className="hidden sm:block text-left">
+                    <p className="text-sm font-medium text-gray-900">{userName || 'User'}</p>
+                    <p className="text-xs text-gray-500">Account</p>
+                  </div>
+                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
 
                 {isDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg py-2 z-50 border border-gray-100 animate-fadeIn">
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl py-2 z-50 border border-gray-200 animate-fadeIn">
+                    {/* User Info Header */}
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <div className="flex items-center space-x-3">
+                        {hasImage ? (
+                          <img
+                            src={imageError ? "/images/avtar.jpg" : avatarUrl}
+                            alt="Profile"
+                            className="w-10 h-10 rounded-full border border-gray-200 object-cover"
+                            onError={handleImageError}
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full border border-gray-200 bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                            <span className="text-white text-sm font-semibold">
+                              {getInitials}
+                            </span>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">{userName || 'User'}</p>
+                          <p className="text-xs text-gray-500">Member since 2024</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Menu Items */}
                     <div className="py-1">
                       <button
                         onClick={handleProfileNavigation}
-                        className="flex items-center cursor-pointer w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#0071E0] transition-colors duration-150"
+                        className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
                       >
-                        <i className="fas fa-user w-4 h-4 mr-3 text-gray-400"></i>
-                        Profile
+                        <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        Profile Settings
                       </button>
 
                       <button
-                        onClick={handleLogout}
-                        className="flex items-center w-full cursor-pointer px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150"
+                        onClick={handleWalletClick}
+                        className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
                       >
-                        <i className="fas fa-sign-out-alt w-4 h-4 mr-3 text-red-500"></i>
-                        Logout
+                        <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                        Wallet & Payments
+                      </button>
+
+                      <button
+                        onClick={handleOrderHistoryClick}
+                        className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
+                      >
+                        <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        </svg>
+                        Order History
+                      </button>
+
+                      <div className="border-t border-gray-100 my-1"></div>
+
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
+                      >
+                        <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Sign Out
                       </button>
                     </div>
                   </div>

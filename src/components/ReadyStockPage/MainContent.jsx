@@ -3,6 +3,7 @@ import ProductCard from "./ProductCard";
 import SideFilter from "../SideFilter";
 import ViewControls from "./ViewControls";
 import BiddingForm from "../negotiation/BiddingForm"; // Import BiddingForm
+import Loader from "../Loader"; // Import Loader
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChevronLeft,
@@ -11,7 +12,6 @@ import {
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
-import { convertPrice } from "../../utils/currencyUtils";
 
 const MainContent = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -20,7 +20,8 @@ const MainContent = () => {
   const [itemsPerPage, setItemsPerPage] = useState(9);
   const [fetchedProducts, setFetchedProducts] = useState([]);
   const [totalProductsCount, setTotalProductsCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [filters, setFilters] = useState({});
   const [refreshTick, setRefreshTick] = useState(false);
@@ -120,6 +121,7 @@ const MainContent = () => {
         }
       } finally {
         setIsLoading(false);
+        setHasInitiallyLoaded(true);
       }
     };
     fetchData();
@@ -258,11 +260,18 @@ const MainContent = () => {
     }
   };
 
-  const indexOfLastProduct = useMemo(() => currentPage * itemsPerPage, [currentPage, itemsPerPage]);
-  const indexOfFirstProduct = useMemo(() => indexOfLastProduct - itemsPerPage, [indexOfLastProduct, itemsPerPage]);
   const totalPages = useMemo(() => Math.max(Math.ceil(totalProductsCount / itemsPerPage), 1), [totalProductsCount, itemsPerPage]);
   const currentProducts = useMemo(() => fetchedProducts, [fetchedProducts]);
-  const showingProducts = `${Math.min(indexOfFirstProduct + 1, totalProductsCount)}-${Math.min(indexOfLastProduct, totalProductsCount)}`;
+  
+  // Calculate showing products range for current page
+  const indexOfFirstProduct = useMemo(() => (currentPage - 1) * itemsPerPage, [currentPage, itemsPerPage]);
+  const indexOfLastProduct = useMemo(() => Math.min(currentPage * itemsPerPage, totalProductsCount), [currentPage, itemsPerPage, totalProductsCount]);
+  const showingProducts = useMemo(() => {
+    if (totalProductsCount === 0) return "0-0";
+    const start = Math.min(indexOfFirstProduct + 1, totalProductsCount);
+    const end = Math.min(indexOfLastProduct, totalProductsCount);
+    return `${start}-${end}`;
+  }, [indexOfFirstProduct, indexOfLastProduct, totalProductsCount]);
 
   const paginate = (pageNumber) => {
     if (pageNumber < 1 || pageNumber > totalPages) return;
@@ -333,194 +342,166 @@ const MainContent = () => {
           {viewMode === "grid" ? (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                {isLoading && currentProducts.length === 0 && (
-                  <div className="col-span-3 text-center text-sm text-gray-500">
-                    Loading products...
+                {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
+                  <div className="col-span-3 flex justify-center py-12">
+                    <Loader size="lg" />
                   </div>
                 )}
-                {!isLoading && currentProducts.length === 0 && (
+                {!isLoading && hasInitiallyLoaded && currentProducts.length === 0 && (
                   <div className="col-span-3 text-center text-2xl text-gray-500 font-bold">
                     No products found.
                   </div>
                 )}
-                {currentProducts.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    viewMode={viewMode}
-                    onRefresh={handleRefresh}
-                    onOpenBiddingForm={handleOpenBiddingForm} // Pass handler
-                    onWishlistChange={handleWishlistChange}
-                  />
+                {currentProducts.map((product, index) => (
+                  <div key={product.id} className="animate-slideUp" style={{animationDelay: `${index * 0.1}s`}}>
+                    <ProductCard
+                      product={product}
+                      viewMode={viewMode}
+                      onRefresh={handleRefresh}
+                      onOpenBiddingForm={handleOpenBiddingForm} // Pass handler
+                      onWishlistChange={handleWishlistChange}
+                    />
+                  </div>
                 ))}
               </div>
-              <div className="text-sm text-gray-600 mt-4 mb-2">
-                Showing {showingProducts} of {totalProductsCount} products
-              </div>
-              <div className="flex items-center justify-between border-t border-gray-200 pt-6 mt-6">
-                <button
-                  onClick={() => paginate(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg ${
-                    currentPage === 1
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  <FontAwesomeIcon icon={faChevronLeft} className="mr-2" />
-                  Previous
-                </button>
-
-                <div className="hidden md:flex space-x-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                    (number) => (
-                      <button
-                        key={number}
-                        onClick={() => paginate(number)}
-                        className={`px-4 py-2 text-sm font-medium rounded-lg ${
-                          currentPage === number
-                            ? "bg-[#0071E0] text-white"
-                            : "text-gray-700 hover:bg-gray-100"
-                        }`}
-                      >
-                        {number}
-                      </button>
-                    )
-                  )}
+              {totalPages > 1 && (
+                <div className="text-sm text-gray-600 mt-4 mb-2">
+                  Showing {showingProducts} of {totalProductsCount} products
                 </div>
+              )}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between border-t border-gray-200 pt-6 mt-6">
+                  <button
+                    onClick={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg ${
+                      currentPage === 1
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    <FontAwesomeIcon icon={faChevronLeft} className="mr-2" />
+                    Previous
+                  </button>
 
-                <div className="md:hidden text-sm text-gray-700">
-                  Page {currentPage} of {totalPages}
+                  <div className="hidden md:flex space-x-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (number) => (
+                        <button
+                          key={number}
+                          onClick={() => paginate(number)}
+                          className={`px-4 py-2 text-sm font-medium rounded-lg ${
+                            currentPage === number
+                              ? "bg-[#0071E0] text-white"
+                              : "text-gray-700 hover:bg-gray-100"
+                          }`}
+                        >
+                          {number}
+                        </button>
+                      )
+                    )}
+                  </div>
+
+                  <div className="md:hidden text-sm text-gray-700">
+                    Page {currentPage} of {totalPages}
+                  </div>
+
+                  <button
+                    onClick={() => paginate(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg ${
+                      currentPage === totalPages
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    Next
+                    <FontAwesomeIcon icon={faChevronRight} className="ml-2" />
+                  </button>
                 </div>
-
-                <button
-                  onClick={() => paginate(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg ${
-                    currentPage === totalPages
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  Next
-                  <FontAwesomeIcon icon={faChevronRight} className="ml-2" />
-                </button>
-              </div>
+              )}
             </>
           ) : (
             <>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-max">
-                    <thead className="bg-gray-50 border-b border-gray-200">
-                      <tr>
-                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider">
-                          Product
-                        </th>
-                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          Status
-                        </th>
-                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          Price
-                        </th>
-                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          Stock
-                        </th>
-                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          MOQ
-                        </th>
-                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-center text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {isLoading && currentProducts.length === 0 && (
-                        <tr>
-                          <td
-                            colSpan={6}
-                            className="px-4 py-6 text-center text-sm text-gray-500"
-                          >
-                            Loading products...
-                          </td>
-                        </tr>
-                      )}
-                      {!isLoading && currentProducts.length === 0 && (
-                        <tr>
-                          <td
-                            colSpan={6}
-                            className="px-4 py-6 text-center text-2xl text-gray-500 font-bold"
-                          >
-                            No products found.
-                          </td>
-                        </tr>
-                      )}
-                      {currentProducts.map((product) => (
-                        <ProductCard
-                          key={product.id}
-                          product={product}
-                          viewMode={viewMode}
-                          onRefresh={handleRefresh}
-                          onWishlistChange={handleWishlistChange}
-                          onOpenBiddingForm={handleOpenBiddingForm} // Pass handler
-                        />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
+                  <div className="col-span-2 flex justify-center py-12">
+                    <Loader size="lg" />
+                  </div>
+                )}
+                {!isLoading && hasInitiallyLoaded && currentProducts.length === 0 && (
+                  <div className="col-span-2 text-center text-2xl text-gray-500 font-bold">
+                    No products found.
+                  </div>
+                )}
+                {currentProducts.map((product, index) => (
+                  <div key={product.id} className="animate-slideUp" style={{animationDelay: `${index * 0.1}s`}}>
+                    <ProductCard
+                      product={product}
+                      viewMode={viewMode}
+                      onRefresh={handleRefresh}
+                      onWishlistChange={handleWishlistChange}
+                      onOpenBiddingForm={handleOpenBiddingForm} // Pass handler
+                    />
+                  </div>
+                ))}
               </div>
-              <div className="text-sm text-gray-600 mt-4 mb-2">
-                Showing {showingProducts} of {totalProductsCount} products
-              </div>
-              <div className="flex items-center justify-between border-t border-gray-200 pt-6 mt-6">
-                <button
-                  onClick={() => paginate(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg ${
-                    currentPage === 1
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  <FontAwesomeIcon icon={faChevronLeft} className="mr-2" />
-                  Previous
-                </button>
-
-                <div className="hidden md:flex space-x-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                    (number) => (
-                      <button
-                        key={number}
-                        onClick={() => paginate(number)}
-                        className={`px-4 py-2 text-sm font-medium rounded-lg ${
-                          currentPage === number
-                            ? "bg-[#0071E0] text-white"
-                            : "text-gray-700 hover:bg-gray-100"
-                        }`}
-                      >
-                        {number}
-                      </button>
-                    )
-                  )}
+              {totalPages > 1 && (
+                <div className="text-sm text-gray-600 mt-4 mb-2">
+                  Showing {showingProducts} of {totalProductsCount} products
                 </div>
+              )}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between border-t border-gray-200 pt-6 mt-6">
+                  <button
+                    onClick={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg ${
+                      currentPage === 1
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    <FontAwesomeIcon icon={faChevronLeft} className="mr-2" />
+                    Previous
+                  </button>
 
-                <div className="md:hidden text-sm text-gray-700">
-                  Page {currentPage} of {totalPages}
+                  <div className="hidden md:flex space-x-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (number) => (
+                        <button
+                          key={number}
+                          onClick={() => paginate(number)}
+                          className={`px-4 py-2 text-sm font-medium rounded-lg ${
+                            currentPage === number
+                              ? "bg-[#0071E0] text-white"
+                              : "text-gray-700 hover:bg-gray-100"
+                          }`}
+                        >
+                          {number}
+                        </button>
+                      )
+                    )}
+                  </div>
+
+                  <div className="md:hidden text-sm text-gray-700">
+                    Page {currentPage} of {totalPages}
+                  </div>
+
+                  <button
+                    onClick={() => paginate(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg ${
+                      currentPage === totalPages
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    Next
+                    <FontAwesomeIcon icon={faChevronRight} className="ml-2" />
+                  </button>
                 </div>
-
-                <button
-                  onClick={() => paginate(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg ${
-                    currentPage === totalPages
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  Next
-                  <FontAwesomeIcon icon={faChevronRight} className="ml-2" />
-                </button>
-              </div>
+              )}
             </>
           )}
         </div>

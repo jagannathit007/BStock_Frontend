@@ -2,8 +2,6 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faTableCellsLarge,
-  faList,
   faChevronLeft,
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
@@ -11,6 +9,8 @@ import BiddingProductDetails from "./BiddingProductDetails";
 import SideFilter from "../SideFilter";
 import BusinessDetailsPopup from "./BusinessDetailsPopup";
 import BiddingProductCard from "./BiddingProductCard";
+import ViewControls from "./ViewControls";
+import Loader from "../Loader"; // Import Loader
 import { convertPrice } from "../../utils/currencyUtils";
 
 const BiddingContent = () => {
@@ -24,12 +24,13 @@ const BiddingContent = () => {
   // Real product data state management
   const [fetchedProducts, setFetchedProducts] = useState([]);
   const [totalProductsCount, setTotalProductsCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [filters, setFilters] = useState({});
   const [refreshTick] = useState(false);
-  const [searchQuery] = useState('');
-  const [sortOption] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState('');
 
   const mapApiProductToUi = (p) => {
     const id = p._id || p.id || "";
@@ -92,6 +93,12 @@ const BiddingContent = () => {
         return { price: 1 };
       case 'price_desc':
         return { price: -1 };
+      case 'ending_soon':
+        return { expiryTime: 1 };
+      case 'bids_desc':
+        return { bids: -1 };
+      case 'bids_asc':
+        return { bids: 1 };
       case 'newest':
         return { createdAt: -1 };
       default:
@@ -145,6 +152,7 @@ const BiddingContent = () => {
         }
       } finally {
         setIsLoading(false);
+        setHasInitiallyLoaded(true);
       }
     };
     fetchData();
@@ -308,42 +316,15 @@ const BiddingContent = () => {
         {/* Main Content */}
         <main className="flex-1 flex flex-col">
           {/* View Controls */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 sm:gap-0">
-            <div className="flex items-center space-x-4">
-              {/* <span className="text-sm text-gray-600">View:</span> */}
-              <div className="flex bg-gray-100 rounded-lg p-1">
-                <button
-                  className={`px-3 py-1 cursor-pointer text-sm font-medium ${
-                    viewMode === "grid"
-                      ? "bg-white text-[#0071E0] rounded-md shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                  onClick={() => setViewMode("grid")}
-                >
-                  <FontAwesomeIcon icon={faTableCellsLarge} className="mr-2" />
-                  Grid
-                </button>
-                <button
-                  className={`px-3 py-1 text-sm cursor-pointer font-medium ${
-                    viewMode === "list"
-                      ? "bg-white text-[#0071E0] rounded-md shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                  onClick={() => setViewMode("list")}
-                >
-                  <FontAwesomeIcon icon={faList} className="mr-2" />
-                  List
-                </button>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3 text-sm text-gray-600">
-              <select className="border border-gray-300 rounded-lg px-3 py-1 text-sm cursor-pointer">
-                <option>Sort by Ending Soon</option>
-                <option>Sort by Starting Price</option>
-                <option>Sort by Bid Count</option>
-              </select>
-            </div>
-          </div>
+          <ViewControls
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            sortOption={sortOption}
+            setSortOption={setSortOption}
+            setCurrentPage={setCurrentPage}
+          />
 
           {/* Grid View */}
           {viewMode === "grid" ? (
@@ -354,24 +335,25 @@ const BiddingContent = () => {
                 </div>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
-                {isLoading && currentProducts.length === 0 && (
-                  <div className="col-span-3 text-center text-sm text-gray-500">
-                    Loading products...
+                {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
+                  <div className="col-span-3 flex justify-center py-12">
+                    <Loader size="lg" />
                   </div>
                 )}
-                {!isLoading && currentProducts.length === 0 && (
+                {!isLoading && hasInitiallyLoaded && currentProducts.length === 0 && (
                   <div className="col-span-3 text-center text-2xl text-gray-500 font-bold">
                     No products found.
                   </div>
                 )}
-                {currentProducts.map((product) => (
-                  <BiddingProductCard
-                    key={product.id}
-                    product={product}
-                    viewMode={viewMode}
-                    onOpenBiddingForm={handleOpenBiddingForm}
-                    renderBidValue={renderBidValue}
-                  />
+                {currentProducts.map((product, index) => (
+                  <div key={product.id} className="animate-slideUp" style={{animationDelay: `${index * 0.1}s`}}>
+                    <BiddingProductCard
+                      product={product}
+                      viewMode={viewMode}
+                      onOpenBiddingForm={handleOpenBiddingForm}
+                      renderBidValue={renderBidValue}
+                    />
+                  </div>
                 ))}
               </div>
 
@@ -459,17 +441,19 @@ const BiddingContent = () => {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {isLoading && currentProducts.length === 0 && (
+                      {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
                         <tr>
                           <td
                             colSpan={6}
-                            className="px-4 py-6 text-center text-sm text-gray-500"
+                            className="px-4 py-12 text-center"
                           >
-                            Loading products...
+                            <div className="flex justify-center">
+                              <Loader size="lg" />
+                            </div>
                           </td>
                         </tr>
                       )}
-                      {!isLoading && currentProducts.length === 0 && (
+                      {!isLoading && hasInitiallyLoaded && currentProducts.length === 0 && (
                         <tr>
                           <td
                             colSpan={6}
@@ -479,14 +463,15 @@ const BiddingContent = () => {
                           </td>
                         </tr>
                       )}
-                      {currentProducts.map((product) => (
-                        <BiddingProductCard
-                          key={product.id}
-                          product={product}
-                          viewMode={viewMode}
-                          onOpenBiddingForm={handleOpenBiddingForm}
-                          renderBidValue={renderBidValue}
-                        />
+                      {currentProducts.map((product, index) => (
+                        <tr key={product.id} className="animate-slideUp" style={{animationDelay: `${index * 0.1}s`}}>
+                          <BiddingProductCard
+                            product={product}
+                            viewMode={viewMode}
+                            onOpenBiddingForm={handleOpenBiddingForm}
+                            renderBidValue={renderBidValue}
+                          />
+                        </tr>
                       ))}
                     </tbody>
                   </table>

@@ -325,72 +325,86 @@ const SignUpForm = () => {
 
   // Right side image section
   const ImageSection = () => (
-    <div className="relative w-full h-full bg-indigo-600 flex items-center justify-center">
-      {/* Background Image */}
+    <div className="relative w-full h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 flex items-center justify-center overflow-hidden">
       <img
         src={loginImage}
         alt="Premium GSM Bidding Platform"
-        className="absolute inset-0 w-full h-full object-cover"
+        className="absolute inset-0 w-full h-full object-cover opacity-20"
       />
-
-      {/* Overlay for readability */}
-      <div className="absolute inset-0 bg-black/50"></div>
-
-      {/* Text Overlay */}
-      <div className="relative z-10 text-center text-white px-6 max-w-2xl">
-        <h2 className="text-2xl md:text-4xl font-bold mb-4">
-          Join the xGSM Bidding community
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-600/90 via-blue-700/80 to-indigo-800/90"></div>
+      
+      {/* Floating elements */}
+      <div className="absolute top-20 left-10 w-20 h-20 bg-white/10 rounded-full animate-float"></div>
+      <div className="absolute top-40 right-20 w-16 h-16 bg-white/5 rounded-full animate-float" style={{animationDelay: '1s'}}></div>
+      <div className="absolute bottom-40 left-20 w-12 h-12 bg-white/10 rounded-full animate-float" style={{animationDelay: '2s'}}></div>
+      
+      <div className="relative z-10 text-center text-white px-8 max-w-2xl">
+        <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 rounded-3xl mb-8 backdrop-blur-sm">
+          <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <h2 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">
+          Join the xGSM community
         </h2>
-        <p className="text-lg text-indigo-100">
-          Create your account to access exclusive deals, trusted sellers, and
-          unbeatable prices on mobile devices.
+        <p className="text-xl text-blue-100 leading-relaxed">
+          Create your account to access exclusive deals, trusted sellers, and unbeatable prices on mobile devices.
         </p>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen flex bg-white fixed inset-0 overflow-auto">
+    <div className="min-h-screen flex bg-gradient-to-br from-gray-50 to-blue-50 fixed inset-0 overflow-auto">
       {/* Left Side - Signup Form */}
-      <div className="flex-1 flex items-center justify-center px-4 sm:px-4 lg:px-6 bg-white overflow-y-auto py-4">
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-4 lg:px-6 bg-transparent overflow-y-auto py-8">
         <motion.div
-          className="w-full max-w-xl space-y-8 px-4 sm:px-6"
+          className="w-full max-w-2xl space-y-10 px-6 sm:px-8"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-          {/* Logo */}
-          <motion.div className="text-left" variants={childVariants}>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Create your account !
+          {/* Logo and Header */}
+          <motion.div className="text-center" variants={childVariants}>
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl shadow-lg mb-6 animate-float">
+              <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+              </svg>
+            </div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-3 tracking-tight">
+              Create your account
             </h1>
-            <p className="text-gray-600">
-              Join us to access the best deals in the mobile industry.
+            <p className="text-lg text-gray-600 leading-relaxed">
+              Join the world's leading mobile trading platform
             </p>
             {error && (
-              <p className="text-red-500 text-sm mt-2 bg-red-50 p-2 rounded">
-                {error}
-              </p>
+              <div className="mt-4 p-4 bg-red-50 text-red-700 rounded-xl border border-red-200">
+                <p className="text-sm font-medium">{error}</p>
+              </div>
             )}
           </motion.div>
-          {/* Signup Form */}
-          <motion.form
-            className="space-y-6"
-            onSubmit={handleSubmit(onSubmit)}
+          {/* Form Card */}
+          <motion.div
+            className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-8"
             variants={childVariants}
           >
+            <motion.form
+              className="space-y-6"
+              onSubmit={handleSubmit(onSubmit)}
+              variants={childVariants}
+            >
             {/* Name and Email Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Full Name */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Full Name <span className="text-red-500">*</span>
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold text-gray-800">
+                  Full Name
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <FontAwesomeIcon
                       icon={faUser}
-                      className="text-indigo-400 text-sm"
+                      className="text-gray-400 group-focus-within:text-blue-500 transition-colors"
                     />
                   </div>
                   <input
@@ -400,10 +414,10 @@ const SignUpForm = () => {
                         handleFieldChange("fullName", e.target.value);
                       },
                     })}
-                    className={`block w-full pl-10 pr-3 py-2 border rounded-lg transition-colors bg-white text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
+                    className={`block w-full pl-12 pr-4 py-4 border-2 rounded-xl transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:bg-white ${
                       errors.fullName
-                        ? "border-red-500 focus:border-red-500"
-                        : "border-gray-300 focus:border-[#0071E0]"
+                        ? "border-red-400 focus:border-red-500"
+                        : "border-gray-200 focus:border-blue-500"
                     }`}
                     placeholder="Enter your full name"
                   />
@@ -416,15 +430,15 @@ const SignUpForm = () => {
                 )}
               </div>
               {/* Email */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Email <span className="text-red-500">*</span>
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold text-gray-800">
+                  Email Address
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <FontAwesomeIcon
                       icon={faEnvelope}
-                      className="text-indigo-400 text-sm"
+                      className="text-gray-400 group-focus-within:text-blue-500 transition-colors"
                     />
                   </div>
                   <input
@@ -434,12 +448,12 @@ const SignUpForm = () => {
                         handleFieldChange("email", e.target.value);
                       },
                     })}
-                    className={`block w-full pl-10 pr-3 py-2 border rounded-lg transition-colors bg-white text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
+                    className={`block w-full pl-12 pr-4 py-4 border-2 rounded-xl transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:bg-white ${
                       errors.email
-                        ? "border-red-500 focus:border-red-500"
-                        : "border-gray-300 focus:border-[#0071E0]"
+                        ? "border-red-400 focus:border-red-500"
+                        : "border-gray-200 focus:border-blue-500"
                     }`}
-                    placeholder="Enter your email"
+                    placeholder="Enter your email address"
                   />
                 </div>
                 {errors.email && (
@@ -451,24 +465,24 @@ const SignUpForm = () => {
               </div>
             </div>
             {/* Phone and WhatsApp Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Phone Number <span className="text-red-500">*</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold text-gray-800">
+                  Phone Number
                 </label>
                 <div className="relative flex">
                   {/* Country Code Selector */}
-                  <div className="relative w-24 mr-2">
+                  <div className="relative w-28 mr-3">
                     <button
                       type="button"
                       onClick={() => {
                         setShowPhoneDropdown(!showPhoneDropdown);
                         if (showPhoneDropdown) setPhoneSearchTerm(""); // Clear search when closing
                       }}
-                      className={`flex items-center justify-between cursor-pointer w-full px-3 py-2 bg-gray-50 border rounded-lg focus:ring-2 text-gray-700 text-sm hover:bg-gray-100 transition-colors ${
+                      className={`flex items-center justify-between cursor-pointer w-full px-4 py-4 bg-gray-50/50 border-2 rounded-xl focus:ring-4 focus:ring-blue-500/20 text-gray-700 text-sm hover:bg-gray-100 transition-all duration-300 ${
                         errors.phoneCode
-                          ? "border-red-500 focus:ring-red-500"
-                          : "border-gray-300 focus:ring-[#0071E0]"
+                          ? "border-red-400 focus:border-red-500"
+                          : "border-gray-200 focus:border-blue-500"
                       }`}
                     >
                       <div className="flex items-center">
@@ -557,12 +571,12 @@ const SignUpForm = () => {
                           handleFieldChange("mobileNumber", e.target.value);
                         },
                       })}
-                      className={`block w-full px-3 py-2 text-sm border rounded-lg transition-colors bg-white focus:ring-2 focus:ring-[#0071E0]/20 ${
+                      className={`block w-full px-4 py-4 text-sm border-2 rounded-xl transition-all duration-300 bg-gray-50/50 focus:ring-4 focus:ring-blue-500/20 focus:bg-white ${
                         errors.mobileNumber
-                          ? "border-red-500 focus:border-red-500"
-                          : "border-gray-300 focus:border-[#0071E0]"
+                          ? "border-red-400 focus:border-red-500"
+                          : "border-gray-200 focus:border-blue-500"
                       }`}
-                      placeholder="Phone number"
+                      placeholder="Enter phone number"
                     />
                   </div>
                 </div>
@@ -574,23 +588,23 @@ const SignUpForm = () => {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold text-gray-800">
                   WhatsApp Number
                 </label>
                 <div className="relative flex">
                   {/* Country Code Selector */}
-                  <div className="relative w-24 mr-2">
+                  <div className="relative w-28 mr-3">
                     <button
                       type="button"
                       onClick={() => {
                         setShowWhatsappDropdown(!showWhatsappDropdown);
                         if (showWhatsappDropdown) setWhatsappSearchTerm(""); // Clear search when closing
                       }}
-                      className={`flex items-center justify-between cursor-pointer w-full px-3 py-2 bg-gray-50 border rounded-lg focus:ring-2 text-gray-700 text-sm hover:bg-gray-100 transition-colors ${
+                      className={`flex items-center justify-between cursor-pointer w-full px-4 py-4 bg-gray-50/50 border-2 rounded-xl focus:ring-4 focus:ring-blue-500/20 text-gray-700 text-sm hover:bg-gray-100 transition-all duration-300 ${
                         errors.whatsappCode
-                          ? "border-red-500 focus:ring-red-500"
-                          : "border-gray-300 focus:ring-[#0071E0]"
+                          ? "border-red-400 focus:border-red-500"
+                          : "border-gray-200 focus:border-blue-500"
                       }`}
                     >
                       <div className="flex items-center">
@@ -679,12 +693,12 @@ const SignUpForm = () => {
                           handleFieldChange("whatsapp", e.target.value);
                         },
                       })}
-                      className={`block w-full px-3 py-2 text-sm border rounded-lg transition-colors bg-white focus:ring-2 focus:ring-[#0071E0]/20 ${
+                      className={`block w-full px-4 py-4 text-sm border-2 rounded-xl transition-all duration-300 bg-gray-50/50 focus:ring-4 focus:ring-blue-500/20 focus:bg-white ${
                         errors.whatsapp
-                          ? "border-red-500 focus:border-red-500"
-                          : "border-gray-300 focus:border-[#0071E0]"
+                          ? "border-red-400 focus:border-red-500"
+                          : "border-gray-200 focus:border-blue-500"
                       }`}
-                      placeholder="WhatsApp number"
+                      placeholder="Enter WhatsApp number"
                     />
                   </div>
                 </div>
@@ -697,17 +711,17 @@ const SignUpForm = () => {
               </div>
             </div>
             {/* Password and Confirm Password Row */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Password */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Password <span className="text-red-500">*</span>
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold text-gray-800">
+                  Password
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <FontAwesomeIcon
                       icon={faLock}
-                      className="text-indigo-400 text-sm"
+                      className="text-gray-400 group-focus-within:text-blue-500 transition-colors"
                     />
                   </div>
                   <input
@@ -717,21 +731,21 @@ const SignUpForm = () => {
                         handleFieldChange("password", e.target.value);
                       },
                     })}
-                    className={`block w-full pl-10 pr-10 py-2 text-sm border rounded-lg transition-colors bg-white focus:ring-2 focus:ring-[#0071E0]/20 ${
+                    className={`block w-full pl-12 pr-12 py-4 border-2 rounded-xl transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:bg-white ${
                       errors.password
-                        ? "border-red-500 focus:border-red-500"
-                        : "border-gray-300 focus:border-[#0071E0]"
+                        ? "border-red-400 focus:border-red-500"
+                        : "border-gray-200 focus:border-blue-500"
                     }`}
                     placeholder="Create password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center hover:bg-gray-100 rounded-r-xl transition-colors"
                   >
                     <FontAwesomeIcon
                       icon={showPassword ? faEye : faEyeSlash}
-                      className="text-gray-400 hover:text-indigo-600 transition-colors text-sm"
+                      className="text-gray-400 hover:text-blue-600 transition-colors"
                     />
                   </button>
                 </div>
@@ -743,15 +757,15 @@ const SignUpForm = () => {
                 )}
               </div>
               {/* Confirm Password */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Confirm Password <span className="text-red-500">*</span>
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold text-gray-800">
+                  Confirm Password
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <FontAwesomeIcon
                       icon={faLock}
-                      className="text-indigo-400 text-sm"
+                      className="text-gray-400 group-focus-within:text-blue-500 transition-colors"
                     />
                   </div>
                   <input
@@ -761,21 +775,21 @@ const SignUpForm = () => {
                         handleFieldChange("confirmPassword", e.target.value);
                       },
                     })}
-                    className={`block w-full pl-10 pr-10 py-2 text-sm border rounded-lg transition-colors bg-white focus:ring-2 focus:ring-[#0071E0]/20 ${
+                    className={`block w-full pl-12 pr-12 py-4 border-2 rounded-xl transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:bg-white ${
                       errors.confirmPassword
-                        ? "border-red-500 focus:border-red-500"
-                        : "border-gray-300 focus:border-[#0071E0]"
+                        ? "border-red-400 focus:border-red-500"
+                        : "border-gray-200 focus:border-blue-500"
                     }`}
                     placeholder="Confirm password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center hover:bg-gray-100 rounded-r-xl transition-colors"
                   >
                     <FontAwesomeIcon
                       icon={showConfirmPassword ? faEye : faEyeSlash}
-                      className="text-gray-400 hover:text-indigo-600 transition-colors text-sm"
+                      className="text-gray-400 hover:text-blue-600 transition-colors"
                     />
                   </button>
                 </div>
@@ -788,31 +802,31 @@ const SignUpForm = () => {
               </div>
             </div>
             {/* Terms Checkbox */}
-            <div className="flex items-start">
+            <div className="flex items-start group">
               <div className="flex items-center h-5">
                 <input
                   id="terms"
                   name="terms"
                   type="checkbox"
                   required
-                  className="h-4 w-4 cursor-pointer text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded transition-colors"
+                  className="h-5 w-5 cursor-pointer text-blue-600 focus:ring-4 focus:ring-blue-500/20 border-2 border-gray-300 rounded-lg transition-all duration-200"
                 />
               </div>
               <label
                 htmlFor="terms"
-                className="ml-3 block text-sm text-gray-700"
+                className="ml-3 block text-sm text-gray-700 cursor-pointer group-hover:text-gray-900 transition-colors"
               >
                 I agree to the{" "}
                 <a
                   href="#"
-                  className="text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+                  className="text-blue-600 hover:text-blue-800 font-semibold transition-colors hover:underline"
                 >
                   Terms of Service
                 </a>{" "}
                 and{" "}
                 <a
                   href="#"
-                  className="text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+                  className="text-blue-600 hover:text-blue-800 font-semibold transition-colors hover:underline"
                 >
                   Privacy Policy
                 </a>
@@ -821,7 +835,7 @@ const SignUpForm = () => {
             {/* Create Account Button */}
             <motion.button
               type="submit"
-              className="w-full bg-[#0071E0] text-white py-2 px-4 rounded-lg font-medium focus:ring-4 cursor-pointer transition-colors flex items-center justify-center disabled:opacity-70"
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-xl font-semibold text-lg focus:ring-4 focus:ring-blue-500/30 cursor-pointer transition-all duration-300 flex items-center justify-center disabled:opacity-70 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
               disabled={isLoading || isSubmitting}
               variants={buttonVariants}
               whileHover="hover"
@@ -858,57 +872,60 @@ const SignUpForm = () => {
             </motion.button>
 
             {/* Divider */}
-            <div className="relative my-6">
+            <div className="relative my-8">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-200"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-3 bg-white text-gray-500">
-                  Or, Sign up with
+                <span className="px-4 bg-white text-gray-500 font-medium">
+                  Or continue with
                 </span>
               </div>
             </div>
             {/* Google Sign-In */}
             <div className="w-full">
               {googleLoading ? (
-                <div className="flex justify-center items-center py-3 bg-gray-50 rounded-lg border">
+                <div className="flex justify-center items-center py-4 bg-gray-50/50 rounded-xl border-2 border-gray-200">
                   <FontAwesomeIcon
                     icon={faSpinner}
-                    className="animate-spin text-indigo-600 mr-2"
+                    className="animate-spin text-blue-600 mr-3"
                   />
-                  <span className="text-gray-700">
+                  <span className="text-gray-700 font-medium">
                     Signing up with Google...
                   </span>
                 </div>
               ) : (
                 <div
                   id="googleSignInDiv"
-                  className="w-fit mx-auto [&>div]:rounded-lg [&>div>div]:rounded-lg [&>div>div>div]:rounded-lg"
+                  className="w-full [&>div]:rounded-xl [&>div>div]:rounded-xl [&>div>div>div]:rounded-xl [&>div]:shadow-sm [&>div]:hover:shadow-md [&>div]:transition-all [&>div]:duration-300"
                 ></div>
               )}
             </div>
-          </motion.form>
+            </motion.form>
+          </motion.div>
+
           {/* Login Link */}
           <motion.div className="text-center" variants={childVariants}>
-            <p className="text-gray-600 text-sm font-medium">
+            <p className="text-gray-600 text-base font-medium">
               Already have an account?{" "}
               <Link
                 to="/login"
-                className="text-indigo-600 hover:text-indigo-800 font-semibold transition-colors"
+                className="text-blue-600 hover:text-blue-800 font-semibold transition-colors hover:underline"
               >
-                Sign in
+                Sign in here
               </Link>
             </p>
           </motion.div>
+
           {/* Security Notice */}
           <motion.div className="text-center" variants={childVariants}>
-            <p className="text-xs text-gray-500 flex items-center justify-center font-medium">
+            <div className="inline-flex items-center px-4 py-2 bg-green-50 text-green-700 rounded-full text-sm font-medium">
               <FontAwesomeIcon
                 icon={faShieldHalved}
-                className="mr-2 text-indigo-500"
+                className="mr-2 text-green-600"
               />
-              Your business data is protected with enterprise-grade security
-            </p>
+              Enterprise-grade security
+            </div>
           </motion.div>
         </motion.div>
       </div>

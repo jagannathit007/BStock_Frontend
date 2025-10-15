@@ -27,7 +27,7 @@ const CountrySelector = ({
   const customStyles = {
     control: (provided, state) => ({
       ...provided,
-      minHeight: '40px',
+      minHeight: '50px',
       border: error 
         ? '1px solid #ef4444' 
         : state.isFocused 
