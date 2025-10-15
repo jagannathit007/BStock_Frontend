@@ -139,6 +139,14 @@ const ProductCard = ({
     if (isOutOfStock || isExpired) return;
 
     try {
+      // Redirect unauthenticated users to login before any business checks
+      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      if (!isLoggedIn) {
+        try { localStorage.setItem('postLoginAction', JSON.stringify({ type: 'add_to_cart', productId: id || product?._id })); } catch {}
+        const hashPath = window.location.hash?.slice(1) || '/home';
+        const returnTo = encodeURIComponent(hashPath);
+        return navigate(`/login?returnTo=${returnTo}`);
+      }
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       const { businessProfile } = user;
 
@@ -174,7 +182,9 @@ const ProductCard = ({
 
       const customerId = user._id || "";
       if (!customerId) {
-        return navigate("/signin");
+        const hashPath = window.location.hash?.slice(1) || "/home";
+        const returnTo = encodeURIComponent(hashPath);
+        return navigate(`/login?returnTo=${returnTo}`);
       }
       setIsAddToCartPopupOpen(true);
     } catch (error) {
@@ -248,6 +258,12 @@ const ProductCard = ({
     const productId = id || product._id;
 
     try {
+      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      if (!isLoggedIn) {
+        const hashPath = window.location.hash?.slice(1) || '/home';
+        const returnTo = encodeURIComponent(hashPath);
+        return navigate(`/login?returnTo=${returnTo}`);
+      }
       const newWishlistStatus = !isFavorite;
       setIsFavorite(newWishlistStatus); // Optimistic update
 
@@ -518,6 +534,13 @@ const ProductCard = ({
                       title="Make an offer"
                       onClick={(e) => {
                         e.stopPropagation();
+                        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+                        if (!isLoggedIn) {
+                          try { localStorage.setItem('postLoginAction', JSON.stringify({ type: 'make_offer', productId: id || product?._id })); } catch {}
+                          const hashPath = window.location.hash?.slice(1) || '/home';
+                          const returnTo = encodeURIComponent(hashPath);
+                          return navigate(`/login?returnTo=${returnTo}`);
+                        }
                         onOpenBiddingForm(product);
                       }}
                     >
@@ -730,6 +753,12 @@ const ProductCard = ({
                 className="flex-1 bg-[#0071e3] text-white py-2 px-3 rounded-lg text-xs font-semibold hover:bg-[#005bb5] cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md"
                 onClick={(e) => {
                   e.stopPropagation();
+                  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+                  if (!isLoggedIn) {
+                    const hashPath = window.location.hash?.slice(1) || '/home';
+                    const returnTo = encodeURIComponent(hashPath);
+                    return navigate(`/login?returnTo=${returnTo}`);
+                  }
                   onOpenBiddingForm(product); // Call handler with product
                 }}
               >

@@ -5,7 +5,7 @@ import CartService from "../services/cart/cart.services";
 import { WalletService } from "../services/wallet/wallet.services";
 import { env } from "../utils/env";
 import NegotiationModal from "./negotiation/NegotiationModal";
-import WishlistModal from "./WishListPage/WishListModal";
+import WishlistModal from "./WishListPage/WishlistModal";
 import WalletModal from "./WalletTransactionsPage/WalletTransactions";
 import { convertPrice } from "../utils/currencyUtils";
 
@@ -19,10 +19,15 @@ const Header = ({ onLogout }) => {
   const [isWishlistModalOpen, setIsWishlistModalOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
 
   // Fetch cart count
   const fetchCartCount = async () => {
     try {
+      if (!isLoggedIn) {
+        setCartItemCount(0);
+        return;
+      }
       const count = await CartService.count();
       setCartItemCount(count || 0);
     } catch (error) {
@@ -34,6 +39,10 @@ const Header = ({ onLogout }) => {
   // Fetch wallet balance
   const fetchWalletBalance = async () => {
     try {
+      if (!isLoggedIn) {
+        setWalletBalance(0);
+        return;
+      }
       const response = await WalletService.getWallet();
       if (response.status === 200 && response.data) {
         setWalletBalance(parseFloat(response.data.balance) || 0);
@@ -92,25 +101,68 @@ const Header = ({ onLogout }) => {
     setIsDropdownOpen(false);
   };
 
-  const handleCartClick = () => {
-    navigate("/cart");
-  };
+  // removed duplicate simple cart click; unified below with auth-redirect
 
   const handleNegotiationClick = () => {
+    if (!isLoggedIn) {
+      try { localStorage.setItem('postLoginAction', JSON.stringify({ type: 'negotiations' })); } catch {}
+      const hashPath = window.location.hash?.slice(1) || '/home';
+      const returnTo = encodeURIComponent(hashPath);
+      navigate(`/login?returnTo=${returnTo}`);
+      return;
+    }
     setIsNegotiationModalOpen(true);
   };
 
   const handleWishlistClick = () => {
+    if (!isLoggedIn) {
+      try { localStorage.setItem('postLoginAction', JSON.stringify({ type: 'wishlist' })); } catch {}
+      const hashPath = window.location.hash?.slice(1) || '/home';
+      const returnTo = encodeURIComponent(hashPath);
+      navigate(`/login?returnTo=${returnTo}`);
+      return;
+    }
     setIsWishlistModalOpen(true);
   };
 
   const handleWalletClick = () => {
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    if (!isLoggedIn) {
+      try { localStorage.setItem('postLoginAction', JSON.stringify({ type: 'wallet' })); } catch {}
+      const hashPath = window.location.hash?.slice(1) || '/home';
+      const returnTo = encodeURIComponent(hashPath);
+      navigate(`/login?returnTo=${returnTo}`);
+      return;
+    }
     setIsWalletModalOpen(true);
   };
 
   const handleOrderHistoryClick = () => {
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    if (!isLoggedIn) {
+      // Direct user back to orders page after login
+      const returnTo = encodeURIComponent('/order');
+      navigate(`/login?returnTo=${returnTo}`);
+      return;
+    }
     navigate("/order");
     setIsDropdownOpen(false);
+  };
+
+  const handleCartClick = () => {
+    if (!isLoggedIn) {
+      // Direct user back to cart after login
+      const returnTo = encodeURIComponent('/cart');
+      navigate(`/login?returnTo=${returnTo}`);
+      return;
+    }
+    navigate("/cart");
+  };
+
+  const handleLoginClick = () => {
+    const hashPath = window.location.hash?.slice(1) || '/home';
+    const returnTo = encodeURIComponent(hashPath);
+    navigate(`/login?returnTo=${returnTo}`);
   };
 
   const toAbsoluteUrl = (p) => {
@@ -192,6 +244,9 @@ const Header = ({ onLogout }) => {
         applyAvatar();
         applyUserName();
       }
+      if (e.key === 'postLoginAction' || e.key === 'isLoggedIn') {
+        processPostLoginAction();
+      }
     };
 
     const onProfileUpdate = () => {
@@ -207,6 +262,24 @@ const Header = ({ onLogout }) => {
       window.removeEventListener('profileUpdated', onProfileUpdate);
     };
   }, []);
+
+  // Open any post-login header modal if requested before login
+  const processPostLoginAction = () => {
+    try {
+      const isNowLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      const raw = localStorage.getItem('postLoginAction');
+      if (!isNowLoggedIn || !raw) return;
+      const { type } = JSON.parse(raw);
+      if (type === 'wallet') setIsWalletModalOpen(true);
+      if (type === 'wishlist') setIsWishlistModalOpen(true);
+      if (type === 'negotiations') setIsNegotiationModalOpen(true);
+      localStorage.removeItem('postLoginAction');
+    } catch {}
+  };
+
+  useEffect(() => {
+    processPostLoginAction();
+  }, [location.pathname]);
 
   const [imageError, setImageError] = useState(false);
 
@@ -317,7 +390,7 @@ const Header = ({ onLogout }) => {
                   <div className="flex flex-col items-start">
                     <span className="text-xs text-gray-500 font-medium">Balance</span>
                     <span className="text-sm font-semibold text-gray-900">
-                      {convertPrice(walletBalance)}
+                      {isLoggedIn ? convertPrice(walletBalance) : (0).toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -354,117 +427,130 @@ const Header = ({ onLogout }) => {
                   onClick={handleCartClick}
                   title="My Cart"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shopping-cart-icon lucide-shopping-cart"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
-                  {cartItemCount > 0 && (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shopping-cart-icon lucide-shopping-cart"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+                  {isLoggedIn && cartItemCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold shadow-sm">
                       {cartItemCount > 99 ? '99+' : cartItemCount}
                     </span>
                   )}
                 </button>
+
+              {/* Login button when not authenticated */}
+              {!isLoggedIn && (
+                <button
+                  onClick={handleLoginClick}
+                  className="ml-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer transition-colors"
+                  title="Login"
+                >
+                  Login
+                </button>
+              )}
               </div>
 
-              {/* Profile Dropdown */}
-              <div className="relative ml-2" ref={dropdownRef}>
-                <button
-                  className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-all duration-200 border border-gray-200"
-                  onClick={handleProfileClick}
-                >
-                  {hasImage ? (
-                    <img
-                      src={imageError ? "/images/avtar.jpg" : avatarUrl}
-                      alt="Profile"
-                      className="w-8 h-8 rounded-full border-2 border-gray-200 object-cover"
-                      onError={handleImageError}
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full border-2 border-gray-200 bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                      <span className="text-white text-sm font-semibold">
-                        {getInitials}
-                      </span>
+              {/* Profile Dropdown (only when logged in) */}
+              {isLoggedIn && (
+                <div className="relative ml-2" ref={dropdownRef}>
+                  <button
+                    className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-all duration-200 border border-gray-200"
+                    onClick={handleProfileClick}
+                  >
+                    {hasImage ? (
+                      <img
+                        src={imageError ? "/images/avtar.jpg" : avatarUrl}
+                        alt="Profile"
+                        className="w-8 h-8 rounded-full border-2 border-gray-200 object-cover"
+                        onError={handleImageError}
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full border-2 border-gray-200 bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                        <span className="text-white text-sm font-semibold">
+                          {getInitials}
+                        </span>
+                      </div>
+                    )}
+                    <div className="hidden sm:block text-left">
+                      <p className="text-sm font-medium text-gray-900">{userName || 'User'}</p>
+                      <p className="text-xs text-gray-500">Account</p>
                     </div>
-                  )}
-                  <div className="hidden sm:block text-left">
-                    <p className="text-sm font-medium text-gray-900">{userName || 'User'}</p>
-                    <p className="text-xs text-gray-500">Account</p>
-                  </div>
-                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
 
-                {isDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl py-2 z-50 border border-gray-200 animate-fadeIn">
-                    {/* User Info Header */}
-                    <div className="px-4 py-3 border-b border-gray-100">
-                      <div className="flex items-center space-x-3">
-                        {hasImage ? (
-                          <img
-                            src={imageError ? "/images/avtar.jpg" : avatarUrl}
-                            alt="Profile"
-                            className="w-10 h-10 rounded-full border border-gray-200 object-cover"
-                            onError={handleImageError}
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-full border border-gray-200 bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                            <span className="text-white text-sm font-semibold">
-                              {getInitials}
-                            </span>
+                  {isDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl py-2 z-50 border border-gray-200 animate-fadeIn">
+                      {/* User Info Header */}
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <div className="flex items-center space-x-3">
+                          {hasImage ? (
+                            <img
+                              src={imageError ? "/images/avtar.jpg" : avatarUrl}
+                              alt="Profile"
+                              className="w-10 h-10 rounded-full border border-gray-200 object-cover"
+                              onError={handleImageError}
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full border border-gray-200 bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                              <span className="text-white text-sm font-semibold">
+                                {getInitials}
+                              </span>
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900">{userName || 'User'}</p>
+                            <p className="text-xs text-gray-500">Member since 2024</p>
                           </div>
-                        )}
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900">{userName || 'User'}</p>
-                          <p className="text-xs text-gray-500">Member since 2024</p>
                         </div>
                       </div>
+
+                      {/* Menu Items */}
+                      <div className="py-1">
+                        <button
+                          onClick={handleProfileNavigation}
+                          className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
+                        >
+                          <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          Profile Settings
+                        </button>
+
+                        <button
+                          onClick={handleWalletClick}
+                          className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
+                        >
+                          <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                          </svg>
+                          Wallet & Payments
+                        </button>
+
+                        <button
+                          onClick={handleOrderHistoryClick}
+                          className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
+                        >
+                          <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                          </svg>
+                          Order History
+                        </button>
+
+                        <div className="border-t border-gray-100 my-1"></div>
+
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
+                        >
+                          <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                          </svg>
+                          Sign Out
+                        </button>
+                      </div>
                     </div>
-
-                    {/* Menu Items */}
-                    <div className="py-1">
-                      <button
-                        onClick={handleProfileNavigation}
-                        className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
-                      >
-                        <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        Profile Settings
-                      </button>
-
-                      <button
-                        onClick={handleWalletClick}
-                        className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
-                      >
-                        <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                        </svg>
-                        Wallet & Payments
-                      </button>
-
-                      <button
-                        onClick={handleOrderHistoryClick}
-                        className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
-                      >
-                        <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                        </svg>
-                        Order History
-                      </button>
-
-                      <div className="border-t border-gray-100 my-1"></div>
-
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
-                      >
-                        <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                        Sign Out
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -45,7 +45,14 @@ api.interceptors.response.use(
       localStorage.removeItem('user');
       // Ensure socket disconnects on auth loss
       try { SocketService.disconnect(); } catch {}
-      window.location.href = '/#/signin';
+      // Preserve the route the user attempted to access
+      try {
+        const hashPath = window.location.hash?.slice(1) || '/home';
+        const returnTo = encodeURIComponent(hashPath);
+        window.location.href = `/#/login?returnTo=${returnTo}`;
+      } catch {
+        window.location.href = '/#/login';
+      }
     }
     return Promise.reject(error);
   }

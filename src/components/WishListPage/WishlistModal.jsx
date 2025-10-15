@@ -173,6 +173,13 @@ const WishlistModal = ({ isOpen, onClose }) => {
     if (product.isOutOfStock || product.isExpired) return;
 
     try {
+      // Redirect unauthenticated users to login before any business checks
+      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      if (!isLoggedIn) {
+        const hashPath = window.location.hash?.slice(1) || '/home';
+        const returnTo = encodeURIComponent(hashPath);
+        return navigate(`/login?returnTo=${returnTo}`);
+      }
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       const { businessProfile } = user;
 
@@ -208,7 +215,9 @@ const WishlistModal = ({ isOpen, onClose }) => {
 
       const customerId = user._id || "";
       if (!customerId) {
-        return navigate("/signin");
+        const hashPath = window.location.hash?.slice(1) || "/home";
+        const returnTo = encodeURIComponent(hashPath);
+        return navigate(`/login?returnTo=${returnTo}`);
       }
       setSelectedProduct(product);
       setIsAddToCartPopupOpen(true);

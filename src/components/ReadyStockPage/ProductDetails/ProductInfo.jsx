@@ -323,6 +323,13 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     const productId = processedProduct._id || processedProduct.id;
     const newWishlistStatus = !isFavorite;
 
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    if (!isLoggedIn) {
+      const hashPath = window.location.hash?.slice(1) || '/home';
+      const returnTo = encodeURIComponent(hashPath);
+      return navigate(`/login?returnTo=${returnTo}`);
+    }
+
     setIsFavorite(newWishlistStatus);
 
     try {
@@ -338,6 +345,13 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
 
   const handleBiddingClick = async (e) => {
     e.stopPropagation();
+    // Require auth for making an offer
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    if (!isLoggedIn) {
+      const hashPath = window.location.hash?.slice(1) || '/home';
+      const returnTo = encodeURIComponent(hashPath);
+      return navigate(`/login?returnTo=${returnTo}`);
+    }
 
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     const { businessProfile } = user;
@@ -383,7 +397,9 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     if (processedProduct.isOutOfStock || processedProduct.isExpired) return;
     const customerId = localStorage.getItem("userId") || "";
     if (!customerId) {
-      return navigate("/signin");
+      const hashPath = window.location.hash?.slice(1) || "/home";
+      const returnTo = encodeURIComponent(hashPath);
+      return navigate(`/login?returnTo=${returnTo}`);
     }
     setIsAddToCartPopupOpen(true);
   };
@@ -393,7 +409,9 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     if (processedProduct.isOutOfStock || processedProduct.isExpired) return;
     const customerId = localStorage.getItem("userId") || "";
     if (!customerId) {
-      return navigate("/signin");
+      const hashPath = window.location.hash?.slice(1) || "/home";
+      const returnTo = encodeURIComponent(hashPath);
+      return navigate(`/login?returnTo=${returnTo}`);
     }
     setIsBuyNowCheckoutOpen(true);
   };
