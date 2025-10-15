@@ -319,7 +319,7 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
         {/* Content */}
         <div className="flex-1 overflow-y-auto bg-gray-50 rounded-b-2xl">
           {activeTab === "history" ? (
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-2">
               {bidsLoading ? (
                 <div className="flex flex-col items-center justify-center py-20">
                   <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
@@ -329,7 +329,7 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
                 groupedBids.map((bidGroup) => (
                   <div
                     key={bidGroup.bidId}
-                    className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:shadow-xl transition-all"
+                    className="bg-white border-2 border-gray-200 rounded-xl p-3 hover:shadow-xl transition-all"
                   >
                     
                     {/* Group Header */}
@@ -500,8 +500,8 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
             /* New Bid Form */
             <div className="flex flex-col h-full">
               <div className="flex-1 overflow-y-auto p-6">
-                <form onSubmit={handleSubmit} className="space-y-5 max-w-lg mx-auto">
-                  <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+                <form onSubmit={handleSubmit} className="max-w-xl mx-auto shadow-sm border border-gray-200 rounded-xl">
+                  <div className=" rounded-xl p-4">
                     <label className="block text-sm font-bold text-gray-900 mb-3">
                       Your Offer Price *
                     </label>
@@ -515,7 +515,7 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
                         onChange={(e) =>
                           setFormData({ ...formData, offerPrice: e.target.value })
                         }
-                        className="w-full pl-12 pr-4 py-2 text-base font-semibold border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        className="w-full pl-12 pr-4 py-2 text-sm font-base border-2 border-gray-300 rounded-lg"
                         placeholder="Enter amount"
                         step="0.01"
                         min="0"
@@ -528,7 +528,7 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
                     </p>
                   </div>
 
-                  <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+                  <div className=" rounded-xl p-4">
                     <label className="block text-sm font-bold text-gray-900 mb-3">
                       Add Message (Optional)
                     </label>
@@ -541,8 +541,8 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
                         onChange={(e) =>
                           setFormData({ ...formData, message: e.target.value })
                         }
-                        className="w-full pl-11 pr-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                        rows={4}
+                        className="w-full pl-11 pr-3 py-2 border-2 border-gray-300 rounded-lg text-sm"
+                        rows={2}
                         placeholder="Explain why your offer is fair..."
                         maxLength={500}
                       />
