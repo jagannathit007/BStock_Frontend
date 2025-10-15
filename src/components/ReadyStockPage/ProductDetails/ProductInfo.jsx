@@ -69,6 +69,17 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       });
     }
 
+    if (
+      currentProduct.subSkuFamilyId?.images &&
+      Array.isArray(currentProduct.subSkuFamilyId.images)
+    ) {
+      currentProduct.subSkuFamilyId.images.forEach((img) => {
+        if (!images.includes(img)) {
+          images.push(img);
+        }
+      });
+    }
+
     while (images.length < 5) {
       images.push(iphoneImage);
     }
@@ -87,7 +98,10 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
 
   const processedProduct = {
     ...currentProduct,
-    name: currentProduct.skuFamilyId?.name || currentProduct.name,
+    name:
+      currentProduct.subSkuFamilyId?.name ||
+      currentProduct.skuFamilyId?.name ||
+      currentProduct.name,
     brand: currentProduct.skuFamilyId?.brand || currentProduct.brand,
     code: currentProduct.skuFamilyId?.code || currentProduct.code,
     description:
@@ -151,11 +165,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
           const freshProduct = await ProductService.getProductById(productId);
           console.log("ProductInfo - Fresh product from API:", freshProduct);
           let productToSet = initialProduct;
-          if (
-            freshProduct &&
-            typeof freshProduct === "object" &&
-            freshProduct.name
-          ) {
+          if (freshProduct && typeof freshProduct === "object") {
             productToSet = freshProduct;
           }
           setCurrentProduct(productToSet);
