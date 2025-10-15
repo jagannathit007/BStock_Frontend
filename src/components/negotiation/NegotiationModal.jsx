@@ -269,7 +269,7 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
             }`}
           >
             <CheckCircle className="w-4 h-4" />
-            <span>Accepted Orders</span>
+            <span>Accepted Negotiations</span>
             {activeTab === 'accepted' && (
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600"></div>
             )}
