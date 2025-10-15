@@ -46,6 +46,7 @@ const Header = ({ onLogout }) => {
     }
   };
 
+
   useEffect(() => {
     const loadData = async () => {
       await fetchCartCount();
@@ -272,40 +273,9 @@ const Header = ({ onLogout }) => {
               </div>
             </div>
 
-            {/* Search bar */}
-            <div className="flex-1 mx-6 max-w-2xl hidden md:block">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg
-                    className="h-5 w-5 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-                <input
-                  type="text"
-                  className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all duration-200"
-                  placeholder="Search products, brands, models..."
-                />
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                  <kbd className="hidden sm:inline-flex items-center px-2 py-1 border border-gray-200 rounded text-xs font-mono text-gray-500 bg-gray-100">
-                    ⌘K
-                  </kbd>
-                </div>
-              </div>
-            </div>
 
             {/* Right Side */}
             <div className="flex items-center space-x-2">
-              {/* Mobile Search Button */}
-              <button className="md:hidden p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200">
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </button>
 
               {/* Wallet Info */}
               <button
@@ -500,6 +470,7 @@ const Header = ({ onLogout }) => {
           }
         `}</style>
       </header>
+
 
       {/* Negotiation Modal */}
       <NegotiationModal
