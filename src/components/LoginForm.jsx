@@ -368,7 +368,7 @@ const LoginForm = ({ onLogin }) => {
       `}</style>
       <div className="h-screen flex bg-gradient-to-br from-gray-50 to-blue-50 overflow-hidden" style={{height: '100vh', maxHeight: '100vh'}}>
         <div className="flex-1 flex justify-center px-2 sm:px-4 lg:px-6 bg-transparent py-2 sm:py-3 lg:py-4 items-start min-w-0 min-h-0 scroll-container" style={{height: '100%', maxHeight: '100vh'}}>
-          <div className="w-full flex justify-center items-start min-h-full">
+          <div className="w-full flex justify-center items-center min-h-full">
             {showLoginForm && (
             <motion.div
               className="max-w-md w-full space-y-4 sm:space-y-5 lg:space-y-6 px-2 sm:px-3 lg:px-4 py-3 sm:py-4"

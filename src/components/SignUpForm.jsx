@@ -380,7 +380,7 @@ const SignUpForm = () => {
       `}</style>
       <div className="h-screen flex bg-gradient-to-br from-gray-50 to-blue-50 overflow-hidden" style={{height: '100vh', maxHeight: '100vh'}}>
         <div className="flex-1 flex justify-center px-2 sm:px-4 lg:px-6 bg-transparent py-2 sm:py-3 lg:py-4 items-start min-w-0 min-h-0 scroll-container" style={{height: '100%', maxHeight: '100vh'}}>
-          <div className="w-full flex justify-center items-start min-h-full">
+          <div className="w-full flex justify-center items-center min-h-full">
             <motion.div
               className="max-w-xl w-full space-y-4 sm:space-y-5 lg:space-y-6 px-2 sm:px-3 lg:px-4 py-3 sm:py-4"
               variants={containerVariants}
@@ -495,7 +495,7 @@ const SignUpForm = () => {
                     </label>
                 <div className="relative flex">
                   {/* Country Code Selector */}
-                  <div className="relative w-28 mr-3">
+                  <div className="relative w-23 mr-1">
                     <button
                       type="button"
                       onClick={() => {
@@ -599,7 +599,7 @@ const SignUpForm = () => {
                           ? "border-red-400 focus:border-red-500"
                           : "border-gray-200 focus:border-blue-500"
                       }`}
-                      placeholder="Enter phone number"
+                      placeholder="Phone number"
                     />
                   </div>
                 </div>
@@ -617,7 +617,7 @@ const SignUpForm = () => {
                     </label>
                 <div className="relative flex">
                   {/* Country Code Selector */}
-                  <div className="relative w-28 mr-3">
+                  <div className="relative w-23 mr-1">
                     <button
                       type="button"
                       onClick={() => {
@@ -721,7 +721,7 @@ const SignUpForm = () => {
                           ? "border-red-400 focus:border-red-500"
                           : "border-gray-200 focus:border-blue-500"
                       }`}
-                      placeholder="Enter WhatsApp number"
+                      placeholder="WhatsApp number"
                     />
                   </div>
                 </div>
