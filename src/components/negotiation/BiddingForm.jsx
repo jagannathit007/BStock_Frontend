@@ -478,7 +478,7 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
                 ))
               ) : (
                 <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-xl border-2 border-dashed border-gray-300">
-                  <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-5">
+                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mb-5">
                     <History className="w-10 h-10 text-gray-400" />
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 mb-2">
