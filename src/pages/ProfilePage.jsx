@@ -7,6 +7,7 @@ import { AuthService } from "../services/auth/auth.services";
 import { env } from "../utils/env";
 import toastHelper from "../utils/toastHelper";
 import CountrySelector from "../components/CountrySelector";
+import WatchlistContent from "../components/WishListPage/WatchlistContent";
 
 // Validation schemas
 const profileSchema = yup.object({
@@ -156,6 +157,7 @@ const ProfileNavigation = ({ activeTab }) => {
   const navItems = [
     { id: "profile", label: "Profile Information", icon: "fas fa-user" },
     { id: "business", label: "Business Profile", icon: "fas fa-building" },
+    { id: "watchlist", label: "My Watchlist", icon: "fas fa-clock" },
     { id: "password", label: "Security Settings", icon: "fas fa-lock" },
   ];
 
@@ -189,6 +191,9 @@ const ProfileNavigation = ({ activeTab }) => {
                     )}
                     {id === "business" && (
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    )}
+                    {id === "watchlist" && (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     )}
                     {id === "password" && (
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
@@ -1670,6 +1675,9 @@ const ProfilePage = () => {
                   onSave={handleSaveBusiness}
                   status={businessStatus}
                 />
+              )}
+              {activeTab === "watchlist" && (
+                <WatchlistContent />
               )}
               {activeTab === "password" && (
                 <ChangePassword

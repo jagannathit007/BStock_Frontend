@@ -5,7 +5,7 @@ import CartService from "../services/cart/cart.services";
 import { WalletService } from "../services/wallet/wallet.services";
 import { env } from "../utils/env";
 import NegotiationModal from "./negotiation/NegotiationModal";
-import WishlistModal from "./WishListPage/WishListModal";
+import WatchlistModal from "./WishListPage/WatchlistModal";
 import WalletModal from "./WalletTransactionsPage/WalletTransactions";
 import { convertPrice } from "../utils/currencyUtils";
 
@@ -102,6 +102,11 @@ const Header = ({ onLogout }) => {
 
   const handleWishlistClick = () => {
     setIsWishlistModalOpen(true);
+  };
+
+  const handleWatchlistNavigation = () => {
+    navigate("/profile?tab=watchlist");
+    setIsDropdownOpen(false);
   };
 
   const handleWalletClick = () => {
@@ -336,7 +341,7 @@ const Header = ({ onLogout }) => {
                   </svg>
                 </button>
 
-                {/* Wishlist */}
+                    {/* Wishlist */}
                 <button
                   className="p-2.5 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg relative cursor-pointer transition-all duration-200 group"
                   onClick={handleWishlistClick}
@@ -449,6 +454,16 @@ const Header = ({ onLogout }) => {
                         Order History
                       </button>
 
+                      <button
+                        onClick={handleWatchlistNavigation}
+                        className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
+                      >
+                        <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        My Watchlist
+                      </button>
+
                       <div className="border-t border-gray-100 my-1"></div>
 
                       <button
@@ -493,8 +508,8 @@ const Header = ({ onLogout }) => {
         userType="customer"
       />
 
-      {/* Wishlist Modal */}
-      <WishlistModal
+      {/* Watchlist Modal */}
+      <WatchlistModal
         isOpen={isWishlistModalOpen}
         onClose={() => setIsWishlistModalOpen(false)}
       />
