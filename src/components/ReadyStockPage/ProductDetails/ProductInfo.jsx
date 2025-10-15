@@ -46,6 +46,18 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [selectedVariant, setSelectedVariant] = useState({
+    color: initialProduct?.color || "",
+    ram: initialProduct?.ram || "",
+    storage: initialProduct?.storage || "",
+    simType: initialProduct?.simType || "",
+  });
+  const [variantOptions, setVariantOptions] = useState({
+    colors: [],
+    rams: [],
+    storages: [],
+    simTypes: [],
+  });
 
   const handleImageError = () => {
     setImageError(true);
@@ -53,6 +65,14 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
 
   const getProductImages = () => {
     const images = [];
+    const toAbsolute = (path) => {
+      if (!path) return path;
+      // If already absolute (http/https or data uri), return as-is
+      if (/^https?:\/\//i.test(path) || /^data:/i.test(path)) return path;
+      const base = import.meta.env.VITE_BASE_URL || "";
+      if (!base) return path;
+      return `${base}/${path.replace(/^\/+/, "")}`;
+    };
 
     if (currentProduct.mainImage) {
       images.push(currentProduct.mainImage);
@@ -63,8 +83,9 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       Array.isArray(currentProduct.skuFamilyId.images)
     ) {
       currentProduct.skuFamilyId.images.forEach((img) => {
-        if (!images.includes(img)) {
-          images.push(img);
+        const abs = toAbsolute(img);
+        if (!images.includes(abs)) {
+          images.push(abs);
         }
       });
     }
@@ -74,8 +95,9 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       Array.isArray(currentProduct.subSkuFamilyId.images)
     ) {
       currentProduct.subSkuFamilyId.images.forEach((img) => {
-        if (!images.includes(img)) {
-          images.push(img);
+        const abs = toAbsolute(img);
+        if (!images.includes(abs)) {
+          images.push(abs);
         }
       });
     }
@@ -169,6 +191,12 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
             productToSet = freshProduct;
           }
           setCurrentProduct(productToSet);
+          setSelectedVariant({
+            color: productToSet?.color || "",
+            ram: productToSet?.ram || "",
+            storage: productToSet?.storage || "",
+            simType: productToSet?.simType || "",
+          });
 
           const wishlistStatus =
             productToSet.WishList || productToSet.wishList || false;
@@ -179,6 +207,12 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
           setIsFavorite(wishlistStatus);
         } else {
           setCurrentProduct(initialProduct);
+          setSelectedVariant({
+            color: initialProduct?.color || "",
+            ram: initialProduct?.ram || "",
+            storage: initialProduct?.storage || "",
+            simType: initialProduct?.simType || "",
+          });
           const wishlistStatus =
             initialProduct.WishList ||
             initialProduct.wishList ||
@@ -225,6 +259,112 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     });
     setIsFavorite(wishlistStatus);
   }, [currentProduct]);
+
+  // Build variant options (Color, RAM, Storage, SIM Type) from current product and related products
+  useEffect(() => {
+    const pool = [];
+    if (currentProduct && (currentProduct._id || currentProduct.id)) {
+      pool.push({
+        _id: currentProduct._id || currentProduct.id,
+        color: currentProduct.color,
+        ram: currentProduct.ram,
+        storage: currentProduct.storage,
+        simType: currentProduct.simType,
+      });
+    }
+    if (Array.isArray(currentProduct?.relatedProducts)) {
+      currentProduct.relatedProducts.forEach((p) => {
+        pool.push({
+          _id: p._id || p.id,
+          color: p.color,
+          ram: p.ram,
+          storage: p.storage,
+          simType: p.simType,
+        });
+      });
+    }
+
+    const uniq = (arr) => Array.from(new Set(arr.filter(Boolean)));
+    setVariantOptions({
+      colors: uniq(pool.map((p) => (p.color || "").toString())),
+      rams: uniq(pool.map((p) => (p.ram || "").toString())),
+      storages: uniq(pool.map((p) => (p.storage || "").toString())),
+      simTypes: uniq(pool.map((p) => (p.simType || "").toString())),
+    });
+
+    // Sync selected variant with current product
+    setSelectedVariant({
+      color: currentProduct?.color || "",
+      ram: currentProduct?.ram || "",
+      storage: currentProduct?.storage || "",
+      simType: currentProduct?.simType || "",
+    });
+  }, [currentProduct]);
+
+  const findMatchingVariant = (next) => {
+    const pool = [];
+    if (currentProduct && (currentProduct._id || currentProduct.id)) {
+      pool.push({
+        _id: currentProduct._id || currentProduct.id,
+        color: currentProduct.color,
+        ram: currentProduct.ram,
+        storage: currentProduct.storage,
+        simType: currentProduct.simType,
+      });
+    }
+    if (Array.isArray(currentProduct?.relatedProducts)) {
+      currentProduct.relatedProducts.forEach((p) => {
+        pool.push({
+          _id: p._id || p.id,
+          color: p.color,
+          ram: p.ram,
+          storage: p.storage,
+          simType: p.simType,
+        });
+      });
+    }
+    return (
+      pool.find(
+        (p) =>
+          (next.color ? p.color === next.color : true) &&
+          (next.ram ? p.ram === next.ram : true) &&
+          (next.storage ? p.storage === next.storage : true) &&
+          (next.simType ? p.simType === next.simType : true)
+      ) || null
+    );
+  };
+
+  // On hover: reflect the matching product id in the URL without full navigation
+  const handleVariantHover = (key, value) => {
+    const next = { ...selectedVariant, [key]: value };
+    const match = findMatchingVariant(next);
+    if (!match || !match._id) return;
+    try {
+      const { origin, pathname, search } = window.location;
+      const newUrl = `${origin}${pathname}${search}#/product/${match._id}`;
+      window.history.replaceState(null, "", newUrl);
+    } catch {}
+  };
+
+  const handleVariantClick = async (key, value) => {
+    const next = { ...selectedVariant, [key]: value };
+    setSelectedVariant(next);
+    const match = findMatchingVariant(next);
+    if (match && match._id && match._id !== (currentProduct._id || currentProduct.id)) {
+      try {
+        navigate(`/product/${match._id}`);
+      } catch {}
+      try {
+        const fresh = await ProductService.getProductById(match._id);
+        if (fresh && typeof fresh === "object") {
+          setCurrentProduct(fresh);
+          setSelectedImageIndex(0);
+        }
+      } catch (e) {
+        console.error("Failed to fetch variant product", e);
+      }
+    }
+  };
 
   useEffect(() => {
     const handleWishlistUpdate = async (event) => {
@@ -805,6 +945,98 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                 <p className="text-sm text-gray-600 leading-relaxed">
                   {processedProduct.description}
                 </p>
+              </div>
+            )}
+            {/* Variant selectors under description (Color, RAM, Storage, SIM Type) */}
+            {(variantOptions.colors.length > 0 ||
+              variantOptions.rams.length > 0 ||
+              variantOptions.storages.length > 0 ||
+              variantOptions.simTypes.length > 0) && (
+              <div className="space-y-3">
+                {variantOptions.colors.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-600 mb-2">Color</label>
+                    <div className="flex flex-wrap gap-2">
+                      {variantOptions.colors.map((c) => (
+                        <button
+                          key={c}
+                          className={`px-3 py-1.5 rounded-lg border text-sm font-semibold cursor-pointer transition-colors ${
+                            selectedVariant.color === c
+                              ? "border-blue-500 text-blue-600 bg-blue-50"
+                              : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50"
+                          }`}
+                          onMouseEnter={() => handleVariantHover("color", c)}
+                          onClick={() => handleVariantClick("color", c)}
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {variantOptions.rams.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-600 mb-2">RAM</label>
+                    <div className="flex flex-wrap gap-2">
+                      {variantOptions.rams.map((r) => (
+                        <button
+                          key={r}
+                          className={`px-3 py-1.5 rounded-lg border text-sm font-semibold cursor-pointer transition-colors ${
+                            selectedVariant.ram === r
+                              ? "border-blue-500 text-blue-600 bg-blue-50"
+                              : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50"
+                          }`}
+                          onMouseEnter={() => handleVariantHover("ram", r)}
+                          onClick={() => handleVariantClick("ram", r)}
+                        >
+                          {r}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {variantOptions.storages.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-600 mb-2">Storage</label>
+                    <div className="flex flex-wrap gap-2">
+                      {variantOptions.storages.map((s) => (
+                        <button
+                          key={s}
+                          className={`px-3 py-1.5 rounded-lg border text-sm font-semibold cursor-pointer transition-colors ${
+                            selectedVariant.storage === s
+                              ? "border-blue-500 text-blue-600 bg-blue-50"
+                              : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50"
+                          }`}
+                          onMouseEnter={() => handleVariantHover("storage", s)}
+                          onClick={() => handleVariantClick("storage", s)}
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {variantOptions.simTypes.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-600 mb-2">SIM Type</label>
+                    <div className="flex flex-wrap gap-2">
+                      {variantOptions.simTypes.map((t) => (
+                        <button
+                          key={t}
+                          className={`px-3 py-1.5 rounded-lg border text-sm font-semibold cursor-pointer transition-colors ${
+                            selectedVariant.simType === t
+                              ? "border-blue-500 text-blue-600 bg-blue-50"
+                              : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50"
+                          }`}
+                          onMouseEnter={() => handleVariantHover("simType", t)}
+                          onClick={() => handleVariantClick("simType", t)}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             <div className="grid grid-cols-2 gap-3">
