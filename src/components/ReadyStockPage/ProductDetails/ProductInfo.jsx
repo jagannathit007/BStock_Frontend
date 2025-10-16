@@ -255,6 +255,11 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     fetchFreshProductData();
   }, [initialProduct]);
 
+  // Scroll to top when component mounts (only once)
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   useEffect(() => {
     setNotify(Boolean(currentProduct?.notify));
     const wishlistStatus =
@@ -751,11 +756,11 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
           {/* Left Column - Images */}
           <div className="space-y-4">
             <div className="relative group max-w-lg mx-auto">
-              <div className="aspect-[4/3.5] relative rounded-lg overflow-hidden bg-gray-50">
+              <div className="aspect-[4/3.5] relative rounded-lg overflow-hidden bg-gray-200 p-4">
                 <div className="h-full w-full">
                   <div className="relative h-full">
                     <img
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                       alt={`${processedProduct.name} ${selectedImageIndex + 1}`}
                       src={
                         imageError ? iphoneImage : productImages[selectedImageIndex]
@@ -854,13 +859,13 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   <button
                     key={index}
                     onClick={() => setSelectedImageIndex(index)}
-                    className={`aspect-[4/3] rounded-md overflow-hidden cursor-pointer transition-opacity duration-300 ${
+                    className={`aspect-[4/3] rounded-md overflow-hidden cursor-pointer transition-opacity duration-300 bg-gray-200 p-2 ${
                       selectedImageIndex === index ? "opacity-100" : "opacity-60"
                     }`}
                   >
                     <img
                       alt={`${processedProduct.name} ${index + 1}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                       src={image}
                       onError={handleImageError}
                     />
