@@ -63,6 +63,7 @@ const MainContent = () => {
       color,
       ram,
       condition,
+      simType: p.simType || "",
       price,
       originalPrice,
       discount: (Number(originalPrice) - Number(price)).toFixed(2),

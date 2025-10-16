@@ -140,10 +140,18 @@ const ProductCard = ({
 
     try {
       // Redirect unauthenticated users to login before any business checks
-      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
       if (!isLoggedIn) {
-        try { localStorage.setItem('postLoginAction', JSON.stringify({ type: 'add_to_cart', productId: id || product?._id })); } catch {}
-        const hashPath = window.location.hash?.slice(1) || '/home';
+        try {
+          localStorage.setItem(
+            "postLoginAction",
+            JSON.stringify({
+              type: "add_to_cart",
+              productId: id || product?._id,
+            })
+          );
+        } catch {}
+        const hashPath = window.location.hash?.slice(1) || "/home";
         const returnTo = encodeURIComponent(hashPath);
         return navigate(`/login?returnTo=${returnTo}`);
       }
@@ -258,9 +266,9 @@ const ProductCard = ({
     const productId = id || product._id;
 
     try {
-      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
       if (!isLoggedIn) {
-        const hashPath = window.location.hash?.slice(1) || '/home';
+        const hashPath = window.location.hash?.slice(1) || "/home";
         const returnTo = encodeURIComponent(hashPath);
         return navigate(`/login?returnTo=${returnTo}`);
       }
@@ -397,6 +405,11 @@ const ProductCard = ({
                       {part.trim()}
                     </span>
                   ))}
+                  {product?.simType && (
+                    <span className="inline-flex items-center px-1.5 py-0.5 bg-gray-50 text-gray-600 text-xs rounded font-medium">
+                      SIM: {product.simType}
+                    </span>
+                  )}
                 </div>
 
                 {!isExpired && !isOutOfStock && isFlashDeal && (
@@ -534,10 +547,20 @@ const ProductCard = ({
                       title="Make an offer"
                       onClick={(e) => {
                         e.stopPropagation();
-                        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+                        const isLoggedIn =
+                          localStorage.getItem("isLoggedIn") === "true";
                         if (!isLoggedIn) {
-                          try { localStorage.setItem('postLoginAction', JSON.stringify({ type: 'make_offer', productId: id || product?._id })); } catch {}
-                          const hashPath = window.location.hash?.slice(1) || '/home';
+                          try {
+                            localStorage.setItem(
+                              "postLoginAction",
+                              JSON.stringify({
+                                type: "make_offer",
+                                productId: id || product?._id,
+                              })
+                            );
+                          } catch {}
+                          const hashPath =
+                            window.location.hash?.slice(1) || "/home";
                           const returnTo = encodeURIComponent(hashPath);
                           return navigate(`/login?returnTo=${returnTo}`);
                         }
@@ -621,11 +644,13 @@ const ProductCard = ({
           const colorVal = product?.color || descParts[1];
           const ramVal = product?.ram || descParts[2];
           const conditionVal = product?.condition || undefined;
+          const simTypeVal = product?.simType || descParts[3] || undefined;
           const hasAny =
             Boolean(conditionVal) ||
             Boolean(colorVal) ||
             Boolean(ramVal) ||
-            Boolean(storageVal);
+            Boolean(storageVal) ||
+            Boolean(simTypeVal);
           if (!hasAny) return null;
           return (
             <div className="absolute top-12 left-3 z-10 flex flex-col gap-1">
@@ -647,6 +672,11 @@ const ProductCard = ({
               {storageVal && (
                 <span className="inline-flex items-center px-1.5 py-0.5 text-[11px] font-semibold text-gray-900 bg-white/90 backdrop-blur-sm rounded shadow-sm">
                   Storage: {storageVal}
+                </span>
+              )}
+              {simTypeVal && (
+                <span className="inline-flex items-center px-1.5 py-0.5 text-[11px] font-semibold text-gray-900 bg-white/90 backdrop-blur-sm rounded shadow-sm">
+                  SIM: {simTypeVal}
                 </span>
               )}
             </div>
@@ -753,9 +783,10 @@ const ProductCard = ({
                 className="flex-1 bg-[#0071e3] text-white py-2 px-3 rounded-lg text-xs font-semibold hover:bg-[#005bb5] cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md"
                 onClick={(e) => {
                   e.stopPropagation();
-                  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+                  const isLoggedIn =
+                    localStorage.getItem("isLoggedIn") === "true";
                   if (!isLoggedIn) {
-                    const hashPath = window.location.hash?.slice(1) || '/home';
+                    const hashPath = window.location.hash?.slice(1) || "/home";
                     const returnTo = encodeURIComponent(hashPath);
                     return navigate(`/login?returnTo=${returnTo}`);
                   }
