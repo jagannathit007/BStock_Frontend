@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { X, MessageSquare, DollarSign, Clock, CheckCircle, User, Package, Send, Inbox, FileX } from 'lucide-react';
+import { X, MessageSquare, DollarSign, Clock, CheckCircle, User, Package, Send, Inbox, FileX, Bell, BellRing } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBolt } from '@fortawesome/free-solid-svg-icons';
 import NegotiationService from '../../services/negotiation/negotiation.services';
+import { useSocket } from '../../context/SocketContext';
+import toastHelper from '../../utils/toastHelper';
 
 const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
   const navigate = useNavigate();
+  const { socketService } = useSocket();
   const [activeTab, setActiveTab] = useState('active');
   const [negotiations, setNegotiations] = useState([]);
   const [acceptedNegotiations, setAcceptedNegotiations] = useState([]);
@@ -18,6 +21,8 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
     offerPrice: '',
     message: ''
   });
+  const [notifications, setNotifications] = useState([]);
+  const [typingUsers, setTypingUsers] = useState(new Set());
 
   const imageBaseUrl = import.meta.env.VITE_BASE_URL;
 
@@ -61,8 +66,88 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
     if (isOpen) {
       fetchNegotiations();
       fetchAcceptedNegotiations();
+      setupSocketListeners();
     }
-  }, [isOpen, activeTab]);
+
+    return () => {
+      // Cleanup socket listeners when modal closes
+      if (socketService) {
+        socketService.removeNegotiationListeners();
+      }
+    };
+  }, [isOpen, activeTab, socketService]);
+
+  // Setup socket listeners for real-time updates
+  const setupSocketListeners = () => {
+    if (!socketService) {
+      console.warn('User panel: socketService not available for setupSocketListeners');
+      return;
+    }
+
+    console.log('User panel: Setting up socket listeners');
+
+    // Listen for negotiation notifications
+    socketService.onNegotiationNotification((data) => {
+      console.log('Received negotiation notification:', data);
+      setNotifications(prev => [...prev, data]);
+      
+      // Show toast notification
+      toastHelper.showTost(data.message || 'New negotiation update', 'info');
+      
+      // Refresh negotiations if it's a relevant update
+      if (data.type === 'new_bid' || data.type === 'counter_offer' || data.type === 'bid_accepted') {
+        fetchNegotiations();
+        fetchAcceptedNegotiations();
+      }
+    });
+
+    // Listen for negotiation broadcasts
+    socketService.onNegotiationBroadcast((data) => {
+      console.log('Received negotiation broadcast:', data);
+      setNotifications(prev => [...prev, data]);
+      
+      // Show toast notification
+      toastHelper.showTost(data.message || 'New negotiation activity', 'info');
+      
+      // Refresh negotiations
+      fetchNegotiations();
+      fetchAcceptedNegotiations();
+    });
+
+    // Listen for negotiation updates
+    socketService.onNegotiationUpdate((data) => {
+      console.log('Received negotiation update:', data);
+      setNotifications(prev => [...prev, data]);
+      
+      // Refresh negotiations
+      fetchNegotiations();
+      fetchAcceptedNegotiations();
+    });
+
+    // Listen for user typing indicators
+    socketService.onUserTyping((data) => {
+      console.log('User typing:', data);
+      if (data.isTyping) {
+        setTypingUsers(prev => new Set([...prev, data.userId]));
+      } else {
+        setTypingUsers(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(data.userId);
+          return newSet;
+        });
+      }
+    });
+
+    // Listen for users joining/leaving negotiations
+    socketService.onUserJoinedNegotiation((data) => {
+      console.log('User joined negotiation:', data);
+      toastHelper.showTost(`${data.userType} joined the negotiation`, 'info');
+    });
+
+    socketService.onUserLeftNegotiation((data) => {
+      console.log('User left negotiation:', data);
+    });
+  };
 
   const fetchNegotiations = async () => {
     setLoading(true);
@@ -120,6 +205,11 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
         await NegotiationService.respondToNegotiationAdmin(data);
       } else {
         await NegotiationService.respondToNegotiation(data);
+      }
+
+      // Join negotiation room for real-time updates
+      if (socketService && selectedNegotiation._id) {
+        socketService.joinNegotiation(selectedNegotiation._id);
       }
 
       setShowResponseForm(false);
@@ -235,13 +325,33 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
               </h2>
               <p className="text-xs text-gray-500">Manage your bidding conversations</p>
             </div>
+            {notifications.length > 0 && (
+              <div className="flex items-center space-x-2">
+                <BellRing className="w-5 h-5 text-orange-500" />
+                <span className="bg-orange-100 text-orange-800 text-xs font-medium px-2 py-1 rounded-full">
+                  {notifications.length} new
+                </span>
+              </div>
+            )}
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 cursor-pointer rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5 text-gray-600" />
-          </button>
+          <div className="flex items-center space-x-2">
+            {typingUsers.size > 0 && (
+              <div className="flex items-center space-x-1 text-sm text-gray-500">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
+                <span>{typingUsers.size} user{typingUsers.size > 1 ? 's' : ''} typing...</span>
+              </div>
+            )}
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 cursor-pointer rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5 text-gray-600" />
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -642,12 +752,22 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
                   </label>
                   <textarea
                     value={responseData.message}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setResponseData({
                         ...responseData,
                         message: e.target.value,
-                      })
-                    }
+                      });
+                      // Send typing indicator
+                      if (socketService && selectedNegotiation._id) {
+                        socketService.sendNegotiationTyping(selectedNegotiation._id, e.target.value.length > 0);
+                      }
+                    }}
+                    onBlur={() => {
+                      // Stop typing indicator when user stops typing
+                      if (socketService && selectedNegotiation._id) {
+                        socketService.sendNegotiationTyping(selectedNegotiation._id, false);
+                      }
+                    }}
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     rows={3}
                     placeholder="Add your message..."

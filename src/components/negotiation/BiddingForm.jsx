@@ -9,14 +9,19 @@ import {
   User,
   Package,
   History,
+  Bell,
+  BellRing,
 } from "lucide-react";
 import NegotiationService from "../../services/negotiation/negotiation.services";
 import iphoneImage from "../../assets/iphone.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHandshake } from "@fortawesome/free-solid-svg-icons";
 import { convertPrice } from "../../utils/currencyUtils";
+import { useSocket } from "../../context/SocketContext";
+import toastHelper from "../../utils/toastHelper";
 
 const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
+  const { socketService } = useSocket();
   const [activeTab, setActiveTab] = useState("history");
   const [formData, setFormData] = useState({
     offerPrice: "",
@@ -33,6 +38,8 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
     offerPrice: "",
     message: "",
   });
+  const [notifications, setNotifications] = useState([]);
+  const [typingUsers, setTypingUsers] = useState(new Set());
 
   const handleImageError = () => {
     setImageError(true);
@@ -41,8 +48,110 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
   useEffect(() => {
     if (isOpen && product?.id) {
       fetchProductBids();
+      setupSocketListeners();
     }
-  }, [isOpen, product?.id]);
+
+    return () => {
+      // Cleanup socket listeners when modal closes
+      if (socketService) {
+        socketService.removeNegotiationListeners();
+      }
+    };
+  }, [isOpen, product?.id, socketService]);
+
+  // Setup socket listeners for real-time updates
+  const setupSocketListeners = () => {
+    if (!socketService) {
+      console.warn('BiddingForm: socketService not available for setupSocketListeners');
+      return;
+    }
+
+    console.log('BiddingForm: Setting up socket listeners for product:', product?.id);
+
+    // Listen for negotiation notifications
+    socketService.onNegotiationNotification((data) => {
+      console.log('BiddingForm: Received negotiation notification:', data);
+      setNotifications(prev => [...prev, data]);
+      
+      // Show toast notification
+      toastHelper.showTost(data.message || 'New negotiation update', 'info');
+      
+      // Refresh product bids if it's a relevant update for this product
+      if (data.negotiation && data.negotiation.productId) {
+        const productId = typeof data.negotiation.productId === 'string' 
+          ? data.negotiation.productId 
+          : data.negotiation.productId._id;
+        
+        if (productId === product?.id) {
+          console.log('BiddingForm: Refreshing bids for product:', productId);
+          fetchProductBids();
+        }
+      }
+    });
+
+    // Listen for negotiation broadcasts
+    socketService.onNegotiationBroadcast((data) => {
+      console.log('BiddingForm: Received negotiation broadcast:', data);
+      setNotifications(prev => [...prev, data]);
+      
+      // Show toast notification
+      toastHelper.showTost(data.message || 'New negotiation activity', 'info');
+      
+      // Refresh product bids if it's relevant for this product
+      if (data.negotiation && data.negotiation.productId) {
+        const productId = typeof data.negotiation.productId === 'string' 
+          ? data.negotiation.productId 
+          : data.negotiation.productId._id;
+        
+        if (productId === product?.id) {
+          console.log('BiddingForm: Refreshing bids for product:', productId);
+          fetchProductBids();
+        }
+      }
+    });
+
+    // Listen for negotiation updates
+    socketService.onNegotiationUpdate((data) => {
+      console.log('BiddingForm: Received negotiation update:', data);
+      setNotifications(prev => [...prev, data]);
+      
+      // Refresh product bids if it's relevant for this product
+      if (data.negotiation && data.negotiation.productId) {
+        const productId = typeof data.negotiation.productId === 'string' 
+          ? data.negotiation.productId 
+          : data.negotiation.productId._id;
+        
+        if (productId === product?.id) {
+          console.log('BiddingForm: Refreshing bids for product:', productId);
+          fetchProductBids();
+        }
+      }
+    });
+
+    // Listen for user typing indicators
+    socketService.onUserTyping((data) => {
+      console.log('BiddingForm: User typing:', data);
+      if (data.isTyping) {
+        setTypingUsers(prev => new Set([...prev, data.userId]));
+      } else {
+        setTypingUsers(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(data.userId);
+          return newSet;
+        });
+      }
+    });
+
+    // Listen for users joining/leaving negotiations
+    socketService.onUserJoinedNegotiation((data) => {
+      console.log('BiddingForm: User joined negotiation:', data);
+      toastHelper.showTost(`${data.userType} joined the negotiation`, 'info');
+    });
+
+    socketService.onUserLeftNegotiation((data) => {
+      console.log('BiddingForm: User left negotiation:', data);
+    });
+  };
 
   const fetchProductBids = async () => {
     setBidsLoading(true);
@@ -112,6 +221,11 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
       };
 
       await NegotiationService.respondToNegotiation(data);
+
+      // Join negotiation room for real-time updates
+      if (socketService && selectedNegotiation._id) {
+        socketService.joinNegotiation(selectedNegotiation._id);
+      }
 
       setShowResponseForm(false);
       setSelectedNegotiation(null);
@@ -250,13 +364,33 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
               <h2 className="text-xl font-bold text-gray-900">Negotiation Center</h2>
               <p className="text-xs text-gray-500">Place your offer and negotiate</p>
             </div>
+            {notifications.length > 0 && (
+              <div className="flex items-center space-x-2">
+                <BellRing className="w-5 h-5 text-orange-500" />
+                <span className="bg-orange-100 text-orange-800 text-xs font-medium px-2 py-1 rounded-full">
+                  {notifications.length} new
+                </span>
+              </div>
+            )}
           </div>
-          <button
-            onClick={handleClose}
-            className="p-2 hover:bg-gray-100 cursor-pointer rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5 text-gray-600" />
-          </button>
+          <div className="flex items-center space-x-2">
+            {typingUsers.size > 0 && (
+              <div className="flex items-center space-x-1 text-sm text-gray-500">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
+                <span>{typingUsers.size} user{typingUsers.size > 1 ? 's' : ''} typing...</span>
+              </div>
+            )}
+            <button
+              onClick={handleClose}
+              className="p-2 hover:bg-gray-100 cursor-pointer rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5 text-gray-600" />
+            </button>
+          </div>
         </div>
 
         {/* Product Info Card */}
@@ -538,9 +672,19 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
                       </div>
                       <textarea
                         value={formData.message}
-                        onChange={(e) =>
-                          setFormData({ ...formData, message: e.target.value })
-                        }
+                        onChange={(e) => {
+                          setFormData({ ...formData, message: e.target.value });
+                          // Send typing indicator for new bid (using product ID as negotiation context)
+                          if (socketService && product?.id) {
+                            socketService.sendNegotiationTyping(product.id, e.target.value.length > 0);
+                          }
+                        }}
+                        onBlur={() => {
+                          // Stop typing indicator when user stops typing
+                          if (socketService && product?.id) {
+                            socketService.sendNegotiationTyping(product.id, false);
+                          }
+                        }}
                         className="w-full pl-11 pr-3 py-2 border-2 border-gray-300 rounded-lg text-sm"
                         rows={2}
                         placeholder="Explain why your offer is fair..."
@@ -680,12 +824,22 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
                 </label>
                 <textarea
                   value={responseData.message}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setResponseData({
                       ...responseData,
                       message: e.target.value,
-                    })
-                  }
+                    });
+                    // Send typing indicator
+                    if (socketService && selectedNegotiation._id) {
+                      socketService.sendNegotiationTyping(selectedNegotiation._id, e.target.value.length > 0);
+                    }
+                  }}
+                  onBlur={() => {
+                    // Stop typing indicator when user stops typing
+                    if (socketService && selectedNegotiation._id) {
+                      socketService.sendNegotiationTyping(selectedNegotiation._id, false);
+                    }
+                  }}
                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                   rows={3}
                   placeholder="Add your message..."
