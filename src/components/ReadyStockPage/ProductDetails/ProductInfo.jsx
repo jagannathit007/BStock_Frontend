@@ -149,8 +149,10 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       const isExpired = currentProduct.expiryTime
         ? new Date(currentProduct.expiryTime) < new Date()
         : false;
+      
+      // Handle stock status based on API response
       if (isExpired) return "Expired";
-      if (stock <= 0) return "Out of Stock";
+      if (stock === 0) return "Out of Stock";
       if (stock <= 10) return "Low Stock";
       return "In Stock";
     })(),
