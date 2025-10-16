@@ -4,6 +4,7 @@ import {
   Route,
   Navigate,
   HashRouter,
+  useLocation,
 } from "react-router-dom";
 import Header from "./components/Header";
 import NavTabs from "./components/NavTabs";
@@ -54,30 +55,23 @@ const ProtectedRoute = ({ children, isLoggedIn }) => {
   return children;
 };
 
-const App = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(
-    localStorage.getItem("isLoggedIn") === "true"
-  );
-
-  const handleLogin = () => {
-    localStorage.setItem("isLoggedIn", "true");
-    setIsLoggedIn(true);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    setIsLoggedIn(false);
-  };
-
+// Component to handle header visibility based on current route
+const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
+  const location = useLocation();
+  
+  // Hide header only on login and signup pages
+  const hideHeader = location.pathname === '/login' || location.pathname === '/signup';
+  
   return (
-    <HashRouter>
-      <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col">
+      {!hideHeader && (
         <>
           <Header onLogout={handleLogout} />
           <NavTabs />
         </>
+      )}
 
-        <main className="flex-1">
+      <main className="flex-1">
           <Routes>
             {/* Public Routes */}
             <Route path="/login" element={<LoginForm onLogin={handleLogin} />} />
@@ -138,10 +132,31 @@ const App = () => {
           </Routes>
         </main>
         
-        <Footer />
+        {!hideHeader && <Footer />}
       </div>
-    </HashRouter>
-  );
-};
+    );
+  };
+
+  const App = () => {
+    const [isLoggedIn, setIsLoggedIn] = useState(
+      localStorage.getItem("isLoggedIn") === "true"
+    );
+
+    const handleLogin = () => {
+      localStorage.setItem("isLoggedIn", "true");
+      setIsLoggedIn(true);
+    };
+
+    const handleLogout = () => {
+      localStorage.removeItem("isLoggedIn");
+      setIsLoggedIn(false);
+    };
+
+    return (
+      <HashRouter>
+        <AppContent isLoggedIn={isLoggedIn} handleLogout={handleLogout} handleLogin={handleLogin} />
+      </HashRouter>
+    );
+  };
 
 export default App;

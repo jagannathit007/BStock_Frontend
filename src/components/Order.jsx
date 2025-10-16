@@ -210,12 +210,12 @@ const Order = () => {
                     <td className="px-6 py-5 text-sm text-gray-600">
                       <div className="space-y-1">
                         {order.cartItems.map((item, index) => (
-                          <div key={item.productId._id} className="flex items-center gap-2">
+                          <div key={item.productId?._id || item._id || index} className="flex items-center gap-2">
                             <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">
                               {index + 1}
                             </span>
                             <span className="font-medium">
-                              {item.skuFamilyId?.name || item.productId.name}
+                              {item.skuFamilyId?.name || item.productId?.name || 'Unknown Product'}
                             </span>
                             <span className="text-gray-500">(x{item.quantity})</span>
                           </div>

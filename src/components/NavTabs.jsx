@@ -1,9 +1,34 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { AuthService } from "../services/auth/auth.services";
 
 const NavTabs = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [isIncompleteProfile, setIsIncompleteProfile] = useState(false);
+
+  // Check profile completion
+  const checkProfileCompletion = () => {
+    try {
+      const raw = localStorage.getItem('user');
+      if (raw) {
+        const userData = JSON.parse(raw);
+        const isProfileComplete = AuthService.isProfileComplete(userData);
+        setIsIncompleteProfile(!isProfileComplete);
+      }
+    } catch (error) {
+      console.error('Error checking profile completion:', error);
+      setIsIncompleteProfile(false);
+    }
+  };
+
+  useEffect(() => {
+    checkProfileCompletion();
+  }, []);
+
+  useEffect(() => {
+    checkProfileCompletion();
+  }, [location.pathname]);
 
   const tabs = [
     { 
@@ -67,43 +92,74 @@ const NavTabs = () => {
   };
 
   return (
-        <nav className="bg-white/80 backdrop-blur-sm border-b border-gray-100 overflow-x-auto sticky top-16 z-40 animate-slideUp">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <div className="flex space-x-8 min-w-max">
-          {tabs.map((tab) => {
-            const isActive = activeTab === tab.name;
-            return (
-              <button
-                key={tab.id}
-                className={`relative py-4 whitespace-nowrap cursor-pointer transition-all duration-300 text-sm flex items-center gap-2 group focus:outline-none hover:scale-105
-                  ${
-                    isActive
-                      ? "text-gray-900 font-medium"
-                      : "text-gray-500 hover:text-gray-700 font-normal"
-                  }`}
-                onClick={() => handleTabClick(tab.path)}
-                aria-current={isActive ? "page" : undefined}
-                role="tab"
-                tabIndex="0"
-              >
-                {/* Active indicator */}
-                {isActive && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900 rounded-full"></div>
-                )}
-                
-                
-                <span className={`transition-colors duration-200 ${
-                  isActive ? "text-gray-900" : "text-gray-500 group-hover:text-gray-700"
-                }`}>
-                  {tab.icon}
-                </span>
-                <span>{tab.name}</span>
-              </button>
-            );
-          })}
+    <>
+      <nav className="bg-white/80 backdrop-blur-sm border-b border-gray-100 overflow-x-auto sticky top-16 z-40 animate-slideUp">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex space-x-8 min-w-max">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.name;
+              return (
+                <button
+                  key={tab.id}
+                  className={`relative py-4 whitespace-nowrap cursor-pointer transition-all duration-300 text-sm flex items-center gap-2 group focus:outline-none hover:scale-105
+                    ${
+                      isActive
+                        ? "text-gray-900 font-medium"
+                        : "text-gray-500 hover:text-gray-700 font-normal"
+                    }`}
+                  onClick={() => handleTabClick(tab.path)}
+                  aria-current={isActive ? "page" : undefined}
+                  role="tab"
+                  tabIndex="0"
+                >
+                  {/* Active indicator */}
+                  {isActive && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900 rounded-full"></div>
+                  )}
+                  
+                  
+                  <span className={`transition-colors duration-200 ${
+                    isActive ? "text-gray-900" : "text-gray-500 group-hover:text-gray-700"
+                  }`}>
+                    {tab.icon}
+                  </span>
+                  <span>{tab.name}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {/* Profile Completion Banner */}
+      {isIncompleteProfile && (
+        <div className="bg-amber-50 border-l-4 border-amber-400 p-4">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <i className="fas fa-exclamation-triangle text-amber-400"></i>
+              </div>
+              <div className="ml-3 flex-1">
+                <p className="text-sm text-amber-700">
+                  <strong>Complete your profile:</strong> Please fill in your
+                  personal and business information to access all features of
+                  the platform.
+                </p>
+              </div>
+              <div className="ml-3">
+                <button
+                  onClick={() => navigate("/profile")}
+                  className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+                >
+                  <i className="fas fa-user-edit mr-2"></i>
+                  Complete Profile
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

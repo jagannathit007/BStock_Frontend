@@ -7,6 +7,7 @@ import { AuthService } from "../services/auth/auth.services";
 import { env } from "../utils/env";
 import toastHelper from "../utils/toastHelper";
 import CountrySelector from "../components/CountrySelector";
+import WatchlistContent from "../components/WishListPage/WatchlistContent";
 
 // Validation schemas
 const profileSchema = yup.object({
@@ -156,6 +157,7 @@ const ProfileNavigation = ({ activeTab }) => {
   const navItems = [
     { id: "profile", label: "Profile Information", icon: "fas fa-user" },
     { id: "business", label: "Business Profile", icon: "fas fa-building" },
+    { id: "watchlist", label: "My Watchlist", icon: "fas fa-clock" },
     { id: "password", label: "Security Settings", icon: "fas fa-lock" },
   ];
 
@@ -189,6 +191,9 @@ const ProfileNavigation = ({ activeTab }) => {
                     )}
                     {id === "business" && (
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    )}
+                    {id === "watchlist" && (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     )}
                     {id === "password" && (
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
@@ -1153,8 +1158,6 @@ const ProfilePage = () => {
   // Get active tab from query params, default to "profile" if not specified
   const activeTab = searchParams.get("tab") || "profile";
 
-  // Check if user came from Google login and profile is incomplete
-  const [isIncompleteProfile, setIsIncompleteProfile] = useState(false);
 
   // Set default tab in URL if no tab parameter is present
   useEffect(() => {
@@ -1243,21 +1246,6 @@ const ProfilePage = () => {
     }
   }, [profileImage]);
 
-  // Check if profile is incomplete on mount
-  useEffect(() => {
-    const user = localStorage.getItem("user");
-    if (user) {
-      try {
-        const userData = JSON.parse(user);
-        if (userData.platformName === "google") {
-          const isProfileComplete = AuthService.isProfileComplete(userData);
-          setIsIncompleteProfile(!isProfileComplete);
-        }
-      } catch (error) {
-        console.error("Error parsing user data:", error);
-      }
-    }
-  }, []);
 
   // Load profile on mount
   useEffect(() => {
@@ -1391,14 +1379,6 @@ const ProfilePage = () => {
           whatsappCountryCode: container?.whatsappCountryCode || "",
         });
 
-        // Check if profile is now complete
-        const updatedUserData = {
-          ...container,
-          businessProfile: container?.businessProfile || {},
-        };
-        const isProfileComplete =
-          AuthService.isProfileComplete(updatedUserData);
-        setIsIncompleteProfile(!isProfileComplete);
 
         toastHelper.showTost("Profile updated successfully", "success");
       } catch (refreshError) {
@@ -1407,7 +1387,8 @@ const ProfilePage = () => {
       }
     } catch (e) {
       console.error("Error updating profile:", e);
-      // Error already handled via toast in AuthService
+      // Error is already handled by AuthService with toast message
+      // No need to show additional error messages here
     }
   };
 
@@ -1457,20 +1438,6 @@ const ProfilePage = () => {
           : null;
         setBusinessStatus(newStatus);
 
-        // Check if profile is now complete
-        const updatedUserData = {
-          name: normalized.name,
-          email: normalized.email,
-          mobileNumber: normalized.mobileNumber,
-          mobileCountryCode: normalized.mobileCountryCode,
-          businessProfile: {
-            businessName: normalized.business.businessName,
-            country: normalized.business.country,
-          },
-        };
-        const isProfileComplete =
-          AuthService.isProfileComplete(updatedUserData);
-        setIsIncompleteProfile(!isProfileComplete);
 
         // Show appropriate success message based on status change
         if (currentStatus === "Approved" && newStatus === "Pending") {
@@ -1605,37 +1572,6 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Profile Completion Banner */}
-      {isIncompleteProfile && (
-        <div className="bg-amber-50 border-l-4 border-amber-400 p-4">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <i className="fas fa-exclamation-triangle text-amber-400"></i>
-              </div>
-              <div className="ml-3 flex-1">
-                <p className="text-sm text-amber-700">
-                  <strong>Complete your profile:</strong> Please fill in your
-                  personal and business information to access all features of
-                  the platform.
-                </p>
-              </div>
-              {!isIncompleteProfile && (
-                <div className="ml-3">
-                  <button
-                    onClick={() => navigate("/ready-stock")}
-                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
-                  >
-                    <i className="fas fa-check mr-2"></i>
-                    Continue to Dashboard
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col lg:flex-row gap-12">
           {/* Left sidebar with profile picture and navigation */}
@@ -1670,6 +1606,9 @@ const ProfilePage = () => {
                   onSave={handleSaveBusiness}
                   status={businessStatus}
                 />
+              )}
+              {activeTab === "watchlist" && (
+                <WatchlistContent />
               )}
               {activeTab === "password" && (
                 <ChangePassword

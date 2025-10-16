@@ -248,6 +248,18 @@ export class AuthService {
     try {
       const res = await api.post(url, form, { headers: { 'Content-Type': 'multipart/form-data' } });
       
+      // Check if the response indicates an error even with 200 status
+      const responseMessage = res.data?.message || '';
+      const isErrorResponse = responseMessage.toLowerCase().includes('already exists') || 
+                             responseMessage.toLowerCase().includes('error') ||
+                             responseMessage.toLowerCase().includes('failed') ||
+                             responseMessage.toLowerCase().includes('invalid');
+      
+      if (isErrorResponse) {
+        toastHelper.showTost(responseMessage, 'error');
+        throw new Error(responseMessage);
+      }
+      
       // Update localStorage with the updated profile data
       if (res.data) {
         const userData = res.data.data || res.data.customer || res.data;
@@ -256,10 +268,10 @@ export class AuthService {
         }
       }
       
-      toastHelper.showTost(res.data?.message || 'Profile updated successfully', 'success');
+      toastHelper.showTost(responseMessage || 'Profile updated successfully', 'success');
       return res.data;
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to update profile';
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to update profile';
       toastHelper.showTost(errorMessage, 'error');
       throw new Error(errorMessage);
     }

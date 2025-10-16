@@ -5,7 +5,7 @@ import CartService from "../services/cart/cart.services";
 import { WalletService } from "../services/wallet/wallet.services";
 import { env } from "../utils/env";
 import NegotiationModal from "./negotiation/NegotiationModal";
-import WishlistModal from "./WishListPage/WishlistModal";
+import WatchlistModal from "./WishListPage/WatchlistModal";
 import WalletModal from "./WalletTransactionsPage/WalletTransactions";
 import { convertPrice } from "../utils/currencyUtils";
 
@@ -54,6 +54,7 @@ const Header = ({ onLogout }) => {
       setWalletBalance(0);
     }
   };
+
 
   useEffect(() => {
     const loadData = async () => {
@@ -123,6 +124,11 @@ const Header = ({ onLogout }) => {
       return;
     }
     setIsWishlistModalOpen(true);
+  };
+
+  const handleWatchlistNavigation = () => {
+    navigate("/profile?tab=watchlist");
+    setIsDropdownOpen(false);
   };
 
   const handleWalletClick = () => {
@@ -340,40 +346,9 @@ const Header = ({ onLogout }) => {
               </div>
             </div>
 
-            {/* Search bar */}
-            <div className="flex-1 mx-6 max-w-2xl hidden md:block">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg
-                    className="h-5 w-5 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-                <input
-                  type="text"
-                  className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all duration-200"
-                  placeholder="Search products, brands, models..."
-                />
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                  <kbd className="hidden sm:inline-flex items-center px-2 py-1 border border-gray-200 rounded text-xs font-mono text-gray-500 bg-gray-100">
-                    ⌘K
-                  </kbd>
-                </div>
-              </div>
-            </div>
 
             {/* Right Side */}
             <div className="flex items-center space-x-2">
-              {/* Mobile Search Button */}
-              <button className="md:hidden p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200">
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </button>
 
               {/* Wallet Info */}
               <button
@@ -409,7 +384,7 @@ const Header = ({ onLogout }) => {
                   </svg>
                 </button>
 
-                {/* Wishlist */}
+                    {/* Wishlist */}
                 <button
                   className="p-2.5 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg relative cursor-pointer transition-all duration-200 group"
                   onClick={handleWishlistClick}
@@ -534,6 +509,16 @@ const Header = ({ onLogout }) => {
                           </svg>
                           Order History
                         </button>
+                        
+                        <button
+                        onClick={handleWatchlistNavigation}
+                        className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
+                      >
+                        <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        My Watchlist
+                      </button>
 
                         <div className="border-t border-gray-100 my-1"></div>
 
@@ -573,6 +558,7 @@ const Header = ({ onLogout }) => {
         `}</style>
       </header>
 
+
       {/* Negotiation Modal */}
       <NegotiationModal
         isOpen={isNegotiationModalOpen}
@@ -580,8 +566,8 @@ const Header = ({ onLogout }) => {
         userType="customer"
       />
 
-      {/* Wishlist Modal */}
-      <WishlistModal
+      {/* Watchlist Modal */}
+      <WatchlistModal
         isOpen={isWishlistModalOpen}
         onClose={() => setIsWishlistModalOpen(false)}
       />
