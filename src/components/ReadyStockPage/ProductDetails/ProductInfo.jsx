@@ -980,91 +980,166 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
               variantOptions.rams.length > 0 ||
               variantOptions.storages.length > 0 ||
               variantOptions.simTypes.length > 0) && (
-              <div className="space-y-3">
-                {variantOptions.colors.length > 0 && (
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-600 mb-2">Color</label>
-                    <div className="flex flex-wrap gap-2">
-                      {variantOptions.colors.map((c) => (
-                        <button
-                          key={c}
-                          className={`px-3 py-1.5 rounded-lg border text-sm font-semibold cursor-pointer transition-colors ${
-                            selectedVariant.color === c
-                              ? "border-blue-500 text-blue-600 bg-blue-50"
-                              : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50"
-                          }`}
-                          onMouseEnter={() => handleVariantHover("color", c)}
-                          onClick={() => handleVariantClick("color", c)}
-                        >
-                          {c}
-                        </button>
-                      ))}
+              <div className="space-y-6">
+                {/* First Row: Color and RAM */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {variantOptions.colors.length > 0 && (
+                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
+                      <div className="flex items-center mb-3">
+                        <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                          <FontAwesomeIcon icon={faPalette} className="text-purple-600 text-sm" />
+                        </div>
+                        <label className="text-sm font-semibold text-gray-700">Color Options</label>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {variantOptions.colors.map((c) => (
+                          <button
+                            key={c}
+                            className={`group relative px-3 py-2 rounded-lg border-2 text-sm font-semibold cursor-pointer transition-all duration-200 transform hover:scale-105 ${
+                              selectedVariant.color === c
+                                ? "border-purple-500 text-purple-700 bg-purple-50 shadow-lg shadow-purple-100"
+                                : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 hover:shadow-md"
+                            }`}
+                            onMouseEnter={() => handleVariantHover("color", c)}
+                            onClick={() => handleVariantClick("color", c)}
+                          >
+                            <div className="flex items-center space-x-2">
+                              <div className={`w-3 h-3 rounded-full border ${
+                                c.toLowerCase().includes('gold') ? 'bg-gradient-to-br from-yellow-300 to-yellow-600' :
+                                c.toLowerCase().includes('silver') ? 'bg-gradient-to-br from-gray-300 to-gray-500' :
+                                c.toLowerCase().includes('black') ? 'bg-gray-900' :
+                                c.toLowerCase().includes('white') ? 'bg-white border-gray-300' :
+                                c.toLowerCase().includes('blue') ? 'bg-blue-500' :
+                                c.toLowerCase().includes('red') ? 'bg-red-500' :
+                                c.toLowerCase().includes('green') ? 'bg-green-500' :
+                                c.toLowerCase().includes('purple') ? 'bg-purple-500' :
+                                'bg-gray-400'
+                              }`}></div>
+                              <span className="capitalize text-xs">{c}</span>
+                            </div>
+                            {selectedVariant.color === c && (
+                              <div className="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
+                                <FontAwesomeIcon icon={faCheckCircle} className="text-white text-xs" />
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-                {variantOptions.rams.length > 0 && (
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-600 mb-2">RAM</label>
-                    <div className="flex flex-wrap gap-2">
-                      {variantOptions.rams.map((r) => (
-                        <button
-                          key={r}
-                          className={`px-3 py-1.5 rounded-lg border text-sm font-semibold cursor-pointer transition-colors ${
-                            selectedVariant.ram === r
-                              ? "border-blue-500 text-blue-600 bg-blue-50"
-                              : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50"
-                          }`}
-                          onMouseEnter={() => handleVariantHover("ram", r)}
-                          onClick={() => handleVariantClick("ram", r)}
-                        >
-                          {r}
-                        </button>
-                      ))}
+                  )}
+                  {variantOptions.rams.length > 0 && (
+                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
+                      <div className="flex items-center mb-3">
+                        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                          <FontAwesomeIcon icon={faMicrochip} className="text-green-600 text-sm" />
+                        </div>
+                        <label className="text-sm font-semibold text-gray-700">Memory (RAM)</label>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {variantOptions.rams.map((r) => (
+                          <button
+                            key={r}
+                            className={`group relative px-3 py-2 rounded-lg border-2 text-sm font-semibold cursor-pointer transition-all duration-200 transform hover:scale-105 ${
+                              selectedVariant.ram === r
+                                ? "border-green-500 text-green-700 bg-green-50 shadow-lg shadow-green-100"
+                                : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 hover:shadow-md"
+                            }`}
+                            onMouseEnter={() => handleVariantHover("ram", r)}
+                            onClick={() => handleVariantClick("ram", r)}
+                          >
+                            <div className="flex items-center space-x-2">
+                              <div className="w-5 h-3 bg-gradient-to-r from-green-400 to-green-600 rounded-sm flex items-center justify-center">
+                                <FontAwesomeIcon icon={faMicrochip} className="text-white text-xs" />
+                              </div>
+                              <span className="font-mono text-xs">{r}</span>
+                            </div>
+                            {selectedVariant.ram === r && (
+                              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                                <FontAwesomeIcon icon={faCheckCircle} className="text-white text-xs" />
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-                {variantOptions.storages.length > 0 && (
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-600 mb-2">Storage</label>
-                    <div className="flex flex-wrap gap-2">
-                      {variantOptions.storages.map((s) => (
-                        <button
-                          key={s}
-                          className={`px-3 py-1.5 rounded-lg border text-sm font-semibold cursor-pointer transition-colors ${
-                            selectedVariant.storage === s
-                              ? "border-blue-500 text-blue-600 bg-blue-50"
-                              : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50"
-                          }`}
-                          onMouseEnter={() => handleVariantHover("storage", s)}
-                          onClick={() => handleVariantClick("storage", s)}
-                        >
-                          {s}
-                        </button>
-                      ))}
+                  )}
+                </div>
+
+                {/* Second Row: Storage and SIM Type */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {variantOptions.storages.length > 0 && (
+                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
+                      <div className="flex items-center mb-3">
+                        <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+                          <FontAwesomeIcon icon={faDatabase} className="text-orange-600 text-sm" />
+                        </div>
+                        <label className="text-sm font-semibold text-gray-700">Storage Capacity</label>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {variantOptions.storages.map((s) => (
+                          <button
+                            key={s}
+                            className={`group relative px-3 py-2 rounded-lg border-2 text-sm font-semibold cursor-pointer transition-all duration-200 transform hover:scale-105 ${
+                              selectedVariant.storage === s
+                                ? "border-orange-500 text-orange-700 bg-orange-50 shadow-lg shadow-orange-100"
+                                : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 hover:shadow-md"
+                            }`}
+                            onMouseEnter={() => handleVariantHover("storage", s)}
+                            onClick={() => handleVariantClick("storage", s)}
+                          >
+                            <div className="flex items-center space-x-2">
+                              <div className="w-5 h-3 bg-gradient-to-r from-orange-400 to-orange-600 rounded-sm flex items-center justify-center">
+                                <FontAwesomeIcon icon={faDatabase} className="text-white text-xs" />
+                              </div>
+                              <span className="font-mono text-xs">{s}</span>
+                            </div>
+                            {selectedVariant.storage === s && (
+                              <div className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
+                                <FontAwesomeIcon icon={faCheckCircle} className="text-white text-xs" />
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-                {variantOptions.simTypes.length > 0 && (
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-600 mb-2">SIM Type</label>
-                    <div className="flex flex-wrap gap-2">
-                      {variantOptions.simTypes.map((t) => (
-                        <button
-                          key={t}
-                          className={`px-3 py-1.5 rounded-lg border text-sm font-semibold cursor-pointer transition-colors ${
-                            selectedVariant.simType === t
-                              ? "border-blue-500 text-blue-600 bg-blue-50"
-                              : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50"
-                          }`}
-                          onMouseEnter={() => handleVariantHover("simType", t)}
-                          onClick={() => handleVariantClick("simType", t)}
-                        >
-                          {t}
-                        </button>
-                      ))}
+                  )}
+                  {variantOptions.simTypes.length > 0 && (
+                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
+                      <div className="flex items-center mb-3">
+                        <div className="w-8 h-8 bg-cyan-100 rounded-lg flex items-center justify-center mr-3">
+                          <FontAwesomeIcon icon={faSimCard} className="text-cyan-600 text-sm" />
+                        </div>
+                        <label className="text-sm font-semibold text-gray-700">SIM Configuration</label>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {variantOptions.simTypes.map((t) => (
+                          <button
+                            key={t}
+                            className={`group relative px-3 py-2 rounded-lg border-2 text-sm font-semibold cursor-pointer transition-all duration-200 transform hover:scale-105 ${
+                              selectedVariant.simType === t
+                                ? "border-cyan-500 text-cyan-700 bg-cyan-50 shadow-lg shadow-cyan-100"
+                                : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 hover:shadow-md"
+                            }`}
+                            onMouseEnter={() => handleVariantHover("simType", t)}
+                            onClick={() => handleVariantClick("simType", t)}
+                          >
+                            <div className="flex items-center space-x-2">
+                              <div className="w-5 h-3 bg-gradient-to-r from-cyan-400 to-cyan-600 rounded-sm flex items-center justify-center">
+                                <FontAwesomeIcon icon={faSimCard} className="text-white text-xs" />
+                              </div>
+                              <span className="font-medium text-xs">{t}</span>
+                            </div>
+                            {selectedVariant.simType === t && (
+                              <div className="absolute -top-1 -right-1 w-4 h-4 bg-cyan-500 rounded-full flex items-center justify-center">
+                                <FontAwesomeIcon icon={faCheckCircle} className="text-white text-xs" />
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             )}
             <div className="grid grid-cols-2 gap-3">
