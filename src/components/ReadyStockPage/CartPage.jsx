@@ -9,6 +9,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import CartService from "../../services/cart/cart.services";
 import OrderService from "../../services/order/order.services";
+import PaymentService from "../../services/payment/payment.services";
+import PaymentPopup from "../PaymentPopup";
 import iphoneImage from "../../assets/iphone.png";
 import { convertPrice } from "../../utils/currencyUtils";
 
@@ -18,6 +20,8 @@ const CartPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showCheckoutForm, setShowCheckoutForm] = useState(false);
+  const [showPaymentPopup, setShowPaymentPopup] = useState(false);
+  const [currentOrder, setCurrentOrder] = useState(null);
   const [billingAddress, setBillingAddress] = useState({
     address: "",
     city: "",
@@ -198,8 +202,8 @@ const CartPage = () => {
     return true;
   };
 
-  // Handle checkout
-  const handleCheckout = async (e) => {
+  // Handle address validation and show payment popup
+  const handleAddPayment = (e) => {
     e.preventDefault();
     if (!validateAddresses()) {
       setError("Please fill in all address fields");
@@ -210,37 +214,51 @@ const CartPage = () => {
       return;
     }
 
+    // Prepare order data for payment popup (without creating order yet)
+    setCurrentOrder({
+      orderId: null, // Will be created after payment
+      totalAmount: totalPrice,
+      orderNumber: null,
+      cartItems: cartItems.map((item) => ({
+        productId: item.id,
+        skuFamilyId: item.skuFamilyId,
+        quantity: Number(item.quantity),
+        price: Number(item.price),
+      })),
+      billingAddress,
+      shippingAddress,
+    });
+    
+    // Close checkout form and show payment popup
+    setShowCheckoutForm(false);
+    setShowPaymentPopup(true);
+  };
+
+  // Handle final order creation after payment
+  const handleFinalOrderCreation = async () => {
     try {
       setError(null);
       setIsLoading(true);
 
+      // Create order with payment details included
       const orderData = {
-        cartItems: cartItems.map((item) => ({
-          productId: item.id,
-          skuFamilyId: item.skuFamilyId,
-          quantity: Number(item.quantity),
-          price: Number(item.price),
-        })),
-        billingAddress,
-        shippingAddress,
+        cartItems: currentOrder.cartItems,
+        billingAddress: currentOrder.billingAddress,
+        shippingAddress: currentOrder.shippingAddress,
+        paymentDetails: currentOrder.paymentDetails,
       };
-
-      console.log("Order data being sent:", orderData);
 
       const response = await OrderService.createOrder(orderData);
 
       if (response?.success || response?.status === 200) {
         setCartItems([]);
+        setShowPaymentPopup(false);
+        setCurrentOrder(null);
         navigate("/order", { state: { order: response.data } });
       } else {
         setError(response?.message || "Failed to create order");
       }
     } catch (error) {
-      console.error("Create order error:", {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
       const errorMessage =
         error.response?.data?.errors?.map((e) => e.message).join(", ") ||
         error.response?.data?.message ||
@@ -248,7 +266,52 @@ const CartPage = () => {
       setError(errorMessage);
     } finally {
       setIsLoading(false);
-      setShowCheckoutForm(false);
+    }
+  };
+
+  // Handle final order creation with data directly (to avoid state timing issues)
+  const handleFinalOrderCreationWithData = async (orderDataWithPayment) => {
+    try {
+      setError(null);
+      setIsLoading(true);
+
+      // Create order with payment details included
+      const orderData = {
+        cartItems: orderDataWithPayment.cartItems,
+        billingAddress: orderDataWithPayment.billingAddress,
+        shippingAddress: orderDataWithPayment.shippingAddress,
+        paymentDetails: orderDataWithPayment.paymentDetails,
+      };
+
+      const response = await OrderService.createOrder(orderData);
+
+      if (response?.success || response?.status === 200) {
+        setCartItems([]);
+        setShowPaymentPopup(false);
+        setCurrentOrder(null);
+        navigate("/order", { state: { order: response.data } });
+      } else {
+        setError(response?.message || "Failed to create order");
+      }
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.errors?.map((e) => e.message).join(", ") ||
+        error.response?.data?.message ||
+        "An error occurred while creating order";
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle payment success - now creates the actual order
+  const handlePaymentSuccess = (updatedOrderData) => {
+    if (updatedOrderData) {
+      // Update current order with payment details
+      setCurrentOrder(updatedOrderData);
+      
+      // Call final order creation with the updated data directly
+      handleFinalOrderCreationWithData(updatedOrderData);
     }
   };
 
@@ -530,7 +593,7 @@ const CartPage = () => {
 
                   {/* Address Form */}
                   <form
-                    onSubmit={handleCheckout}
+                    onSubmit={handleAddPayment}
                     className="grid grid-cols-1 md:grid-cols-2 gap-6"
                   >
                     <div>
@@ -705,7 +768,7 @@ const CartPage = () => {
                             ></path>
                           </svg>
                         ) : (
-                          "Place Order"
+                          "Add Payment"
                         )}
                       </button>
                     </div>
@@ -714,6 +777,16 @@ const CartPage = () => {
               </div>
             )}
           </>
+        )}
+
+        {/* Payment Popup */}
+        {showPaymentPopup && currentOrder && (
+          <PaymentPopup
+            isOpen={showPaymentPopup}
+            onClose={() => setShowPaymentPopup(false)}
+            orderData={currentOrder}
+            onSuccess={handlePaymentSuccess}
+          />
         )}
         </div>
       </div>

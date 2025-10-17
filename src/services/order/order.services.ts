@@ -15,10 +15,20 @@ export interface Address {
   country: string;
 }
 
+export interface PaymentDetails {
+  module: string;
+  currency: string;
+  acceptedTerms: boolean;
+  fields: Record<string, any>;
+  uploadedFiles?: string[];
+  transactionRef?: string;
+}
+
 export interface CreateOrderRequest {
   cartItems: OrderItem[];
   billingAddress: Address;
   shippingAddress: Address;
+  paymentDetails?: PaymentDetails;
 }
 
 export interface Order {
@@ -72,15 +82,44 @@ export class OrderService {
   static async createOrder(orderData: CreateOrderRequest): Promise<CreateOrderResponse> {
     try {
       const res = await api.post('/api/customer/order/create', orderData);
+      
       const ok = res.data?.success === true || res.data?.status === 200;
       toastHelper.showTost(res.data?.message || (ok ? 'Order created successfully' : 'Failed to create order'), ok ? 'success' : 'error');
       return res.data;
     } catch (err: any) {
-      console.error("OrderService createOrder error:", {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status,
+      const msg = err.response?.data?.errors?.map((e: any) => e.message).join(', ') || err.response?.data?.message || 'Failed to create order';
+      toastHelper.showTost(msg, 'error');
+      throw err;
+    }
+  }
+
+  static async createOrderWithFiles(orderData: CreateOrderRequest, files: File[]): Promise<CreateOrderResponse> {
+    try {
+      const formData = new FormData();
+      
+      // Add order data
+      formData.append('cartItems', JSON.stringify(orderData.cartItems));
+      formData.append('billingAddress', JSON.stringify(orderData.billingAddress));
+      formData.append('shippingAddress', JSON.stringify(orderData.shippingAddress));
+      if (orderData.paymentDetails) {
+        formData.append('paymentDetails', JSON.stringify(orderData.paymentDetails));
+      }
+
+      // Add files
+      files.forEach((file, index) => {
+        formData.append('images', file);
       });
+
+      const res = await api.post('/api/customer/order/create', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const ok = res.data?.success === true || res.data?.status === 200;
+      toastHelper.showTost(res.data?.message || (ok ? 'Order created successfully' : 'Failed to create order'), ok ? 'success' : 'error');
+      return res.data;
+    } catch (err: any) {
       const msg = err.response?.data?.errors?.map((e: any) => e.message).join(', ') || err.response?.data?.message || 'Failed to create order';
       toastHelper.showTost(msg, 'error');
       throw err;
@@ -121,6 +160,15 @@ export class OrderService {
       });
       const msg = err.response?.data?.message || 'Failed to cancel order';
       toastHelper.showTost(msg, 'error');
+      throw err;
+    }
+  }
+
+  static async getOrderWithPaymentDetails(orderId: string): Promise<CreateOrderResponse> {
+    try {
+      const res = await api.post('/api/customer/order/get-payment-details', { orderId });
+      return res.data;
+    } catch (err: any) {
       throw err;
     }
   }
