@@ -9,6 +9,7 @@ import {
 import Header from "./components/Header";
 import NavTabs from "./components/NavTabs";
 import Footer from "./components/Footer";
+import Layout from "./components/Layout";
 import MainContent from "./components/ReadyStockPage/MainContent";
 import "./App.css";
 import ProductDetails from "./components/ReadyStockPage/ProductDetails";
@@ -81,14 +82,14 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
             <Route path="/customer/:token" element={<VerifyEmail />} />
             {/* Public pages (browsable without login) */}
             <Route path="/home" element={<HomePage />} />
-            <Route path="/ready-stock" element={<MainContent />} />
-            <Route path="/flash-deals" element={<FlashDeals />} />
+            <Route path="/ready-stock" element={<Layout><MainContent /></Layout>} />
+            <Route path="/flash-deals" element={<Layout><FlashDeals /></Layout>} />
             {/* Profile remains protected */}
             <Route
               path="/profile"
               element={
                 <ProtectedRoute isLoggedIn={isLoggedIn}>
-                  <ProfilePage />
+                  <Layout><ProfilePage /></Layout>
                 </ProtectedRoute>
               }
             />
@@ -99,7 +100,7 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
               path="/product/:id"
               element={
                 <ProtectedRoute isLoggedIn={isLoggedIn}>
-                  <ProductDetails />
+                  <Layout><ProductDetails /></Layout>
                 </ProtectedRoute>
               }
             />
@@ -107,7 +108,7 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
               path="/bidding"
               element={
                 <ProtectedRoute isLoggedIn={isLoggedIn}>
-                  <BiddingContent />
+                  <Layout><BiddingContent /></Layout>
                 </ProtectedRoute>
               }
             />
@@ -115,7 +116,7 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
               path="/cart"
               element={
                 <ProtectedRoute isLoggedIn={isLoggedIn}>
-                  <CartPage />
+                  <Layout><CartPage /></Layout>
                 </ProtectedRoute>
               }
             />
@@ -123,7 +124,7 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
               path="/order"
               element={
                 <ProtectedRoute isLoggedIn={isLoggedIn}>
-                  <Order />
+                  <Layout><Order /></Layout>
                 </ProtectedRoute>
               }
             />

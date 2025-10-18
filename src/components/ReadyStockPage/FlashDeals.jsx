@@ -289,7 +289,7 @@ const FlashDeals = () => {
   };
 
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div>
       <div className="flex flex-col lg:flex-row gap-6">
         {showMobileFilters && (
           <div className="fixed inset-0 z-40 lg:hidden">
@@ -527,7 +527,7 @@ const FlashDeals = () => {
           onSuccess={handleBidSuccess}
         />
       )}
-    </main>
+    </div>
   );
 };
 

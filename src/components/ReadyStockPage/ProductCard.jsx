@@ -584,12 +584,13 @@ const ProductCard = ({
 
   return (
     <div
-      className={`bg-white-25 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 h-full flex flex-col cursor-pointer group border border-gray-100 overflow-hidden ${getCardBackgroundClass()}`}
+      className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group overflow-hidden flex flex-col w-[406.67px] h-[691px] p-4 pb-5 max-w-full box-border ${getCardBackgroundClass()}`}
       onClick={!isInModal ? handleProductClick : undefined}
     >
-      <div className="relative flex-1 overflow-hidden rounded-t-xl">
+      {/* Image Container */}
+      <div className="relative overflow-hidden mb-5 flex-shrink-0 w-full h-[300px] rounded-t-xl max-w-[375px]">
         <img
-          className="w-full h-48 sm:h-56 object-cover group-hover:scale-105 transition-transform duration-300"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           src={
             imageError
               ? iphoneImage
@@ -598,30 +599,22 @@ const ProductCard = ({
           alt={name}
           onError={handleImageError}
         />
-        <div className="absolute top-3 right-3">
-          <button
-            className={`p-2.5 bg-white/90 backdrop-blur-sm rounded-full cursor-pointer shadow-lg hover:shadow-xl transition-all duration-200 ${
-              isFavorite ? "text-red-500" : "text-gray-400 hover:text-red-500"
-            } w-11 h-11 flex items-center justify-center`}
-            onClick={handleToggleWishlist}
-          >
-            <FontAwesomeIcon icon={faClock} className="text-sm" />
-          </button>
-        </div>
+        
+        {/* In Stock Badge */}
         <div className="absolute top-3 left-3">
           <span
-            className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-sm ${getStatusBadgeClass()}`}
+            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClass()}`}
           >
             {isExpired ? (
               <FontAwesomeIcon
                 icon={faCalendarXmark}
-                className="w-3 h-3 mr-1.5"
+                className="w-3 h-3 mr-1"
               />
             ) : (
               <svg
                 data-prefix="fas"
                 data-icon="circle-check"
-                className="w-3 h-3 mr-1.5"
+                className="w-3 h-3 mr-1"
                 role="img"
                 viewBox="0 0 512 512"
                 aria-hidden="true"
@@ -635,82 +628,97 @@ const ProductCard = ({
             {getDisplayStatus()}
           </span>
         </div>
-        {(() => {
-          const descParts = (description || "")
-            .split("•")
-            .map((s) => s.trim())
-            .filter(Boolean);
-          const storageVal = product?.storage || descParts[0];
-          const colorVal = product?.color || descParts[1];
-          const ramVal = product?.ram || descParts[2];
-          const conditionVal = product?.condition || undefined;
-          const simTypeVal = product?.simType || descParts[3] || undefined;
-          const hasAny =
-            Boolean(conditionVal) ||
-            Boolean(colorVal) ||
-            Boolean(ramVal) ||
-            Boolean(storageVal) ||
-            Boolean(simTypeVal);
-          if (!hasAny) return null;
-          return (
-            <div className="absolute top-12 left-3 z-10 flex flex-col gap-1">
-              {conditionVal && (
-                <span className="inline-flex items-center px-1.5 py-0.5 text-[11px] font-semibold text-gray-900 bg-white/90 backdrop-blur-sm rounded shadow-sm">
-                  Condition: {conditionVal}
-                </span>
-              )}
-              {colorVal && (
-                <span className="inline-flex items-center px-1.5 py-0.5 text-[11px] font-semibold text-gray-900 bg-white/90 backdrop-blur-sm rounded shadow-sm">
-                  Color: {colorVal}
-                </span>
-              )}
-              {ramVal && (
-                <span className="inline-flex items-center px-1.5 py-0.5 text-[11px] font-semibold text-gray-900 bg-white/90 backdrop-blur-sm rounded shadow-sm">
-                  RAM: {ramVal}
-                </span>
-              )}
-              {storageVal && (
-                <span className="inline-flex items-center px-1.5 py-0.5 text-[11px] font-semibold text-gray-900 bg-white/90 backdrop-blur-sm rounded shadow-sm">
-                  Storage: {storageVal}
-                </span>
-              )}
-              {simTypeVal && (
-                <span className="inline-flex items-center px-1.5 py-0.5 text-[11px] font-semibold text-gray-900 bg-white/90 backdrop-blur-sm rounded shadow-sm">
-                  SIM: {simTypeVal}
-                </span>
-              )}
-            </div>
-          );
-        })()}
+        
+        {/* Bookmark/Wishlist Icon */}
+        <div className="absolute top-3 right-3">
+          <button
+            className={`p-2 bg-white rounded-full cursor-pointer shadow-lg hover:shadow-xl transition-all duration-200 ${
+              isFavorite ? "text-[#FB2C36]" : "text-gray-400 hover:text-[#FB2C36]"
+            } w-8 h-8 flex items-center justify-center border border-gray-200`}
+            onClick={handleToggleWishlist}
+          >
+            <svg className="w-4 h-4" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
+            </svg>
+          </button>
+        </div>
       </div>
 
-      <div className="p-4">
-        <h3 className="font-semibold text-gray-900 text-base mb-2 truncate">
+      {/* Content Section */}
+      <div className="flex flex-col flex-1 w-full gap-5 min-h-0">
+        {/* Product Title */}
+        <h3 className="font-bold text-lg leading-none tracking-normal align-middle text-[#364153]">
           {name}
         </h3>
-        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{description}</p>
 
-        <div className="flex items-center mb-2">
-          <span className="text-lg font-semibold text-gray-900">
-            {convertPrice(price)}
-          </span>
+        {/* Price Section */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <span className="text-sm text-gray-500 mr-1">From</span>
+            <span className="text-lg font-semibold text-gray-900">
+              {convertPrice(price)}
+            </span>
+          </div>
+          <div className="flex items-center justify-center w-8 h-8 rounded-full p-2.5 bg-white shadow-lg backdrop-blur-sm opacity-100">
+            <span className="text-sm font-medium text-gray-700 font-sans">
+              i
+            </span>
+          </div>
         </div>
 
-        <div className="text-xs text-gray-500 mb-3 space-y-1">
-          <div className="flex items-center">
-            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-            MOQ: {moq} units
-          </div>
-          <div className="flex items-center">
-            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-            {stockCount} available
-          </div>
-          {purchaseTypeLabel && (
-            <div className="flex items-center">
-              <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-2"></span>
-              Purchase: {purchaseTypeLabel}
+        {/* Color Options and SKU */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            {/* Color Swatches */}
+            <div className="flex space-x-1">
+              <div className="w-4 h-4 bg-gray-600 rounded-full border border-gray-300"></div>
+              <div className="w-4 h-4 bg-white rounded-full border border-gray-300"></div>
+              <div className="w-4 h-4 bg-orange-500 rounded-full border border-gray-300 flex items-center justify-center">
+                <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="w-4 h-4 bg-black rounded-full border border-gray-300"></div>
+              <div className="w-4 h-4 bg-blue-500 rounded-full border border-gray-300"></div>
             </div>
-          )}
+          </div>
+          <span className="text-xs text-gray-500">SKU: {product?.sku || 'IP17PM512SLV'}</span>
+        </div>
+
+        {/* Specifications Grid */}
+        <div className="grid grid-cols-2 gap-2.5 w-full">
+          <div className="w-full h-[54px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
+            <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">
+              MOQ
+            </div>
+            <div className="text-sm text-gray-500 font-medium leading-5 tracking-normal text-center align-middle mt-0.5">
+              {moq} Units
+            </div>
+          </div>
+          <div className="w-full h-[54px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
+            <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">
+              Model Code
+            </div>
+            <div className="text-sm text-gray-500 font-medium leading-5 tracking-normal text-center align-middle mt-0.5">
+              {product?.modelCode || 'A2321'}
+            </div>
+          </div>
+          <div className="w-full h-[54px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
+            <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">
+              Delivery Time (EST)
+            </div>
+            <div className="text-sm text-gray-500 font-medium leading-5 tracking-normal text-center align-middle mt-0.5">
+              3-5 Days
+            </div>
+          </div>
+          <div className="w-full h-[54px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
+            <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">
+              SIM Type
+            </div>
+            <div className="text-sm text-gray-500 font-medium leading-5 tracking-normal text-center align-middle mt-0.5">
+              {product?.simType || 'E-SIM'}
+            </div>
+          </div>
         </div>
 
         {!isExpired && !isOutOfStock && isFlashDeal && (
@@ -738,66 +746,69 @@ const ProductCard = ({
             </div>
           </div>
         )}
-        <div className="flex space-x-3">
-          {isExpired ? (
-            <>
+      </div>
+
+      {/* Button Container */}
+      <div className="flex mt-auto w-full h-[46px] gap-4">
+        {isExpired ? (
+          <>
+            <button
+              className="flex-1 bg-gray-300 text-gray-500 py-2 px-3 rounded-lg text-xs font-semibold cursor-not-allowed"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <FontAwesomeIcon icon={faCalendarXmark} className="mr-1" />
+              Expired
+            </button>
+          </>
+        ) : isOutOfStock ? (
+          <>
+            {notify ? (
               <button
-                className="flex-1 bg-gray-300 text-gray-500 py-2 px-3 rounded-lg text-xs font-semibold cursor-not-allowed"
-                onClick={(e) => e.stopPropagation()}
+                className="flex-1 border border-red-300 text-red-700 bg-white py-2 px-3 rounded-lg text-xs font-semibold hover:bg-red-50 cursor-pointer transition-all duration-200 flex items-center justify-center"
+                onClick={(ev) => handleNotifyToggle(ev, false)}
+                title="Turn off notifications for notifying me when back in stock"
               >
-                <FontAwesomeIcon icon={faCalendarXmark} className="mr-1" />
-                Expired
+                <FontAwesomeIcon icon={faBellSlash} className="mr-1" />
+                Turn Off
               </button>
-            </>
-          ) : isOutOfStock ? (
-            <>
-              {notify ? (
-                <button
-                  className="flex-1 border-2 border-red-300 text-red-700 bg-red-50 py-2 px-3 rounded-lg text-xs font-semibold hover:bg-red-100 cursor-pointer transition-all duration-200 flex items-center justify-center"
-                  onClick={(ev) => handleNotifyToggle(ev, false)}
-                  title="Turn off notifications for notifying me when back in stock"
-                >
-                  <FontAwesomeIcon icon={faBellSlash} className="mr-1" />
-                  Turn Off
-                </button>
-              ) : (
-                <button
-                  className="flex-1 border-2 border-blue-300 text-blue-700 bg-blue-50 py-2 px-3 rounded-lg text-xs font-semibold hover:bg-blue-100 cursor-pointer transition-all duration-200 flex items-center justify-center"
-                  onClick={(ev) => handleNotifyToggle(ev, true)}
-                  title="Notify me when back in stock"
-                >
-                  <FontAwesomeIcon icon={faBell} className="mr-1" />
-                  Notify Me
-                </button>
-              )}
-            </>
-          ) : (
-            <>
+            ) : (
               <button
-                className="flex-1 border-2 border-gray-200 text-gray-700 py-2 px-3 rounded-lg text-xs font-semibold hover:bg-gray-50 hover:border-gray-300 cursor-pointer transition-all duration-200"
-                onClick={handleAddToCart}
+                className="flex-1 border border-[#0071E3] text-[#0071E3] bg-white py-2 px-3 rounded-lg text-xs font-semibold hover:bg-blue-50 cursor-pointer transition-all duration-200 flex items-center justify-center"
+                onClick={(ev) => handleNotifyToggle(ev, true)}
+                title="Notify me when back in stock"
               >
-                Add to Cart
+                <FontAwesomeIcon icon={faBell} className="mr-1" />
+                Notify Me
               </button>
-              <button
-                className="flex-1 bg-[#0071e3] text-white py-2 px-3 rounded-lg text-xs font-semibold hover:bg-[#005bb5] cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const isLoggedIn =
-                    localStorage.getItem("isLoggedIn") === "true";
-                  if (!isLoggedIn) {
-                    const hashPath = window.location.hash?.slice(1) || "/home";
-                    const returnTo = encodeURIComponent(hashPath);
-                    return navigate(`/login?returnTo=${returnTo}`);
-                  }
-                  onOpenBiddingForm(product); // Call handler with product
-                }}
-              >
-                Make Offer
-              </button>
-            </>
-          )}
-        </div>
+            )}
+          </>
+        ) : (
+          <>
+            <button
+              className="flex-1 border border-gray-200 text-gray-700 bg-white py-2 px-3 rounded-lg text-xs font-semibold hover:bg-gray-50 hover:border-gray-300 cursor-pointer transition-all duration-200 flex items-center justify-center"
+              onClick={handleAddToCart}
+            >
+              <FontAwesomeIcon icon={faCartShopping} className="mr-1" />
+              Add to Cart
+            </button>
+            <button
+              className="flex-1 text-white py-2 px-3 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md bg-[#0071E3] hover:bg-[#005bb5]"
+              onClick={(e) => {
+                e.stopPropagation();
+                const isLoggedIn =
+                  localStorage.getItem("isLoggedIn") === "true";
+                if (!isLoggedIn) {
+                  const hashPath = window.location.hash?.slice(1) || "/home";
+                  const returnTo = encodeURIComponent(hashPath);
+                  return navigate(`/login?returnTo=${returnTo}`);
+                }
+                onOpenBiddingForm(product); // Call handler with product
+              }}
+            >
+              Make Offer
+            </button>
+          </>
+        )}
       </div>
       {isAddToCartPopupOpen && (
         <AddToCartPopup product={product} onClose={handlePopupClose} />
