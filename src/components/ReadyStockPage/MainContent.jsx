@@ -475,14 +475,14 @@ const MainContent = () => {
             </>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-4">
                 {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
-                  <div className="col-span-2 flex justify-center py-12">
+                  <div className="flex justify-center py-12">
                     <Loader size="lg" />
                   </div>
                 )}
                 {!isLoading && hasInitiallyLoaded && currentProducts.length === 0 && (
-                  <div className="col-span-2 text-center text-2xl text-gray-500 font-bold">
+                  <div className="text-center text-2xl text-gray-500 font-bold">
                     No products found.
                   </div>
                 )}

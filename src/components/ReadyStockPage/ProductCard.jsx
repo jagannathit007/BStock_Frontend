@@ -310,41 +310,81 @@ const ProductCard = ({
   if (viewMode === "list") {
     return (
       <>
+        {/* Main Container - Figma Specifications */}
         <div
-          className="bg-white-25 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group border border-gray-100 overflow-hidden mb-3"
-          onClick={!isInModal ? handleProductClick : undefined}
+          className="w-[1280px] h-[412px] gap-5 rounded-[12px] p-5 bg-[#FBFBFB]  border-gray-200 mb-4"
+          style={{ maxWidth: '100%' }}
         >
-          <div className="p-3">
-            <div className="flex items-center space-x-3">
-              <div className="relative flex-shrink-0">
-                <div className="w-14 h-14 flex items-center justify-center rounded-lg overflow-hidden bg-gray-50">
-                  <img
-                    className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                    alt={name}
-                    src={
-                      imageError
-                        ? iphoneImage
-                        : `${import.meta.env.VITE_BASE_URL}/${imageUrl}`
-                    }
-                    onError={handleImageError}
-                  />
+          {/* Inner Product Card - Figma Design */}
+          <div
+            className="w-full h-full bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group border border-gray-100 overflow-hidden"
+            onClick={!isInModal ? handleProductClick : undefined}
+          >
+            <div className="p-6 h-full flex flex-col">
+              {/* Header Section - Product Title and Actions */}
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-bold text-gray-900 group-hover:text-[#0071e3] transition-colors duration-200 mb-2">
+                    {name}
+                  </h3>
                 </div>
-
-                {/* ✅ status badge */}
-                <div className="absolute -top-1 -right-1">
+                
+                {/* Action Icons - Top Right */}
+                <div className="flex items-center space-x-2 ml-4">
+                  <button
+                    className="rounded-full transition-all duration-200 flex items-center justify-center"
+                    title="Information"
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '90px',
+                      padding: '10px',
+                      background: '#FFFFFF',
+                      boxShadow: '0px 4px 6px -4px #0000001A, 0px 10px 15px -3px #0000001A',
+                      backdropFilter: 'blur(8px)',
+                      opacity: 1
+                    }}
+                  >
+                    <span className="text-sm font-medium" style={{ color: '#1F2937' }}>i</span>
+                  </button>
+                  <button
+                    className={`rounded-full transition-all duration-200 hover:scale-105 flex items-center justify-center ${
+                      isFavorite
+                        ? "text-red-500 hover:bg-red-50"
+                        : "text-gray-400 hover:text-red-500"
+                    }`}
+                    title={
+                      isFavorite ? "Remove from wishlist" : "Add to wishlist"
+                    }
+                    onClick={handleToggleWishlist}
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '90px',
+                      padding: '10px',
+                      background: '#FFFFFF',
+                      boxShadow: '0px 4px 6px -4px #0000001A, 0px 10px 15px -3px #0000001A',
+                      backdropFilter: 'blur(8px)',
+                      opacity: 1
+                    }}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
+                    </svg>
+                  </button>
                   <span
-                    className={`inline-flex items-center px-0.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass()}`}
+                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass()}`}
                   >
                     {isExpired ? (
                       <FontAwesomeIcon
                         icon={faCalendarXmark}
-                        className="w-2.5 h-2.5"
+                        className="w-3 h-3 mr-1"
                       />
                     ) : (
                       <svg
                         data-prefix="fas"
                         data-icon="circle-check"
-                        className="svg-inline--fa fa-circle-check w-2.5 h-2.5"
+                        className="w-3 h-3 mr-1"
                         role="img"
                         viewBox="0 0 512 512"
                         aria-hidden="true"
@@ -355,196 +395,185 @@ const ProductCard = ({
                         ></path>
                       </svg>
                     )}
+                    {getDisplayStatus()}
                   </span>
                 </div>
               </div>
 
-              {/* ✅ right content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-semibold text-gray-900 group-hover:text-[#0071e3] transition-colors duration-200 truncate">
-                      {name}
-                    </h3>
-                    <div className="flex items-center space-x-2 mt-0.5">
-                      <span className="text-xs text-gray-500"></span>
-                      <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                      <span className="text-xs text-gray-500">
-                        {purchaseTypeLabel || "Partial"}
-                      </span>
-                      {!isExpired && !isOutOfStock && !isFlashDeal && (
-                        <>
-                          <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                          <span className="text-xs bg-blue-50 text-[#0071e3] px-1.5 py-0.5 rounded-md font-medium">
-                            Negotiable
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right ml-3">
-                    <div className="text-base font-semibold text-gray-900 group-hover:text-[#0071e3] transition-colors duration-200">
-                      {convertPrice(price)}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-0.5">
-                      {isExpired
-                        ? "Expired"
-                        : isOutOfStock
-                        ? "Out of stock"
-                        : "Starting price"}
-                    </div>
-                  </div>
+              {/* Price, Color Options and Quantity - Single Horizontal Row */}
+              <div className="flex items-center space-x-4 mb-4">
+                {/* Price */}
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-500">Start from</span>
+                  <span className="text-lg font-semibold text-green-600">
+                    {convertPrice(price)}
+                  </span>
                 </div>
-
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {description.split(" • ").map((part, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center px-1.5 py-0.5 bg-gray-50 text-gray-600 text-xs rounded font-medium"
-                    >
-                      {part.trim()}
-                    </span>
-                  ))}
-                  {product?.simType && (
-                    <span className="inline-flex items-center px-1.5 py-0.5 bg-gray-50 text-gray-600 text-xs rounded font-medium">
-                      SIM: {product.simType}
-                    </span>
-                  )}
+                
+                {/* Separator */}
+                <div className="w-px h-4 bg-gray-300"></div>
+                
+                {/* Color Swatches */}
+                <div className="flex space-x-2">
+                  <div className="w-4 h-4 bg-gray-600 rounded-full border border-gray-300"></div>
+                  <div className="w-4 h-4 bg-white rounded-full border border-gray-300"></div>
+                  <div className="w-4 h-4 bg-orange-500 rounded-full border border-gray-300 flex items-center justify-center">
+                    <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="w-4 h-4 bg-black rounded-full border border-gray-300"></div>
+                  <div className="w-4 h-4 bg-blue-500 rounded-full border border-gray-300"></div>
                 </div>
-
-                {!isExpired && !isOutOfStock && isFlashDeal && (
-                  <div className="mt-3 flex justify-center">
-                    <div className="inline-flex items-center bg-gradient-to-r from-red-50 to-pink-50 text-red-700 px-4 py-2 rounded-full text-xs font-semibold shadow-sm border border-red-200">
-                      <FontAwesomeIcon
-                        icon={faClock}
-                        className="w-3 h-3 mr-2"
-                      />
-                      <Countdown
-                        date={product.expiryTime}
-                        renderer={({
-                          days,
-                          hours,
-                          minutes,
-                          seconds,
-                          completed,
-                        }) => {
-                          if (completed) {
-                            return (
-                              <span className="font-semibold">
-                                Flash Deal Ended
-                              </span>
-                            );
-                          }
-                          return (
-                            <span className="font-semibold">
-                              {days > 0 ? `${days} days ` : ""}
-                              {String(hours).padStart(2, "0")}:
-                              {String(minutes).padStart(2, "0")}:
-                              {String(seconds).padStart(2, "0")}
-                            </span>
-                          );
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-3 flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="text-center">
-                  <div
-                    className={`text-xs font-semibold ${
-                      stockStatus === "In Stock"
-                        ? "text-green-600"
-                        : stockStatus === "Low Stock"
-                        ? "text-yellow-600"
-                        : "text-red-600"
-                    }`}
-                  >
-                    {stockCount} units
-                  </div>
-                  <div className="text-xs text-gray-500">Available</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xs font-semibold text-gray-900">
-                    {moq}
-                  </div>
-                  <div className="text-xs text-gray-500">Min Order</div>
+                
+                {/* Separator */}
+                <div className="w-px h-4 bg-gray-300"></div>
+                
+                {/* Quantity Selector */}
+                <div className="flex items-center border border-gray-300 rounded-lg">
+                  <button className="px-3 py-1 text-gray-600 hover:bg-gray-100">-</button>
+                  <span className="px-3 py-1 text-sm font-medium">75</span>
+                  <button className="px-3 py-1 text-gray-600 hover:bg-gray-100">+</button>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <button
-                  className={`p-2 rounded-xl transition-all duration-200 hover:scale-105 ${
-                    isFavorite
-                      ? "text-red-500 bg-red-50 hover:bg-red-100"
-                      : "text-gray-400 hover:text-red-500 hover:bg-red-50"
-                  }`}
-                  title={
-                    isFavorite ? "Remove from wishlist" : "Add to wishlist"
-                  }
-                  onClick={handleToggleWishlist}
+
+              {/* Specifications Grid - Single Horizontal Row */}
+              <div 
+                className="flex gap-3 mb-2 flex-1 justify-between" 
+                style={{ 
+                  height: '128px',
+                  maxHeight: '128px',
+                  minHeight: '128px'
+                }}
+              >
+                <div 
+                  className="rounded-lg p-2 text-center flex-1 flex flex-col justify-center"
+                  style={{
+                    height: '100%',
+                    background: '#FAFDFF',
+                    border: '1px solid #E3F4FF',
+                    borderRadius: '8px'
+                  }}
                 >
-                  <FontAwesomeIcon icon={faClock} className="text-sm" />
-                </button>
+                  <div className="text-xs text-gray-600 mb-1">SKU / Model ID</div>
+                  <div className="text-sm font-medium text-gray-900">{product?.sku || 'IP15PM-A256-BLK'}</div>
+                </div>
+                <div 
+                  className="rounded-lg p-2 text-center flex-1 flex flex-col justify-center"
+                  style={{
+                    height: '100%',
+                    background: '#FAFDFF',
+                    border: '1px solid #E3F4FF',
+                    borderRadius: '8px'
+                  }}
+                >
+                  <div className="text-xs text-gray-600 mb-1">Specs</div>
+                  <div className="text-sm font-medium text-gray-900">256GB • E-SIM • A2321 Series</div>
+                </div>
+                <div 
+                  className="rounded-lg p-2 text-center flex-1 flex flex-col justify-center"
+                  style={{
+                    height: '100%',
+                    background: '#FAFDFF',
+                    border: '1px solid #E3F4FF',
+                    borderRadius: '8px'
+                  }}
+                >
+                  <div className="text-xs text-gray-600 mb-1">Warehouse</div>
+                  <div className="text-sm font-medium text-gray-900 flex items-center justify-center">
+                    <span className="w-4 h-3 bg-red-500 rounded-sm mr-1"></span>
+                    Hong Kong
+                  </div>
+                </div>
+                <div 
+                  className="rounded-lg p-2 text-center flex-1 flex flex-col justify-center"
+                  style={{
+                    height: '100%',
+                    background: '#FAFDFF',
+                    border: '1px solid #E3F4FF',
+                    borderRadius: '8px'
+                  }}
+                >
+                  <div className="text-xs text-gray-600 mb-1">MOQ / Stock</div>
+                  <div className="text-sm font-medium text-gray-900">{moq} Units</div>
+                </div>
+                <div 
+                  className="rounded-lg p-2 text-center flex-1 flex flex-col justify-center"
+                  style={{
+                    height: '100%',
+                    background: '#FAFDFF',
+                    border: '1px solid #E3F4FF',
+                    borderRadius: '8px'
+                  }}
+                >
+                  <div className="text-xs text-gray-600 mb-1">Delivery EST</div>
+                  <div className="text-sm font-medium text-gray-900">3-5 Days</div>
+                </div>
+                <div 
+                  className="rounded-lg p-2 text-center flex-1 flex flex-col justify-center"
+                  style={{
+                    height: '100%',
+                    background: '#FAFDFF',
+                    border: '1px solid #E3F4FF',
+                    borderRadius: '8px'
+                  }}
+                >
+                  <div className="text-xs text-gray-600 mb-1">Partial Purchase</div>
+                  <div className="text-sm font-medium text-gray-900">Allowed or Not Allowed</div>
+                </div>
+              </div>
+
+              {/* Action Buttons - Bottom */}
+              <div className="flex gap-4" style={{ marginTop: '24px' }}>
                 {isExpired ? (
                   <button
-                    disabled
-                    className="bg-gray-300 text-gray-500 p-2 rounded-xl cursor-not-allowed"
-                    title="Expired"
+                    className="flex-1 bg-gray-300 text-gray-500 py-3 px-4 rounded-lg text-sm font-semibold cursor-not-allowed flex items-center justify-center"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <FontAwesomeIcon
-                      icon={faCalendarXmark}
-                      className="text-sm"
-                    />
+                    <FontAwesomeIcon icon={faCalendarXmark} className="mr-2" />
+                    Expired
                   </button>
                 ) : isOutOfStock ? (
                   canNotify ? (
                     notify ? (
                       <button
-                        className="border border-red-300 text-red-700 bg-red-50 p-2 rounded-xl hover:bg-red-100 transition-all duration-200"
+                        className="flex-1 border border-red-300 text-red-700 bg-white py-3 px-4 rounded-lg text-sm font-semibold hover:bg-red-50 cursor-pointer transition-all duration-200 flex items-center justify-center"
                         onClick={(ev) => handleNotifyToggle(ev, false)}
-                        title="Turn off notifications"
+                        title="Turn off notifications for notifying me when back in stock"
                       >
-                        <FontAwesomeIcon
-                          icon={faBellSlash}
-                          className="text-sm"
-                        />
+                        <FontAwesomeIcon icon={faBellSlash} className="mr-2" />
+                        Turn Off
                       </button>
                     ) : (
                       <button
-                        className="border border-blue-300 text-blue-700 bg-blue-50 p-2 rounded-xl hover:bg-blue-100 transition-all duration-200"
+                        className="flex-1 border border-[#0071E3] text-[#0071E3] bg-white py-3 px-4 rounded-lg text-sm font-semibold hover:bg-blue-50 cursor-pointer transition-all duration-200 flex items-center justify-center"
                         onClick={(ev) => handleNotifyToggle(ev, true)}
                         title="Notify me when back in stock"
                       >
-                        <FontAwesomeIcon icon={faBell} className="text-sm" />
+                        <FontAwesomeIcon icon={faBell} className="mr-2" />
+                        Notify Me
                       </button>
                     )
                   ) : (
                     <button
-                      disabled
-                      className="bg-gray-300 text-gray-500 p-2 rounded-xl cursor-not-allowed"
+                      className="flex-1 bg-gray-300 text-gray-500 py-3 px-4 rounded-lg text-sm font-semibold cursor-not-allowed flex items-center justify-center"
                       title="Out of stock"
                     >
-                      <FontAwesomeIcon icon={faXmark} className="text-sm" />
+                      <FontAwesomeIcon icon={faXmark} className="mr-2" />
+                      Out of Stock
                     </button>
                   )
                 ) : (
                   <>
                     <button
-                      className="p-2 rounded-xl bg-[#0071e3] text-white hover:bg-[#005bb5] transition-all duration-200 shadow-sm hover:shadow-md hover:scale-105"
-                      title="Add to cart"
+                      className="flex-1 border border-gray-200 text-gray-700 bg-white py-3 px-4 rounded-lg text-sm font-semibold hover:bg-gray-50 hover:border-gray-300 cursor-pointer transition-all duration-200 flex items-center justify-center"
                       onClick={handleAddToCart}
                     >
-                      <FontAwesomeIcon
-                        icon={faCartShopping}
-                        className="text-sm"
-                      />
+                      <FontAwesomeIcon icon={faCartShopping} className="mr-2" />
+                      Add to Cart
                     </button>
                     <button
-                      className="p-2 rounded-xl border border-gray-200 text-gray-600 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 transition-all duration-200 hover:scale-105"
-                      title="Make an offer"
+                      className="flex-1 text-white py-3 px-4 rounded-lg text-sm font-semibold cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md bg-[#0071E3] hover:bg-[#005bb5] flex items-center justify-center"
                       onClick={(e) => {
                         e.stopPropagation();
                         const isLoggedIn =
@@ -567,7 +596,7 @@ const ProductCard = ({
                         onOpenBiddingForm(product);
                       }}
                     >
-                      <FontAwesomeIcon icon={faHandshake} className="text-sm" />
+                      Make Offer
                     </button>
                   </>
                 )}
