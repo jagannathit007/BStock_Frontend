@@ -12,6 +12,7 @@ import {
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
+import HeroSlider from "./HeroSlider";
 
 const MainContent = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -332,6 +333,8 @@ const MainContent = () => {
 
   return (
     <div>
+      {/* hero section */}
+      <HeroSlider/>
       <div className="flex flex-col lg:flex-row gap-6">
         {showMobileFilters && (
           <div className="fixed inset-0 z-40 lg:hidden">
@@ -393,7 +396,7 @@ const MainContent = () => {
 
           {viewMode === "grid" ? (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-4 sm:gap-6">
                 {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
                   <div className="col-span-3 flex justify-center py-12">
                     <Loader size="lg" />

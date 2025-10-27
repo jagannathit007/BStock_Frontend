@@ -136,3 +136,17 @@
   border-radius: 15px;
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
+
+
+.readyStockBanner {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background-image: url("./assets/ready-stock-hero.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  height: 320px;
+  border-radius: 12px;
+}

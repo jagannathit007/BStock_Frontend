@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Routes,
   Route,
   Navigate,
   HashRouter,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
 import Header from "./components/Header";
 import NavTabs from "./components/NavTabs";
@@ -59,9 +60,33 @@ const ProtectedRoute = ({ children, isLoggedIn }) => {
 // Component to handle header visibility based on current route
 const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Hide header only on login and signup pages
   const hideHeader = location.pathname === '/login' || location.pathname === '/signup';
+
+  useEffect(() => {
+    if (isLoggedIn && (location.pathname === "/login" || location.pathname === "/signup")) {
+      const params = new URLSearchParams(location.search);
+      const returnTo = params.get("returnTo");
+
+      let redirectPath = "/home";
+      if (returnTo) {
+        try {
+          const decoded = decodeURIComponent(returnTo);
+          // Sanitize: must start with / and no ..
+          if (decoded.startsWith("/") && !decoded.includes("..")) {
+            redirectPath = decoded;
+          }
+        } catch (e) {
+          console.error("Invalid returnTo parameter", e);
+        }
+      }
+
+      // Clean redirect (replace to avoid history clutter)
+      navigate(redirectPath, { replace: true });
+    }
+  }, [isLoggedIn, location, navigate]);
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -99,9 +124,7 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
             <Route
               path="/product/:id"
               element={
-                <ProtectedRoute isLoggedIn={isLoggedIn}>
                   <Layout><ProductDetails /></Layout>
-                </ProtectedRoute>
               }
             />
             <Route
