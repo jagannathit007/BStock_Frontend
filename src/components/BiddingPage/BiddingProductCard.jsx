@@ -62,72 +62,187 @@ const BiddingProductCard = ({
     setImageError(true);
   };
 
-
   if (viewMode === "list") {
     return (
-      <>
-        <tr className="hover:bg-gray-50 cursor-pointer" onClick={handleProductClick}>
-          <td className="px-3 py-3 sm:px-6 sm:py-4">
-            <div className="flex items-center min-w-[200px]">
-              <img
-                className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg mr-4"
-                src={
-                  imageError
-                    ? iphoneImage
-                    : imageUrl
-                }
-                alt={name}
-                onError={handleImageError}
-              />
-              <div className="min-w-0">
-                <div className="text-base sm:text-lg font-bold text-gray-900 truncate">
-                  {name}
-                </div>
-                <div className="text-xs sm:text-sm text-gray-600 mt-1">
-                  <div>{description}</div>
-                  {grade && <div>Grade: {grade}</div>}
-                  
-                  {/* {color && <div>Color: {color}</div>} */}
-                  {/* {lotInfo && <div>{lotInfo}</div>} */}
-                </div>
+      <tr
+        className="hover:bg-gray-50 cursor-pointer"
+        onClick={handleProductClick}
+      >
+        {/* MODEL */}
+        <td className="px-4 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">
+          {product.modelFull}
+        </td>
+
+        {/* MEMORY */}
+        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+          {product.memory}
+        </td>
+
+        {/* GRADE */}
+        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+          {product.grade}
+        </td>
+
+        {/* UNITS */}
+        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+          {product.units || "-"}
+        </td>
+
+        {/* CARRIER */}
+        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+          {product.carrier || "-"}
+        </td>
+
+        {/* CLOSES IN */}
+        <td className="px-4 py-3 text-sm font-medium text-red-600 whitespace-nowrap">
+          {product.expiryTime ? (
+            <Countdown
+              date={product.expiryTime}
+              renderer={({ days, hours, minutes, seconds, completed }) => {
+                if (completed) return <span>Ended</span>;
+                return (
+                  <span>
+                    {days > 0 ? `${days}d ` : ""}
+                    {String(hours).padStart(2, "0")}:
+                    {String(minutes).padStart(2, "0")}:
+                    {String(seconds).padStart(2, "0")}
+                  </span>
+                );
+              }}
+            />
+          ) : (
+            product.timer
+          )}
+        </td>
+
+        {/* BIDS */}
+        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+          {product.bids}
+        </td>
+
+        {/* UNIT PRICE (hidden on <md) */}
+        <td className="hidden md:table-cell px-4 py-3 text-sm text-gray-900 whitespace-nowrap">
+          {renderBidValue ? renderBidValue(product.unitPrice) : product.unitPrice}
+        </td>
+
+        {/* CUR. BID */}
+        <td className="px-4 py-3 text-sm font-medium text-[#0071E0] whitespace-nowrap">
+          {renderBidValue ? renderBidValue(product.currentBid) : product.currentBid}
+        </td>
+
+        {/* MY MAX BID (hidden on <lg) */}
+        <td className="hidden lg:table-cell px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+          <div className="relative">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">$</span>
+            <input
+              type="text"
+              className="w-24 pl-5 pr-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#0071E0]"
+              value={product.myMaxBid}
+              onChange={(e) => {
+                const val = e.target.value.replace(/[^0-9.,]/g, "");
+                setMyMaxBidInput(val);
+              }}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </td>
+
+        {/* BID NOW */}
+        <td className="px-4 py-3 text-center whitespace-nowrap">
+          <button
+            className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer ${product.isLeading
+              ? "bg-green-600 text-white hover:bg-green-700"
+              : "bg-[#0071E0] text-white hover:bg-blue-600"
+              }`}
+            onClick={handleBidButtonClick}
+          >
+            <FontAwesomeIcon
+              icon={product.isLeading ? faCrown : faGavel}
+              className="mr-1"
+            />
+            {product.isLeading ? "Leading" : "Bid"}
+          </button>
+        </td>
+      </tr>
+    );
+  }
+
+  // ----- inside BiddingProductCard.jsx -----
+  if (viewMode === "grid") {
+    return (
+      <div
+        className="rounded-[18px] shadow-[2px_4px_12px_#00000014] hover:shadow-[6px_8px_24px_#00000026] transition-shadow duration-200 h-full flex flex-col cursor-pointer bg-white"
+        onClick={handleProductClick}
+      >
+        {/* ---------- IMAGE ---------- */}
+        <div className="relative flex-1">
+          <img
+            className="w-full h-40 sm:h-48 object-cover rounded-t-[18px]"
+            src={imageError ? iphoneImage : imageUrl}
+            alt={product.modelFull}
+            onError={handleImageError}
+          />
+          {/* Live badge */}
+          <div className="absolute top-2 left-2">
+            <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              Live
+            </span>
+          </div>
+        </div>
+
+        {/* ---------- CARD BODY ---------- */}
+        <div className="p-3 sm:p-4 flex-1 flex flex-col">
+
+          {/* ---- Title line (same as screenshot) ---- */}
+          <h3 className="font-bold text-gray-900 text-sm sm:text-base mb-1 line-clamp-2">
+            {[
+              product.modelFull,
+              product.memory,
+              product.carrier,
+              product.units ? `${product.units} Units` : "",
+              product.grade,
+              product.cityState,
+            ]
+              .filter(Boolean)
+              .join(", ")}
+          </h3>
+
+          {/* ---- Current bid ---- */}
+          <div className="mt-2">
+            <div className="text-xs text-gray-600">Current bid:</div>
+            <div className="text-lg sm:text-xl font-bold text-[#0071E0]">
+              {renderBidValue ? renderBidValue(product.currentBid) : product.currentBid}
+            </div>
+          </div>
+
+          {/* ---- Avg. cost per unit ---- */}
+          {product.unitPrice && (
+            <div className="mt-1">
+              <div className="text-xs text-gray-600">Avg. Cost Per Unit:</div>
+              <div className="text-sm font-medium text-gray-900">
+                {renderBidValue ? renderBidValue(product.unitPrice) : product.unitPrice}
               </div>
             </div>
-          </td>
-          {/* <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
-            <div className="flex items-center mt-1 sm:mt-2">
-              <span className="inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                Live Auction
-              </span>
-            </div>
-          </td> */}
-          <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
-            <div className="text-base sm:text-lg font-bold text-[#0071E0]">
-              {renderBidValue ? renderBidValue(currentBid) : currentBid}
-            </div>
-            <div className="text-xs text-gray-500">
-              Starting: {renderBidValue ? renderBidValue(startingPrice) : startingPrice}
-            </div>
-          </td>
-          <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
-            <div className="text-sm font-medium text-gray-900">
-              {renderBidValue ? renderBidValue(`${bids} bids`) : `${bids} bids`}
-            </div>
-            <div className="text-xs text-gray-500">
-              {lastInfo}
-            </div>
-          </td>
-          <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
-            <div className="text-sm font-bold text-red-600">
+          )}
+
+          {/* ---- Bids ---- */}
+          <div className="mt-1">
+            <div className="text-xs text-gray-600">Bids:</div>
+            <div className="text-sm font-medium text-gray-900">{product.bids}</div>
+          </div>
+
+          {/* ---- Timer ---- */}
+          <div className="mt-2 flex justify-center">
+            <div className="inline-flex items-center bg-red-50 text-red-700 px-3 py-1.5 rounded-full text-xs font-medium w-full justify-center">
+              <FontAwesomeIcon icon={faClock} className="w-3 h-3 mr-2" />
               {product.expiryTime ? (
                 <Countdown
                   date={product.expiryTime}
                   renderer={({ days, hours, minutes, seconds, completed }) => {
-                    if (completed) {
-                      return <span>Auction Ended</span>;
-                    }
+                    if (completed) return <span className="font-semibold">Ended</span>;
                     return (
                       <span className="font-semibold">
-                        {days > 0 ? `${days} days ` : ""}
+                        {days > 0 ? `${days}d ` : ""}
                         {String(hours).padStart(2, "0")}:
                         {String(minutes).padStart(2, "0")}:
                         {String(seconds).padStart(2, "0")}
@@ -136,43 +251,38 @@ const BiddingProductCard = ({
                   }}
                 />
               ) : (
-                timer
+                <span className="font-semibold">{product.timer}</span>
               )}
             </div>
-            <div className="text-xs text-gray-500">Time Remaining</div>
-          </td>
-          <td className="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
-            <div className="flex space-x-1 sm:space-x-2">
-              <button
-                className={`flex items-center px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium cursor-pointer ${
-                  isLeading
-                    ? "bg-green-600 text-white hover:bg-green-700"
-                    : "bg-[#0071E0] text-white hover:bg-blue-600"
+          </div>
+
+          {/* ---- Action buttons ---- */}
+          <div className="mt-3 flex space-x-2">
+            <button
+              className={`flex-1 px-3 py-2 rounded-3xl text-xs sm:text-sm font-medium cursor-pointer flex items-center justify-center ${product.isLeading
+                ? "bg-green-600 text-white hover:bg-green-700"
+                : "bg-[#0071E0] text-white hover:bg-blue-600"
                 }`}
-                onClick={handleBidButtonClick}
-              >
-                <FontAwesomeIcon
-                  icon={isLeading ? faCrown : faGavel}
-                  className="mr-1"
-                />
-                {isLeading ? "Leading" : "Bid"}
-              </button>
-              <button
-                className="border border-gray-300 rounded-lg hover:bg-gray-50 h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center cursor-pointer"
-                onClick={handleEyeButtonClick}
-              >
-                <FontAwesomeIcon
-                  icon={faEye}
-                  className="text-gray-600 text-sm"
-                />
-              </button>
-            </div>
-          </td>
-        </tr>
-      </>
+              onClick={handleBidButtonClick}
+            >
+              <FontAwesomeIcon
+                icon={product.isLeading ? faCrown : faGavel}
+                className="mr-1 sm:mr-2"
+              />
+              {product.isLeading ? "Leading" : "Place Bid"}
+            </button>
+
+            <button
+              className="border border-gray-300 rounded-lg hover:bg-gray-50 h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center cursor-pointer"
+              onClick={handleEyeButtonClick}
+            >
+              <FontAwesomeIcon icon={faEye} className="text-gray-600 text-sm" />
+            </button>
+          </div>
+        </div>
+      </div>
     );
   }
-
   return (
     <div
       className={`rounded-[18px] shadow-[2px_4px_12px_#00000014] hover:shadow-[6px_8px_24px_#00000026] transition-shadow duration-200 h-full flex flex-col cursor-pointer bg-white`}
@@ -218,7 +328,7 @@ const BiddingProductCard = ({
         <p className="text-xs sm:text-sm text-gray-600 mb-2 truncate">
           {description}
           {grade && " • "}
-            {color && <span>{grade}</span>}
+          {color && <span>{grade}</span>}
         </p>
 
         {/* Grade and Color Info */}
@@ -238,15 +348,15 @@ const BiddingProductCard = ({
               {renderBidValue ? renderBidValue(`${bids} bids`) : `${bids} bids`}
             </span>
           </div>
-          
+
           <div className="text-lg sm:text-xl font-bold text-[#0071E0]">
             {renderBidValue ? renderBidValue(currentBid) : currentBid}
           </div>
-          
+
           <div className="text-xs text-gray-500">
             Starting: {renderBidValue ? renderBidValue(startingPrice) : startingPrice}
           </div>
-          
+
           {/* {lastReference && (
             <div className="text-xs text-gray-500">
               Reference: {lastReference}
@@ -292,11 +402,10 @@ const BiddingProductCard = ({
         {/* Action Buttons */}
         <div className="flex space-x-2">
           <button
-            className={`flex-1 px-3 py-2 rounded-3xl text-xs sm:text-sm font-medium cursor-pointer flex items-center justify-center ${
-              isLeading
-                ? "bg-green-600 text-white hover:bg-green-700"
-                : "bg-[#0071E0] text-white hover:bg-blue-600"
-            }`}
+            className={`flex-1 px-3 py-2 rounded-3xl text-xs sm:text-sm font-medium cursor-pointer flex items-center justify-center ${isLeading
+              ? "bg-green-600 text-white hover:bg-green-700"
+              : "bg-[#0071E0] text-white hover:bg-blue-600"
+              }`}
             onClick={handleBidButtonClick}
           >
             <FontAwesomeIcon
@@ -305,7 +414,7 @@ const BiddingProductCard = ({
             />
             {isLeading ? "Leading Bid" : "Place Bid"}
           </button>
-          
+
           <button
             className="border border-gray-300 rounded-lg hover:bg-gray-50 h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center cursor-pointer"
             onClick={handleEyeButtonClick}

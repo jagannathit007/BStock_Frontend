@@ -6,7 +6,7 @@ import {
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
 import BiddingProductDetails from "./BiddingProductDetails";
-import SideFilter from "../SideFilter";
+import BiddingSideFilter from "./BiddingSideFilter";
 import BusinessDetailsPopup from "./BusinessDetailsPopup";
 import BiddingProductCard from "./BiddingProductCard";
 import ViewControls from "./ViewControls";
@@ -18,7 +18,8 @@ const BiddingContent = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(4);
+  const [itemsPerPage] = useState(10);
+  const [myMaxBidInput, setMyMaxBidInput] = useState("");
   const [showBusinessPopup, setShowBusinessPopup] = useState(false);
 
   // Real product data state management
@@ -33,57 +34,57 @@ const BiddingContent = () => {
   const [sortOption, setSortOption] = useState('');
 
   const mapApiProductToUi = (p) => {
-    const id = p._id || p.id || "";
-    const name = p.skuFamilyId?.name || p.specification || "Product";
-    const imageUrl = p.skuFamilyId?.images?.[0] || "https://via.placeholder.com/400x300.png?text=Product";
-    const storage = p.storage || "";
-    const color = p.color || "";
-    const ram = p.ram || "";
-    const description = [storage, color, ram].filter(Boolean).join(" • ") || p.specification || "";
-    const priceNumber = Number(p.price) || 0;
-    
-    // Convert to bidding format - using price as currentBid, adding bidding properties
-    const startingPrice = (priceNumber * 0.8).toFixed(2); // 80% of current price as starting price
-    const currentBid = priceNumber.toFixed(2);
-    const lastReference = (priceNumber * 1.1).toFixed(2); // 110% of current price as reference
-    const randomBids = Math.floor(Math.random() * 30) + 10; // Random bids count between 10-40
-    
-    // Use proper timer from expiryTime if available, otherwise generate random timer
-    const expiryTime = p.expiryTime;
-    let timer = `${Math.floor(Math.random() * 24)}h ${Math.floor(Math.random() * 60)}m ${Math.floor(Math.random() * 60)}s`;
-    
-    if (expiryTime) {
+    const id = p._id || "";
+    const qty = Number(p.qty) || 0;
+    const currentPriceNum = Number(p.currentPrice) || Number(p.startingBidPrice) || 0;
+    const unitPrice = p.price;
+
+    const modelFull = `${p.oem || ""} ${p.model || ""}`.trim();
+    const memory = p.capacity || "";
+    const carrier = p.carrier || "";
+    const units = qty;
+    const grade = p.grade || "";
+    const cityState = p.city && p.state ? `${p.city}, ${p.state}` : "";
+
+    // ----- TIMER -----
+    let timer = "";
+    if (p.endDatetime) {
       const now = new Date();
-      const expiry = new Date(expiryTime);
-      const timeDiff = expiry.getTime() - now.getTime();
-      
-      if (timeDiff > 0) {
-        const hours = Math.floor(timeDiff / (1000 * 60 * 60));
-        const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
-        timer = `${hours}h ${minutes}m ${seconds}s`;
+      const end = new Date(p.endDatetime);
+      const diff = end - now;
+      if (diff > 0) {
+        const h = Math.floor(diff / 36e5);
+        const m = Math.floor((diff % 36e5) / 6e4);
+        const s = Math.floor((diff % 6e4) / 1e3);
+        timer = `${h}h ${m}m ${s}s`;
+      } else {
+        timer = "Ended";
       }
     }
-    
-    // const isLeading = Math.random() > 0.7; // 30% chance of leading bid
-    
+
+    // ----- NEW: Use maxBidPrice as My Max Bid -----
+    const myMaxBidRaw = p.maxBidPrice;
+    const myMaxBid = myMaxBidRaw && !myMaxBidRaw.includes("-")
+      ? `$${Number(myMaxBidRaw).toFixed(2)}`
+      : "-";
+
     return {
       id,
-      name,
-      modelName: name,
-      description,
-      color,
-      grade: p.grade || "Grade A",
-      currentBid: `$${currentBid}`,
-      startingPrice: `$${startingPrice}`,
-      lastReference: `$${lastReference}`,
-      // lastInfo: `Last sale: ${Math.floor(Math.random() * 7)} days ago`,
-      // lotInfo: `Lot #${String(id).slice(-5)}`,
-      bids: randomBids,
+      modelFull,
+      memory,
+      carrier,
+      units,
+      grade,
+      cityState,
+      currentBid: `$${currentPriceNum.toFixed(2)}`,
+      unitPrice: `$${unitPrice}`,
+      bids: p.bids?.length ?? 0,
       timer,
-      imageUrl,
-      // isLeading,
-      expiryTime, // Include expiry time for timer updates
+      expiryTime: p.endDatetime,
+      imageUrl: "https://via.placeholder.com/400x300.png?text=Product",
+
+      // This is the field the card will read
+      myMaxBid,                     // <-- NOW USING maxBidPrice
     };
   };
 
@@ -114,13 +115,11 @@ const BiddingContent = () => {
       try {
         const baseUrl = import.meta.env.VITE_BASE_URL || "http://localhost:3200";
         const response = await axios.post(
-          `${baseUrl}/api/customer/get-product-list`,
+          `${baseUrl}/api/customer/get-bid-products`,
           {
             page: currentPage,
             limit: itemsPerPage,
             search: searchQuery,
-            sort: getSortObject(sortOption),
-            isFlashDeal:true,
             ...filters,
           },
           {
@@ -132,14 +131,18 @@ const BiddingContent = () => {
           }
         );
 
+        console.log("API Response:", response.data);
+
         if (response.data.status === 200) {
           const payload = response.data.data;
           const docs = payload?.docs || [];
           const totalDocs = Number(payload?.totalDocs) || 0;
+          console.log(`Fetched ${docs.length} bid products out of ${totalDocs} total`);
           const mapped = docs.map(mapApiProductToUi);
           setFetchedProducts(mapped);
           setTotalProductsCount(totalDocs);
         } else {
+          console.error("API returned non-200 status:", response.data);
           setErrorMessage("Failed to fetch products.");
           setFetchedProducts([]);
           setTotalProductsCount(0);
@@ -149,6 +152,8 @@ const BiddingContent = () => {
           setFetchedProducts([]);
           setTotalProductsCount(0);
           console.error("Fetch products error:", e);
+          console.error("Error details:", e.response?.data || e.message);
+          setErrorMessage(e.response?.data?.message || "Failed to fetch products.");
         }
       } finally {
         setIsLoading(false);
@@ -159,7 +164,7 @@ const BiddingContent = () => {
     return () => controller.abort();
   }, [currentPage, itemsPerPage, filters, refreshTick, searchQuery, sortOption]);
 
-  // Timer update effect - update timers every second for products with expiryTime
+
   useEffect(() => {
     const interval = setInterval(() => {
       setFetchedProducts((prevProducts) =>
@@ -168,13 +173,13 @@ const BiddingContent = () => {
             const now = new Date();
             const expiry = new Date(product.expiryTime);
             const timeDiff = expiry.getTime() - now.getTime();
-            
+
             if (timeDiff > 0) {
               const hours = Math.floor(timeDiff / (1000 * 60 * 60));
               const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
               const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
               const timer = `${hours}h ${minutes}m ${seconds}s`;
-              
+
               return { ...product, timer };
             } else {
               // Timer expired
@@ -255,7 +260,7 @@ const BiddingContent = () => {
     } else if (typeof value === 'number') {
       return convertPrice(value);
     }
-    
+
     return value;
   };
 
@@ -296,8 +301,8 @@ const BiddingContent = () => {
               onClick={() => setShowMobileFilters(false)}
             ></div>
             <div className="absolute left-0 top-0 h-full w-72 bg-white z-50 overflow-y-auto">
-              <SideFilter 
-                onClose={() => setShowMobileFilters(false)} 
+              <BiddingSideFilter
+                onClose={() => setShowMobileFilters(false)}
                 onFilterChange={handleFilterChange}
               />
               <button
@@ -312,7 +317,7 @@ const BiddingContent = () => {
 
         {/* Sidebar Filters - Desktop */}
         <aside className="lg:w-72 hidden lg:block">
-          <SideFilter onFilterChange={handleFilterChange} />
+          <BiddingSideFilter onFilterChange={handleFilterChange} />
         </aside>
 
         {/* Main Content */}
@@ -348,7 +353,7 @@ const BiddingContent = () => {
                   </div>
                 )}
                 {currentProducts.map((product, index) => (
-                  <div key={product.id} className="animate-slideUp" style={{animationDelay: `${index * 0.1}s`}}>
+                  <div key={product.id} className="animate-slideUp" style={{ animationDelay: `${index * 0.1}s` }}>
                     <BiddingProductCard
                       product={product}
                       viewMode={viewMode}
@@ -364,11 +369,10 @@ const BiddingContent = () => {
                 <button
                   onClick={() => paginate(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${
-                    currentPage === 1
+                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${currentPage === 1
                       ? "text-gray-400 cursor-not-allowed"
                       : "text-gray-700 hover:bg-gray-100"
-                  }`}
+                    }`}
                 >
                   <FontAwesomeIcon icon={faChevronLeft} className="mr-2" />
                   Previous
@@ -380,11 +384,10 @@ const BiddingContent = () => {
                       <button
                         key={number}
                         onClick={() => paginate(number)}
-                        className={`px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${
-                          currentPage === number
+                        className={`px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${currentPage === number
                             ? "bg-[#0071E0] text-white"
                             : "text-gray-700 hover:bg-gray-100"
-                        }`}
+                          }`}
                       >
                         {number}
                       </button>
@@ -399,11 +402,10 @@ const BiddingContent = () => {
                 <button
                   onClick={() => paginate(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${
-                    currentPage === totalPages
+                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${currentPage === totalPages
                       ? "text-gray-400 cursor-not-allowed"
                       : "text-gray-700 hover:bg-gray-100"
-                  }`}
+                    }`}
                 >
                   Next
                   <FontAwesomeIcon icon={faChevronRight} className="ml-2" />
@@ -418,27 +420,42 @@ const BiddingContent = () => {
                 </div>
               )}
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-max">
+                <div className="w-full overflow-x-auto">
+                  <table className="w-full min-w-[1100px]">
                     <thead className="bg-gray-50 border-b border-gray-200">
                       <tr>
-                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider">
-                          Product
-                        </th>
-                        {/* <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          Status
-                        </th> */}
                         <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          Current Bid
+                          MODEL
                         </th>
                         <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          Bids
+                          MEMORY
                         </th>
                         <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          Time Left
+                          GRADE
+                        </th>
+                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                          UNITS
+                        </th>
+                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                          CARRIER
+                        </th>
+                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                          CLOSES IN
+                        </th>
+                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                          BIDS
+                        </th>
+                        <th className="hidden md:table-cell px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                          UNIT PRICE
+                        </th>
+                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                          CUR. BID
+                        </th>
+                        <th className="hidden lg:table-cell px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                          MY MAX BID
                         </th>
                         <th className="px-4 py-3 sm:px-6 sm:py-4 text-center text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          Actions
+                          BID NOW
                         </th>
                       </tr>
                     </thead>
@@ -446,7 +463,7 @@ const BiddingContent = () => {
                       {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
                         <tr>
                           <td
-                            colSpan={6}
+                            colSpan={11}
                             className="px-4 py-12 text-center"
                           >
                             <div className="flex justify-center">
@@ -458,7 +475,7 @@ const BiddingContent = () => {
                       {!isLoading && hasInitiallyLoaded && currentProducts.length === 0 && (
                         <tr>
                           <td
-                            colSpan={6}
+                            colSpan={11}
                             className="px-4 py-6 text-center text-2xl text-gray-500 font-bold"
                           >
                             No products found.
@@ -466,14 +483,14 @@ const BiddingContent = () => {
                         </tr>
                       )}
                       {currentProducts.map((product, index) => (
-                        <tr key={product.id} className="animate-slideUp" style={{animationDelay: `${index * 0.1}s`}}>
-                          <BiddingProductCard
-                            product={product}
-                            viewMode={viewMode}
-                            onOpenBiddingForm={handleOpenBiddingForm}
-                            renderBidValue={renderBidValue}
-                          />
-                        </tr>
+                        <BiddingProductCard
+                          key={product.id}
+                          product={product}
+                          viewMode={viewMode}
+                          onOpenBiddingForm={handleOpenBiddingForm}
+                          renderBidValue={renderBidValue}
+                          index={index}
+                        />
                       ))}
                     </tbody>
                   </table>
@@ -485,11 +502,10 @@ const BiddingContent = () => {
                 <button
                   onClick={() => paginate(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${
-                    currentPage === 1
+                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${currentPage === 1
                       ? "text-gray-400 cursor-not-allowed"
                       : "text-gray-700 hover:bg-gray-100"
-                  }`}
+                    }`}
                 >
                   <FontAwesomeIcon icon={faChevronLeft} className="mr-2" />
                   Previous
@@ -501,11 +517,10 @@ const BiddingContent = () => {
                       <button
                         key={number}
                         onClick={() => paginate(number)}
-                        className={`px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${
-                          currentPage === number
+                        className={`px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${currentPage === number
                             ? "bg-[#0071E0] text-white"
                             : "text-gray-700 hover:bg-gray-100"
-                        }`}
+                          }`}
                       >
                         {number}
                       </button>
@@ -520,11 +535,10 @@ const BiddingContent = () => {
                 <button
                   onClick={() => paginate(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${
-                    currentPage === totalPages
+                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${currentPage === totalPages
                       ? "text-gray-400 cursor-not-allowed"
                       : "text-gray-700 hover:bg-gray-100"
-                  }`}
+                    }`}
                 >
                   Next
                   <FontAwesomeIcon icon={faChevronRight} className="ml-2" />
