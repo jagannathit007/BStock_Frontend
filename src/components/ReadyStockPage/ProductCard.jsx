@@ -581,7 +581,7 @@ if (viewMode === "list") {
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group overflow-hidden flex flex-col w-[406.67px] h-[664px] p-4 pb-5 max-w-full box-border mx-auto ${getCardBackgroundClass()}`}
+      className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group overflow-hidden flex flex-col w-[406.67px] h-[678px] p-4 pb-5 max-w-full box-border mx-auto ${getCardBackgroundClass()}`}
       onClick={!isInModal ? handleProductClick : undefined}
     >
       {/* Image Container */}
@@ -631,10 +631,10 @@ if (viewMode === "list") {
           <button
             className={`p-2 bg-white rounded-full cursor-pointer shadow-lg hover:shadow-xl transition-all duration-200 ${
               isFavorite ? "text-[#FB2C36]" : "text-gray-400 hover:text-[#FB2C36]"
-            } w-8 h-8 flex items-center justify-center border border-gray-200`}
+            } w-[40px] h-[40px] flex items-center justify-center border border-gray-200`}
             onClick={handleToggleWishlist}
           >
-            <svg className="w-4 h-4" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <svg className="w-[24px] h-[24px]" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
             </svg>
           </button>
@@ -642,7 +642,7 @@ if (viewMode === "list") {
       </div>
 
       {/* Content Section */}
-      <div className="flex flex-col flex-1 w-full gap-5 min-h-0">
+      <div className="flex flex-col flex-1 w-full gap-3 min-h-0">
         {/* Product Title */}
         <h3 className="font-bold text-lg leading-none tracking-normal align-middle text-[#364153]">
           {name}

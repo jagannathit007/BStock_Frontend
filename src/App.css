@@ -150,3 +150,9 @@
   height: 320px;
   border-radius: 12px;
 }
+
+.product-info-glasseffects {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(4.8px);
+-webkit-backdrop-filter: blur(4.8px);
+}

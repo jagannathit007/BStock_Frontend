@@ -758,11 +758,11 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
           {/* Left Column - Images */}
           <div className="space-y-4">
             <div className="relative group max-w-lg mx-auto">
-              <div className="aspect-[4/3.5] relative rounded-lg overflow-hidden bg-gray-200 p-4">
+              <div className="aspect-[4/3.5] relative rounded-lg overflow-hidden bg-gray-100 p-4">
                 <div className="h-full w-full">
                   <div className="relative h-full">
                     <img
-                      className="w-full h-full object-contain"
+                      className="w-full h-full rounded-xl"
                       alt={`${processedProduct.name} ${selectedImageIndex + 1}`}
                       src={
                         imageError ? iphoneImage : productImages[selectedImageIndex]
@@ -784,31 +784,31 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                     {processedProduct.isExpired ? "Expired" : effectiveStockStatus}
                   </span>
                 </div>
-                {/* Product Specifications under Stock Status (polished with subtle animation) */}
+                {/* Product Specifications under Stock Status (polished with subtle animation and glass effect) */}
                 <div className="absolute top-12 left-3 z-20">
-                  <div className=" px-1 py-2">
+                  <div className="px-3 py-3 product-info-glasseffects border border-white/50 rounded-xl shadow-lg">
                     <div className="space-y-2">
                       {processedProduct.condition && (
                         <div className="flex items-center gap-1 fade-in-up slide-in-left" style={{ animationDelay: '0ms' }}>
-                          <span className="text-xs text-gray-600">Condition:</span>
+                          <span className="text-xs text-gray-700">Condition:</span>
                           <span className="text-xs font-semibold text-gray-900 capitalize">{processedProduct.condition}</span>
                         </div>
                       )}
                       {processedProduct.color && (
                         <div className="flex items-center gap-1 fade-in-up slide-in-left" style={{ animationDelay: '200ms' }}>
-                          <span className="text-xs text-gray-600">Color:</span>
+                          <span className="text-xs text-gray-700">Color:</span>
                           <span className="text-xs font-semibold text-gray-900 capitalize">{processedProduct.color}</span>
                         </div>
                       )}
                       {processedProduct.ram && (
                         <div className="flex items-center gap-1 fade-in-up slide-in-left" style={{ animationDelay: '400ms' }}>
-                          <span className="text-xs text-gray-600">RAM:</span>
+                          <span className="text-xs text-gray-700">RAM:</span>
                           <span className="text-xs font-semibold text-gray-900">{processedProduct.ram}</span>
                         </div>
                       )}
                       {processedProduct.storage && (
                         <div className="flex items-center gap-1 fade-in-up slide-in-left" style={{ animationDelay: '600ms' }}>
-                          <span className="text-xs text-gray-600">Storage:</span>
+                          <span className="text-xs text-gray-700">Storage:</span>
                           <span className="text-xs font-semibold text-gray-900">{processedProduct.storage}</span>
                         </div>
                       )}
@@ -861,7 +861,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   <button
                     key={index}
                     onClick={() => setSelectedImageIndex(index)}
-                    className={`aspect-[4/3] rounded-md overflow-hidden cursor-pointer transition-opacity duration-300 bg-gray-200 p-2 ${
+                    className={`aspect-[4/3] rounded-md overflow-hidden cursor-pointer transition-opacity duration-300 bg-gray-100 p-2 ${
                       selectedImageIndex === index ? "opacity-100" : "opacity-60"
                     }`}
                   >
