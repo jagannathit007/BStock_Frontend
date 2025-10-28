@@ -4,19 +4,61 @@ import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import { ProductService } from "../services/products/products.services"; // Adjust the import path to your ProductService
 import { convertPrice } from "../utils/currencyUtils";
 
-const SideFilter = ({ onClose, onFilterChange }) => {
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
-  const [minMoq, setMinMoq] = useState("");
-  const [maxMoq, setMaxMoq] = useState("");
-  const [minStock, setMinStock] = useState("");
-  const [maxStock, setMaxStock] = useState("");
-  const [selectedSimTypes, setSelectedSimTypes] = useState([]);
-  const [selectedStorage, setSelectedStorage] = useState([]);
-  const [selectedGrades, setSelectedGrades] = useState([]);
-  const [selectedColors, setSelectedColors] = useState([]);
-  const [selectedRams, setSelectedRams] = useState([]);
+const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
+  const [minPrice, setMinPrice] = useState(currentFilters.minPrice || "");
+  const [maxPrice, setMaxPrice] = useState(currentFilters.maxPrice || "");
+  const [minMoq, setMinMoq] = useState(currentFilters.minMoq || "");
+  const [maxMoq, setMaxMoq] = useState(currentFilters.maxMoq || "");
+  const [minStock, setMinStock] = useState(currentFilters.minStock || "");
+  const [maxStock, setMaxStock] = useState(currentFilters.maxStock || "");
+  const [selectedSimTypes, setSelectedSimTypes] = useState(currentFilters.simTypes || []);
+  const [selectedStorage, setSelectedStorage] = useState(currentFilters.storage || []);
+  const [selectedGrades, setSelectedGrades] = useState(currentFilters.grades || []);
+  const [selectedColors, setSelectedColors] = useState(currentFilters.colors || []);
+  const [selectedRams, setSelectedRams] = useState(currentFilters.rams || []);
   const [filtersData, setFiltersData] = useState(null);
+  const prevFiltersStrRef = React.useRef("");
+
+  // Sync internal state with currentFilters prop when it changes externally  
+  useEffect(() => {
+    // Create a normalized string representation of current filters
+    const currentFiltersStr = JSON.stringify({
+      minPrice: currentFilters.minPrice || "",
+      maxPrice: currentFilters.maxPrice || "",
+      minMoq: currentFilters.minMoq || "",
+      maxMoq: currentFilters.maxMoq || "",
+      minStock: currentFilters.minStock || "",
+      maxStock: currentFilters.maxStock || "",
+      simTypes: currentFilters.simTypes || [],
+      storage: currentFilters.storage || [],
+      grades: currentFilters.grades || [],
+      colors: currentFilters.colors || [],
+      rams: currentFilters.rams || [],
+    });
+    
+    // Only update if the filter values have actually changed
+    if (currentFiltersStr !== prevFiltersStrRef.current) {
+      setMinPrice(currentFilters.minPrice || "");
+      setMaxPrice(currentFilters.maxPrice || "");
+      setMinMoq(currentFilters.minMoq || "");
+      setMaxMoq(currentFilters.maxMoq || "");
+      setMinStock(currentFilters.minStock || "");
+      setMaxStock(currentFilters.maxStock || "");
+      setSelectedSimTypes(currentFilters.simTypes || []);
+      setSelectedStorage(currentFilters.storage || []);
+      setSelectedGrades(currentFilters.grades || []);
+      setSelectedColors(currentFilters.colors || []);
+      setSelectedRams(currentFilters.rams || []);
+      prevFiltersStrRef.current = currentFiltersStr;
+    }
+  }, [currentFilters]);
+
+  // Reset the ref on unmount/remount to ensure proper sync
+  useEffect(() => {
+    return () => {
+      prevFiltersStrRef.current = "";
+    };
+  }, []);
 
   useEffect(() => {
     const fetchFilters = async () => {
@@ -174,8 +216,7 @@ const SideFilter = ({ onClose, onFilterChange }) => {
   };
 
   return (
-    <div className="lg:w-72 hidden lg:block">
-      <aside className="bg-white h-fit sticky top-24">
+    <aside className="bg-white h-fit sticky top-24 w-full lg:w-72">
         <style>
           {`
             input[type="range"] {
@@ -258,12 +299,14 @@ const SideFilter = ({ onClose, onFilterChange }) => {
             }
           `}
         </style>
-        <div className="px-6 py-8 bg-[#FAFAFF] rounded-xl shadow-md">
-          <div className="flex justify-between items-center mb-8">
+        <div className="px-6 py-8 bg-[#FAFAFF] rounded-xl shadow-md lg:mx-0">
+          <div className="flex justify-between items-center mb-8 sticky top-0 bg-[#FAFAFF] pb-4 z-10">
             <h3 className="text-2xl font-semibold text-gray-900 font-apple">Filters</h3>
-            <button className="text-gray-400 hover:text-gray-600 lg:hidden transition-colors duration-200" onClick={onClose}>
-              <FontAwesomeIcon icon={faTimes} className="h-6 w-6" />
-            </button>
+            {onClose && (
+              <button className="text-gray-400 hover:text-gray-600 lg:hidden transition-colors duration-200" onClick={onClose}>
+                <FontAwesomeIcon icon={faTimes} className="h-6 w-6" />
+              </button>
+            )}
           </div>
 
         {/* Price Range */}
@@ -493,9 +536,8 @@ const SideFilter = ({ onClose, onFilterChange }) => {
         >
           Clear All Filters
         </button>
-        </div>
-      </aside>
-    </div>
+      </div>
+    </aside>
   );
 };
 

@@ -15,6 +15,7 @@ import MainContent from "./components/ReadyStockPage/MainContent";
 import "./App.css";
 import ProductDetails from "./components/ReadyStockPage/ProductDetails";
 import BiddingContent from "./components/BiddingPage/BiddingContent";
+import BidProductDetails from "./components/BiddingPage/BidProductDetails";
 import LoginForm from "./components/LoginForm";
 import SignUpForm from "./components/SignUpForm";
 import VerifyEmailPrompt from "./components/VerifyEmailPrompt";
@@ -132,6 +133,14 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
               element={
                 <ProtectedRoute isLoggedIn={isLoggedIn}>
                   <Layout><BiddingContent /></Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/bidding/product/:id"
+              element={
+                <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <Layout><BidProductDetails /></Layout>
                 </ProtectedRoute>
               }
             />

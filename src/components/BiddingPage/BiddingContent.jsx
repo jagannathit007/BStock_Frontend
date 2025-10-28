@@ -308,6 +308,7 @@ const BiddingContent = () => {
               <BiddingSideFilter
                 onClose={() => setShowMobileFilters(false)}
                 onFilterChange={handleFilterChange}
+                appliedFilters={filters}
               />
               <button
                 className="w-full bg-[#0071E0] text-white py-3 px-4 text-sm font-medium lg:hidden sticky bottom-0 cursor-pointer hover:bg-blue-800"
@@ -321,7 +322,7 @@ const BiddingContent = () => {
 
         {/* Sidebar Filters - Desktop */}
         <aside className="lg:w-72 hidden lg:block">
-          <BiddingSideFilter onFilterChange={handleFilterChange} />
+          <BiddingSideFilter onFilterChange={handleFilterChange} appliedFilters={filters} />
         </aside>
 
         {/* Main Content */}

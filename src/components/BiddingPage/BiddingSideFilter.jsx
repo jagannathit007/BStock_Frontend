@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-const BiddingSideFilter = ({ onFilterChange, onClose }) => {
+const BiddingSideFilter = ({ onFilterChange, onClose, appliedFilters }) => {
   const [loading, setLoading] = useState(true);
   const [facets, setFacets] = useState({ grades: [], models: [], capacities: [], carriers: [], priceRange: { min: 0, max: 0 } });
   const [selected, setSelected] = useState({ grades: [], models: [], capacities: [], carriers: [], minPrice: undefined, maxPrice: undefined });
@@ -26,7 +26,11 @@ const BiddingSideFilter = ({ onFilterChange, onClose }) => {
         if (res.data?.status === 200) {
           setFacets(res.data.data || {});
           const { min, max } = res.data.data?.priceRange || { min: 0, max: 0 };
-          setSelected((prev) => ({ ...prev, minPrice: min, maxPrice: max }));
+          setSelected((prev) => ({
+            ...prev,
+            minPrice: prev.minPrice ?? appliedFilters?.minPrice ?? min,
+            maxPrice: prev.maxPrice ?? appliedFilters?.maxPrice ?? max,
+          }));
         }
       } catch (e) {
         if (!axios.isCancel(e)) console.error("Fetch bid filters error", e);
@@ -37,6 +41,20 @@ const BiddingSideFilter = ({ onFilterChange, onClose }) => {
     fetchFilters();
     return () => cancel && cancel();
   }, []);
+
+  // Hydrate local state from applied filters when opening/props change
+  useEffect(() => {
+    if (!appliedFilters) return;
+    setSelected((prev) => ({
+      ...prev,
+      grades: Array.isArray(appliedFilters.grade) ? appliedFilters.grade : (appliedFilters.grades || prev.grades),
+      models: Array.isArray(appliedFilters.models) ? appliedFilters.models : prev.models,
+      capacities: Array.isArray(appliedFilters.capacities) ? appliedFilters.capacities : prev.capacities,
+      carriers: Array.isArray(appliedFilters.carriers) ? appliedFilters.carriers : prev.carriers,
+      minPrice: appliedFilters.minPrice ?? prev.minPrice,
+      maxPrice: appliedFilters.maxPrice ?? prev.maxPrice,
+    }));
+  }, [appliedFilters]);
 
   const toggle = (key, value) => {
     setSelected((prev) => {

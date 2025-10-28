@@ -172,6 +172,7 @@ const MainContent = () => {
     setCurrentPage(1);
   }, []);
 
+
   const handleRefresh = () => {
     setRefreshTick((prev) => !prev);
   };
@@ -344,24 +345,23 @@ const MainContent = () => {
               className="absolute inset-0 bg-opacity-30 backdrop-blur-[1.5px]"
               onClick={() => setShowMobileFilters(false)}
             ></div>
-            <div className="absolute left-0 top-0 h-full w-72 bg-white z-50 overflow-y-auto">
+            <div className="absolute left-0 top-0 h-full w-80 bg-white z-50 overflow-y-auto shadow-2xl">
               <SideFilter
+                key="mobile-filter"
                 onClose={() => setShowMobileFilters(false)}
                 onFilterChange={handleFilterChange}
+                currentFilters={filters}
               />
-              <button
-                className="w-full bg-[#0071E0] text-white py-3 px-4 text-sm font-medium lg:hidden"
-                onClick={() => setShowMobileFilters(false)}
-              >
-                Apply Filters
-              </button>
             </div>
           </div>
         )}
 
-        <div className="lg:w-72 hidden lg:block">
-          <SideFilter onFilterChange={handleFilterChange} />
-        </div>
+        <aside className="hidden lg:block lg:w-72">
+          <SideFilter 
+            onFilterChange={handleFilterChange} 
+            currentFilters={filters}
+          />
+        </aside>
 
         <div className="flex-1 min-w-0">
           {errorMessage && (
@@ -372,11 +372,11 @@ const MainContent = () => {
 
           <div className="lg:hidden mb-4">
             <button
-              className="w-full bg-white border border-gray-300 rounded-lg py-2 px-4 text-sm font-medium flex items-center justify-center"
+              className="w-full bg-white border border-gray-300 rounded-xl py-3 px-4 text-sm font-medium font-apple flex items-center justify-center hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-sm hover:shadow"
               onClick={() => setShowMobileFilters(true)}
             >
               <svg
-                className="w-4 h-4 mr-2"
+                className="w-5 h-5 mr-2 text-gray-600"
                 fill="currentColor"
                 viewBox="0 0 512 512"
               >

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -20,6 +21,7 @@ const BiddingProductCard = ({
   onOpenBiddingForm,
   renderBidValue,
 }) => {
+  const navigate = useNavigate();
   const [imageError, setImageError] = useState(false);
   const [myMaxBidInput, setMyMaxBidInput] = useState(() => {
     // If minNextBid exists, use it, otherwise use myMaxBid or empty
@@ -53,7 +55,11 @@ const BiddingProductCard = ({
     if (e.target.tagName === "BUTTON" || e.target.closest("button")) {
       return;
     }
-    // Navigate to product details or show bidding form
+    const pid = product?.id || product?._id;
+    if (pid) {
+      navigate(`/bidding/product/${pid}`);
+      return;
+    }
     if (onOpenBiddingForm) {
       onOpenBiddingForm(product);
     }

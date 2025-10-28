@@ -299,24 +299,20 @@ const FlashDeals = () => {
               className="absolute inset-0 bg-opacity-30 backdrop-blur-[1.5px]"
               onClick={() => setShowMobileFilters(false)}
             ></div>
-            <div className="absolute left-0 top-0 h-full w-72 bg-white z-50 overflow-y-auto">
+            <div className="absolute left-0 top-0 h-full w-80 bg-white z-50 overflow-y-auto shadow-2xl">
               <SideFilter
+                key="flash-mobile-filter"
                 onClose={() => setShowMobileFilters(false)}
                 onFilterChange={handleFilterChange}
+                currentFilters={filters}
               />
-              <button
-                className="w-full bg-[#0071E0] text-white py-3 px-4 text-sm font-medium lg:hidden"
-                onClick={() => setShowMobileFilters(false)}
-              >
-                Apply Filters
-              </button>
             </div>
           </div>
         )}
 
-        <div className="lg:w-72 hidden lg:block">
-          <SideFilter onFilterChange={handleFilterChange} />
-        </div>
+        <aside className="hidden lg:block lg:w-72">
+          <SideFilter onFilterChange={handleFilterChange} currentFilters={filters} />
+        </aside>
 
         <div className="flex-1 min-w-0">
           {errorMessage && (
