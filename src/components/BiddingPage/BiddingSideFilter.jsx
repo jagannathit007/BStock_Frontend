@@ -73,19 +73,21 @@ const BiddingSideFilter = ({ onFilterChange, onClose }) => {
   };
 
   const renderGroup = (title, key, items) => (
-    <div className="mb-6">
-      <div className="text-xs font-semibold text-gray-500 uppercase mb-2">{title}</div>
-      <div className="space-y-1 max-h-64 overflow-y-auto pr-1">
+    <div className="mb-8">
+      <h4 className="text-base font-medium text-gray-900 mb-4 font-apple">{title}</h4>
+      <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
         {items.map((i) => (
-          <label key={i.value} className="flex items-center justify-between text-sm text-gray-700 cursor-pointer">
+          <label
+            key={i.value}
+            className="flex items-center justify-between text-sm text-gray-700 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-all duration-200"
+          >
             <span className="truncate mr-2">{i.value}</span>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-3">
               <span className="text-gray-400 text-xs">{i.count}</span>
               <input
                 type="checkbox"
                 checked={selected[key]?.includes(i.value)}
                 onChange={() => toggle(key, i.value)}
-                className="h-4 w-4 text-blue-600 border-gray-300 rounded"
               />
             </div>
           </label>
@@ -95,47 +97,171 @@ const BiddingSideFilter = ({ onFilterChange, onClose }) => {
     </div>
   );
 
+  const handlePriceSliderChange = (type, value) => {
+    const numValue = parseFloat(value);
+    setSelected((prev) => {
+      const next = { ...prev, [type]: numValue };
+      onFilterChange?.({
+        grade: next.grades,
+        models: next.models,
+        capacities: next.capacities,
+        carriers: next.carriers,
+        minPrice: next.minPrice,
+        maxPrice: next.maxPrice,
+      });
+      return next;
+    });
+  };
+
   return (
-    <aside className="w-full p-4 bg-white rounded-xl border border-gray-200">
-      <div className="flex items-center justify-between mb-4">
-        <div className="text-lg font-semibold">Filters</div>
-        {onClose && (
-          <button onClick={onClose} className="text-sm text-gray-500 hover:text-gray-700 cursor-pointer">Close</button>
+    <aside className="w-full bg-white rounded-xl border border-gray-200">
+      <style>{`
+        input[type="range"] {
+          -webkit-appearance: none;
+          appearance: none;
+          height: 4px;
+          background: transparent;
+          outline: none;
+          pointer-events: none;
+          position: absolute;
+          width: 100%;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 20px;
+          height: 20px;
+          background: #0071e3;
+          border-radius: 50%;
+          cursor: pointer;
+          pointer-events: auto;
+          box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
+          border: 2px solid white;
+          transition: all 0.2s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+          transform: scale(1.1);
+          box-shadow: 0 4px 12px rgba(0, 113, 227, 0.4);
+        }
+        input[type="range"]::-moz-range-thumb {
+          width: 20px;
+          height: 20px;
+          background: #0071e3;
+          border-radius: 50%;
+          cursor: pointer;
+          pointer-events: auto;
+          box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
+          border: 2px solid white;
+          transition: all 0.2s ease;
+        }
+        input[type="range"]::-moz-range-thumb:hover {
+          transform: scale(1.1);
+          box-shadow: 0 4px 12px rgba(0, 113, 227, 0.4);
+        }
+        .range-container {
+          position: relative;
+          height: 4px;
+          background: #f5f5f7;
+          border-radius: 2px;
+        }
+        input[type="checkbox"] {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 18px;
+          height: 18px;
+          border: 1.5px solid #d1d1d6;
+          border-radius: 4px;
+          background: white;
+          cursor: pointer;
+          position: relative;
+          transition: all 0.2s ease;
+        }
+        input[type="checkbox"]:checked {
+          background: #0071e3;
+          border-color: #0071e3;
+        }
+        input[type="checkbox"]:checked::after {
+          content: '✓';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          color: white;
+          font-size: 12px;
+          font-weight: 600;
+        }
+        input[type="checkbox"]:hover {
+          border-color: #0071e3;
+          transform: scale(1.05);
+        }
+      `}</style>
+      <div className="px-6 py-8 bg-[#FAFAFF] rounded-xl shadow-md">
+        <div className="flex justify-between items-center mb-8">
+          <h3 className="text-2xl font-semibold text-gray-900 font-apple">Filters</h3>
+          {onClose && (
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 lg:hidden transition-colors duration-200">
+              Close
+            </button>
+          )}
+        </div>
+
+        {loading ? (
+          <div className="text-sm text-gray-500">Loading filters...</div>
+        ) : (
+          <>
+            {/* Price range */}
+            <div className="mb-8">
+              <h4 className="text-base font-medium text-gray-900 mb-4 font-apple">Price Range</h4>
+              <div className="range-container mb-3">
+                <input
+                  type="range"
+                  min={facets.priceRange?.min || 0}
+                  max={facets.priceRange?.max || 0}
+                  value={selected.minPrice ?? facets.priceRange?.min ?? 0}
+                  onChange={(e) => handlePriceSliderChange('minPrice', e.target.value)}
+                  className="min-range"
+                  style={{ zIndex: 2 }}
+                  aria-label="Minimum price"
+                />
+                <input
+                  type="range"
+                  min={facets.priceRange?.min || 0}
+                  max={facets.priceRange?.max || 0}
+                  value={selected.maxPrice ?? facets.priceRange?.max ?? 0}
+                  onChange={(e) => handlePriceSliderChange('maxPrice', e.target.value)}
+                  className="max-range"
+                  style={{ zIndex: 1 }}
+                  aria-label="Maximum price"
+                />
+                <div
+                  className="absolute h-1 bg-primary rounded-full"
+                  style={{
+                    left: `${
+                      ((selected.minPrice ?? facets.priceRange?.min ?? 0) / (facets.priceRange?.max || 1)) * 100
+                    }%`,
+                    width: `${
+                      (((selected.maxPrice ?? facets.priceRange?.max ?? 0) -
+                        (selected.minPrice ?? facets.priceRange?.min ?? 0)) /
+                        (facets.priceRange?.max || 1)) *
+                      100
+                    }%`,
+                    zIndex: 0,
+                  }}
+                ></div>
+              </div>
+              <div className="flex justify-between text-sm text-gray-500 font-apple">
+                <span>${selected.minPrice ?? facets.priceRange?.min ?? 0}</span>
+                <span>${selected.maxPrice ?? facets.priceRange?.max ?? 0}</span>
+              </div>
+            </div>
+
+            {renderGroup('Condition', 'grades', facets.grades)}
+            {renderGroup('Model', 'models', facets.models)}
+            {renderGroup('Memory', 'capacities', facets.capacities)}
+            {renderGroup('Carrier', 'carriers', facets.carriers)}
+          </>
         )}
       </div>
-
-      {loading ? (
-        <div className="text-sm text-gray-500">Loading filters...</div>
-      ) : (
-        <>
-          {/* Price range */}
-          <div className="mb-6">
-            <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Price Range</div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="number"
-                className="w-24 px-2 py-1 text-sm border border-gray-300 rounded"
-                value={selected.minPrice ?? ''}
-                onChange={(e) => onPriceChange('minPrice', e.target.value)}
-                placeholder="Min"
-              />
-              <span className="text-gray-400">-</span>
-              <input
-                type="number"
-                className="w-24 px-2 py-1 text-sm border border-gray-300 rounded"
-                value={selected.maxPrice ?? ''}
-                onChange={(e) => onPriceChange('maxPrice', e.target.value)}
-                placeholder="Max"
-              />
-            </div>
-          </div>
-
-          {renderGroup('Condition', 'grades', facets.grades)}
-          {renderGroup('Model', 'models', facets.models)}
-          {renderGroup('Memory', 'capacities', facets.capacities)}
-          {renderGroup('Carrier', 'carriers', facets.carriers)}
-        </>
-      )}
     </aside>
   );
 };

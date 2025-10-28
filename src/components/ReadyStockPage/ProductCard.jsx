@@ -34,6 +34,8 @@ const ProductCard = ({
   const [isFavorite, setIsFavorite] = useState(product.isFavorite || false);
   const [notify, setNotify] = useState(Boolean(product?.notify));
   const [imageError, setImageError] = useState(false);
+  const [selectedColor, setSelectedColor] = useState(product?.color || "");
+  const [selectedPrice, setSelectedPrice] = useState(product?.price || 0);
 
   // === LIST VIEW: QUANTITY STATE ===
   const [quantity, setQuantity] = useState(1);
@@ -45,6 +47,11 @@ const ProductCard = ({
   useEffect(() => {
     setIsFavorite(product.isFavorite || false);
   }, [product.isFavorite]);
+
+  useEffect(() => {
+    setSelectedColor(product?.color || "");
+    setSelectedPrice(product?.price || 0);
+  }, [product]);
 
   useEffect(() => {
     const handleWishlistUpdate = (event) => {
@@ -359,6 +366,55 @@ const ProductCard = ({
 
   const handleImageError = () => setImageError(true);
 
+  // Get available colors from product and related products
+  const getAvailableColors = () => {
+    const colors = new Set();
+    
+    // Add current product color
+    if (product?.color) {
+      colors.add(product.color);
+    }
+    
+    // Add colors from related products
+    if (product?.relatedProducts && Array.isArray(product.relatedProducts)) {
+      product.relatedProducts.forEach((rp) => {
+        if (rp.color) {
+          colors.add(rp.color);
+        }
+      });
+    }
+    
+    return Array.from(colors).map(color => ({
+      name: color,
+      value: color.toLowerCase(),
+    }));
+  };
+
+  const availableColors = getAvailableColors();
+
+  // Handle color selection and update price
+  const handleColorSelect = (e, colorValue) => {
+    e.stopPropagation();
+    setSelectedColor(colorValue);
+    
+    // Find the variant with the selected color from related products
+    if (product?.relatedProducts && Array.isArray(product.relatedProducts)) {
+      const matchingVariant = product.relatedProducts.find(
+        (rp) => rp.color && rp.color.toLowerCase() === colorValue.toLowerCase()
+      );
+      
+      if (matchingVariant && matchingVariant._id) {
+        // Navigate to the matching variant
+        navigate(`/product/${matchingVariant._id}`);
+      } else {
+        // No matching variant found, use current product price
+        setSelectedPrice(parseFloat(product?.price || 0));
+      }
+    } else {
+      setSelectedPrice(parseFloat(product?.price || 0));
+    }
+  };
+
 if (viewMode === "list") {
     return (
       <>
@@ -436,19 +492,53 @@ if (viewMode === "list") {
               <div className="flex items-center space-x-4 mb-4">
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-500">Start from</span>
-                  <span className="text-lg font-semibold text-green-600">{convertPrice(price)}</span>
+                  <span className="text-lg font-semibold text-green-600">{convertPrice(selectedPrice || price)}</span>
                 </div>
                 <div className="w-px h-4 bg-gray-300" />
                 <div className="flex space-x-2">
-                  <div className="w-4 h-4 bg-gray-600 rounded-full border border-gray-300" />
-                  <div className="w-4 h-4 bg-white rounded-full border border-gray-300" />
-                  <div className="w-4 h-4 bg-orange-500 rounded-full border border-gray-300 flex items-center justify-center">
-                    <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="w-4 h-4 bg-black rounded-full border border-gray-300" />
-                  <div className="w-4 h-4 bg-blue-500 rounded-full border border-gray-300" />
+                  {availableColors.length > 0 ? (
+                    availableColors.map((color) => (
+                      <button
+                        key={color.value}
+                        onClick={(e) => handleColorSelect(e, color.value)}
+                        className={`w-4 h-4 rounded-full border-2 transition-all ${
+                          selectedColor.toLowerCase() === color.value
+                            ? 'border-blue-500 scale-110'
+                            : 'border-gray-300 hover:border-gray-400'
+                        } ${
+                          color.value === 'black' ? 'bg-black' :
+                          color.value === 'white' ? 'bg-white' :
+                          color.value === 'gold' ? 'bg-gradient-to-br from-yellow-300 to-yellow-600' :
+                          color.value === 'silver' ? 'bg-gray-400' :
+                          color.value === 'blue' ? 'bg-blue-500' :
+                          color.value === 'red' ? 'bg-red-500' :
+                          color.value === 'green' ? 'bg-green-500' :
+                          color.value === 'purple' ? 'bg-purple-500' :
+                          'bg-gray-600'
+                        } flex items-center justify-center`}
+                        title={color.name}
+                      >
+                        {selectedColor.toLowerCase() === color.value && (
+                          <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </button>
+                    ))
+                  ) : (
+                    // Fallback to static colors if no variants available
+                    <>
+                      <div className="w-4 h-4 bg-gray-600 rounded-full border border-gray-300" />
+                      <div className="w-4 h-4 bg-white rounded-full border border-gray-300" />
+                      <div className="w-4 h-4 bg-orange-500 rounded-full border border-gray-300 flex items-center justify-center">
+                        <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="w-4 h-4 bg-black rounded-full border border-gray-300" />
+                      <div className="w-4 h-4 bg-blue-500 rounded-full border border-gray-300" />
+                    </>
+                  )}
                 </div>
                 <div className="w-px h-4 bg-gray-300" />
 
@@ -581,7 +671,7 @@ if (viewMode === "list") {
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group overflow-hidden flex flex-col w-[406.67px] h-[678px] p-4 pb-5 max-w-full box-border mx-auto ${getCardBackgroundClass()}`}
+      className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group overflow-hidden flex flex-col w-[406.67px] h-[100%] p-4 pb-5 max-w-full box-border mx-auto ${getCardBackgroundClass()}`}
       onClick={!isInModal ? handleProductClick : undefined}
     >
       {/* Image Container */}
@@ -653,7 +743,7 @@ if (viewMode === "list") {
           <div className="flex items-center">
             <span className="text-sm text-gray-500 mr-1">From</span>
             <span className="text-lg font-semibold text-gray-900">
-              {convertPrice(price)}
+              {convertPrice(selectedPrice || price)}
             </span>
           </div>
           <div className="flex items-center justify-center w-8 h-8 rounded-full p-2.5 bg-white shadow-lg backdrop-blur-sm opacity-100">
@@ -665,25 +755,59 @@ if (viewMode === "list") {
 
         {/* Color Options and SKU */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2">
             {/* Color Swatches */}
             <div className="flex space-x-1">
-              <div className="w-4 h-4 bg-gray-600 rounded-full border border-gray-300"></div>
-              <div className="w-4 h-4 bg-white rounded-full border border-gray-300"></div>
-              <div className="w-4 h-4 bg-orange-500 rounded-full border border-gray-300 flex items-center justify-center">
-                <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="w-4 h-4 bg-black rounded-full border border-gray-300"></div>
-              <div className="w-4 h-4 bg-blue-500 rounded-full border border-gray-300"></div>
+              {availableColors.length > 0 ? (
+                availableColors.map((color) => (
+                  <button
+                    key={color.value}
+                    onClick={(e) => handleColorSelect(e, color.value)}
+                    className={`w-4 h-4 rounded-full border-2 transition-all ${
+                      selectedColor.toLowerCase() === color.value
+                        ? 'border-blue-500 scale-110'
+                        : 'border-gray-300 hover:border-gray-400'
+                    } ${
+                      color.value === 'black' ? 'bg-black' :
+                      color.value === 'white' ? 'bg-white' :
+                      color.value === 'gold' ? 'bg-gradient-to-br from-yellow-300 to-yellow-600' :
+                      color.value === 'silver' ? 'bg-gray-400' :
+                      color.value === 'blue' ? 'bg-blue-500' :
+                      color.value === 'red' ? 'bg-red-500' :
+                      color.value === 'green' ? 'bg-green-500' :
+                      color.value === 'purple' ? 'bg-purple-500' :
+                      'bg-gray-600'
+                    } flex items-center justify-center`}
+                    title={color.name}
+                  >
+                    {selectedColor.toLowerCase() === color.value && (
+                      <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </button>
+                ))
+              ) : (
+                // Fallback to static colors if no variants available
+                <>
+                  <div className="w-4 h-4 bg-gray-600 rounded-full border border-gray-300"></div>
+                  <div className="w-4 h-4 bg-white rounded-full border border-gray-300"></div>
+                  <div className="w-4 h-4 bg-orange-500 rounded-full border border-gray-300 flex items-center justify-center">
+                    <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="w-4 h-4 bg-black rounded-full border border-gray-300"></div>
+                  <div className="w-4 h-4 bg-blue-500 rounded-full border border-gray-300"></div>
+                </>
+              )}
             </div>
           </div>
           <span className="text-xs text-gray-500">SKU: {product?.sku || 'IP17PM512SLV'}</span>
         </div>
 
         {/* Specifications Grid */}
-        <div className="grid grid-cols-2 gap-2.5 w-full">
+        <div className="grid grid-cols-2 gap-2.5 w-full mb-3">
           <div className="w-full h-[54px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
             <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">
               MOQ

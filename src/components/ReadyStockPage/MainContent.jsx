@@ -78,6 +78,8 @@ const MainContent = () => {
       expiryTime,
       notify: Boolean(p.notify),
       purchaseType: p.purchaseType || null,
+      // Include related products data for variant selection
+      relatedProducts: p.relatedProducts || [],
     };
   };
 
@@ -396,7 +398,7 @@ const MainContent = () => {
 
           {viewMode === "grid" ? (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-4 sm:gap-4 md:gap-6">
                 {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
                   <div className="col-span-3 flex justify-center py-12">
                     <Loader size="lg" />
