@@ -65,6 +65,21 @@ const BiddingProductCard = ({
     setImageError(true);
   };
 
+  // Check if auction has ended
+  const isAuctionEnded = () => {
+    // First check if API explicitly says it's ended
+    if (product.status === 'ended' || product.status === 'closed' || product.status === 'expired') {
+      return true;
+    }
+    
+    if (!product.expiryTime) return false;
+    const now = new Date();
+    const endDate = new Date(product.expiryTime);
+    return now >= endDate;
+  };
+
+  const auctionEnded = isAuctionEnded();
+
   if (viewMode === "list") {
     return (
       <tr
@@ -115,8 +130,10 @@ const BiddingProductCard = ({
                 );
               }}
             />
+          ) : product.status === 'pending' ? (
+            <span className="text-gray-500">Pending</span>
           ) : (
-            product.timer
+            product.timer || "-"
           )}
         </td>
 
@@ -141,13 +158,14 @@ const BiddingProductCard = ({
             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">$</span>
             <input
               type="text"
-              className="w-24 pl-5 pr-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#0071E0]"
+              className="w-24 pl-5 pr-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#0071E0] disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder="0.00"
               defaultValue={
                 typeof product.myMaxBid === "string"
                   ? product.myMaxBid.replace(/[^0-9.,]/g, "") || ""
                   : product.myMaxBid ?? ""
               }
+              disabled={auctionEnded}
               onClick={(e) => e.stopPropagation()}
               onChange={(e) => {
                 const val = e.target.value.replace(/[^0-9.,]/g, "");
@@ -160,17 +178,20 @@ const BiddingProductCard = ({
         {/* BID NOW */}
         <td className="px-4 py-3 text-center whitespace-nowrap">
           <button
-            className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer ${product.isLeading
-              ? "bg-green-600 text-white hover:bg-green-700"
-              : "bg-[#0071E0] text-white hover:bg-blue-600"
+            className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium ${auctionEnded
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : product.isLeading
+              ? "bg-green-600 text-white hover:bg-green-700 cursor-pointer"
+              : "bg-[#0071E0] text-white hover:bg-blue-600 cursor-pointer"
               }`}
-            onClick={handleBidButtonClick}
+            onClick={auctionEnded ? undefined : handleBidButtonClick}
+            disabled={auctionEnded}
           >
             <FontAwesomeIcon
-              icon={product.isLeading ? faCrown : faGavel}
+              icon={auctionEnded ? faClock : (product.isLeading ? faCrown : faGavel)}
               className="mr-1"
             />
-            {product.isLeading ? "Leading" : "Bid"}
+            {auctionEnded ? "Ended" : (product.isLeading ? "Leading" : "Bid")}
           </button>
         </td>
       </tr>
@@ -254,10 +275,9 @@ const BiddingProductCard = ({
                   <Countdown
                     date={product.expiryTime}
                     renderer={({ days, hours, minutes, seconds, completed }) => {
-                      if (completed) return <span>Ended</span>;
+                      if (completed) return <span className="text-xs">Ended</span>;
                       return (
-                        <span>
-                          {days > 0 ? `${days}d ` : ""}
+                        <span className="text-sm">
                           {String(hours).padStart(2, "0")}:
                           {String(minutes).padStart(2, "0")}:
                           {String(seconds).padStart(2, "0")}
@@ -265,8 +285,10 @@ const BiddingProductCard = ({
                       );
                     }}
                   />
+                ) : product.status === 'pending' ? (
+                  <span className="text-gray-500">Pending</span>
                 ) : (
-                  product.timer
+                  product.timer || "-"
                 )}
               </div>
             </div>
@@ -295,13 +317,14 @@ const BiddingProductCard = ({
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
               <input
                 type="text"
-                className="w-full pl-6 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071E0]"
+                className="w-full pl-6 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071E0] disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder="Enter max bid"
                 defaultValue={
                   typeof product.myMaxBid === "string"
                     ? product.myMaxBid.replace(/[^0-9.,]/g, "") || ""
                     : product.myMaxBid ?? ""
                 }
+                disabled={auctionEnded}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => {
                   const val = e.target.value.replace(/[^0-9.,]/g, "");
@@ -314,24 +337,32 @@ const BiddingProductCard = ({
           {/* ---- Action buttons ---- */}
           <div className="flex mt-auto w-full h-[46px] gap-4">
             <button
-              className="flex-1 border border-gray-200 text-gray-700 bg-white py-2 px-3 rounded-lg text-xs font-semibold hover:bg-gray-50 hover:border-gray-300 cursor-pointer transition-all duration-200 flex items-center justify-center"
+              className={`flex-1 border ${
+                auctionEnded
+                  ? "border-gray-300 text-gray-400 bg-gray-100 cursor-not-allowed"
+                  : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 cursor-pointer"
+              } py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center justify-center`}
+              disabled={auctionEnded}
             >
               <FontAwesomeIcon icon={faShoppingCart} className="mr-1" />
               Add to Cart
             </button>
             <button
-              className={`flex-1 text-white py-2 px-3 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md ${
-                product.isLeading
-                  ? "bg-green-600 hover:bg-green-700"
-                  : "bg-[#0071E3] hover:bg-[#005bb5]"
+              className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 shadow-sm ${
+                auctionEnded
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : product.isLeading
+                  ? "hover:shadow-md bg-green-600 hover:bg-green-700 text-white cursor-pointer"
+                  : "hover:shadow-md bg-[#0071E3] hover:bg-[#005bb5] text-white cursor-pointer"
               }`}
-              onClick={handleBidButtonClick}
+              onClick={auctionEnded ? undefined : handleBidButtonClick}
+              disabled={auctionEnded}
             >
               <FontAwesomeIcon
-                icon={product.isLeading ? faCrown : faGavel}
+                icon={auctionEnded ? faClock : (product.isLeading ? faCrown : faGavel)}
                 className="mr-1"
               />
-              {product.isLeading ? "Leading" : "Make Offer"}
+              {auctionEnded ? "Auction Ended" : (product.isLeading ? "Leading" : "Make Offer")}
             </button>
           </div>
         </div>

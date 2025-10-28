@@ -81,6 +81,7 @@ const BiddingContent = () => {
       bids: p.bids?.length ?? 0,
       timer,
       expiryTime: p.endDatetime,
+      status: p.status || 'active', // Add status from API
       imageUrl: "https://via.placeholder.com/400x300.png?text=Product",
 
       // This is the field the card will read
