@@ -29,7 +29,7 @@ const BiddingContent = () => {
   const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [filters, setFilters] = useState({});
-  const [refreshTick] = useState(false);
+  const [refreshTick, setRefreshTick] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('');
 
@@ -249,9 +249,9 @@ const BiddingContent = () => {
   };
 
 
-  // const handleRefresh = () => {
-  //   setRefreshTick((prev) => !prev);
-  // };
+  const handleRefresh = () => {
+    setRefreshTick((prev) => !prev);
+  };
 
   const renderBidValue = (value) => {
     // Check if the value is a price (contains $ or is a number)
@@ -364,6 +364,7 @@ const BiddingContent = () => {
                       viewMode={viewMode}
                       onOpenBiddingForm={handleOpenBiddingForm}
                       renderBidValue={renderBidValue}
+                      onBidSuccess={handleRefresh}
                     />
                   </div>
                 ))}
@@ -485,6 +486,7 @@ const BiddingContent = () => {
                           viewMode={viewMode}
                           onOpenBiddingForm={handleOpenBiddingForm}
                           renderBidValue={renderBidValue}
+                        onBidSuccess={handleRefresh}
                           index={index}
                         />
                       ))}
