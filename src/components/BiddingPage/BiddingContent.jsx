@@ -83,6 +83,9 @@ const BiddingContent = () => {
       expiryTime: p.endDatetime,
       status: p.status || 'active', // Add status from API
       imageUrl: "https://via.placeholder.com/400x300.png?text=Product",
+      highestBidder: p.highestBidder,
+      minNextBid: p.minNextBid,
+      currentPrice: p.currentPrice,
 
       // This is the field the card will read
       myMaxBid,                     // <-- NOW USING maxBidPrice
@@ -444,7 +447,7 @@ const BiddingContent = () => {
                           CUR. BID
                         </th>
                         <th className="hidden lg:table-cell px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          MY MAX BID
+                          NEXT MIN BID
                         </th>
                         <th className="px-4 py-3 sm:px-6 sm:py-4 text-center text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                           BID NOW

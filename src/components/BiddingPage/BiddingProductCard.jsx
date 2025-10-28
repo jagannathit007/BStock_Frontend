@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faGavel,
@@ -20,6 +21,16 @@ const BiddingProductCard = ({
   renderBidValue,
 }) => {
   const [imageError, setImageError] = useState(false);
+  const [myMaxBidInput, setMyMaxBidInput] = useState(() => {
+    // If minNextBid exists, use it, otherwise use myMaxBid or empty
+    if (product?.minNextBid) {
+      return product.minNextBid.toString();
+    }
+    const initial = typeof product?.myMaxBid === "string"
+      ? product.myMaxBid.replace(/[^0-9.,]/g, "")
+      : product?.myMaxBid || "";
+    return initial?.toString() || "";
+  });
 
   // Extract bidding-specific properties
   const {
@@ -50,8 +61,44 @@ const BiddingProductCard = ({
 
   const handleBidButtonClick = async (e) => {
     e.stopPropagation();
-    if (onOpenBiddingForm) {
-      await onOpenBiddingForm(product);
+    if (auctionEnded) return;
+
+    try {
+      const amountNum = Number(String(myMaxBidInput).replace(/[,]/g, ""));
+      if (!amountNum || isNaN(amountNum) || amountNum <= 0) {
+        return Swal.fire({ icon: "warning", title: "Enter a valid amount" });
+      }
+
+      const baseUrl = import.meta.env.VITE_BASE_URL || "http://localhost:3200";
+      const token = localStorage.getItem("token");
+      const res = await axios.post(
+        `${baseUrl}/api/customer/bid/place`,
+        { productId: product.id, amount: amountNum },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token ? `Bearer ${token}` : "",
+          },
+        }
+      );
+
+      if (res?.data?.data) {
+        Swal.fire({
+          icon: "success",
+          title: res?.data?.message,
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+        });
+      } else {
+        const msg = res?.data?.message || "Failed to place bid";
+        Swal.fire({ icon: "error", title: msg, toast: true, position: "top-end", showConfirmButton: false, timer: 3000, timerProgressBar: true });
+      }
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.message || "Failed to place bid";
+      Swal.fire({ icon: "error", title: msg });
     }
   };
 
@@ -79,6 +126,16 @@ const BiddingProductCard = ({
   };
 
   const auctionEnded = isAuctionEnded();
+  
+  // Check if current user is the highest bidder
+  const isCurrentUserHighestBidder = () => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const currentUserId = user._id || user.id;
+    const highestBidderId = product.highestBidder?._id || product.highestBidder?.id;
+    return currentUserId && highestBidderId && currentUserId === highestBidderId;
+  };
+
+  const isCurrentUserBidder = isCurrentUserHighestBidder();
 
   if (viewMode === "list") {
     return (
@@ -156,20 +213,16 @@ const BiddingProductCard = ({
         <td className="hidden lg:table-cell px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
           <div className="relative">
             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">$</span>
-            <input
+              <input
               type="text"
               className="w-24 pl-5 pr-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#0071E0] disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder="0.00"
-              defaultValue={
-                typeof product.myMaxBid === "string"
-                  ? product.myMaxBid.replace(/[^0-9.,]/g, "") || ""
-                  : product.myMaxBid ?? ""
-              }
+              value={myMaxBidInput}
               disabled={auctionEnded}
               onClick={(e) => e.stopPropagation()}
               onChange={(e) => {
                 const val = e.target.value.replace(/[^0-9.,]/g, "");
-                // Handle input change if needed
+                setMyMaxBidInput(val);
               }}
             />
           </div>
@@ -178,20 +231,20 @@ const BiddingProductCard = ({
         {/* BID NOW */}
         <td className="px-4 py-3 text-center whitespace-nowrap">
           <button
-            className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium ${auctionEnded
+            className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium ${auctionEnded || isCurrentUserBidder
               ? "bg-gray-300 text-gray-500 cursor-not-allowed"
               : product.isLeading
               ? "bg-green-600 text-white hover:bg-green-700 cursor-pointer"
               : "bg-[#0071E0] text-white hover:bg-blue-600 cursor-pointer"
               }`}
-            onClick={auctionEnded ? undefined : handleBidButtonClick}
-            disabled={auctionEnded}
+            onClick={auctionEnded || isCurrentUserBidder ? undefined : handleBidButtonClick}
+            disabled={auctionEnded || isCurrentUserBidder}
           >
             <FontAwesomeIcon
-              icon={auctionEnded ? faClock : (product.isLeading ? faCrown : faGavel)}
+              icon={auctionEnded || isCurrentUserBidder ? faClock : (product.isLeading ? faCrown : faGavel)}
               className="mr-1"
             />
-            {auctionEnded ? "Ended" : (product.isLeading ? "Leading" : "Bid")}
+            {auctionEnded ? "Ended" : isCurrentUserBidder ? "Leading" : (product.isLeading ? "Leading" : "Bid")}
           </button>
         </td>
       </tr>
@@ -319,16 +372,12 @@ const BiddingProductCard = ({
                 type="text"
                 className="w-full pl-6 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071E0] disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder="Enter max bid"
-                defaultValue={
-                  typeof product.myMaxBid === "string"
-                    ? product.myMaxBid.replace(/[^0-9.,]/g, "") || ""
-                    : product.myMaxBid ?? ""
-                }
+                value={myMaxBidInput}
                 disabled={auctionEnded}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => {
                   const val = e.target.value.replace(/[^0-9.,]/g, "");
-                  // Handle input change if needed
+                  setMyMaxBidInput(val);
                 }}
               />
             </div>
@@ -338,31 +387,31 @@ const BiddingProductCard = ({
           <div className="flex mt-auto w-full h-[46px] gap-4">
             <button
               className={`flex-1 border ${
-                auctionEnded
+                auctionEnded || isCurrentUserBidder
                   ? "border-gray-300 text-gray-400 bg-gray-100 cursor-not-allowed"
                   : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 cursor-pointer"
               } py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center justify-center`}
-              disabled={auctionEnded}
+              disabled={auctionEnded || isCurrentUserBidder}
             >
               <FontAwesomeIcon icon={faShoppingCart} className="mr-1" />
               Add to Cart
             </button>
             <button
               className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 shadow-sm ${
-                auctionEnded
+                auctionEnded || isCurrentUserBidder
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                   : product.isLeading
                   ? "hover:shadow-md bg-green-600 hover:bg-green-700 text-white cursor-pointer"
                   : "hover:shadow-md bg-[#0071E3] hover:bg-[#005bb5] text-white cursor-pointer"
               }`}
-              onClick={auctionEnded ? undefined : handleBidButtonClick}
-              disabled={auctionEnded}
+              onClick={auctionEnded || isCurrentUserBidder ? undefined : handleBidButtonClick}
+              disabled={auctionEnded || isCurrentUserBidder}
             >
               <FontAwesomeIcon
-                icon={auctionEnded ? faClock : (product.isLeading ? faCrown : faGavel)}
+                icon={auctionEnded || isCurrentUserBidder ? faClock : (product.isLeading ? faCrown : faGavel)}
                 className="mr-1"
               />
-              {auctionEnded ? "Auction Ended" : (product.isLeading ? "Leading" : "Make Offer")}
+              {auctionEnded ? "Auction Ended" : isCurrentUserBidder ? "Leading" : (product.isLeading ? "Leading" : "Make Offer")}
             </button>
           </div>
         </div>
