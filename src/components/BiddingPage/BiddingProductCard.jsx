@@ -5,6 +5,9 @@ import {
   faCrown,
   faEye,
   faClock,
+  faBookmark,
+  faShoppingCart,
+  faCircleInfo,
 } from "@fortawesome/free-solid-svg-icons";
 import iphoneImage from "../../assets/iphone.png";
 import Countdown from "react-countdown";
@@ -68,33 +71,35 @@ const BiddingProductCard = ({
         className="hover:bg-gray-50 cursor-pointer"
         onClick={handleProductClick}
       >
-        {/* MODEL */}
-        <td className="px-4 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">
-          {product.modelFull}
-        </td>
-
-        {/* MEMORY */}
-        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
-          {product.memory}
+        {/* MODEL / UNIT / MEMORY / CARRIER */}
+        <td className="px-4 py-3 text-sm font-medium text-gray-900">
+          <div className="flex flex-col">
+            <span className="font-medium">{product.modelFull}</span>
+            <div className="flex items-center text-xs text-gray-500 mt-1 gap-1.5">
+              <span>{product.units || "-"} UNIT{product.units !== 1 ? 'S' : ''}</span>
+              {product.memory && (
+                <>
+                  <span>•</span>
+                  <span>{product.memory}</span>
+                </>
+              )}
+              {product.carrier && (
+                <>
+                  <span>•</span>
+                  <span>{product.carrier}</span>
+                </>
+              )}
+            </div>
+          </div>
         </td>
 
         {/* GRADE */}
-        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap text-center">
           {product.grade}
         </td>
 
-        {/* UNITS */}
-        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
-          {product.units || "-"}
-        </td>
-
-        {/* CARRIER */}
-        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
-          {product.carrier || "-"}
-        </td>
-
         {/* CLOSES IN */}
-        <td className="px-4 py-3 text-sm font-medium text-red-600 whitespace-nowrap">
+        <td className="px-4 py-3 text-sm font-medium text-red-600 whitespace-nowrap text-center">
           {product.expiryTime ? (
             <Countdown
               date={product.expiryTime}
@@ -116,17 +121,17 @@ const BiddingProductCard = ({
         </td>
 
         {/* BIDS */}
-        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap text-center">
           {product.bids}
         </td>
 
         {/* UNIT PRICE (hidden on <md) */}
-        <td className="hidden md:table-cell px-4 py-3 text-sm text-gray-900 whitespace-nowrap">
+        <td className="hidden md:table-cell px-4 py-3 text-sm text-gray-900 whitespace-nowrap text-center">
           {renderBidValue ? renderBidValue(product.unitPrice) : product.unitPrice}
         </td>
 
         {/* CUR. BID */}
-        <td className="px-4 py-3 text-sm font-medium text-[#0071E0] whitespace-nowrap">
+        <td className="px-4 py-3 text-sm font-medium text-[#0071E0] whitespace-nowrap text-center">
           {renderBidValue ? renderBidValue(product.currentBid) : product.currentBid}
         </td>
 
@@ -137,12 +142,17 @@ const BiddingProductCard = ({
             <input
               type="text"
               className="w-24 pl-5 pr-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#0071E0]"
-              value={product.myMaxBid}
+              placeholder="0.00"
+              defaultValue={
+                typeof product.myMaxBid === "string"
+                  ? product.myMaxBid.replace(/[^0-9.,]/g, "") || ""
+                  : product.myMaxBid ?? ""
+              }
+              onClick={(e) => e.stopPropagation()}
               onChange={(e) => {
                 const val = e.target.value.replace(/[^0-9.,]/g, "");
-                setMyMaxBidInput(val);
+                // Handle input change if needed
               }}
-              onClick={(e) => e.stopPropagation()}
             />
           </div>
         </td>
@@ -171,112 +181,157 @@ const BiddingProductCard = ({
   if (viewMode === "grid") {
     return (
       <div
-        className="rounded-[18px] shadow-[2px_4px_12px_#00000014] hover:shadow-[6px_8px_24px_#00000026] transition-shadow duration-200 h-full flex flex-col cursor-pointer bg-white"
+        className="rounded-lg shadow-md hover:shadow-xl transition-shadow duration-200 h-full flex flex-col bg-white overflow-hidden"
         onClick={handleProductClick}
       >
         {/* ---------- IMAGE ---------- */}
-        <div className="relative flex-1">
+        <div className="relative bg-gray-100 h-48 sm:h-56">
           <img
-            className="w-full h-40 sm:h-48 object-cover rounded-t-[18px]"
+            className="w-full h-full object-contain"
             src={imageError ? iphoneImage : imageUrl}
             alt={product.modelFull}
             onError={handleImageError}
           />
-          {/* Live badge */}
-          <div className="absolute top-2 left-2">
-            <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-              Live
+          {/* Badges */}
+          <div className="absolute top-3 left-3">
+            <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-green-600 text-white">
+              <span className="w-1.5 h-1.5 bg-white rounded-full mr-1.5"></span>
+              In Stock
             </span>
           </div>
+          <button
+            className="absolute top-3 right-3 w-8 h-8 rounded-md bg-white flex items-center justify-center hover:bg-gray-100 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              // Handle bookmark
+            }}
+          >
+            <FontAwesomeIcon icon={faBookmark} className="text-gray-600 text-sm" />
+          </button>
         </div>
 
         {/* ---------- CARD BODY ---------- */}
-        <div className="p-3 sm:p-4 flex-1 flex flex-col">
+        <div className="p-4 flex-1 flex flex-col">
 
-          {/* ---- Title line (same as screenshot) ---- */}
-          <h3 className="font-bold text-gray-900 text-sm sm:text-base mb-1 line-clamp-2">
-            {[
-              product.modelFull,
-              product.memory,
-              product.carrier,
-              product.units ? `${product.units} Units` : "",
-              product.grade,
-              product.cityState,
-            ]
-              .filter(Boolean)
-              .join(", ")}
+          {/* ---- Product Name ---- */}
+          <h3 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-2">
+            {product.modelFull}
           </h3>
 
-          {/* ---- Current bid ---- */}
-          <div className="mt-2">
-            <div className="text-xs text-gray-600">Current bid:</div>
-            <div className="text-lg sm:text-xl font-bold text-[#0071E0]">
-              {renderBidValue ? renderBidValue(product.currentBid) : product.currentBid}
+          {/* ---- Price and Grade ---- */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center">
+              <span className="text-sm text-gray-600 mr-1">From</span>
+              <span className="text-xl font-bold text-gray-900">
+                {renderBidValue ? renderBidValue(product.currentBid) : product.currentBid}
+              </span>
+              <button className="ml-2 text-gray-400 hover:text-gray-600">
+                <FontAwesomeIcon icon={faCircleInfo} className="text-sm" />
+              </button>
+            </div>
+            <div className="bg-gray-50 border border-gray-200 rounded px-2 py-1">
+              <span className="text-xs text-gray-600">Grade: </span>
+              <span className="text-sm font-medium text-gray-900">{product.grade}</span>
             </div>
           </div>
 
-          {/* ---- Avg. cost per unit ---- */}
-          {product.unitPrice && (
-            <div className="mt-1">
-              <div className="text-xs text-gray-600">Avg. Cost Per Unit:</div>
-              <div className="text-sm font-medium text-gray-900">
+          {/* ---- Specifications Grid ---- */}
+          <div className="grid grid-cols-2 gap-2.5 w-full mb-3">
+            <div className="w-full h-[54px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
+              <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">
+                Units
+              </div>
+              <div className="text-sm text-gray-500 font-medium leading-5 tracking-normal text-center align-middle mt-0.5">
+                {product.units || "-"}
+              </div>
+            </div>
+            <div className="w-full h-[54px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
+              <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">
+                Closes In
+              </div>
+              <div className="text-sm text-red-600 font-medium leading-5 tracking-normal text-center align-middle mt-0.5">
+                {product.expiryTime ? (
+                  <Countdown
+                    date={product.expiryTime}
+                    renderer={({ days, hours, minutes, seconds, completed }) => {
+                      if (completed) return <span>Ended</span>;
+                      return (
+                        <span>
+                          {days > 0 ? `${days}d ` : ""}
+                          {String(hours).padStart(2, "0")}:
+                          {String(minutes).padStart(2, "0")}:
+                          {String(seconds).padStart(2, "0")}
+                        </span>
+                      );
+                    }}
+                  />
+                ) : (
+                  product.timer
+                )}
+              </div>
+            </div>
+            <div className="w-full h-[54px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
+              <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">
+                Bids
+              </div>
+              <div className="text-sm text-gray-500 font-medium leading-5 tracking-normal text-center align-middle mt-0.5">
+                {product.bids}
+              </div>
+            </div>
+            <div className="w-full h-[54px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
+              <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">
+                Unit Price
+              </div>
+              <div className="text-sm text-gray-500 font-medium leading-5 tracking-normal text-center align-middle mt-0.5">
                 {renderBidValue ? renderBidValue(product.unitPrice) : product.unitPrice}
               </div>
             </div>
-          )}
-
-          {/* ---- Bids ---- */}
-          <div className="mt-1">
-            <div className="text-xs text-gray-600">Bids:</div>
-            <div className="text-sm font-medium text-gray-900">{product.bids}</div>
           </div>
 
-          {/* ---- Timer ---- */}
-          <div className="mt-2 flex justify-center">
-            <div className="inline-flex items-center bg-red-50 text-red-700 px-3 py-1.5 rounded-full text-xs font-medium w-full justify-center">
-              <FontAwesomeIcon icon={faClock} className="w-3 h-3 mr-2" />
-              {product.expiryTime ? (
-                <Countdown
-                  date={product.expiryTime}
-                  renderer={({ days, hours, minutes, seconds, completed }) => {
-                    if (completed) return <span className="font-semibold">Ended</span>;
-                    return (
-                      <span className="font-semibold">
-                        {days > 0 ? `${days}d ` : ""}
-                        {String(hours).padStart(2, "0")}:
-                        {String(minutes).padStart(2, "0")}:
-                        {String(seconds).padStart(2, "0")}
-                      </span>
-                    );
-                  }}
-                />
-              ) : (
-                <span className="font-semibold">{product.timer}</span>
-              )}
+          {/* ---- My Max Bid Input ---- */}
+          <div className="mb-3">
+            <label className="text-xs text-gray-500 mb-1 block">My Max Bid</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
+              <input
+                type="text"
+                className="w-full pl-6 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071E0]"
+                placeholder="Enter max bid"
+                defaultValue={
+                  typeof product.myMaxBid === "string"
+                    ? product.myMaxBid.replace(/[^0-9.,]/g, "") || ""
+                    : product.myMaxBid ?? ""
+                }
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^0-9.,]/g, "");
+                  // Handle input change if needed
+                }}
+              />
             </div>
           </div>
 
           {/* ---- Action buttons ---- */}
-          <div className="mt-3 flex space-x-2">
+          <div className="flex mt-auto w-full h-[46px] gap-4">
             <button
-              className={`flex-1 px-3 py-2 rounded-3xl text-xs sm:text-sm font-medium cursor-pointer flex items-center justify-center ${product.isLeading
-                ? "bg-green-600 text-white hover:bg-green-700"
-                : "bg-[#0071E0] text-white hover:bg-blue-600"
-                }`}
+              className="flex-1 border border-gray-200 text-gray-700 bg-white py-2 px-3 rounded-lg text-xs font-semibold hover:bg-gray-50 hover:border-gray-300 cursor-pointer transition-all duration-200 flex items-center justify-center"
+            >
+              <FontAwesomeIcon icon={faShoppingCart} className="mr-1" />
+              Add to Cart
+            </button>
+            <button
+              className={`flex-1 text-white py-2 px-3 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md ${
+                product.isLeading
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-[#0071E3] hover:bg-[#005bb5]"
+              }`}
               onClick={handleBidButtonClick}
             >
               <FontAwesomeIcon
                 icon={product.isLeading ? faCrown : faGavel}
-                className="mr-1 sm:mr-2"
+                className="mr-1"
               />
-              {product.isLeading ? "Leading" : "Place Bid"}
-            </button>
-
-            <button
-              className="border border-gray-300 rounded-lg hover:bg-gray-50 h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center cursor-pointer"
-              onClick={handleEyeButtonClick}
-            >
-              <FontAwesomeIcon icon={faEye} className="text-gray-600 text-sm" />
+              {product.isLeading ? "Leading" : "Make Offer"}
             </button>
           </div>
         </div>
