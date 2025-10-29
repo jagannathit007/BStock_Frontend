@@ -171,6 +171,160 @@ const BiddingProductCard = ({
 
   const isCurrentUserBidder = isCurrentUserHighestBidder();
 
+  // MOBILE CARD VIEW - Matches the image style for mobile devices
+  if (viewMode === "mobile") {
+    const statusColor = auctionEnded || product.status === 'ended' || product.status === 'closed' 
+      ? "bg-red-600" 
+      : "bg-green-600";
+    const statusText = auctionEnded || product.status === 'ended' || product.status === 'closed' 
+      ? "Out of Stock" 
+      : "In Stock";
+
+    return (
+      <div
+        className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-4"
+        onClick={handleProductClick}
+      >
+        {/* Header with Status Badge and Icons */}
+        <div className="relative px-3 pt-3 pb-2">
+          {/* Product Name with In Stock Badge */}
+          <div className="mb-2 flex items-start justify-between gap-2">
+            <h3 className="font-bold text-base text-gray-900 line-clamp-2 flex-1">
+              {product.modelFull}
+            </h3>
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium ${statusColor} text-white flex-shrink-0`}>
+              <span className="w-1.5 h-1.5 bg-white rounded-full mr-1.5"></span>
+              {statusText}
+            </span>
+          </div>
+
+          {/* Price - Start from with Grade */}
+          <div className="mb-2">
+            <div className="flex items-baseline gap-2 justify-between">
+              <div className="flex items-baseline gap-2">
+                <span className="text-sm text-gray-600">Start from</span>
+                <span className="text-2xl font-bold text-green-600">
+                  {renderBidValue ? renderBidValue(product.currentBid) : product.currentBid}
+                </span>
+              </div>
+              {product.grade && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-700">
+                  Grade: {product.grade}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Product Details */}
+        <div className="px-3 pb-3">
+          <div className="grid grid-cols-2 gap-2.5 mb-2">
+            <div className="w-full h-[48px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center">
+              <div className="text-xs text-gray-900 text-center">Units</div>
+              <div className="text-sm text-gray-500 font-medium text-center mt-0.5">{product.units || "-"}</div>
+            </div>
+            <div className="w-full h-[48px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center">
+              <div className="text-xs text-gray-900 text-center">Specs</div>
+              <div className="text-sm text-gray-500 font-medium text-center mt-0.5">
+                {(product.memory || "") + (product.memory && product.carrier ? " • " : "") + (product.carrier || "-")}
+              </div>
+            </div>
+            <div className="w-full h-[48px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center">
+              <div className="text-xs text-gray-900 text-center">Bids</div>
+              <div className="text-sm text-gray-500 font-medium text-center mt-0.5">{product.bids || 0}</div>
+            </div>
+            <div className="w-full h-[48px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center">
+              <div className="text-xs text-gray-900 text-center">Closes In</div>
+              <div className="text-sm text-red-600 font-medium text-center mt-0.5">
+                {product.expiryTime ? (
+                  <Countdown
+                    date={product.expiryTime}
+                    renderer={({ days, hours, minutes, seconds, completed }) => {
+                      if (completed) return <span className="text-xs">Ended</span>;
+                      return (
+                        <span className="text-sm">
+                          {String(hours).padStart(2, "0")}:{String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
+                        </span>
+                      );
+                    }}
+                  />
+                ) : product.status === 'pending' ? (
+                  <span className="text-gray-500">Pending</span>
+                ) : (
+                  product.timer || "-"
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Next Min Bid input */}
+          <div className="mb-2">
+            <label className="text-xs text-gray-500 mb-0.5 block">Next Min Bid</label>
+            <div className="relative">
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
+              <input
+                type="text"
+                className="w-full pl-5 pr-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071E0] disabled:bg-gray-100 disabled:cursor-not-allowed"
+                placeholder={product?.minNextBid ? String(product.minNextBid) : "Enter amount"}
+                value={myMaxBidInput}
+                disabled={auctionEnded || isSubmittingBid}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^0-9.,]/g, "");
+                  setMyMaxBidInput(val);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="px-3 pb-3 flex items-center gap-2">
+          <button
+            className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
+              auctionEnded || isCurrentUserBidder || isSubmittingBid
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : product.isLeading
+                ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer"
+                : "bg-[#0071E0] hover:bg-blue-600 text-white cursor-pointer"
+            }`}
+            onClick={handleBidButtonClick}
+            disabled={auctionEnded || isCurrentUserBidder || isSubmittingBid}
+          >
+            {isSubmittingBid ? (
+              <>
+                <Spinner />
+                <span className="ml-1">Placing…</span>
+              </>
+            ) : (
+              <>
+                <FontAwesomeIcon
+                  icon={auctionEnded || isCurrentUserBidder ? faClock : (product.isLeading ? faCrown : faGavel)}
+                  className="mr-2"
+                />
+                {auctionEnded ? "Ended" : isCurrentUserBidder ? "Leading" : (product.isLeading ? "Leading" : "Bid")}
+              </>
+            )}
+          </button>
+          <button
+            className={`w-10 h-10 rounded-lg border flex items-center justify-center transition-all duration-200 ${
+              auctionEnded || isCurrentUserBidder
+                ? "border-gray-300 text-gray-400 bg-gray-100 cursor-not-allowed"
+                : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 cursor-pointer"
+            }`}
+            disabled={auctionEnded || isCurrentUserBidder}
+            onClick={(e) => {
+              e.stopPropagation();
+              // Handle add to cart
+            }}
+          >
+            <FontAwesomeIcon icon={faShoppingCart} className="text-base" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // LIST VIEW
   if (viewMode === "list") {
     return (
@@ -300,12 +454,6 @@ const BiddingProductCard = ({
             alt={product.modelFull}
             onError={handleImageError}
           />
-          <div className="absolute top-3 left-3">
-            <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-green-600 text-white">
-              <span className="w-1.5 h-1.5 bg-white rounded-full mr-1.5"></span>
-              In Stock
-            </span>
-          </div>
           <button
             className="absolute top-3 right-3 w-8 h-8 rounded-md bg-white flex items-center justify-center hover:bg-gray-100 transition-colors"
             onClick={(e) => e.stopPropagation()}
@@ -315,12 +463,18 @@ const BiddingProductCard = ({
         </div>
 
         {/* CARD BODY */}
-        <div className="p-4 flex-1 flex flex-col">
-          <h3 className="font-semibold text-lg text-gray-900 mb-2 line-clamp-2">
-            {product.modelFull}
-          </h3>
+        <div className="p-3 flex-1 flex flex-col">
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <h3 className="font-semibold text-base text-gray-900 line-clamp-2 flex-1">
+              {product.modelFull}
+            </h3>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-green-600 text-white flex-shrink-0">
+              <span className="w-1.5 h-1.5 bg-white rounded-full mr-1.5"></span>
+              In Stock
+            </span>
+          </div>
 
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-2">
             <div className="flex items-center">
               <span className="text-sm text-gray-600 mr-1">From</span>
               <span className="text-xl font-bold text-gray-900">
@@ -330,20 +484,28 @@ const BiddingProductCard = ({
                 <FontAwesomeIcon icon={faCircleInfo} className="text-sm" />
               </button>
             </div>
-            <div className="bg-gray-50 border border-gray-200 rounded px-2 py-1">
-              <span className="text-xs text-gray-600">Grade: </span>
-              <span className="text-sm font-medium text-gray-900">{product.grade}</span>
-            </div>
+            {product.grade && (
+              <div className="bg-gray-50 border border-gray-200 rounded px-2 py-0.5">
+                <span className="text-xs text-gray-600">Grade: </span>
+                <span className="text-sm font-medium text-gray-900">{product.grade}</span>
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5 w-full mb-3">
-            <div className="w-full h-[54px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
+          <div className="grid grid-cols-2 gap-2 w-full mb-2">
+            <div className="w-full h-[48px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
               <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">Units</div>
               <div className="text-sm text-gray-500 font-medium leading-5 tracking-normal text-center align-middle mt-0.5">
                 {product.units || "-"}
               </div>
             </div>
-            <div className="w-full h-[54px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
+            <div className="w-full h-[48px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
+              <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">Bids</div>
+              <div className="text-sm text-gray-500 font-medium leading-5 tracking-normal text-center align-middle mt-0.5">
+                {product.bids}
+              </div>
+            </div>
+            <div className="w-full h-[48px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
               <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">Closes In</div>
               <div className="text-sm text-red-600 font-medium leading-5 tracking-normal text-center align-middle mt-0.5">
                 {product.expiryTime ? (
@@ -367,28 +529,16 @@ const BiddingProductCard = ({
                 )}
               </div>
             </div>
-            <div className="w-full h-[54px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
-              <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">Bids</div>
-              <div className="text-sm text-gray-500 font-medium leading-5 tracking-normal text-center align-middle mt-0.5">
-                {product.bids}
-              </div>
-            </div>
-            <div className="w-full h-[54px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
-              <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">Unit Price</div>
-              <div className="text-sm text-gray-500 font-medium leading-5 tracking-normal text-center align-middle mt-0.5">
-                {renderBidValue ? renderBidValue(product.unitPrice) : product.unitPrice}
-              </div>
-            </div>
           </div>
 
           {/* MY MAX BID */}
-          <div className="mb-3">
-            <label className="text-xs text-gray-500 mb-1 block">My Max Bid</label>
+          <div className="mb-2">
+            <label className="text-xs text-gray-500 mb-0.5 block">My Max Bid</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
               <input
                 type="text"
-                className="w-full pl-6 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071E0] disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="w-full pl-5 pr-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071E0] disabled:bg-gray-100 disabled:cursor-not-allowed"
                 placeholder="Enter max bid"
                 value={myMaxBidInput}
                 disabled={auctionEnded || isSubmittingBid}
@@ -402,13 +552,13 @@ const BiddingProductCard = ({
           </div>
 
           {/* ACTION BUTTONS */}
-          <div className="flex mt-auto w-full h-[46px] gap-4">
+          <div className="flex mt-auto w-full gap-2">
             <button
               className={`flex-1 border ${
                 auctionEnded || isCurrentUserBidder
                   ? "border-gray-300 text-gray-400 bg-gray-100 cursor-not-allowed"
                   : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 cursor-pointer"
-              } py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center justify-center`}
+              } py-1.5 px-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center justify-center`}
               disabled={auctionEnded || isCurrentUserBidder}
             >
               <FontAwesomeIcon icon={faShoppingCart} className="mr-1" />
@@ -416,7 +566,7 @@ const BiddingProductCard = ({
             </button>
 
             <button
-              className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 shadow-sm ${
+              className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all duration-200 shadow-sm ${
                 auctionEnded || isCurrentUserBidder || isSubmittingBid
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                   : product.isLeading
@@ -437,7 +587,7 @@ const BiddingProductCard = ({
                     icon={auctionEnded || isCurrentUserBidder ? faClock : (product.isLeading ? faCrown : faGavel)}
                     className="mr-1"
                   />
-                  {auctionEnded ? "Auction Ended" : isCurrentUserBidder ? "Leading" : (product.isLeading ? "Leading" : "Make Offer")}
+                  {auctionEnded ? "Auction Ended" : isCurrentUserBidder ? "Leading" : (product.isLeading ? "Leading" : "Bid")}
                 </>
               )}
             </button>
