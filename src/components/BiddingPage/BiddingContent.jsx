@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -14,7 +14,7 @@ import Loader from "../Loader"; // Import Loader
 import { convertPrice } from "../../utils/currencyUtils";
 
 const BiddingContent = () => {
-  const [viewMode, setViewMode] = useState("grid");
+  const [viewMode, setViewMode] = useState("list");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -31,7 +31,27 @@ const BiddingContent = () => {
   const [filters, setFilters] = useState({});
   const [refreshTick, setRefreshTick] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('');
+  const isInitialMount = useRef(true);
+
+  // Debounce search query with 1000ms delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Reset to page 1 when debounced search query changes (but not on initial mount)
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    setCurrentPage(1);
+  }, [debouncedSearchQuery]);
 
   const mapApiProductToUi = (p) => {
     const id = p._id || "";
@@ -95,17 +115,17 @@ const BiddingContent = () => {
   const getSortObject = (option) => {
     switch (option) {
       case 'price_asc':
-        return { price: 1 };
+        return { sortBy: 'price', sortOrder: 1 };
       case 'price_desc':
-        return { price: -1 };
+        return { sortBy: 'price', sortOrder: -1 };
       case 'ending_soon':
-        return { expiryTime: 1 };
+        return { sortBy: 'endDatetime', sortOrder: 1 };
       case 'bids_desc':
-        return { bids: -1 };
+        return { sortBy: 'bids', sortOrder: -1 };
       case 'bids_asc':
-        return { bids: 1 };
+        return { sortBy: 'bids', sortOrder: 1 };
       case 'newest':
-        return { createdAt: -1 };
+        return { sortBy: 'createdAt', sortOrder: -1 };
       default:
         return {};
     }
@@ -118,14 +138,23 @@ const BiddingContent = () => {
       setErrorMessage(null);
       try {
         const baseUrl = import.meta.env.VITE_BASE_URL || "http://localhost:3200";
+        const sortParams = getSortObject(sortOption);
+        // Ensure search is included and not overridden by filters
+        const requestBody = {
+          page: currentPage,
+          limit: itemsPerPage,
+          search: debouncedSearchQuery || '',
+          ...filters,
+          ...sortParams,
+        };
+        // Re-apply search after filters to ensure it's not overridden
+        if (debouncedSearchQuery && debouncedSearchQuery.trim()) {
+          requestBody.search = debouncedSearchQuery.trim();
+        }
+        console.log('Request body:', requestBody);
         const response = await axios.post(
           `${baseUrl}/api/customer/get-bid-products`,
-          {
-            page: currentPage,
-            limit: itemsPerPage,
-            search: searchQuery,
-            ...filters,
-          },
+          requestBody,
           {
             headers: {
               "Content-Type": "application/json",
@@ -166,7 +195,7 @@ const BiddingContent = () => {
     };
     fetchData();
     return () => controller.abort();
-  }, [currentPage, itemsPerPage, filters, refreshTick, searchQuery, sortOption]);
+  }, [currentPage, itemsPerPage, filters, refreshTick, debouncedSearchQuery, sortOption]);
 
 
   useEffect(() => {
@@ -280,23 +309,6 @@ const BiddingContent = () => {
   return (
     <>
       <div className="flex flex-col lg:flex-row gap-6 min-h-screen">
-        {/* Mobile Filter Button */}
-        <div className="lg:hidden mb-4">
-          <button
-            className="w-full bg-white border border-gray-300 rounded-lg py-2 px-4 text-sm font-medium flex items-center justify-center cursor-pointer hover:bg-gray-50"
-            onClick={() => setShowMobileFilters(true)}
-          >
-            <svg
-              className="w-4 h-4 mr-2"
-              fill="currentColor"
-              viewBox="0 0 512 512"
-            >
-              <path d="M3.9 54.9C10.5 40.9 24.5 32 40 32H472c15.5 0 29.5 8.9 36.1 22.9s4.6 30.5-5.2 42.5L320 320.9V448c0 12.1-6.8 23.2-17.7 28.6s-23.8 4.3-33.5-3l-64-48c-8.1-6-12.8-15.5-12.8-25.6V320.9L9 97.3C-.7 85.4-2.8 68.8 3.9 54.9z" />
-            </svg>
-            Filters
-          </button>
-        </div>
-
         {/* Mobile Filters Overlay */}
         {showMobileFilters && (
           <div className="fixed inset-0 z-40 lg:hidden">
@@ -336,6 +348,8 @@ const BiddingContent = () => {
             sortOption={sortOption}
             setSortOption={setSortOption}
             setCurrentPage={setCurrentPage}
+            onFiltersClick={() => setShowMobileFilters(true)}
+            filters={filters}
           />
 
           {/* Grid View */}
@@ -425,7 +439,34 @@ const BiddingContent = () => {
                   {errorMessage}
                 </div>
               )}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              
+              {/* Mobile Card View - Shown on mobile devices when in list mode */}
+              <div className="md:hidden mb-6">
+                {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
+                  <div className="flex justify-center py-12">
+                    <Loader size="lg" />
+                  </div>
+                )}
+                {!isLoading && hasInitiallyLoaded && currentProducts.length === 0 && (
+                  <div className="text-center text-2xl text-gray-500 font-bold">
+                    No products found.
+                  </div>
+                )}
+                {currentProducts.map((product, index) => (
+                  <div key={product.id} className="animate-slideUp" style={{ animationDelay: `${index * 0.1}s` }}>
+                    <BiddingProductCard
+                      product={product}
+                      viewMode="mobile"
+                      onOpenBiddingForm={handleOpenBiddingForm}
+                      renderBidValue={renderBidValue}
+                      onBidSuccess={handleRefresh}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table View - Shown on medium and larger screens */}
+              <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div className="w-full overflow-x-auto">
                   <table className="w-full" style={{ minWidth: 'max-content' }}>
                     <thead className="bg-gray-50 border-b border-gray-200">
