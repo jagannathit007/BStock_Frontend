@@ -4,19 +4,61 @@ import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import { ProductService } from "../services/products/products.services"; // Adjust the import path to your ProductService
 import { convertPrice } from "../utils/currencyUtils";
 
-const SideFilter = ({ onClose, onFilterChange }) => {
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
-  const [minMoq, setMinMoq] = useState("");
-  const [maxMoq, setMaxMoq] = useState("");
-  const [minStock, setMinStock] = useState("");
-  const [maxStock, setMaxStock] = useState("");
-  const [selectedSimTypes, setSelectedSimTypes] = useState([]);
-  const [selectedStorage, setSelectedStorage] = useState([]);
-  const [selectedGrades, setSelectedGrades] = useState([]);
-  const [selectedColors, setSelectedColors] = useState([]);
-  const [selectedRams, setSelectedRams] = useState([]);
+const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
+  const [minPrice, setMinPrice] = useState(currentFilters.minPrice || "");
+  const [maxPrice, setMaxPrice] = useState(currentFilters.maxPrice || "");
+  const [minMoq, setMinMoq] = useState(currentFilters.minMoq || "");
+  const [maxMoq, setMaxMoq] = useState(currentFilters.maxMoq || "");
+  const [minStock, setMinStock] = useState(currentFilters.minStock || "");
+  const [maxStock, setMaxStock] = useState(currentFilters.maxStock || "");
+  const [selectedSimTypes, setSelectedSimTypes] = useState(currentFilters.simTypes || []);
+  const [selectedStorage, setSelectedStorage] = useState(currentFilters.storage || []);
+  const [selectedGrades, setSelectedGrades] = useState(currentFilters.grades || []);
+  const [selectedColors, setSelectedColors] = useState(currentFilters.colors || []);
+  const [selectedRams, setSelectedRams] = useState(currentFilters.rams || []);
   const [filtersData, setFiltersData] = useState(null);
+  const prevFiltersStrRef = React.useRef("");
+
+  // Sync internal state with currentFilters prop when it changes externally  
+  useEffect(() => {
+    // Create a normalized string representation of current filters
+    const currentFiltersStr = JSON.stringify({
+      minPrice: currentFilters.minPrice || "",
+      maxPrice: currentFilters.maxPrice || "",
+      minMoq: currentFilters.minMoq || "",
+      maxMoq: currentFilters.maxMoq || "",
+      minStock: currentFilters.minStock || "",
+      maxStock: currentFilters.maxStock || "",
+      simTypes: currentFilters.simTypes || [],
+      storage: currentFilters.storage || [],
+      grades: currentFilters.grades || [],
+      colors: currentFilters.colors || [],
+      rams: currentFilters.rams || [],
+    });
+    
+    // Only update if the filter values have actually changed
+    if (currentFiltersStr !== prevFiltersStrRef.current) {
+      setMinPrice(currentFilters.minPrice || "");
+      setMaxPrice(currentFilters.maxPrice || "");
+      setMinMoq(currentFilters.minMoq || "");
+      setMaxMoq(currentFilters.maxMoq || "");
+      setMinStock(currentFilters.minStock || "");
+      setMaxStock(currentFilters.maxStock || "");
+      setSelectedSimTypes(currentFilters.simTypes || []);
+      setSelectedStorage(currentFilters.storage || []);
+      setSelectedGrades(currentFilters.grades || []);
+      setSelectedColors(currentFilters.colors || []);
+      setSelectedRams(currentFilters.rams || []);
+      prevFiltersStrRef.current = currentFiltersStr;
+    }
+  }, [currentFilters]);
+
+  // Reset the ref on unmount/remount to ensure proper sync
+  useEffect(() => {
+    return () => {
+      prevFiltersStrRef.current = "";
+    };
+  }, []);
 
   useEffect(() => {
     const fetchFilters = async () => {
@@ -174,64 +216,103 @@ const SideFilter = ({ onClose, onFilterChange }) => {
   };
 
   return (
-    <aside className="bg-white-50 rounded-[18px] shadow-sm border border-gray-200 h-fit sticky top-24">
-      <style>
-        {`
-          input[type="range"] {
-            -webkit-appearance: none;
-            appearance: none;
-            height: 8px;
-            background: transparent;
-            outline: none;
-            pointer-events: none;
-            position: absolute;
-            width: 100%;
-          }
-          input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 16px;
-            height: 16px;
-            background: #3b82f6;
-            border-radius: 50%;
-            cursor: pointer;
-            pointer-events: auto;
-            box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
-          }
-          input[type="range"]::-moz-range-thumb {
-            width: 16px;
-            height: 16px;
-            background: #3b82f6;
-            border-radius: 50%;
-            cursor: pointer;
-            pointer-events: auto;
-            box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
-          }
-          .range-container {
-            position: relative;
-            height: 8px;
-            background: #e5e7eb; /* bg-gray-200 */
-            border-radius: 4px;
-          }
-        `}
-      </style>
-      <div className="p-4 sm:p-6 pt-10">
-        <div className="flex justify-between items-center mb-4 sm:mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
-          <button
-            className="text-gray-400 hover:text-gray-500 lg:hidden"
-            onClick={onClose}
-          >
-            <FontAwesomeIcon icon={faTimes} className="h-5 w-5" />
-          </button>
-        </div>
+    <aside className="bg-white h-fit sticky top-24 w-full lg:w-72">
+        <style>
+          {`
+            input[type="range"] {
+              -webkit-appearance: none;
+              appearance: none;
+              height: 4px;
+              background: transparent;
+              outline: none;
+              pointer-events: none;
+              position: absolute;
+              width: 100%;
+            }
+            input[type="range"]::-webkit-slider-thumb {
+              -webkit-appearance: none;
+              appearance: none;
+              width: 20px;
+              height: 20px;
+              background: #0071e3;
+              border-radius: 50%;
+              cursor: pointer;
+              pointer-events: auto;
+              box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
+              border: 2px solid white;
+              transition: all 0.2s ease;
+            }
+            input[type="range"]::-webkit-slider-thumb:hover {
+              transform: scale(1.1);
+              box-shadow: 0 4px 12px rgba(0, 113, 227, 0.4);
+            }
+            input[type="range"]::-moz-range-thumb {
+              width: 20px;
+              height: 20px;
+              background: #0071e3;
+              border-radius: 50%;
+              cursor: pointer;
+              pointer-events: auto;
+              box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
+              border: 2px solid white;
+              transition: all 0.2s ease;
+            }
+            input[type="range"]::-moz-range-thumb:hover {
+              transform: scale(1.1);
+              box-shadow: 0 4px 12px rgba(0, 113, 227, 0.4);
+            }
+            .range-container {
+              position: relative;
+              height: 4px;
+              background: #f5f5f7;
+              border-radius: 2px;
+            }
+            input[type="checkbox"] {
+              -webkit-appearance: none;
+              appearance: none;
+              width: 18px;
+              height: 18px;
+              border: 1.5px solid #d1d1d6;
+              border-radius: 4px;
+              background: white;
+              cursor: pointer;
+              position: relative;
+              transition: all 0.2s ease;
+            }
+            input[type="checkbox"]:checked {
+              background: #0071e3;
+              border-color: #0071e3;
+            }
+            input[type="checkbox"]:checked::after {
+              content: '✓';
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              color: white;
+              font-size: 12px;
+              font-weight: 600;
+            }
+            input[type="checkbox"]:hover {
+              border-color: #0071e3;
+              transform: scale(1.05);
+            }
+          `}
+        </style>
+        <div className="px-6 py-8 bg-[#FAFAFF] rounded-xl shadow-md lg:mx-0">
+          <div className="flex justify-between items-center mb-8 sticky top-0 bg-[#FAFAFF] pb-4 z-10">
+            <h3 className="text-2xl font-semibold text-gray-900 font-apple">Filters</h3>
+            {onClose && (
+              <button className="text-gray-400 hover:text-gray-600 lg:hidden transition-colors duration-200" onClick={onClose}>
+                <FontAwesomeIcon icon={faTimes} className="h-6 w-6" />
+              </button>
+            )}
+          </div>
 
         {/* Price Range */}
-        <div className="mb-6">
-          <h4 className="text-sm font-medium text-gray-900 mb-3">
-            Price Range
-          </h4>
-          <div className="range-container">
+        <div className="mb-8">
+          <h4 className="text-base font-medium text-gray-900 mb-4 font-apple">Price Range</h4>
+          <div className="range-container mb-3">
             <input
               type="range"
               min={priceRange.min}
@@ -253,7 +334,7 @@ const SideFilter = ({ onClose, onFilterChange }) => {
               aria-label="Maximum price"
             />
             <div
-              className="absolute h-2 bg-primary"
+              className="absolute h-1 bg-primary rounded-full"
               style={{
                 left: `${
                   ((minPrice || priceRange.min) / priceRange.max) * 100
@@ -268,16 +349,16 @@ const SideFilter = ({ onClose, onFilterChange }) => {
               }}
             ></div>
           </div>
-          <div className="flex justify-between text-sm text-gray-600 mt-2">
+          <div className="flex justify-between text-sm text-gray-500 font-apple">
             <span>{convertPrice(parseFloat(minPrice || priceRange.min))}</span>
             <span>{convertPrice(parseFloat(maxPrice || priceRange.max))}</span>
           </div>
         </div>
 
         {/* MOQ Range */}
-        <div className="mb-6">
-          <h4 className="text-sm font-medium text-gray-900 mb-3">MOQ Range</h4>
-          <div className="range-container">
+        <div className="mb-8">
+          <h4 className="text-base font-medium text-gray-900 mb-4 font-apple">MOQ Range</h4>
+          <div className="range-container mb-3">
             <input
               type="range"
               min={moqRange.min}
@@ -299,7 +380,7 @@ const SideFilter = ({ onClose, onFilterChange }) => {
               aria-label="Maximum MOQ"
             />
             <div
-              className="absolute h-2 bg-primary"
+              className="absolute h-1 bg-primary rounded-full"
               style={{
                 left: `${((minMoq || moqRange.min) / moqRange.max) * 100}%`,
                 width: `${
@@ -311,18 +392,16 @@ const SideFilter = ({ onClose, onFilterChange }) => {
               }}
             ></div>
           </div>
-          <div className="flex justify-between text-sm text-gray-600 mt-2">
+          <div className="flex justify-between text-sm text-gray-500 font-apple">
             <span>{minMoq || moqRange.min}</span>
             <span>{maxMoq || moqRange.max}</span>
           </div>
         </div>
 
         {/* Stock Range */}
-        <div className="mb-6">
-          <h4 className="text-sm font-medium text-gray-900 mb-3">
-            Stock Range
-          </h4>
-          <div className="range-container">
+        <div className="mb-8">
+          <h4 className="text-base font-medium text-gray-900 mb-4 font-apple">Stock Range</h4>
+          <div className="range-container mb-3">
             <input
               type="range"
               min={stockRange.min}
@@ -344,7 +423,7 @@ const SideFilter = ({ onClose, onFilterChange }) => {
               aria-label="Maximum stock"
             />
             <div
-              className="absolute h-2 bg-primary"
+              className="absolute h-1 bg-primary rounded-full"
               style={{
                 left: `${
                   ((minStock || stockRange.min) / stockRange.max) * 100
@@ -359,97 +438,92 @@ const SideFilter = ({ onClose, onFilterChange }) => {
               }}
             ></div>
           </div>
-          <div className="flex justify-between text-sm text-gray-600 mt-2">
+          <div className="flex justify-between text-sm text-gray-500 font-apple">
             <span>{minStock || stockRange.min}</span>
             <span>{maxStock || stockRange.max}</span>
           </div>
         </div>
 
         {/* SIM Types */}
-        <div className="mb-6">
-          <h4 className="text-sm font-medium text-gray-900 mb-3">SIM Types</h4>
-          <div className="space-y-2">
+        <div className="mb-8">
+          <h4 className="text-base font-medium text-gray-900 mb-4 font-apple">SIM Types</h4>
+          <div className="space-y-3">
             {simTypes.map((simType) => (
-              <label key={simType} className="flex items-center">
+              <label key={simType} className="flex items-center group cursor-pointer">
                 <input
                   type="checkbox"
                   checked={selectedSimTypes.includes(simType)}
                   onChange={() => handleSimTypeChange(simType)}
-                  className="rounded cursor-pointer border-gray-300 text-primary focus:ring-primary"
                 />
-                <span className="ml-2 text-sm text-gray-700">{simType}</span>
+                <span className="ml-3 text-sm text-gray-700 font-apple group-hover:text-gray-900 transition-colors duration-200">{simType}</span>
               </label>
             ))}
           </div>
         </div>
 
         {/* Storage */}
-        <div className="mb-6">
-          <h4 className="text-sm font-medium text-gray-900 mb-3">Storage</h4>
-          <div className="space-y-2">
+        <div className="mb-8">
+          <h4 className="text-base font-medium text-gray-900 mb-4 font-apple">Storage</h4>
+          <div className="space-y-3">
             {storages.map((storage) => (
-              <label key={storage} className="flex items-center">
+              <label key={storage} className="flex items-center group cursor-pointer">
                 <input
                   type="checkbox"
                   checked={selectedStorage.includes(storage)}
                   onChange={() => handleStorageChange(storage)}
-                  className="rounded cursor-pointer border-gray-300 text-primary focus:ring-primary"
                 />
-                <span className="ml-2 text-sm text-gray-700">{storage}</span>
+                <span className="ml-3 text-sm text-gray-700 font-apple group-hover:text-gray-900 transition-colors duration-200">{storage}</span>
               </label>
             ))}
           </div>
         </div>
 
         {/* Grades */}
-        <div className="mb-6">
-          <h4 className="text-sm font-medium text-gray-900 mb-3">Grades</h4>
-          <div className="space-y-2">
+        <div className="mb-8">
+          <h4 className="text-base font-medium text-gray-900 mb-4 font-apple">Grades</h4>
+          <div className="space-y-3">
             {grades.map((grade) => (
-              <label key={grade} className="flex items-center">
+              <label key={grade} className="flex items-center group cursor-pointer">
                 <input
                   type="checkbox"
                   checked={selectedGrades.includes(grade)}
                   onChange={() => handleGradeChange(grade)}
-                  className="rounded border-gray-300 cursor-pointer text-primary focus:ring-primary"
                 />
-                <span className="ml-2 text-sm text-gray-700">{grade}</span>
+                <span className="ml-3 text-sm text-gray-700 font-apple group-hover:text-gray-900 transition-colors duration-200">{grade}</span>
               </label>
             ))}
           </div>
         </div>
 
         {/* Colors */}
-        <div className="mb-6">
-          <h4 className="text-sm font-medium text-gray-900 mb-3">Colors</h4>
-          <div className="space-y-2">
+        <div className="mb-8">
+          <h4 className="text-base font-medium text-gray-900 mb-4 font-apple">Colors</h4>
+          <div className="space-y-3">
             {colors.map((color) => (
-              <label key={color.name} className="flex items-center">
+              <label key={color.name} className="flex items-center group cursor-pointer">
                 <input
                   type="checkbox"
                   checked={selectedColors.includes(color.name)}
                   onChange={() => handleColorChange(color.name)}
-                  className="rounded border-gray-300 cursor-pointer text-primary focus:ring-primary"
                 />
-                <span className="ml-2 text-sm text-gray-700">{color.name}</span>
+                <span className="ml-3 text-sm text-gray-700 font-apple group-hover:text-gray-900 transition-colors duration-200">{color.name}</span>
               </label>
             ))}
           </div>
         </div>
 
         {/* RAM */}
-        <div className="mb-6">
-          <h4 className="text-sm font-medium text-gray-900 mb-3">RAM</h4>
-          <div className="space-y-2 ">
+        <div className="mb-8">
+          <h4 className="text-base font-medium text-gray-900 mb-4 font-apple">RAM</h4>
+          <div className="space-y-3">
             {rams.map((ram) => (
-              <label key={ram} className="flex items-center">
+              <label key={ram} className="flex items-center group cursor-pointer">
                 <input
                   type="checkbox"
                   checked={selectedRams.includes(ram)}
                   onChange={() => handleRamChange(ram)}
-                  className="rounded cursor-pointer border-gray-300 text-primary focus:ring-primary"
                 />
-                <span className="ml-2 text-sm text-gray-700">{ram}</span>
+                <span className="ml-3 text-sm text-gray-700 font-apple group-hover:text-gray-900 transition-colors duration-200">{ram}</span>
               </label>
             ))}
           </div>
@@ -458,7 +532,7 @@ const SideFilter = ({ onClose, onFilterChange }) => {
         {/* Clear Filters */}
         <button
           onClick={clearAllFilters}
-          className="w-full cursor-pointer bg-[#0071E0] text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-blue-600"
+          className="w-full bg-[#0071E0] text-white py-3 px-6 rounded-xl text-sm font-medium font-apple hover:bg-primary-dark transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-sm hover:shadow-md"
         >
           Clear All Filters
         </button>

@@ -2,15 +2,15 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faTableCellsLarge,
-  faList,
   faChevronLeft,
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
 import BiddingProductDetails from "./BiddingProductDetails";
-import SideFilter from "../SideFilter";
+import BiddingSideFilter from "./BiddingSideFilter";
 import BusinessDetailsPopup from "./BusinessDetailsPopup";
 import BiddingProductCard from "./BiddingProductCard";
+import ViewControls from "./ViewControls";
+import Loader from "../Loader"; // Import Loader
 import { convertPrice } from "../../utils/currencyUtils";
 
 const BiddingContent = () => {
@@ -18,71 +18,77 @@ const BiddingContent = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(4);
+  const [itemsPerPage] = useState(10);
+  const [myMaxBidInput, setMyMaxBidInput] = useState("");
   const [showBusinessPopup, setShowBusinessPopup] = useState(false);
 
   // Real product data state management
   const [fetchedProducts, setFetchedProducts] = useState([]);
   const [totalProductsCount, setTotalProductsCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [filters, setFilters] = useState({});
-  const [refreshTick] = useState(false);
-  const [searchQuery] = useState('');
-  const [sortOption] = useState('');
+  const [refreshTick, setRefreshTick] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState('');
 
   const mapApiProductToUi = (p) => {
-    const id = p._id || p.id || "";
-    const name = p.skuFamilyId?.name || p.specification || "Product";
-    const imageUrl = p.skuFamilyId?.images?.[0] || "https://via.placeholder.com/400x300.png?text=Product";
-    const storage = p.storage || "";
-    const color = p.color || "";
-    const ram = p.ram || "";
-    const description = [storage, color, ram].filter(Boolean).join(" • ") || p.specification || "";
-    const priceNumber = Number(p.price) || 0;
-    
-    // Convert to bidding format - using price as currentBid, adding bidding properties
-    const startingPrice = (priceNumber * 0.8).toFixed(2); // 80% of current price as starting price
-    const currentBid = priceNumber.toFixed(2);
-    const lastReference = (priceNumber * 1.1).toFixed(2); // 110% of current price as reference
-    const randomBids = Math.floor(Math.random() * 30) + 10; // Random bids count between 10-40
-    
-    // Use proper timer from expiryTime if available, otherwise generate random timer
-    const expiryTime = p.expiryTime;
-    let timer = `${Math.floor(Math.random() * 24)}h ${Math.floor(Math.random() * 60)}m ${Math.floor(Math.random() * 60)}s`;
-    
-    if (expiryTime) {
+    const id = p._id || "";
+    const qty = Number(p.qty) || 0;
+    const currentPriceNum = Number(p.currentPrice) || Number(p.startingBidPrice) || 0;
+    const unitPrice = p.price;
+
+    const modelFull = `${p.oem || ""} ${p.model || ""}`.trim();
+    const memory = p.capacity || "";
+    const carrier = p.carrier || "";
+    const units = qty;
+    const grade = p.grade || "";
+    const cityState = p.city && p.state ? `${p.city}, ${p.state}` : "";
+
+    // ----- TIMER -----
+    let timer = "";
+    if (p.endDatetime) {
       const now = new Date();
-      const expiry = new Date(expiryTime);
-      const timeDiff = expiry.getTime() - now.getTime();
-      
-      if (timeDiff > 0) {
-        const hours = Math.floor(timeDiff / (1000 * 60 * 60));
-        const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
-        timer = `${hours}h ${minutes}m ${seconds}s`;
+      const end = new Date(p.endDatetime);
+      const diff = end - now;
+      if (diff > 0) {
+        const h = Math.floor(diff / 36e5);
+        const m = Math.floor((diff % 36e5) / 6e4);
+        const s = Math.floor((diff % 6e4) / 1e3);
+        timer = `${h}h ${m}m ${s}s`;
+      } else {
+        timer = "Ended";
       }
     }
-    
-    // const isLeading = Math.random() > 0.7; // 30% chance of leading bid
-    
+
+    // ----- NEW: Use maxBidPrice as My Max Bid -----
+    const myMaxBidRaw = p.maxBidPrice;
+    const myMaxBid = myMaxBidRaw && !myMaxBidRaw.includes("-")
+      ? `$${Number(myMaxBidRaw).toFixed(2)}`
+      : "-";
+
     return {
       id,
-      name,
-      modelName: name,
-      description,
-      color,
-      grade: p.grade || "Grade A",
-      currentBid: `$${currentBid}`,
-      startingPrice: `$${startingPrice}`,
-      lastReference: `$${lastReference}`,
-      // lastInfo: `Last sale: ${Math.floor(Math.random() * 7)} days ago`,
-      // lotInfo: `Lot #${String(id).slice(-5)}`,
-      bids: randomBids,
+      modelFull,
+      memory,
+      carrier,
+      units,
+      grade,
+      cityState,
+      currentBid: `$${currentPriceNum.toFixed(2)}`,
+      unitPrice: `$${unitPrice}`,
+      bids: p.bids?.length ?? 0,
       timer,
-      imageUrl,
-      // isLeading,
-      expiryTime, // Include expiry time for timer updates
+      expiryTime: p.endDatetime,
+      status: p.status || 'active', // Add status from API
+      imageUrl: "https://via.placeholder.com/400x300.png?text=Product",
+      highestBidder: p.highestBidder,
+      minNextBid: p.minNextBid,
+      currentPrice: p.currentPrice,
+
+      // This is the field the card will read
+      myMaxBid,                     // <-- NOW USING maxBidPrice
     };
   };
 
@@ -92,6 +98,12 @@ const BiddingContent = () => {
         return { price: 1 };
       case 'price_desc':
         return { price: -1 };
+      case 'ending_soon':
+        return { expiryTime: 1 };
+      case 'bids_desc':
+        return { bids: -1 };
+      case 'bids_asc':
+        return { bids: 1 };
       case 'newest':
         return { createdAt: -1 };
       default:
@@ -107,13 +119,11 @@ const BiddingContent = () => {
       try {
         const baseUrl = import.meta.env.VITE_BASE_URL || "http://localhost:3200";
         const response = await axios.post(
-          `${baseUrl}/api/customer/get-product-list`,
+          `${baseUrl}/api/customer/get-bid-products`,
           {
             page: currentPage,
             limit: itemsPerPage,
             search: searchQuery,
-            sort: getSortObject(sortOption),
-            isFlashDeal:true,
             ...filters,
           },
           {
@@ -125,14 +135,18 @@ const BiddingContent = () => {
           }
         );
 
+        console.log("API Response:", response.data);
+
         if (response.data.status === 200) {
           const payload = response.data.data;
           const docs = payload?.docs || [];
           const totalDocs = Number(payload?.totalDocs) || 0;
+          console.log(`Fetched ${docs.length} bid products out of ${totalDocs} total`);
           const mapped = docs.map(mapApiProductToUi);
           setFetchedProducts(mapped);
           setTotalProductsCount(totalDocs);
         } else {
+          console.error("API returned non-200 status:", response.data);
           setErrorMessage("Failed to fetch products.");
           setFetchedProducts([]);
           setTotalProductsCount(0);
@@ -142,16 +156,19 @@ const BiddingContent = () => {
           setFetchedProducts([]);
           setTotalProductsCount(0);
           console.error("Fetch products error:", e);
+          console.error("Error details:", e.response?.data || e.message);
+          setErrorMessage(e.response?.data?.message || "Failed to fetch products.");
         }
       } finally {
         setIsLoading(false);
+        setHasInitiallyLoaded(true);
       }
     };
     fetchData();
     return () => controller.abort();
   }, [currentPage, itemsPerPage, filters, refreshTick, searchQuery, sortOption]);
 
-  // Timer update effect - update timers every second for products with expiryTime
+
   useEffect(() => {
     const interval = setInterval(() => {
       setFetchedProducts((prevProducts) =>
@@ -160,13 +177,13 @@ const BiddingContent = () => {
             const now = new Date();
             const expiry = new Date(product.expiryTime);
             const timeDiff = expiry.getTime() - now.getTime();
-            
+
             if (timeDiff > 0) {
               const hours = Math.floor(timeDiff / (1000 * 60 * 60));
               const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
               const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
               const timer = `${hours}h ${minutes}m ${seconds}s`;
-              
+
               return { ...product, timer };
             } else {
               // Timer expired
@@ -218,7 +235,9 @@ const BiddingContent = () => {
 
       const customerId = user._id || "";
       if (!customerId) {
-        window.location.href = "/signin";
+        const hashPath = window.location.hash?.slice(1) || "/home";
+        const returnTo = encodeURIComponent(hashPath);
+        window.location.href = `/#/login?returnTo=${returnTo}`;
         return;
       }
 
@@ -230,9 +249,9 @@ const BiddingContent = () => {
   };
 
 
-  // const handleRefresh = () => {
-  //   setRefreshTick((prev) => !prev);
-  // };
+  const handleRefresh = () => {
+    setRefreshTick((prev) => !prev);
+  };
 
   const renderBidValue = (value) => {
     // Check if the value is a price (contains $ or is a number)
@@ -245,7 +264,7 @@ const BiddingContent = () => {
     } else if (typeof value === 'number') {
       return convertPrice(value);
     }
-    
+
     return value;
   };
 
@@ -260,7 +279,7 @@ const BiddingContent = () => {
 
   return (
     <>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col lg:flex-row gap-6 min-h-screen">
+      <div className="flex flex-col lg:flex-row gap-6 min-h-screen">
         {/* Mobile Filter Button */}
         <div className="lg:hidden mb-4">
           <button
@@ -286,9 +305,10 @@ const BiddingContent = () => {
               onClick={() => setShowMobileFilters(false)}
             ></div>
             <div className="absolute left-0 top-0 h-full w-72 bg-white z-50 overflow-y-auto">
-              <SideFilter 
-                onClose={() => setShowMobileFilters(false)} 
+              <BiddingSideFilter
+                onClose={() => setShowMobileFilters(false)}
                 onFilterChange={handleFilterChange}
+                appliedFilters={filters}
               />
               <button
                 className="w-full bg-[#0071E0] text-white py-3 px-4 text-sm font-medium lg:hidden sticky bottom-0 cursor-pointer hover:bg-blue-800"
@@ -302,48 +322,21 @@ const BiddingContent = () => {
 
         {/* Sidebar Filters - Desktop */}
         <aside className="lg:w-72 hidden lg:block">
-          <SideFilter onFilterChange={handleFilterChange} />
+          <BiddingSideFilter onFilterChange={handleFilterChange} appliedFilters={filters} />
         </aside>
 
         {/* Main Content */}
         <main className="flex-1 flex flex-col">
           {/* View Controls */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4 sm:gap-0">
-            <div className="flex items-center space-x-4">
-              {/* <span className="text-sm text-gray-600">View:</span> */}
-              <div className="flex bg-gray-100 rounded-lg p-1">
-                <button
-                  className={`px-3 py-1 cursor-pointer text-sm font-medium ${
-                    viewMode === "grid"
-                      ? "bg-white text-[#0071E0] rounded-md shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                  onClick={() => setViewMode("grid")}
-                >
-                  <FontAwesomeIcon icon={faTableCellsLarge} className="mr-2" />
-                  Grid
-                </button>
-                <button
-                  className={`px-3 py-1 text-sm cursor-pointer font-medium ${
-                    viewMode === "list"
-                      ? "bg-white text-[#0071E0] rounded-md shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                  onClick={() => setViewMode("list")}
-                >
-                  <FontAwesomeIcon icon={faList} className="mr-2" />
-                  List
-                </button>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3 text-sm text-gray-600">
-              <select className="border border-gray-300 rounded-lg px-3 py-1 text-sm cursor-pointer">
-                <option>Sort by Ending Soon</option>
-                <option>Sort by Starting Price</option>
-                <option>Sort by Bid Count</option>
-              </select>
-            </div>
-          </div>
+          <ViewControls
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            sortOption={sortOption}
+            setSortOption={setSortOption}
+            setCurrentPage={setCurrentPage}
+          />
 
           {/* Grid View */}
           {viewMode === "grid" ? (
@@ -354,24 +347,26 @@ const BiddingContent = () => {
                 </div>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
-                {isLoading && currentProducts.length === 0 && (
-                  <div className="col-span-3 text-center text-sm text-gray-500">
-                    Loading products...
+                {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
+                  <div className="col-span-3 flex justify-center py-12">
+                    <Loader size="lg" />
                   </div>
                 )}
-                {!isLoading && currentProducts.length === 0 && (
+                {!isLoading && hasInitiallyLoaded && currentProducts.length === 0 && (
                   <div className="col-span-3 text-center text-2xl text-gray-500 font-bold">
                     No products found.
                   </div>
                 )}
-                {currentProducts.map((product) => (
-                  <BiddingProductCard
-                    key={product.id}
-                    product={product}
-                    viewMode={viewMode}
-                    onOpenBiddingForm={handleOpenBiddingForm}
-                    renderBidValue={renderBidValue}
-                  />
+                {currentProducts.map((product, index) => (
+                  <div key={product.id} className="animate-slideUp" style={{ animationDelay: `${index * 0.1}s` }}>
+                    <BiddingProductCard
+                      product={product}
+                      viewMode={viewMode}
+                      onOpenBiddingForm={handleOpenBiddingForm}
+                      renderBidValue={renderBidValue}
+                      onBidSuccess={handleRefresh}
+                    />
+                  </div>
                 ))}
               </div>
 
@@ -380,11 +375,10 @@ const BiddingContent = () => {
                 <button
                   onClick={() => paginate(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${
-                    currentPage === 1
+                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${currentPage === 1
                       ? "text-gray-400 cursor-not-allowed"
                       : "text-gray-700 hover:bg-gray-100"
-                  }`}
+                    }`}
                 >
                   <FontAwesomeIcon icon={faChevronLeft} className="mr-2" />
                   Previous
@@ -396,11 +390,10 @@ const BiddingContent = () => {
                       <button
                         key={number}
                         onClick={() => paginate(number)}
-                        className={`px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${
-                          currentPage === number
+                        className={`px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${currentPage === number
                             ? "bg-[#0071E0] text-white"
                             : "text-gray-700 hover:bg-gray-100"
-                        }`}
+                          }`}
                       >
                         {number}
                       </button>
@@ -415,11 +408,10 @@ const BiddingContent = () => {
                 <button
                   onClick={() => paginate(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${
-                    currentPage === totalPages
+                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${currentPage === totalPages
                       ? "text-gray-400 cursor-not-allowed"
                       : "text-gray-700 hover:bg-gray-100"
-                  }`}
+                    }`}
                 >
                   Next
                   <FontAwesomeIcon icon={faChevronRight} className="ml-2" />
@@ -434,58 +426,68 @@ const BiddingContent = () => {
                 </div>
               )}
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-max">
+                <div className="w-full overflow-x-auto">
+                  <table className="w-full" style={{ minWidth: 'max-content' }}>
                     <thead className="bg-gray-50 border-b border-gray-200">
                       <tr>
                         <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider">
-                          Product
-                        </th>
-                        {/* <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          Status
-                        </th> */}
-                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          Current Bid
-                        </th>
-                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          Bids
-                        </th>
-                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          Time Left
+                          MODEL / UNIT
                         </th>
                         <th className="px-4 py-3 sm:px-6 sm:py-4 text-center text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          Actions
+                          GRADE
+                        </th>
+                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-center text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                          CLOSES IN
+                        </th>
+                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-center text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                          BIDS
+                        </th>
+                        <th className="hidden md:table-cell px-4 py-3 sm:px-6 sm:py-4 text-center text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                          UNIT PRICE
+                        </th>
+                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-center text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                          CUR. BID
+                        </th>
+                        <th className="hidden lg:table-cell px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                          NEXT MIN BID
+                        </th>
+                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-center text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                          BID NOW
                         </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {isLoading && currentProducts.length === 0 && (
+                      {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
                         <tr>
                           <td
-                            colSpan={6}
-                            className="px-4 py-6 text-center text-sm text-gray-500"
+                            colSpan={8}
+                            className="px-4 py-12 text-center"
                           >
-                            Loading products...
+                            <div className="flex justify-center">
+                              <Loader size="lg" />
+                            </div>
                           </td>
                         </tr>
                       )}
-                      {!isLoading && currentProducts.length === 0 && (
+                      {!isLoading && hasInitiallyLoaded && currentProducts.length === 0 && (
                         <tr>
                           <td
-                            colSpan={6}
+                            colSpan={8}
                             className="px-4 py-6 text-center text-2xl text-gray-500 font-bold"
                           >
                             No products found.
                           </td>
                         </tr>
                       )}
-                      {currentProducts.map((product) => (
+                      {currentProducts.map((product, index) => (
                         <BiddingProductCard
                           key={product.id}
                           product={product}
                           viewMode={viewMode}
                           onOpenBiddingForm={handleOpenBiddingForm}
                           renderBidValue={renderBidValue}
+                        onBidSuccess={handleRefresh}
+                          index={index}
                         />
                       ))}
                     </tbody>
@@ -498,11 +500,10 @@ const BiddingContent = () => {
                 <button
                   onClick={() => paginate(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${
-                    currentPage === 1
+                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${currentPage === 1
                       ? "text-gray-400 cursor-not-allowed"
                       : "text-gray-700 hover:bg-gray-100"
-                  }`}
+                    }`}
                 >
                   <FontAwesomeIcon icon={faChevronLeft} className="mr-2" />
                   Previous
@@ -514,11 +515,10 @@ const BiddingContent = () => {
                       <button
                         key={number}
                         onClick={() => paginate(number)}
-                        className={`px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${
-                          currentPage === number
+                        className={`px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${currentPage === number
                             ? "bg-[#0071E0] text-white"
                             : "text-gray-700 hover:bg-gray-100"
-                        }`}
+                          }`}
                       >
                         {number}
                       </button>
@@ -533,11 +533,10 @@ const BiddingContent = () => {
                 <button
                   onClick={() => paginate(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${
-                    currentPage === totalPages
+                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${currentPage === totalPages
                       ? "text-gray-400 cursor-not-allowed"
                       : "text-gray-700 hover:bg-gray-100"
-                  }`}
+                    }`}
                 >
                   Next
                   <FontAwesomeIcon icon={faChevronRight} className="ml-2" />

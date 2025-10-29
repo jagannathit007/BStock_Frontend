@@ -12,7 +12,7 @@ import {
   faShieldHalved,
   faExclamationTriangle,
 } from "@fortawesome/free-solid-svg-icons";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { jwtDecode } from "jwt-decode";
 import ForgotPasswordModal from "./ForgotPasswordModal";
@@ -35,6 +35,7 @@ const loginSchema = yup.object({
 
 const LoginForm = ({ onLogin }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -157,8 +158,10 @@ const LoginForm = ({ onLogin }) => {
               return;
             }
           }
-          
-          navigate("/ready-stock");
+          // Navigate back to intended page if provided
+          const search = new URLSearchParams(location.search);
+          const returnTo = search.get('returnTo');
+          navigate(returnTo || "/ready-stock");
         }
       } catch (loginErr) {
         // If login fails, try to register the user automatically
@@ -265,8 +268,10 @@ const LoginForm = ({ onLogin }) => {
             return;
           }
         }
-        
-        navigate("/ready-stock");
+        // Navigate back to intended page if provided
+        const search = new URLSearchParams(location.search);
+        const returnTo = search.get('returnTo');
+        navigate(returnTo || "/ready-stock");
       }
     } catch (err) {
       setError(err.message || "Login failed. Please try again.");
@@ -313,20 +318,30 @@ const LoginForm = ({ onLogin }) => {
 
   // Right side image section
   const ImageSection = () => (
-    <div className="relative w-full h-screen bg-indigo-600 flex items-center justify-center">
+    <div className="relative w-full h-full min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 flex items-center justify-center overflow-hidden">
       <img
         src={loginImage}
         alt="Premium GSM Bidding Platform"
-        className="absolute inset-0 w-full h-full object-cover"
+        className="absolute inset-0 w-full h-full object-cover opacity-20"
       />
-      <div className="absolute inset-0 bg-black/50"></div>
-      <div className="relative z-10 text-center text-white px-6 max-w-2xl">
-        <h2 className="text-2xl md:text-4xl font-bold mb-4">
-          xGMS Access the best deals, anytime.
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-600/90 via-blue-700/80 to-indigo-800/90"></div>
+      
+      {/* Floating elements */}
+      <div className="absolute top-20 left-10 w-16 lg:w-20 h-16 lg:h-20 bg-white/10 rounded-full animate-float"></div>
+      <div className="absolute top-40 right-20 w-12 lg:w-16 h-12 lg:h-16 bg-white/5 rounded-full animate-float" style={{animationDelay: '1s'}}></div>
+      <div className="absolute bottom-40 left-20 w-10 lg:w-12 h-10 lg:h-12 bg-white/10 rounded-full animate-float" style={{animationDelay: '2s'}}></div>
+      
+      <div className="relative z-10 text-center text-white px-6 lg:px-8 max-w-2xl">
+        <div className="inline-flex items-center justify-center w-16 lg:w-20 h-16 lg:h-20 bg-white/20 rounded-2xl lg:rounded-3xl mb-6 lg:mb-8 backdrop-blur-sm">
+          <svg className="w-8 lg:w-10 h-8 lg:h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <h2 className="text-2xl lg:text-3xl xl:text-5xl font-bold mb-4 lg:mb-6 leading-tight">
+          Access the best deals, anytime
         </h2>
-        <p className="text-lg text-indigo-100">
-          Log in to discover exclusive deals, trusted sellers, and unbeatable
-          prices—all in one place.
+        <p className="text-lg lg:text-xl text-blue-100 leading-relaxed">
+          Discover exclusive deals, trusted sellers, and unbeatable prices—all in one secure platform.
         </p>
       </div>
     </div>
@@ -334,21 +349,50 @@ const LoginForm = ({ onLogin }) => {
 
   return (
     <>
-      <div className="min-h-screen flex bg-white fixed inset-0 overflow-auto">
-        <div className="flex-1 flex  justify-center px-4 sm:px-4 lg:px-6 bg-white overflow-y-auto py-12 items-center">
-          {showLoginForm && (
+      <style jsx>{`
+        .scroll-container {
+          height: 100vh;
+          max-height: 100vh;
+          overflow-y: auto;
+          overflow-x: hidden;
+          -webkit-overflow-scrolling: touch;
+        }
+        .scroll-container::-webkit-scrollbar {
+          width: 6px;
+        }
+        .scroll-container::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .scroll-container::-webkit-scrollbar-thumb {
+          background: rgba(0, 0, 0, 0.2);
+          border-radius: 3px;
+        }
+        .scroll-container::-webkit-scrollbar-thumb:hover {
+          background: rgba(0, 0, 0, 0.3);
+        }
+      `}</style>
+      <div className="h-screen flex bg-gradient-to-br from-gray-50 to-blue-50 overflow-hidden" style={{height: '100vh', maxHeight: '100vh'}}>
+        <div className="flex-1 flex justify-center px-2 sm:px-4 lg:px-6 bg-transparent py-2 sm:py-3 lg:py-4 items-start min-w-0 min-h-0 scroll-container" style={{height: '100%', maxHeight: '100vh'}}>
+          <div className="w-full flex justify-center items-center min-h-full">
+            {showLoginForm && (
             <motion.div
-              className="max-w-md w-full space-y-8 px-4 sm:px-6"
+              className="max-w-md w-full space-y-4 sm:space-y-5 lg:space-y-6 px-2 sm:px-3 lg:px-4 py-3 sm:py-4"
               variants={containerVariants}
               initial="hidden"
               animate="visible"
             >
-              <motion.div className="text-left" variants={childVariants}>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Welcome back !
+              {/* Logo and Header */}
+              <motion.div className="text-center" variants={childVariants}>
+                <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg sm:rounded-xl shadow-lg mb-3 sm:mb-4 animate-float">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                  </svg>
+                </div>
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2 sm:mb-3 tracking-tight">
+                  Welcome back
                 </h1>
-                <p className="text-gray-600">
-                  Enter to get unlimited access to data & information.
+                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+                  Sign in to access exclusive deals and trusted trading opportunities
                 </p>
               </motion.div>
 
@@ -368,20 +412,25 @@ const LoginForm = ({ onLogin }) => {
                 </motion.div>
               )} */}
 
-              <motion.form
-                className="space-y-6"
-                onSubmit={handleSubmit(onSubmit)}
+              {/* Form Card */}
+              <motion.div
+                className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-xl border border-white/20 p-3 sm:p-4 lg:p-5"
                 variants={childVariants}
               >
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Email <span className="text-red-500">*</span>
+                <motion.form
+                  className="space-y-3 sm:space-y-4 lg:space-y-5"
+                  onSubmit={handleSubmit(onSubmit)}
+                  variants={childVariants}
+                >
+                <div className="space-y-1 sm:space-y-2">
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-800">
+                    Email Address
                   </label>
-                  <div className="relative">
+                  <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <FontAwesomeIcon
                         icon={faEnvelope}
-                        className="text-indigo-400 text-sm"
+                        className="text-gray-400 group-focus-within:text-blue-500 transition-colors text-sm"
                       />
                     </div>
                     <input
@@ -393,12 +442,12 @@ const LoginForm = ({ onLogin }) => {
                           trigger("email");
                         },
                       })}
-                      className={`block w-full pl-10 pr-3 py-2 border rounded-lg transition-colors bg-white text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
+                      className={`block w-full pl-8 pr-3 py-1.5 sm:py-2 border-2 rounded-lg transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:bg-white text-sm sm:text-sm ${
                         errors.email
-                          ? "border-red-500 focus:border-red-500"
-                          : "border-gray-300 focus:border-[#0071E0]"
+                          ? "border-red-400 focus:border-red-500"
+                          : "border-gray-200 focus:border-blue-500"
                       }`}
-                      placeholder="Enter your mail address"
+                      placeholder="Enter your email address"
                     />
                   </div>
                   {errors.email && (
@@ -409,15 +458,15 @@ const LoginForm = ({ onLogin }) => {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Password <span className="text-red-500">*</span>
+                <div className="space-y-1 sm:space-y-2">
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-800">
+                    Password
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
                       <FontAwesomeIcon
                         icon={faLock}
-                        className="text-indigo-400 text-sm"
+                        className="text-gray-400 group-focus-within:text-blue-500 transition-colors text-xs"
                       />
                     </div>
                     <input
@@ -429,21 +478,21 @@ const LoginForm = ({ onLogin }) => {
                           trigger("password");
                         },
                       })}
-                      className={`block w-full pl-10 pr-10 py-2 border rounded-lg transition-colors bg-white text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
+                      className={`block w-full pl-8 pr-10 py-1.5 sm:py-2 border-2 rounded-lg transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:bg-white text-sm sm:text-sm ${
                         errors.password
-                          ? "border-red-500 focus:border-red-500"
-                          : "border-gray-300 focus:border-[#0071E0]"
+                          ? "border-red-400 focus:border-red-500"
+                          : "border-gray-200 focus:border-blue-500"
                       }`}
-                      placeholder="Enter password"
+                      placeholder="Enter your password"
                     />
                     <button
                       type="button"
                       onClick={togglePasswordVisibility}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center hover:bg-gray-100 rounded-r-lg transition-colors"
                     >
                       <FontAwesomeIcon
-                        icon={showPassword ? faEye :  faEyeSlash }
-                        className="text-gray-400 hover:text-indigo-600 text-sm"
+                        icon={showPassword ? faEye : faEyeSlash}
+                        className="text-gray-400 hover:text-blue-600 transition-colors text-xs"
                       />
                     </button>
                   </div>
@@ -456,28 +505,29 @@ const LoginForm = ({ onLogin }) => {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center">
+                  <div className="flex items-center group">
                     <input
                       type="checkbox"
                       checked={rememberMe}
                       onChange={(e) => setRememberMe(e.target.checked)}
-                      className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      className="h-4 w-4 text-blue-600 border-2 border-gray-300 rounded-lg focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 cursor-pointer"
                     />
-                    <label className="ml-2 block text-sm text-gray-700">
+                    <label className="ml-3 block text-[14px] font-medium text-gray-700 cursor-pointer group-hover:text-gray-900 transition-colors">
                       Remember me
                     </label>
                   </div>
-                  <span
+                  <button
+                    type="button"
                     onClick={handleForgotPassword}
-                    className="text-sm text-indigo-600 hover:text-indigo-800 font-medium cursor-pointer"
+                    className="text-[14px] text-blue-600 hover:text-blue-800 font-semibold cursor-pointer transition-colors hover:underline"
                   >
-                    Forgot your password ?
-                  </span>
+                    Forgot password?
+                  </button>
                 </div>
 
                 <motion.button
                   type="submit"
-                  className="w-full bg-[#0071E0] text-white cursor-pointer py-2 px-4 rounded-lg font-medium focus:ring-4 flex items-center justify-center disabled:opacity-70"
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white cursor-pointer py-1 sm:py-2 px-6 rounded-lg font-semibold text-sm sm:text-sm focus:ring-4 focus:ring-blue-500/30 flex items-center justify-center disabled:opacity-70 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
                   disabled={isLoading || isSubmitting}
                   variants={buttonVariants}
                   whileHover="hover"
@@ -514,60 +564,62 @@ const LoginForm = ({ onLogin }) => {
                   )}
                 </motion.button>
 
-                <div className="relative my-6">
+                <div className="relative my-6.5">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-gray-200"></div>
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-3 bg-white text-gray-500">
-                      Or, Login with
+                    <span className="px-4 bg-white text-gray-500 font-medium">
+                      Or continue with
                     </span>
                   </div>
                 </div>
 
                 <div className="w-full">
                   {googleLoading ? (
-                    <div className="flex justify-center items-center py-3 bg-gray-50 rounded-lg border">
+                    <div className="flex justify-center items-center py-4 bg-gray-50/50 rounded-xl border-2 border-gray-200">
                       <FontAwesomeIcon
                         icon={faSpinner}
-                        className="animate-spin text-indigo-600 mr-2"
+                        className="animate-spin text-blue-600 mr-3"
                       />
-                      <span className="text-gray-700">
+                      <span className="text-gray-700 font-medium">
                         Signing in with Google...
                       </span>
                     </div>
                   ) : (
-                    <div id="googleSignInDiv" className="w-fit mx-auto [&>div]:rounded-lg [&>div>div]:rounded-lg [&>div>div>div]:rounded-lg"></div>
+                    <div id="googleSignInDiv" className="w-full [&>div]:rounded-xl [&>div>div]:rounded-xl [&>div>div>div]:rounded-xl [&>div]:shadow-sm [&>div]:hover:shadow-md [&>div]:transition-all [&>div]:duration-300"></div>
                   )}
                 </div>
-              </motion.form>
+                </motion.form>
+              </motion.div>
 
               <motion.div className="text-center" variants={childVariants}>
-                <p className="text-gray-600 text-sm font-medium">
+                <p className="text-gray-600 text-base font-medium">
                   Don't have an account?{" "}
                   <Link
                     to="/signup"
-                    className="text-indigo-600 hover:text-indigo-800 font-semibold"
+                    className="text-blue-600 hover:text-blue-800 font-semibold transition-colors hover:underline"
                   >
-                    Register here
+                    Create one here
                   </Link>
                 </p>
               </motion.div>
-
+{/* 
               <motion.div className="text-center" variants={childVariants}>
-                <p className="text-xs text-gray-500 flex items-center justify-center font-medium">
+                <div className="inline-flex items-center px-4 py-2 bg-green-50 text-green-700 rounded-full text-sm font-medium">
                   <FontAwesomeIcon
                     icon={faShieldHalved}
-                    className="mr-2 text-indigo-500"
+                    className="mr-2 text-green-600"
                   />
-                  Your business data is protected with enterprise-grade security
-                </p>
-              </motion.div>
+                  Enterprise-grade security
+                </div>
+              </motion.div> */}
             </motion.div>
-          )}
+            )}
+          </div>
         </div>
 
-        <div className="hidden lg:flex flex-1 relative">
+        <div className="hidden lg:flex flex-1 relative min-w-0">
           <ImageSection />
         </div>
 

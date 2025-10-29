@@ -66,7 +66,7 @@ const ForgotPasswordModal = ({ isOpen, onClose, onEmailSubmit }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="fixed inset-0 flex items-center justify-center z-[120] p-4 bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Subtle background animation for tech theme */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 left-0 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>

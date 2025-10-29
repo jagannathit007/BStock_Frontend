@@ -1,9 +1,8 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faTableCellsLarge,
   faList,
-  faMobileScreen,
 } from "@fortawesome/free-solid-svg-icons";
 
 const ViewControls = ({
@@ -15,12 +14,6 @@ const ViewControls = ({
   setSortOption,
   setCurrentPage,
 }) => {
-  useEffect(() => {
-    const savedViewMode = localStorage.getItem("preferredViewMode");
-    if (savedViewMode === "grid" || savedViewMode === "list") {
-      setViewMode(savedViewMode);
-    }
-  }, [setViewMode]);
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
     setCurrentPage(1);
@@ -32,34 +25,28 @@ const ViewControls = ({
   };
 
   return (
-    <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-6 gap-6">
+    <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-8 gap-6">
       <div className="flex items-center space-x-4 w-full lg:w-auto">
         <div className="flex bg-gray-100 rounded-2xl p-1.5 w-full lg:w-auto">
           <button
-            className={`flex-1 lg:flex-none px-4 py-2 cursor-pointer text-sm font-medium rounded-xl transition-all duration-200 font-apple ${
+            className={`flex-1 lg:flex-none px-4 py-3 cursor-pointer text-sm font-medium rounded-xl transition-all duration-200 font-apple ${
               viewMode === "grid"
-                ? "bg-white text-primary shadow-sm"
+                ? "bg-white text-[#0071E0] shadow-sm"
                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
             }`}
-            onClick={() => {
-     setViewMode("grid");
-     localStorage.setItem("preferredViewMode", "grid");
-   }}
+            onClick={() => setViewMode("grid")}
           >
             <FontAwesomeIcon icon={faTableCellsLarge} className="mr-2" />
             <span className="hidden sm:inline">Grid</span>
             <span className="sm:hidden">Grid View</span>
           </button>
           <button
-            className={`flex-1 lg:flex-none px-4 py-2 text-sm cursor-pointer font-medium rounded-xl transition-all duration-200 font-apple ${
+            className={`flex-1 lg:flex-none px-4 py-3 text-sm cursor-pointer font-medium rounded-xl transition-all duration-200 font-apple ${
               viewMode === "list"
-                ? "bg-white text-primary shadow-sm"
+                ? "bg-white text-[#0071E0] shadow-sm"
                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
             }`}
-            onClick={() => {
-     setViewMode("list");
-     localStorage.setItem("preferredViewMode", "list");
-   }}
+            onClick={() => setViewMode("list")}
           >
             <FontAwesomeIcon icon={faList} className="mr-2" />
             <span className="hidden sm:inline">List</span>
@@ -81,7 +68,7 @@ const ViewControls = ({
           </div>
           <input
             type="text"
-            placeholder="Search products..."
+            placeholder="Search auctions, products..."
             value={searchQuery}
             onChange={handleSearchChange}
             className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all duration-200"
@@ -95,11 +82,14 @@ const ViewControls = ({
         <select 
           value={sortOption}
           onChange={handleSortChange}
-          className="border border-gray-200 cursor-pointer rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-white min-w-[180px] font-apple"
+          className="border border-gray-200 cursor-pointer rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0071E0]/20 focus:border-[#0071E0] transition-all duration-200 bg-white min-w-[180px] font-apple"
         >
           <option value="">Sort by: Featured</option>
-          <option value="price_asc">Sort by: Price Low to High</option>
-          <option value="price_desc">Sort by: Price High to Low</option>
+          <option value="ending_soon">Sort by: Ending Soon</option>
+          <option value="price_asc">Sort by: Starting Price Low to High</option>
+          <option value="price_desc">Sort by: Starting Price High to Low</option>
+          <option value="bids_desc">Sort by: Most Bids</option>
+          <option value="bids_asc">Sort by: Least Bids</option>
           <option value="newest">Sort by: Newest</option>
         </select>
       </div>

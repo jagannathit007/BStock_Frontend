@@ -7,6 +7,7 @@ import { AuthService } from "../services/auth/auth.services";
 import { env } from "../utils/env";
 import toastHelper from "../utils/toastHelper";
 import CountrySelector from "../components/CountrySelector";
+import WatchlistContent from "../components/WishListPage/WatchlistContent";
 
 // Validation schemas
 const profileSchema = yup.object({
@@ -95,53 +96,54 @@ const ProfilePictureUpload = ({ profileImage, displayName, onChangeImage }) => {
 
   return (
     <div className="flex flex-col items-center">
-      <div className="relative group cursor-pointer mb-4">
-        <div className="relative bg-white p-1 rounded-full shadow-md">
+      <div className="relative group cursor-pointer mb-6">
+        <div className="relative">
           {hasImage ? (
             <img
               src={imageError ? "/images/avtar.jpg" : previewSrc}
               alt="Profile"
-              className="w-28 h-28 rounded-full object-cover ring-2 ring-gray-200"
+              className="w-24 h-24 rounded-full object-cover ring-1 ring-gray-200/50"
               onError={handleImageError}
             />
           ) : (
-            <div className="w-28 h-28 rounded-full bg-gradient-to-br from-[#0071E0] to-[#005BB5] flex items-center justify-center ring-2 ring-gray-200">
-              <span className="text-white text-2xl font-semibold">
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#0071E0] to-[#005BB5] flex items-center justify-center ring-1 ring-gray-200/50">
+              <span className="text-white text-xl font-semibold">
                 {getInitials}
               </span>
             </div>
           )}
         </div>
-        <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <label
-            className="cursor-pointer p-3 rounded-full hover:bg-white/20 transition-colors duration-200"
-            style={{ backgroundColor: "rgba(255, 255, 255, 0.1)" }}
-          >
+        <div className="absolute inset-0 bg-black/20 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+          <label className="cursor-pointer p-2 rounded-full bg-white/90 hover:bg-white transition-all duration-200 shadow-lg">
             <input
               type="file"
               accept="image/*"
               onChange={onChangeImage}
               className="hidden"
             />
-            <i className="fas fa-camera text-white text-xl"></i>
+            <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
           </label>
         </div>
-        <div className="absolute bottom-1 right-1 w-5 h-5 bg-green-500 border-2 border-white rounded-full"></div>
       </div>
       <div className="text-center">
-        <h3 className="text-lg font-semibold text-gray-800">
+        <h3 className="text-xl font-semibold text-gray-900 tracking-tight">
           {displayName || "User"}
         </h3>
-        <p className="text-sm text-gray-500 mt-1">&nbsp;</p>
+        <p className="text-sm text-gray-500 mt-1">Account Settings</p>
       </div>
-      <label className="mt-4 px-4 py-2 text-sm text-[#0071E0] hover:text-[#005BB5] cursor-pointer transition-colors duration-200">
+      <label className="mt-6 px-6 py-2 text-sm text-gray-600 hover:text-gray-900 cursor-pointer transition-colors duration-200 border border-gray-200 rounded-full hover:border-gray-300">
         <input
           type="file"
           accept="image/*"
           onChange={onChangeImage}
           className="hidden"
         />
-        <i className="fas fa-edit mr-2"></i>
+        <svg className="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
         Change Photo
       </label>
     </div>
@@ -155,6 +157,7 @@ const ProfileNavigation = ({ activeTab }) => {
   const navItems = [
     { id: "profile", label: "Profile Information", icon: "fas fa-user" },
     { id: "business", label: "Business Profile", icon: "fas fa-building" },
+    { id: "watchlist", label: "My Watchlist", icon: "fas fa-clock" },
     { id: "password", label: "Security Settings", icon: "fas fa-lock" },
   ];
 
@@ -166,29 +169,42 @@ const ProfileNavigation = ({ activeTab }) => {
 
   return (
     <div className="w-full">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-        <h3 className="text-base font-semibold text-gray-800 mb-4">
-          Account Settings
-        </h3>
-        <nav className="space-y-2">
-          {navItems.map(({ id, label, icon }) => (
-            <button
-              key={id}
-              onClick={() => handleTabChange(id)}
-              className={`w-full px-4 py-3 cursor-pointer text-left rounded-lg flex items-center text-sm font-medium transition-colors duration-200 ${
-                activeTab === id
-                  ? "text-white bg-[#0071E0] shadow-sm"
-                  : "text-gray-600 hover:bg-gray-50"
-              }`}
-            >
-              <i
-                className={`${icon} w-4 h-4 mr-3`}
-                style={{ color: activeTab === id ? "white" : "#0071E0" }}
-              ></i>
-              {label}
-            </button>
-          ))}
-        </nav>
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className="w-full">
+          <nav className="space-y-1">
+            {navItems.map(({ id, label, icon }) => (
+              <button
+                key={id}
+                onClick={() => handleTabChange(id)}
+                className={`w-full px-4 py-3 text-left rounded-xl flex items-center text-sm font-medium transition-all duration-200 group ${
+                  activeTab === id
+                    ? "bg-[#0071E0] text-white shadow-sm"
+                    : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                }`}
+              >
+                <span className={`mr-3 transition-colors duration-200 ${
+                  activeTab === id ? "text-white" : "text-gray-400 group-hover:text-gray-600"
+                }`}>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {id === "profile" && (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    )}
+                    {id === "business" && (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    )}
+                    {id === "watchlist" && (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    )}
+                    {id === "password" && (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    )}
+                  </svg>
+                </span>
+                {label}
+              </button>
+            ))}
+          </nav>
+        </div>
       </div>
     </div>
   );
@@ -327,23 +343,19 @@ const ProfileDetails = ({ formData, onChange, onSave }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="pb-4 border-b border-gray-200">
-        <h2 className="text-xl font-semibold text-gray-800">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <div className="space-y-2">
+        <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">
           Personal Information
         </h2>
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="text-gray-600">
           Update your personal details and how others see you on the platform
         </p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="space-y-6">
         {/* Name Field */}
-        <div className="md:col-span-2 space-y-2">
-          <label className="text-sm font-medium text-gray-700 flex items-center">
-            <i
-              className="fas fa-user w-4 h-4 mr-2"
-              style={{ color: "#0071E0" }}
-            ></i>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-900">
             Name <span className="text-red-500">*</span>
           </label>
           <input
@@ -351,10 +363,10 @@ const ProfileDetails = ({ formData, onChange, onSave }) => {
             {...register("name", {
               onChange: (e) => handleFieldChange("name", e.target.value),
             })}
-            className={`w-full px-4 py-2 rounded-lg border transition-colors duration-200 text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
+            className={`w-full px-4 py-3 rounded-xl border transition-all duration-200 text-base focus:ring-2 focus:ring-[#0071E0]/20 focus:border-[#0071E0] border-gray-200 hover:border-gray-300 ${
               errors.name
                 ? "border-red-500 focus:border-red-500"
-                : "border-gray-300 focus:border-[#0071E0]"
+                : ""
             }`}
             placeholder="Enter your name"
           />
@@ -367,12 +379,8 @@ const ProfileDetails = ({ formData, onChange, onSave }) => {
         </div>
 
         {/* Email Field */}
-        <div className="md:col-span-2 space-y-2">
-          <label className="text-sm font-medium text-gray-700 flex items-center">
-            <i
-              className="fas fa-envelope w-4 h-4 mr-2"
-              style={{ color: "#0071E0" }}
-            ></i>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-900">
             Email Address <span className="text-red-500">*</span>
           </label>
           <input
@@ -380,10 +388,10 @@ const ProfileDetails = ({ formData, onChange, onSave }) => {
             {...register("email", {
               onChange: (e) => handleFieldChange("email", e.target.value),
             })}
-            className={`w-full px-4 py-2 rounded-lg border transition-colors duration-200 text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
+            className={`w-full px-4 py-3 rounded-xl border transition-all duration-200 text-base focus:ring-2 focus:ring-[#0071E0]/20 focus:border-[#0071E0] border-gray-200 hover:border-gray-300 ${
               errors.email
                 ? "border-red-500 focus:border-red-500"
-                : "border-gray-300 focus:border-[#0071E0]"
+                : ""
             }`}
             placeholder="Enter your email address"
           />
@@ -396,15 +404,11 @@ const ProfileDetails = ({ formData, onChange, onSave }) => {
         </div>
 
         {/* Mobile Number with Country Code */}
-        <div className="md:col-span-2 space-y-2">
-          <label className="text-sm font-medium text-gray-700 flex items-center">
-            <i
-              className="fas fa-phone w-4 h-4 mr-2"
-              style={{ color: "#0071E0" }}
-            ></i>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-900">
             Mobile Number <span className="text-red-500">*</span>
           </label>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <div className="w-32">
               <CountrySelector
                 value={formData.mobileCountryCode}
@@ -422,10 +426,10 @@ const ProfileDetails = ({ formData, onChange, onSave }) => {
                   onChange: (e) =>
                     handleFieldChange("mobileNumber", e.target.value),
                 })}
-                className={`w-full px-4 py-2 rounded-lg border transition-colors duration-200 text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
+                className={`w-full px-4 py-3 rounded-xl border transition-all duration-200 text-base focus:ring-2 focus:ring-[#0071E0]/20 focus:border-[#0071E0] border-gray-200 hover:border-gray-300 ${
                   errors.mobileNumber
                     ? "border-red-500 focus:border-red-500"
-                    : "border-gray-300 focus:border-[#0071E0]"
+                    : ""
                 }`}
                 placeholder="Enter mobile number"
               />
@@ -441,16 +445,12 @@ const ProfileDetails = ({ formData, onChange, onSave }) => {
         </div>
 
         {/* WhatsApp Number with Country Code */}
-        <div className="md:col-span-2 space-y-2">
-          <label className="text-sm font-medium text-gray-700 flex items-center">
-            <i
-              className="fab fa-whatsapp w-4 h-4 mr-2"
-              style={{ color: "#0071E0" }}
-            ></i>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-900">
             WhatsApp Number{" "}
-            <span className="text-gray-400 ml-1">(Optional)</span>
+            <span className="text-gray-500 font-normal">(Optional)</span>
           </label>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <div className="w-32">
               <CountrySelector
                 value={formData.whatsappCountryCode}
@@ -468,10 +468,10 @@ const ProfileDetails = ({ formData, onChange, onSave }) => {
                   onChange: (e) =>
                     handleFieldChange("whatsappNumber", e.target.value),
                 })}
-                className={`w-full px-4 py-2 rounded-lg border transition-colors duration-200 text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
+                className={`w-full px-4 py-3 rounded-xl border transition-all duration-200 text-base focus:ring-2 focus:ring-[#0071E0]/20 focus:border-[#0071E0] border-gray-200 hover:border-gray-300 ${
                   errors.whatsappNumber
                     ? "border-red-500 focus:border-red-500"
-                    : "border-gray-300 focus:border-[#0071E0]"
+                    : ""
                 }`}
                 placeholder="Enter WhatsApp number"
               />
@@ -486,42 +486,40 @@ const ProfileDetails = ({ formData, onChange, onSave }) => {
           )}
         </div>
       </div>
-      <div className="flex justify-end pt-4">
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            className="min-w-[140px] bg-[#0071E0] text-white cursor-pointer py-2 px-4 rounded-md font-medium flex items-center justify-center disabled:opacity-70"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <svg
-                className="animate-spin h-5 w-5 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 
+      <div className="flex justify-end pt-6">
+        <button
+          type="submit"
+          className="px-8 py-3 bg-[#0071E0] text-white rounded-xl font-medium hover:bg-[#0056B3] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <svg
+              className="animate-spin h-5 w-5 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 
              0 5.373 0 12h4zm2 5.291A7.962 
              7.962 0 014 12H0c0 3.042 1.135 
              5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-            ) : (
-              <span>Save Changes</span>
-            )}
-          </button>
-        </div>
+              ></path>
+            </svg>
+          ) : (
+            <span>Save Changes</span>
+          )}
+        </button>
       </div>
     </form>
   );
@@ -1160,8 +1158,6 @@ const ProfilePage = () => {
   // Get active tab from query params, default to "profile" if not specified
   const activeTab = searchParams.get("tab") || "profile";
 
-  // Check if user came from Google login and profile is incomplete
-  const [isIncompleteProfile, setIsIncompleteProfile] = useState(false);
 
   // Set default tab in URL if no tab parameter is present
   useEffect(() => {
@@ -1250,21 +1246,6 @@ const ProfilePage = () => {
     }
   }, [profileImage]);
 
-  // Check if profile is incomplete on mount
-  useEffect(() => {
-    const user = localStorage.getItem("user");
-    if (user) {
-      try {
-        const userData = JSON.parse(user);
-        if (userData.platformName === "google") {
-          const isProfileComplete = AuthService.isProfileComplete(userData);
-          setIsIncompleteProfile(!isProfileComplete);
-        }
-      } catch (error) {
-        console.error("Error parsing user data:", error);
-      }
-    }
-  }, []);
 
   // Load profile on mount
   useEffect(() => {
@@ -1398,14 +1379,6 @@ const ProfilePage = () => {
           whatsappCountryCode: container?.whatsappCountryCode || "",
         });
 
-        // Check if profile is now complete
-        const updatedUserData = {
-          ...container,
-          businessProfile: container?.businessProfile || {},
-        };
-        const isProfileComplete =
-          AuthService.isProfileComplete(updatedUserData);
-        setIsIncompleteProfile(!isProfileComplete);
 
         toastHelper.showTost("Profile updated successfully", "success");
       } catch (refreshError) {
@@ -1414,7 +1387,8 @@ const ProfilePage = () => {
       }
     } catch (e) {
       console.error("Error updating profile:", e);
-      // Error already handled via toast in AuthService
+      // Error is already handled by AuthService with toast message
+      // No need to show additional error messages here
     }
   };
 
@@ -1464,20 +1438,6 @@ const ProfilePage = () => {
           : null;
         setBusinessStatus(newStatus);
 
-        // Check if profile is now complete
-        const updatedUserData = {
-          name: normalized.name,
-          email: normalized.email,
-          mobileNumber: normalized.mobileNumber,
-          mobileCountryCode: normalized.mobileCountryCode,
-          businessProfile: {
-            businessName: normalized.business.businessName,
-            country: normalized.business.country,
-          },
-        };
-        const isProfileComplete =
-          AuthService.isProfileComplete(updatedUserData);
-        setIsIncompleteProfile(!isProfileComplete);
 
         // Show appropriate success message based on status change
         if (currentStatus === "Approved" && newStatus === "Pending") {
@@ -1612,42 +1572,11 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Profile Completion Banner */}
-      {isIncompleteProfile && (
-        <div className="bg-amber-50 border-l-4 border-amber-400 p-4">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <i className="fas fa-exclamation-triangle text-amber-400"></i>
-              </div>
-              <div className="ml-3 flex-1">
-                <p className="text-sm text-amber-700">
-                  <strong>Complete your profile:</strong> Please fill in your
-                  personal and business information to access all features of
-                  the platform.
-                </p>
-              </div>
-              {!isIncompleteProfile && (
-                <div className="ml-3">
-                  <button
-                    onClick={() => navigate("/ready-stock")}
-                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
-                  >
-                    <i className="fas fa-check mr-2"></i>
-                    Continue to Dashboard
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-6">
+      <div>
+        <div className="flex flex-col lg:flex-row gap-12">
           {/* Left sidebar with profile picture and navigation */}
-          <div className="w-full lg:w-1/4 flex flex-col gap-6">
-            <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="w-full lg:w-80 flex flex-col gap-8">
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
               <ProfilePictureUpload
                 profileImage={profileImage}
                 displayName={profileFormData.name}
@@ -1659,8 +1588,8 @@ const ProfilePage = () => {
           </div>
 
           {/* Right content area */}
-          <div className="w-full lg:w-3/4">
-            <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="flex-1">
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
               {activeTab === "profile" && (
                 <ProfileDetails
                   formData={profileFormData}
@@ -1677,6 +1606,9 @@ const ProfilePage = () => {
                   onSave={handleSaveBusiness}
                   status={businessStatus}
                 />
+              )}
+              {activeTab === "watchlist" && (
+                <WatchlistContent />
               )}
               {activeTab === "password" && (
                 <ChangePassword

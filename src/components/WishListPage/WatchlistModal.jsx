@@ -5,10 +5,11 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChevronLeft,
   faChevronRight,
-  faClock,
+  faHeart,
   faBell,
   faShoppingCart,
   faTimes,
+  faClock,
 } from "@fortawesome/free-solid-svg-icons";
 import ProductCard from "../ReadyStockPage/ProductCard";
 import AddToCartPopup from "../ReadyStockPage/AddToCartPopup";
@@ -17,7 +18,7 @@ import iphoneImage from "../../assets/iphone.png";
 import Swal from "sweetalert2";
 import { convertPrice } from "../../utils/currencyUtils";
 
-const WishlistModal = ({ isOpen, onClose }) => {
+const WatchlistModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   const navigate = useNavigate();
@@ -76,12 +77,12 @@ const WishlistModal = ({ isOpen, onClose }) => {
     };
   };
 
-  const fetchWishlist = async (page) => {
+  const fetchWatchlist = async (page) => {
     setIsLoading(true);
     try {
       const data = await ProductService.getWishlist(page, itemsPerPage);
-      const wishlistDocs = data.docs || [];
-      const allProducts = wishlistDocs.flatMap((doc) => doc.productIds || []);
+      const watchlistDocs = data.docs || [];
+      const allProducts = watchlistDocs.flatMap((doc) => doc.productIds || []);
       const populatedProducts = await Promise.all(
         allProducts.map((p) => ProductService.getProductById(p._id))
       );
@@ -89,7 +90,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
       setProducts(mapped);
       setTotalProductsCount(data.totalDocs ? allProducts.length : 0);
     } catch (e) {
-      console.error("Fetch wishlist error:", e);
+      console.error("Fetch watchlist error:", e);
       setProducts([]);
       setTotalProductsCount(0);
     } finally {
@@ -100,40 +101,40 @@ const WishlistModal = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (isOpen) {
       setCurrentPage(1);
-      fetchWishlist(1);
+      fetchWatchlist(1);
     }
   }, [isOpen]);
 
   useEffect(() => {
     if (isOpen && currentPage > 1) {
-      fetchWishlist(currentPage);
+      fetchWatchlist(currentPage);
     }
   }, [currentPage]);
 
-  // Listen for wishlist updates from other components
+  // Listen for watchlist updates from other components
   useEffect(() => {
-    const handleWishlistUpdate = (event) => {
+    const handleWatchlistUpdate = (event) => {
       if (isOpen) {
-        // If a product was removed from wishlist, remove it from the current view
+        // If a product was removed from watchlist, remove it from the current view
         if (event.detail && !event.detail.isWishlisted) {
           setProducts((prev) =>
             prev.filter((p) => p.id !== event.detail.productId)
           );
           setTotalProductsCount((prev) => Math.max(0, prev - 1));
         } else {
-          // If a product was added to wishlist, refresh the current page
-          fetchWishlist(currentPage);
+          // If a product was added to watchlist, refresh the current page
+          fetchWatchlist(currentPage);
         }
       }
     };
 
-    window.addEventListener("wishlistUpdated", handleWishlistUpdate);
+    window.addEventListener("wishlistUpdated", handleWatchlistUpdate);
     return () => {
-      window.removeEventListener("wishlistUpdated", handleWishlistUpdate);
+      window.removeEventListener("wishlistUpdated", handleWatchlistUpdate);
     };
   }, [isOpen, currentPage]);
 
-  const handleWishlistChange = async (productId, newStatus) => {
+  const handleWatchlistChange = async (productId, newStatus) => {
     if (!newStatus) {
       try {
         // Optimistic update - remove from UI immediately
@@ -145,9 +146,9 @@ const WishlistModal = ({ isOpen, onClose }) => {
           wishlist: false,
         });
       } catch (error) {
-        console.error("Failed to remove from wishlist:", error);
+        console.error("Failed to remove from watchlist:", error);
         // Revert optimistic update on error
-        fetchWishlist(currentPage);
+        fetchWatchlist(currentPage);
       }
     }
   };
@@ -173,13 +174,6 @@ const WishlistModal = ({ isOpen, onClose }) => {
     if (product.isOutOfStock || product.isExpired) return;
 
     try {
-      // Redirect unauthenticated users to login before any business checks
-      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-      if (!isLoggedIn) {
-        const hashPath = window.location.hash?.slice(1) || '/home';
-        const returnTo = encodeURIComponent(hashPath);
-        return navigate(`/login?returnTo=${returnTo}`);
-      }
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       const { businessProfile } = user;
 
@@ -215,9 +209,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
 
       const customerId = user._id || "";
       if (!customerId) {
-        const hashPath = window.location.hash?.slice(1) || "/home";
-        const returnTo = encodeURIComponent(hashPath);
-        return navigate(`/login?returnTo=${returnTo}`);
+        return navigate("/signin");
       }
       setSelectedProduct(product);
       setIsAddToCartPopupOpen(true);
@@ -250,12 +242,12 @@ const WishlistModal = ({ isOpen, onClose }) => {
         <div className="bg-white rounded-2xl sm:rounded-2xl shadow-2xl w-full max-w-6xl h-[95vh] sm:h-[85vh] flex flex-col relative overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="bg-white border-b border-gray-100 px-4 sm:px-8 py-4 sm:py-6 flex items-center justify-between">
           <div className="flex items-center gap-3 sm:gap-4">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-red-50 rounded-full flex items-center justify-center">
-              <FontAwesomeIcon icon={faClock} className="text-sm sm:text-lg text-red-500" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-50 rounded-full flex items-center justify-center">
+              <FontAwesomeIcon icon={faClock} className="text-sm sm:text-lg text-blue-500" />
             </div>
             <div>
               <h2 className="text-lg sm:text-2xl font-semibold text-gray-900 tracking-tight">
-                Watch list
+                Watchlist
               </h2>
               <p className="text-xs sm:text-sm text-gray-500 font-medium">
                 {totalProductsCount}{" "}
@@ -276,7 +268,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
             <div className="flex items-center justify-center py-20">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading wishlist...</p>
+                <p className="text-gray-600">Loading watchlist...</p>
               </div>
             </div>
           ) : products.length === 0 ? (
@@ -287,7 +279,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
                   className="text-4xl text-gray-300 mb-4"
                 />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Your watch list is empty
+                  Your watchlist is empty
                 </h3>
                 <p className="text-gray-500">
                   Start adding products to keep track of them!
@@ -334,10 +326,10 @@ const WishlistModal = ({ isOpen, onClose }) => {
                         </div>
                         <button
                           onClick={() =>
-                            handleWishlistChange(product.id, false)
+                            handleWatchlistChange(product.id, false)
                           }
                           className="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-colors flex items-center justify-center"
-                          title="Remove from wishlist"
+                          title="Remove from watchlist"
                         >
                           <FontAwesomeIcon icon={faClock} className="text-xs" />
                         </button>
@@ -461,10 +453,10 @@ const WishlistModal = ({ isOpen, onClose }) => {
                                 )}
                                 <button
                                   onClick={() =>
-                                    handleWishlistChange(product.id, false)
+                                    handleWatchlistChange(product.id, false)
                                   }
                                   className="w-10 h-10 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-colors flex items-center justify-center group/remove"
-                                  title="Remove from wishlist"
+                                  title="Remove from watchlist"
                                 >
                                   <FontAwesomeIcon icon={faClock} className="text-sm group-hover/remove:scale-110 transition-transform" />
                                 </button>
@@ -523,4 +515,4 @@ const WishlistModal = ({ isOpen, onClose }) => {
   );
 };
 
-export default WishlistModal;
+export default WatchlistModal;

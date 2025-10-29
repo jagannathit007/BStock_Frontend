@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHeart,
@@ -21,10 +21,10 @@ import { GiPriceTag } from "react-icons/gi";
 import { IoTimeOutline, IoPeopleOutline } from "react-icons/io5";
 import { RiAuctionLine } from "react-icons/ri";
 import { convertPrice } from "../../utils/currencyUtils";
+import Countdown from "react-countdown";
 
 const BiddingProductDetails = ({ product, onBack }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [timeRemaining, setTimeRemaining] = useState(0); // in seconds
   const [isLiked, setIsLiked] = useState(false);
 
   // Sample images array - you can replace this with actual product images
@@ -37,47 +37,15 @@ const BiddingProductDetails = ({ product, onBack }) => {
     "/images/iphone15.png",
   ];
 
-  // Timer functionality - starts with 2 hours
-  useEffect(() => {
-    if (timeRemaining === 0) {
-    
-      setTimeRemaining(7200);
-    }
-
-    const timer = setInterval(() => {
-      setTimeRemaining((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  // Format time remaining
-  const formatTime = (seconds) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hours.toString().padStart(2, "0")}:${minutes
-      .toString()
-      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
-
   // Navigate images
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % productImages.length);
   };
-
   const prevImage = () => {
     setCurrentImageIndex(
       (prev) => (prev - 1 + productImages.length) % productImages.length
     );
   };
-
   const selectImage = (index) => {
     setCurrentImageIndex(index);
   };
@@ -91,7 +59,7 @@ const BiddingProductDetails = ({ product, onBack }) => {
           .thumbnail-container::-webkit-scrollbar {
             display: none;
           }
-          
+         
           /* Enhanced animations */
           @keyframes fadeInUp {
             from {
@@ -103,11 +71,11 @@ const BiddingProductDetails = ({ product, onBack }) => {
               transform: translateY(0);
             }
           }
-          
+         
           .animate-fadeInUp {
             animation: fadeInUp 0.6s ease-out;
           }
-          
+         
           /* Smooth hover transitions */
           * {
             transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
@@ -126,7 +94,6 @@ const BiddingProductDetails = ({ product, onBack }) => {
           <span className="mx-2">/</span>
           <span className="text-gray-900">{product.name}</span>
         </div>
-
         {/* Product Overview Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Product Images */}
@@ -143,7 +110,6 @@ const BiddingProductDetails = ({ product, onBack }) => {
                       filter: "drop-shadow(0 10px 20px rgba(0,0,0,0.1))",
                     }}
                   />
-
                   {/* Status Badges */}
                   <div className="absolute top-4 left-4 flex gap-2">
                     <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium shadow-lg">
@@ -153,7 +119,6 @@ const BiddingProductDetails = ({ product, onBack }) => {
                       Live Auction
                     </span>
                   </div>
-
                   {/* Favorite Button */}
                   {/* <div className="absolute top-4 right-4">
                     <button
@@ -194,7 +159,6 @@ const BiddingProductDetails = ({ product, onBack }) => {
                   </div>
                 </div>
               </div>
-
               {/* Thumbnail Gallery */}
               <div className="p-4 bg-gray-50 mt-2">
                 <div className="flex justify-center gap-3">
@@ -206,7 +170,7 @@ const BiddingProductDetails = ({ product, onBack }) => {
                         currentImageIndex === index
                           ? "opacity-100"
                           : "opacity-60 hover:opacity-80"
-                      }}`}
+                      }`}
                     >
                       <img
                         src={image}
@@ -215,14 +179,13 @@ const BiddingProductDetails = ({ product, onBack }) => {
                           currentImageIndex === index
                             ? "border-blue-500 scale-110 shadow-md"
                             : "border-gray-200 hover:border-gray-300"
-                        }}`}
+                        }`}
                       />
                     </div>
                   ))}
                 </div>
               </div>
             </div>
-
             {/* Manifest Download */}
             <div className="border-t border-gray-200 pt-4">
               <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
@@ -261,7 +224,6 @@ const BiddingProductDetails = ({ product, onBack }) => {
               </ul>
             </div>
           </div>
-
           {/* Product Information */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
@@ -272,7 +234,6 @@ const BiddingProductDetails = ({ product, onBack }) => {
                 </h1>
                 <p className="text-sm text-gray-500 mt-1">by Apple</p>
               </div>
-
               {/* Price + Negotiable + Timer */}
               <div className="flex items-center justify-between mb-6">
                 {/* Left: Price + Negotiable */}
@@ -283,16 +244,33 @@ const BiddingProductDetails = ({ product, onBack }) => {
                     )}
                   </span>
                 </div>
-
                 {/* Right: Timer */}
                 <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-6 py-2">
                   <IoTimeOutline className="text-red-600 text-sm" />
                   <span className="text-sm font-mono font-semibold text-red-700">
-                    {timeRemaining > 0 ? formatTime(timeRemaining) : "00:00:00"}
+                    {product.expiryTime ? (
+                      <Countdown
+                        date={product.expiryTime}
+                        renderer={({ days, hours, minutes, seconds, completed }) => {
+                          if (completed) {
+                            return <span>Auction Ended</span>;
+                          }
+                          return (
+                            <span className="font-semibold">
+                              {days > 0 ? `${days} days ` : ""}
+                              {String(hours).padStart(2, "0")}:
+                              {String(minutes).padStart(2, "0")}:
+                              {String(seconds).padStart(2, "0")}
+                            </span>
+                          );
+                        }}
+                      />
+                    ) : (
+                      product.timer || "00:00:00"
+                    )}
                   </span>
                 </div>
               </div>
-
               {/* Key Features */}
               <div className="bg-white rounded-xl p-4 border border-gray-200 mb-6">
                 <h3 className="text-base font-semibold text-gray-900 mb-3">
@@ -311,7 +289,6 @@ const BiddingProductDetails = ({ product, onBack }) => {
                       </div>
                     </div>
                   </div>
-
                   {/* Color */}
                   <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2 bg-gray-50">
                     <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
@@ -324,7 +301,6 @@ const BiddingProductDetails = ({ product, onBack }) => {
                       </div>
                     </div>
                   </div>
-
                   {/* RAM */}
                   <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2 bg-gray-50">
                     <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
@@ -337,7 +313,6 @@ const BiddingProductDetails = ({ product, onBack }) => {
                       </div>
                     </div>
                   </div>
-
                   {/* Storage */}
                   <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2 bg-gray-50">
                     <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center">
@@ -352,13 +327,11 @@ const BiddingProductDetails = ({ product, onBack }) => {
                   </div>
                 </div>
               </div>
-
               {/* Bid Input */}
               <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Your Bid Amount
                 </label>
-
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400 text-sm">
                     $
@@ -370,7 +343,6 @@ const BiddingProductDetails = ({ product, onBack }) => {
                     min="1246"
                   />
                 </div>
-
                 <p className="text-xs text-gray-500 mt-1">
                   Minimum bid: $1,246
                 </p>
@@ -380,7 +352,6 @@ const BiddingProductDetails = ({ product, onBack }) => {
                   Place Bid
                 </button>
               </div>
-
               {/* Bid Stats */}
               <div className="grid grid-cols-2 gap-3 mb-6">
                 <div className="bg-white rounded-lg p-3 text-center border border-gray-200 shadow-sm">
@@ -398,8 +369,7 @@ const BiddingProductDetails = ({ product, onBack }) => {
                 </div>
               </div>
             </div>
-
-            {/* Recent Bids Section - Placed BELOW Product Manifest */}
+            {/* Recent Bids Section */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mt-4">
               <h3 className="text-lg font-bold text-gray-900 mb-3">
                 Recent Bids

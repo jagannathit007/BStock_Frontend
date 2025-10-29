@@ -1,155 +1,195 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Routes,
   Route,
   Navigate,
   HashRouter,
+  useLocation,
+  useNavigate,
 } from "react-router-dom";
 import Header from "./components/Header";
 import NavTabs from "./components/NavTabs";
+import Footer from "./components/Footer";
+import Layout from "./components/Layout";
 import MainContent from "./components/ReadyStockPage/MainContent";
 import "./App.css";
 import ProductDetails from "./components/ReadyStockPage/ProductDetails";
 import BiddingContent from "./components/BiddingPage/BiddingContent";
+import BidProductDetails from "./components/BiddingPage/BidProductDetails";
 import LoginForm from "./components/LoginForm";
 import SignUpForm from "./components/SignUpForm";
 import VerifyEmailPrompt from "./components/VerifyEmailPrompt";
 import VerifyEmail from "./components/VerifyEmail";
 import CartPage from "./components/ReadyStockPage/CartPage";
 import ProfilePage from "./pages/ProfilePage";
+import HomePage from "./pages/HomePage";
 import Order from "./components/Order";
 import { AuthService } from "./services/auth/auth.services";
 import FlashDeals from "./components/ReadyStockPage/FlashDeals";
 
-const App = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(
-    localStorage.getItem("isLoggedIn") === "true"
-  );
+// Route guard: redirects unauthenticated users to login with returnTo
+const ProtectedRoute = ({ children, isLoggedIn }) => {
+  if (!isLoggedIn) {
+    const currentPath = window.location.hash.replace('#', '') || '/home';
+    const returnTo = encodeURIComponent(currentPath);
+    return <Navigate to={`/login?returnTo=${returnTo}`} replace />;
+  }
 
-  const handleLogin = () => {
-    localStorage.setItem("isLoggedIn", "true");
-    setIsLoggedIn(true);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    setIsLoggedIn(false);
-  };
-
-  const ProtectedRoute = ({ children }) => {
-    if (!isLoggedIn) {
-      return <Navigate to="/login" replace />;
-    }
-    
-    // Check profile completion for Google users on protected routes (except profile page)
-    const currentPath = window.location.hash.replace('#', '');
-    if (currentPath !== '/profile') {
-      const user = localStorage.getItem('user');
-      if (user) {
-        try {
-          const userData = JSON.parse(user);
-          if (userData.platformName === 'google') {
-            const isProfileComplete = AuthService.isProfileComplete(userData);
-            if (!isProfileComplete) {
-              return <Navigate to="/profile" replace />;
-            }
-          }
-        } catch (error) {
-          console.error('Error parsing user data:', error);
+  // Check profile completion for Google users on protected routes (except profile page)
+  const currentPath = window.location.hash.replace('#', '');
+  if (currentPath !== '/profile') {
+    const user = localStorage.getItem('user');
+    if (user) {
+      let userData = null;
+      try {
+        userData = JSON.parse(user);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+        return children;
+      }
+      if (userData && userData.platformName === 'google') {
+        const isProfileComplete = AuthService.isProfileComplete(userData);
+        if (!isProfileComplete) {
+          return <Navigate to="/profile" replace />;
         }
       }
     }
-    
-    return children;
+  }
+  return children;
+};
+
+// Component to handle header visibility based on current route
+const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Hide header only on login and signup pages
+  const hideHeader = location.pathname === '/login' || location.pathname === '/signup';
+
+  useEffect(() => {
+    if (isLoggedIn && (location.pathname === "/login" || location.pathname === "/signup")) {
+      const params = new URLSearchParams(location.search);
+      const returnTo = params.get("returnTo");
+
+      let redirectPath = "/home";
+      if (returnTo) {
+        try {
+          const decoded = decodeURIComponent(returnTo);
+          // Sanitize: must start with / and no ..
+          if (decoded.startsWith("/") && !decoded.includes("..")) {
+            redirectPath = decoded;
+          }
+        } catch (e) {
+          console.error("Invalid returnTo parameter", e);
+        }
+      }
+
+      // Clean redirect (replace to avoid history clutter)
+      navigate(redirectPath, { replace: true });
+    }
+  }, [isLoggedIn, location, navigate]);
+  
+  return (
+    <div className="min-h-screen flex flex-col">
+      {!hideHeader && (
+        <>
+          <Header onLogout={handleLogout} />
+          <NavTabs />
+        </>
+      )}
+
+      <main className="flex-1">
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/login" element={<LoginForm onLogin={handleLogin} />} />
+            <Route path="/signup" element={<SignUpForm />} />{" "}
+            <Route path="/verify-email" element={<VerifyEmailPrompt />} />
+            <Route path="/api/customer/verify-email/:token" element={<VerifyEmail />} />
+            <Route path="/customer/:token" element={<VerifyEmail />} />
+            {/* Public pages (browsable without login) */}
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/ready-stock" element={<Layout><MainContent /></Layout>} />
+            <Route path="/flash-deals" element={<Layout><FlashDeals /></Layout>} />
+            {/* Profile remains protected */}
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <Layout><ProfilePage /></Layout>
+                </ProtectedRoute>
+              }
+            />
+            {/* Default root to Home for all users */}
+            <Route path="/" element={<Navigate to="/home" replace /> } />
+            {/* Restricted actions require login */}
+            <Route
+              path="/product/:id"
+              element={
+                  <Layout><ProductDetails /></Layout>
+              }
+            />
+            <Route
+              path="/bidding"
+              element={
+                <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <Layout><BiddingContent /></Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/bidding/product/:id"
+              element={
+                <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <Layout><BidProductDetails /></Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/cart"
+              element={
+                <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <Layout><CartPage /></Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/order"
+              element={
+                <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <Layout><Order /></Layout>
+                </ProtectedRoute>
+              }
+            />
+            {/* Fallback to Home for unknown routes */}
+            <Route path="*" element={<Navigate to="/home" replace />} />
+          </Routes>
+        </main>
+        
+        {!hideHeader && <Footer />}
+      </div>
+    );
   };
 
-  return (
-    <HashRouter>
-      <div className="">
-        {isLoggedIn && (
-          <>
-            <Header onLogout={handleLogout} />
-            <NavTabs />
-          </>
-        )}
+  const App = () => {
+    const [isLoggedIn, setIsLoggedIn] = useState(
+      localStorage.getItem("isLoggedIn") === "true"
+    );
 
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/login" element={<LoginForm onLogin={handleLogin} />} />
-          <Route path="/signup" element={<SignUpForm />} />{" "}
-          <Route path="/verify-email" element={<VerifyEmailPrompt />} />
-          <Route path="/api/customer/verify-email/:token" element={<VerifyEmail />} />
-          <Route path="/customer/:token" element={<VerifyEmail />} />
-          {/* <Route path="/dashboard" element={<Dashboard />} /> */}
-          {/* Add this route */}
-          {/* Protected Routes */}
-          <Route
-            path="/ready-stock"
-            element={
-              <ProtectedRoute>
-                <MainContent />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/flash-deals"
-            element={
-              <ProtectedRoute>
-                <FlashDeals />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <ProfilePage />
-              </ProtectedRoute>
-            }
-          />
-          {/* Redirect root to appropriate page */}
-          <Route
-            path="/"
-            element={<Navigate to={isLoggedIn ? "/ready-stock" : "/login"} replace />}
-          />
-          <Route
-            path="/product/:id"
-            element={
-              <ProtectedRoute>
-                <ProductDetails />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/bidding"
-            element={
-              <ProtectedRoute>
-                <BiddingContent />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/cart"
-            element={
-              <ProtectedRoute>
-                <CartPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/order"
-            element={
-              <ProtectedRoute>
-                <Order />
-              </ProtectedRoute>
-            }
-          />
-          {/* Redirect to login if no matching route */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </div>
-    </HashRouter>
-  );
-};
+    const handleLogin = () => {
+      localStorage.setItem("isLoggedIn", "true");
+      setIsLoggedIn(true);
+    };
+
+    const handleLogout = () => {
+      localStorage.removeItem("isLoggedIn");
+      setIsLoggedIn(false);
+    };
+
+    return (
+      <HashRouter>
+        <AppContent isLoggedIn={isLoggedIn} handleLogout={handleLogout} handleLogin={handleLogin} />
+      </HashRouter>
+    );
+  };
 
 export default App;
