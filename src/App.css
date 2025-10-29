@@ -156,3 +156,9 @@
   backdrop-filter: blur(4.8px);
 -webkit-backdrop-filter: blur(4.8px);
 }
+
+.glassiffectfor_productinfo{
+  background: rgba(255, 255, 255, 0.77);
+backdrop-filter: blur(8px);
+-webkit-backdrop-filter: blur(8px);
+}

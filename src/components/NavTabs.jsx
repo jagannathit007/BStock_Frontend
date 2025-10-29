@@ -26,9 +26,42 @@ const NavTabs = () => {
     checkProfileCompletion();
   }, []);
 
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem('isLoggedIn') === 'true';
+  });
+
   useEffect(() => {
     checkProfileCompletion();
   }, [location.pathname]);
+
+  useEffect(() => {
+    const checkLoginStatus = () => {
+      setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
+    };
+
+    checkLoginStatus();
+    
+    // Listen for login state changes
+    const handleStorageChange = (e) => {
+      if (e.key === 'isLoggedIn') {
+        checkLoginStatus();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also listen to custom events (for same-tab login)
+    const handleLoginChange = () => {
+      checkLoginStatus();
+    };
+    
+    window.addEventListener('loginStateChanged', handleLoginChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('loginStateChanged', handleLoginChange);
+    };
+  }, []);
 
   const tabs = [
     { 
@@ -61,7 +94,8 @@ const NavTabs = () => {
         </svg>
       )
     },
-    { 
+    // Only show bidding tab when user is logged in
+    ...(isLoggedIn ? [{
       id: "bidding", 
       name: "Bidding", 
       path: "/bidding",
@@ -70,7 +104,7 @@ const NavTabs = () => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
         </svg>
       )
-    },
+    }] : []),
   ];
 
   const getActiveTab = () => {
@@ -88,6 +122,13 @@ const NavTabs = () => {
   const activeTab = getActiveTab();
 
   const handleTabClick = (path) => {
+    // Check if trying to access bidding without login
+    if (path === '/bidding' && !isLoggedIn) {
+      const hashPath = window.location.hash?.slice(1) || '/home';
+      const returnTo = encodeURIComponent(hashPath);
+      navigate(`/login?returnTo=${returnTo}`);
+      return;
+    }
     navigate(path);
   };
 
@@ -95,7 +136,7 @@ const NavTabs = () => {
     <>
       <nav className="bg-white/80 backdrop-blur-sm border-b border-gray-100 overflow-x-auto sticky top-16 z-40 animate-slideUp">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex space-x-8 min-w-max">
+          <div className="flex space-x-8 min-w-max pe-4">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.name;
               return (

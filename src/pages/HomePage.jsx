@@ -9,6 +9,13 @@ const HomePage = () => {
   };
 
   const handleNavigateToBidding = () => {
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    if (!isLoggedIn) {
+      const hashPath = window.location.hash?.slice(1) || '/home';
+      const returnTo = encodeURIComponent(hashPath);
+      navigate(`/login?returnTo=${returnTo}`);
+      return;
+    }
     navigate("/bidding");
   };
 

@@ -125,7 +125,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       currentProduct.subSkuFamilyId?.name ||
       currentProduct.skuFamilyId?.name ||
       currentProduct.name,
-    brand: currentProduct.skuFamilyId?.brand || currentProduct.brand,
+    brand: currentProduct.skuFamilyId?.name || currentProduct.brand,
     code: currentProduct.skuFamilyId?.code || currentProduct.code,
     description:
       currentProduct.skuFamilyId?.description || currentProduct.description,
@@ -683,6 +683,75 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     },
   ].filter((spec) => spec.value && spec.value !== "");
 
+  // Helper function to get country flag emoji
+  const getCountryFlag = (countryName) => {
+    if (!countryName) return "🌍";
+    const country = countryName.toLowerCase();
+    if (country.includes("hongkong") || country.includes("hong kong")) return "🇭🇰";
+    if (country.includes("uae") || country.includes("united arab")) return "🇦🇪";
+    if (country.includes("usa") || country.includes("united states")) return "🇺🇸";
+    if (country.includes("uk") || country.includes("united kingdom")) return "🇬🇧";
+    if (country.includes("india")) return "🇮🇳";
+    if (country.includes("china")) return "🇨🇳";
+    if (country.includes("japan")) return "🇯🇵";
+    if (country.includes("korea")) return "🇰🇷";
+    return "🌍";
+  };
+
+  // Storage & Variant label
+  const storageVariantLabel = [
+    processedProduct.storage,
+    processedProduct.color,
+    processedProduct.simType,
+  ]
+    .filter(Boolean)
+    .join(" • ");
+
+  // Get color swatch style based on color name (for circular swatches)
+  const getColorSwatchStyle = (colorName) => {
+    if (!colorName) return "bg-gray-400";
+    const color = colorName.toLowerCase();
+    if (color.includes("orange")) return "bg-orange-500";
+    if (color.includes("black")) return "bg-gray-900";
+    if (color.includes("white")) return "bg-white border border-gray-300";
+    if (color.includes("blue")) return "bg-blue-500";
+    if (color.includes("gold")) return "bg-gradient-to-br from-yellow-300 to-yellow-600";
+    if (color.includes("silver")) return "bg-gradient-to-br from-gray-300 to-gray-500";
+    if (color.includes("red")) return "bg-red-500";
+    if (color.includes("green")) return "bg-green-500";
+    if (color.includes("purple")) return "bg-purple-500";
+    if (color.includes("gray") || color.includes("grey")) return "bg-gray-500";
+    return "bg-gray-400";
+  };
+
+  // Build RAM + Storage combinations for size selection (current + related products)
+  const getSizeOptions = () => {
+    const combinations = [];
+    const seen = new Set();
+
+    const pushCombo = (ram, storage) => {
+      if (!ram || !storage) return;
+      const key = `${ram}__${storage}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      combinations.push({
+        ram: String(ram),
+        storage: String(storage),
+        label: `${ram} + ${storage}`,
+      });
+    };
+
+    // Current product
+    pushCombo(processedProduct.ram, processedProduct.storage);
+
+    // Related products
+    if (Array.isArray(currentProduct?.relatedProducts)) {
+      currentProduct.relatedProducts.forEach((p) => pushCombo(p.ram, p.storage));
+    }
+
+    return combinations.slice(0, 8);
+  };
+
   const getStockIcon = () => {
     if (processedProduct.isExpired) return faTimesCircle;
     if (effectiveStockStatus === "In Stock") return faCheckCircle;
@@ -754,7 +823,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   `}
       </style>
       <div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-6">
           {/* Left Column - Images */}
           <div className="space-y-4">
             <div className="relative group max-w-lg mx-auto">
@@ -785,7 +854,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   </span>
                 </div>
                 {/* Product Specifications under Stock Status (polished with subtle animation and glass effect) */}
-                <div className="absolute top-12 left-3 z-20">
+                <div className="hidden md:block absolute top-12 left-3 z-20">
                   <div className="px-3 py-3 product-info-glasseffects border border-white/50 rounded-xl shadow-lg">
                     <div className="space-y-2">
                       {processedProduct.condition && (
@@ -816,7 +885,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   </div>
                 </div>
                 <button
-                  className="absolute top-3 right-3 z-20 p-2 bg-white/80 rounded-md hover:bg-white transition-colors duration-200"
+                  className="absolute top-3 right-3 w-[40px] h-[40px] z-20 p-2 bg-white/80 rounded-md hover:bg-white transition-colors duration-200"
                   onClick={handleToggleWishlist}
                 >
                   <FontAwesomeIcon
@@ -855,7 +924,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                 </div>
               </div>
             </div>
-            <div className="max-w-lg mx-auto">
+            <div className="hidden md:block max-w-lg mx-auto">
               <div className="grid grid-cols-5 gap-2">
                 {productImages.map((image, index) => (
                   <button
@@ -878,8 +947,8 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
           </div>
 
           {/* Right Column - Product Details */}
-          <div className="space-y-4">
-            <div className="border-b border-gray-200 pb-3">
+          <div className="space-y-4 px-2 md:px-0">
+            <div className="">
               <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
                 {processedProduct.name}
               </h1>
@@ -887,9 +956,10 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                 by {processedProduct.brand}
               </p>
             </div>
+              <div className="border-b border-gray-200 pb-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <span className="text-3xl font-semibold text-gray-900">
+                <span className="text-3xl font-semibold text-green-600">
                   {convertPrice(processedProduct.price)}
                 </span>
                 {processedProduct.isNegotiable && (
@@ -907,71 +977,128 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                 </div>
               )}
             </div>
-            {(processedProduct.storage ||
-              processedProduct.ram ||
-              processedProduct.color ||
-              processedProduct.condition) && (
-              <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                <h3 className="text-sm font-semibold text-gray-900 mb-2">Key Features</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {processedProduct.condition && (
-                    <div className="flex items-center bg-white rounded-lg p-2 shadow-sm border border-gray-100">
-                      <div className="w-6 h-6 bg-blue-50 rounded-md flex items-center justify-center mr-2">
-                        <FontAwesomeIcon icon={faShield} className="text-blue-600 text-xs" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <span className="text-xs text-gray-500 font-medium">Condition</span>
-                        <div className="text-xs font-bold text-gray-900 capitalize truncate">
-                          {processedProduct.condition}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {processedProduct.color && (
-                    <div className="flex items-center bg-white rounded-lg p-2 shadow-sm border border-gray-100">
-                      <div className="w-6 h-6 bg-purple-50 rounded-md flex items-center justify-center mr-2">
-                        <FontAwesomeIcon icon={faCircleDot} className="text-purple-600 text-xs" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <span className="text-xs text-gray-500 font-medium">Color</span>
-                        <div className="text-xs font-bold text-gray-900 capitalize truncate">
-                          {processedProduct.color}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {processedProduct.ram && (
-                    <div className="flex items-center bg-white rounded-lg p-2 shadow-sm border border-gray-100">
-                      <div className="w-6 h-6 bg-green-50 rounded-md flex items-center justify-center mr-2">
-                        <FontAwesomeIcon icon={faMicrochip} className="text-green-600 text-xs" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <span className="text-xs text-gray-500 font-medium">RAM</span>
-                        <div className="text-xs font-bold text-gray-900 truncate">
-                          {processedProduct.ram}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {processedProduct.storage && (
-                    <div className="flex items-center bg-white rounded-lg p-2 shadow-sm border border-gray-100">
-                      <div className="w-6 h-6 bg-orange-50 rounded-md flex items-center justify-center mr-2">
-                        <FontAwesomeIcon icon={faDatabase} className="text-orange-600 text-xs" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <span className="text-xs text-gray-500 font-medium">Storage</span>
-                        <div className="text-xs font-bold text-gray-900 truncate">
-                          {processedProduct.storage}
-                        </div>
-                      </div>
-                    </div>
-                  )}
+            </div>
+            
+            {/* Mobile Colour Selection - Above Key Features */}
+            {variantOptions.colors.length > 0 && (
+              <div className="md:hidden mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-3">Colour</label>
+                <div className="flex items-center gap-3">
+                  {variantOptions.colors.map((c) => {
+                    const isSelected = selectedVariant.color === c;
+                    return (
+                      <button
+                        key={c}
+                        onClick={() => handleVariantClick("color", c)}
+                        className={`w-10 h-10 rounded-full ${getColorSwatchStyle(c)} border-2 transition-all ${
+                          isSelected
+                            ? "border-gray-900"
+                            : "border-gray-200"
+                        }`}
+                      >
+                        {isSelected && (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <svg className="w-4 h-4 text-white drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
+
+            {/* Mobile Size (RAM + Storage) Selection */}
+            {getSizeOptions().length > 0 && (
+              <div className="md:hidden mb-4 border-b border-gray-200 pb-3">
+                <label className="block text-sm text-gray-500 font-medium mb-2">
+                  Size : <span className="font-bold text-gray-900">{processedProduct.ram} + {processedProduct.storage}</span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {getSizeOptions().map((size, idx) => {
+                    const isSelected = String(selectedVariant.ram) === String(size.ram) && String(selectedVariant.storage) === String(size.storage);
+                    return (
+                      <button
+                        key={`${size.ram}-${size.storage}-${idx}`}
+                        onClick={() => {
+                          if (selectedVariant.ram !== size.ram) handleVariantClick("ram", size.ram);
+                          if (selectedVariant.storage !== size.storage) handleVariantClick("storage", size.storage);
+                        }}
+                        className={`px-4 py-2 rounded-[10px] text-sm font-semibold border transition-colors ${
+                          isSelected ? "border-blue-500 text-blue-600 bg-blue-50" : "border-gray-200 text-gray-800 bg-white"
+                        }`}
+                      >
+                        {size.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Key Features Section - 6 Cards Grid */}
+            <div className="md:hidden">
+              <h3 className="text-base font-bold text-gray-900 mb-3">Key Features</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {/* Card 1: SKU / Model ID */}
+                {processedProduct.code && (
+                  <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="text-xs text-gray-500 font-medium mb-1">SKU / Model ID</p>
+                    <p className="text-sm font-bold text-gray-900">{processedProduct.code}</p>
+                  </div>
+                )}
+
+                {/* Card 2: Storage & Variant */}
+                {storageVariantLabel && (
+                  <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="text-xs text-gray-500 font-medium mb-1">Storage & Variant</p>
+                    <p className="text-sm font-bold text-gray-900">{storageVariantLabel}</p>
+                  </div>
+                )}
+
+                {/* Card 3: Warehouse */}
+                {processedProduct.country && (
+                  <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="text-xs text-gray-500 font-medium mb-1">Warehouse</p>
+                    <p className="text-sm font-bold text-gray-900">
+                       {processedProduct.country}
+                    </p>
+                  </div>
+                )}
+
+                {/* Card 4: Delivery (EST) */}
+                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-xs text-gray-500 font-medium mb-1">Delivery (EST)</p>
+                  <p className="text-sm font-bold text-gray-900">
+                    {currentProduct?.deliveryEstimate || processedProduct.deliveryEstimate || "3-5 Business Days"}
+                  </p>
+                </div>
+
+                {/* Card 5: MOQ */}
+                {processedProduct.moq && (
+                  <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="text-xs text-gray-500 font-medium mb-1">MOQ</p>
+                    <p className="text-sm font-bold text-gray-900">{processedProduct.moq} Units</p>
+                  </div>
+                )}
+
+                {/* Card 6: Available Stock */}
+                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-xs text-gray-500 font-medium mb-1">Available Stock</p>
+                  <p className={`text-sm font-bold ${effectiveStockStatus === "In Stock" ? "text-green-600" : "text-gray-900"} flex items-center gap-1`}>
+                    {effectiveStockStatus === "In Stock" && (
+                      <FontAwesomeIcon icon={faCheckCircle} className="text-green-600" />
+                    )}
+                    {effectiveStockCount} Units
+                  </p>
+                </div>
+              </div>
+            </div>
             {processedProduct.description && (
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-2">Description</h3>
+                <h3 className="text-base font-bold text-gray-900 mb-2">About This Item</h3>
                 <p className="text-sm text-gray-600 leading-relaxed">
                   {processedProduct.description}
                 </p>
@@ -986,7 +1113,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                 {/* First Row: Color and RAM */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {variantOptions.colors.length > 0 && (
-                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
+                    <div className="hidden md:block bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
                       <div className="flex items-center mb-3">
                         <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
                           <FontAwesomeIcon icon={faPalette} className="text-purple-600 text-sm" />
@@ -1030,7 +1157,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                     </div>
                   )}
                   {variantOptions.rams.length > 0 && (
-                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
+                    <div className="hidden md:block bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
                       <div className="flex items-center mb-3">
                         <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
                           <FontAwesomeIcon icon={faMicrochip} className="text-green-600 text-sm" />
@@ -1068,9 +1195,9 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                 </div>
 
                 {/* Second Row: Storage and SIM Type */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="hidden md:block grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {variantOptions.storages.length > 0 && (
-                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
+                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200 mb-4">
                       <div className="flex items-center mb-3">
                         <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
                           <FontAwesomeIcon icon={faDatabase} className="text-orange-600 text-sm" />
@@ -1144,7 +1271,8 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                 </div>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-3">
+            {/* Desktop/Tablet quantity + total */}
+            <div className="hidden md:grid grid-cols-2 gap-3">
               <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                 <span className="text-xs text-gray-500 block font-medium mb-1">Minimum Order Quantity</span>
                 <span className="text-lg font-bold text-gray-900">{processedProduct.moq} units</span>
@@ -1193,7 +1321,8 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                 )}
               </div>
             )}
-            <div className="grid grid-cols-2 gap-4 items-center">
+            {/* Desktop/Tablet quantity + total + CTAs */}
+            <div className="hidden md:grid grid-cols-2 gap-4 items-center">
               <div>
                 <label className="block text-sm font-semibold text-gray-600 mb-2">Quantity</label>
                 <div className="flex items-center">
@@ -1248,7 +1377,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                 </span>
               </div>
             </div>
-            <div className="flex space-x-3">
+            <div className="hidden md:flex space-x-3">
               {processedProduct.isExpired ? (
                 <button
                   className="flex-1 cursor-pointer text-black py-3 rounded-lg text-sm font-semibold border border-gray-200 hover:bg-gray-50 hover:border-gray-300 shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center"
@@ -1313,6 +1442,112 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
           </div>
 
         </div>
+        {/* Spacer for mobile sticky bar */}
+        <div className="md:hidden" />
+
+        {/* Mobile sticky bottom action bar */}
+        {!processedProduct.isExpired && (
+          <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-6px_20px_rgba(0,0,0,0.06)] glassiffectfor_productinfo">
+            <div className="px-4 py-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <span className="block text-xs text-gray-500 font-medium">Total</span>
+                  <span className="text-lg font-extrabold text-green-600">{convertPrice(totalAmount)}</span>
+                  {processedProduct.moq && (
+                    <p className="text-xs text-gray-600">
+                      Minimum order quantity is {processedProduct.moq} units.
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center">
+                  <button
+                    className="w-8 h-8 flex items-center cursor-pointer justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-default"
+                    onClick={() => handleQuantityChange(-1)}
+                    disabled={
+                      quantity <= processedProduct.moq ||
+                      effectiveIsOutOfStock ||
+                      processedProduct.isExpired
+                    }
+                  >
+                    <FontAwesomeIcon icon={faMinus} className="w-3 h-3" />
+                  </button>
+                  <input
+                    className="mx-2 w-14 text-center text-base font-bold text-gray-900 border border-gray-200 rounded-lg py-2 focus:outline-none"
+                    min={processedProduct.moq}
+                    max={effectiveStockCount}
+                    type="number"
+                    value={quantity}
+                    onChange={(e) => {
+                      const newValue = parseInt(e.target.value) || processedProduct.moq;
+                      if (newValue >= processedProduct.moq && newValue <= effectiveStockCount) {
+                        setQuantity(newValue);
+                      }
+                    }}
+                    disabled={effectiveIsOutOfStock || processedProduct.isExpired}
+                  />
+                  <button
+                    className="w-8 h-8 flex items-center cursor-pointer justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-default"
+                    onClick={() => handleQuantityChange(1)}
+                    disabled={
+                      quantity >= effectiveStockCount ||
+                      effectiveIsOutOfStock ||
+                      processedProduct.isExpired
+                    }
+                  >
+                    <FontAwesomeIcon icon={faPlus} className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+
+              {effectiveIsOutOfStock ? (
+                <div className="flex gap-3">
+                  <button
+                    className="flex-1 cursor-pointer text-gray-700 py-3 rounded-lg text-sm font-semibold border border-gray-200 bg-gray-50"
+                    disabled
+                  >
+                    Out of Stock
+                  </button>
+                  {canNotify && (notify ? (
+                    <button
+                      className="flex-1 bg-red-600 cursor-pointer text-white py-3 rounded-lg text-sm font-semibold"
+                      onClick={(ev) => handleNotifyToggle(ev, false)}
+                    >
+                      Turn Off
+                    </button>
+                  ) : (
+                    <button
+                      className="flex-1 bg-blue-600 cursor-pointer text-white py-3 rounded-lg text-sm font-semibold"
+                      onClick={(ev) => handleNotifyToggle(ev, true)}
+                    >
+                      Notify Me
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleAddToCartClick}
+                    className="flex-1 cursor-pointer bg-white text-gray-900 py-3 rounded-lg text-sm font-semibold border border-gray-200"
+                  >
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <FontAwesomeIcon icon={faCartShopping} />
+                      Add to Cart
+                    </span>
+                  </button>
+                  <button
+                    onClick={handleBuyNowClick}
+                    className="flex-1 cursor-pointer bg-blue-600 text-white py-3 rounded-lg text-sm font-semibold"
+                  >
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <FontAwesomeIcon icon={faBolt} />
+                      Buy Now
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Product Specifications Section */}
         <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

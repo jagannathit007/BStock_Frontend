@@ -181,8 +181,11 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
     };
 
     const handleLogout = () => {
-      localStorage.removeItem("isLoggedIn");
+      // Clear entire localStorage
+      localStorage.clear();
       setIsLoggedIn(false);
+      // Dispatch event to notify other components of logout
+      window.dispatchEvent(new Event('loginStateChanged'));
     };
 
     return (

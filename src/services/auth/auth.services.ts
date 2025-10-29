@@ -298,12 +298,8 @@ export class AuthService {
   // Clear user data from localStorage (for logout)
   static clearUserData = (): void => {
     try {
-      localStorage.removeItem('user');
-      localStorage.removeItem('profileImageUrl');
-      localStorage.removeItem('userId');
-      localStorage.removeItem('token');
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('userCurrency');
+      // Clear entire localStorage
+      localStorage.clear();
     } catch (error) {
       console.error('Failed to clear user data from localStorage:', error);
     }

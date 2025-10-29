@@ -340,7 +340,7 @@ const MainContent = () => {
       <HeroSlider/>
       <div className="flex flex-col lg:flex-row gap-6">
         {showMobileFilters && (
-          <div className="fixed inset-0 z-40 lg:hidden">
+          <div className="fixed inset-0 z-[99] lg:hidden">
             <div
               className="absolute inset-0 bg-opacity-30 backdrop-blur-[1.5px]"
               onClick={() => setShowMobileFilters(false)}
