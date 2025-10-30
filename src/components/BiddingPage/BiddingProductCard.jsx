@@ -218,15 +218,15 @@ const BiddingProductCard = ({
 
         {/* Product Details */}
         <div className="px-3 pb-3">
-          <div className="grid grid-cols-2 gap-2.5 mb-2">
+          <div className="grid grid-cols-4 gap-2.5 mb-2">
             <div className="w-full h-[48px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center">
               <div className="text-xs text-gray-900 text-center">Units</div>
               <div className="text-sm text-gray-500 font-medium text-center mt-0.5">{product.units || "-"}</div>
             </div>
             <div className="w-full h-[48px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center">
-              <div className="text-xs text-gray-900 text-center">Specs</div>
+              <div className="text-xs text-gray-900 text-center">Spaces</div>
               <div className="text-sm text-gray-500 font-medium text-center mt-0.5">
-                {(product.memory || "") + (product.memory && product.carrier ? " • " : "") + (product.carrier || "-")}
+                {(product.memory || "-") }
               </div>
             </div>
             <div className="w-full h-[48px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center">
@@ -257,15 +257,14 @@ const BiddingProductCard = ({
             </div>
           </div>
 
-          {/* Next Min Bid input */}
-          <div className="mb-2">
-            <label className="text-xs text-gray-500 mb-0.5 block">Next Min Bid</label>
-            <div className="relative">
+          {/* Next Min Bid input + Buttons in one row */}
+          <div className="flex items-center gap-2 mb-2">
+            <div className="relative flex-1 min-w-0">
               <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
               <input
                 type="text"
                 className="w-full pl-5 pr-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071E0] disabled:bg-gray-100 disabled:cursor-not-allowed"
-                placeholder={product?.minNextBid ? String(product.minNextBid) : "Enter amount"}
+                placeholder="Enter next min bid amount"
                 value={myMaxBidInput}
                 disabled={auctionEnded || isSubmittingBid}
                 onClick={(e) => e.stopPropagation()}
@@ -275,51 +274,47 @@ const BiddingProductCard = ({
                 }}
               />
             </div>
+            <button
+              className={`py-2 px-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                auctionEnded || isCurrentUserBidder || isSubmittingBid
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : product.isLeading
+                  ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer"
+                  : "bg-[#0071E0] hover:bg-blue-600 text-white cursor-pointer"
+              }`}
+              onClick={handleBidButtonClick}
+              disabled={auctionEnded || isCurrentUserBidder || isSubmittingBid}
+            >
+              {isSubmittingBid ? (
+                <>
+                  <Spinner />
+                  <span className="ml-1">Placing…</span>
+                </>
+              ) : (
+                <>
+                  <FontAwesomeIcon
+                    icon={auctionEnded || isCurrentUserBidder ? faClock : (product.isLeading ? faCrown : faGavel)}
+                    className="mr-2"
+                  />
+                  {auctionEnded ? "Ended" : isCurrentUserBidder ? "Leading" : (product.isLeading ? "Leading" : "Bid")}
+                </>
+              )}
+            </button>
+            <button
+              className={`w-10 h-10 rounded-lg border flex items-center justify-center transition-all duration-200 ${
+                auctionEnded || isCurrentUserBidder
+                  ? "border-gray-300 text-gray-400 bg-gray-100 cursor-not-allowed"
+                  : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 cursor-pointer"
+              }`}
+              disabled={auctionEnded || isCurrentUserBidder}
+              onClick={(e) => {
+                e.stopPropagation();
+                // Handle add to cart
+              }}
+            >
+              <FontAwesomeIcon icon={faShoppingCart} className="text-base" />
+            </button>
           </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="px-3 pb-3 flex items-center gap-2">
-          <button
-            className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
-              auctionEnded || isCurrentUserBidder || isSubmittingBid
-                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                : product.isLeading
-                ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer"
-                : "bg-[#0071E0] hover:bg-blue-600 text-white cursor-pointer"
-            }`}
-            onClick={handleBidButtonClick}
-            disabled={auctionEnded || isCurrentUserBidder || isSubmittingBid}
-          >
-            {isSubmittingBid ? (
-              <>
-                <Spinner />
-                <span className="ml-1">Placing…</span>
-              </>
-            ) : (
-              <>
-                <FontAwesomeIcon
-                  icon={auctionEnded || isCurrentUserBidder ? faClock : (product.isLeading ? faCrown : faGavel)}
-                  className="mr-2"
-                />
-                {auctionEnded ? "Ended" : isCurrentUserBidder ? "Leading" : (product.isLeading ? "Leading" : "Bid")}
-              </>
-            )}
-          </button>
-          <button
-            className={`w-10 h-10 rounded-lg border flex items-center justify-center transition-all duration-200 ${
-              auctionEnded || isCurrentUserBidder
-                ? "border-gray-300 text-gray-400 bg-gray-100 cursor-not-allowed"
-                : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 cursor-pointer"
-            }`}
-            disabled={auctionEnded || isCurrentUserBidder}
-            onClick={(e) => {
-              e.stopPropagation();
-              // Handle add to cart
-            }}
-          >
-            <FontAwesomeIcon icon={faShoppingCart} className="text-base" />
-          </button>
         </div>
       </div>
     );
@@ -492,11 +487,17 @@ const BiddingProductCard = ({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-2 w-full mb-2">
+          <div className="grid grid-cols-4 gap-2 w-full mb-2">
             <div className="w-full h-[48px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
               <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">Units</div>
               <div className="text-sm text-gray-500 font-medium leading-5 tracking-normal text-center align-middle mt-0.5">
                 {product.units || "-"}
+              </div>
+            </div>
+            <div className="w-full h-[48px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
+              <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">Spaces</div>
+              <div className="text-sm text-gray-500 font-medium leading-5 tracking-normal text-center align-middle mt-0.5">
+                {product.memory || "-" }
               </div>
             </div>
             <div className="w-full h-[48px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
@@ -531,15 +532,14 @@ const BiddingProductCard = ({
             </div>
           </div>
 
-          {/* MY MAX BID */}
-          <div className="mb-2">
-            <label className="text-xs text-gray-500 mb-0.5 block">My Max Bid</label>
-            <div className="relative">
+          {/* Input + Buttons in one row */}
+          <div className="flex mt-auto w-full gap-2 items-center">
+            <div className="relative flex-1 min-w-0">
               <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
               <input
                 type="text"
                 className="w-full pl-5 pr-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071E0] disabled:bg-gray-100 disabled:cursor-not-allowed"
-                placeholder="Enter max bid"
+                placeholder="Enter next min bid amount"
                 value={myMaxBidInput}
                 disabled={auctionEnded || isSubmittingBid}
                 onClick={(e) => e.stopPropagation()}
@@ -549,24 +549,23 @@ const BiddingProductCard = ({
                 }}
               />
             </div>
-          </div>
-
-          {/* ACTION BUTTONS */}
-          <div className="flex mt-auto w-full gap-2">
             <button
-              className={`flex-1 border ${
+              className={`border ${
                 auctionEnded || isCurrentUserBidder
                   ? "border-gray-300 text-gray-400 bg-gray-100 cursor-not-allowed"
                   : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 cursor-pointer"
               } py-1.5 px-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center justify-center`}
               disabled={auctionEnded || isCurrentUserBidder}
+              onClick={(e) => {
+                e.stopPropagation();
+                // Handle add to cart
+              }}
             >
               <FontAwesomeIcon icon={faShoppingCart} className="mr-1" />
-              Add to Cart
+              Add
             </button>
-
             <button
-              className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all duration-200 shadow-sm ${
+              className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition-all duration-200 shadow-sm ${
                 auctionEnded || isCurrentUserBidder || isSubmittingBid
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                   : product.isLeading
