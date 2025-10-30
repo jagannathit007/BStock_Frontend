@@ -29,7 +29,7 @@ const ViewControls = ({
   return (
     <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-8 gap-6">
       <div className="flex items-center space-x-4 w-full lg:w-auto">
-        <div className="flex bg-gray-100 rounded-2xl p-1.5 w-full lg:w-auto">
+        {/* <div className="flex bg-gray-100 rounded-2xl p-1.5 w-full lg:w-auto"> */}
           {/* <button
             className={`flex-1 lg:flex-none px-4 py-3 cursor-pointer text-sm font-medium rounded-xl transition-all duration-200 font-apple ${
               viewMode === "grid"
@@ -54,7 +54,7 @@ const ViewControls = ({
             <span className="hidden sm:inline">List</span>
             <span className="sm:hidden">List View</span>
           </button> */}
-        </div>
+        {/* </div> */}
       </div>
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 w-full lg:w-auto">
         <div className="relative flex-1">
