@@ -36,6 +36,7 @@ const MainContent = () => {
     const id = p._id || p.id || "";
     const name = p.skuFamilyId?.name || p.specification || "Product";
     const imageUrl =
+      p.subSkuFamilyId?.images?.[0] ||
       p.skuFamilyId?.images?.[0] ||
       "https://via.placeholder.com/400x300.png?text=Product";
     const storage = p.storage || "";

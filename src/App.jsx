@@ -21,6 +21,7 @@ import SignUpForm from "./components/SignUpForm";
 import VerifyEmailPrompt from "./components/VerifyEmailPrompt";
 import VerifyEmail from "./components/VerifyEmail";
 import CartPage from "./components/ReadyStockPage/CartPage";
+import CheckoutPage from "./components/ReadyStockPage/CheckoutPage";
 import ProfilePage from "./pages/ProfilePage";
 import HomePage from "./pages/HomePage";
 import Order from "./components/Order";
@@ -149,6 +150,14 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
               element={
                 <ProtectedRoute isLoggedIn={isLoggedIn}>
                   <Layout><CartPage /></Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/checkout"
+              element={
+                <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <Layout><CheckoutPage /></Layout>
                 </ProtectedRoute>
               }
             />

@@ -251,7 +251,9 @@ const WishlistModal = ({ isOpen, onClose }) => {
         <div className="bg-white border-b border-gray-100 px-4 sm:px-8 py-4 sm:py-6 flex items-center justify-between">
           <div className="flex items-center gap-3 sm:gap-4">
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-red-50 rounded-full flex items-center justify-center">
-              <FontAwesomeIcon icon={faClock} className="text-sm sm:text-lg text-red-500" />
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-red-500" fill="currentColor" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
+              </svg>
             </div>
             <div>
               <h2 className="text-lg sm:text-2xl font-semibold text-gray-900 tracking-tight">
@@ -282,10 +284,15 @@ const WishlistModal = ({ isOpen, onClose }) => {
           ) : products.length === 0 ? (
             <div className="flex items-center justify-center py-20">
               <div className="text-center">
-                <FontAwesomeIcon
-                  icon={faClock}
-                  className="text-4xl text-gray-300 mb-4"
-                />
+                  <svg
+                    className="w-10 h-10 text-gray-300 mb-4 mx-auto"
+                    fill="currentColor"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
+                  </svg>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
                   Your watch list is empty
                 </h3>
@@ -339,7 +346,9 @@ const WishlistModal = ({ isOpen, onClose }) => {
                           className="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-colors flex items-center justify-center"
                           title="Remove from wishlist"
                         >
-                          <FontAwesomeIcon icon={faClock} className="text-xs" />
+                          <svg className="w-3 h-3" fill="currentColor" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
+                          </svg>
                         </button>
                       </div>
                       <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -466,7 +475,9 @@ const WishlistModal = ({ isOpen, onClose }) => {
                                   className="w-10 h-10 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-colors flex items-center justify-center group/remove"
                                   title="Remove from wishlist"
                                 >
-                                  <FontAwesomeIcon icon={faClock} className="text-sm group-hover/remove:scale-110 transition-transform" />
+                                  <svg className="w-4 h-4 group-hover/remove:scale-110 transition-transform" fill="currentColor" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                    <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
+                                  </svg>
                                 </button>
                               </div>
                             </div>

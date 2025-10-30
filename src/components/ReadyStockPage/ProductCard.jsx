@@ -11,6 +11,7 @@ import {
   faBellSlash,
   faClock,
 } from "@fortawesome/free-solid-svg-icons";
+import { FiAlertCircle } from "react-icons/fi";
 import AddToCartPopup from "./AddToCartPopup";
 import CartService from "../../services/cart/cart.services";
 import { ProductService } from "../../services/products/products.services";
@@ -347,7 +348,6 @@ const ProductCard = ({
         wishlist: newWishlistStatus,
       });
       onWishlistChange?.(productId, newWishlistStatus);
-      onRefresh?.();
     } catch (error) {
       console.error("Failed to toggle wishlist:", error);
       setIsFavorite(!newWishlistStatus);
@@ -450,7 +450,7 @@ if (viewMode === "list") {
                       opacity: 1,
                     }}
                   >
-                    <span className="text-sm font-medium" style={{ color: "#1F2937" }}>i</span>
+                    <span className="text-sm font-medium" style={{ color: "#1F2937" }}><FiAlertCircle/></span>
                   </button>
 
                   <button
@@ -463,7 +463,7 @@ if (viewMode === "list") {
                       width: "32px",
                       height: "32px",
                       borderRadius: "90px",
-                      padding: "10px",
+                      // padding: "10px",
                       background: "#FFFFFF",
                       boxShadow: "0px 4px 6px -4px #0000001A, 0px 10px 15px -3px #0000001A",
                       backdropFilter: "blur(8px)",
@@ -746,9 +746,9 @@ if (viewMode === "list") {
               {convertPrice(selectedPrice || price)}
             </span>
           </div>
-          <div className="flex items-center justify-center w-8 h-8 rounded-full p-2.5 bg-white shadow-lg backdrop-blur-sm opacity-100">
-            <span className="text-sm font-medium text-gray-700 font-sans">
-              i
+          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-white shadow-lg backdrop-blur-sm opacity-100">
+            <span className="text-md font-medium text-gray-700 font-sans">
+              <FiAlertCircle />
             </span>
           </div>
         </div>

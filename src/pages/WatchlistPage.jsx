@@ -244,7 +244,15 @@ const WatchlistPage = () => {
             </button>
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center shadow-lg">
-                <FontAwesomeIcon icon={faClock} className="w-6 h-6 text-blue-500" />
+                <svg
+                  className="w-6 h-6 text-blue-500"
+                  fill="currentColor"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
+                </svg>
               </div>
               <div>
                 <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">My Watchlist</h1>
@@ -267,10 +275,15 @@ const WatchlistPage = () => {
             ) : products.length === 0 ? (
               <div className="flex items-center justify-center py-20">
                 <div className="text-center">
-                  <FontAwesomeIcon
-                    icon={faClock}
-                    className="text-4xl text-gray-300 mb-4"
-                  />
+                  <svg
+                    className="w-10 h-10 text-gray-300 mb-4 mx-auto"
+                    fill="currentColor"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
+                  </svg>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
                     Your watchlist is empty
                   </h3>
@@ -331,7 +344,15 @@ const WatchlistPage = () => {
                           className="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-colors flex items-center justify-center"
                           title="Remove from watchlist"
                         >
-                          <FontAwesomeIcon icon={faClock} className="text-xs" />
+                          <svg
+                            className="w-3 h-3"
+                            fill="currentColor"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
+                          </svg>
                         </button>
                           </div>
                           <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -458,7 +479,15 @@ const WatchlistPage = () => {
                                       className="w-10 h-10 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-colors flex items-center justify-center group/remove"
                                       title="Remove from watchlist"
                                     >
-                                      <FontAwesomeIcon icon={faClock} className="text-sm group-hover/remove:scale-110 transition-transform" />
+                                      <svg
+                                        className="w-4 h-4 group-hover/remove:scale-110 transition-transform"
+                                        fill="currentColor"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
+                                      </svg>
                                     </button>
                                   </div>
                                 </div>

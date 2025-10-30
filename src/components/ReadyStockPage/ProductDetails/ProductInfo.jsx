@@ -43,6 +43,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
   const [isBuyNowCheckoutOpen, setIsBuyNowCheckoutOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [thumbErrors, setThumbErrors] = useState({});
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -67,16 +68,16 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const getProductImages = () => {
     const images = [];
     const toAbsolute = (path) => {
-      if (!path) return path;
-      // If already absolute (http/https or data uri), return as-is
+      if (!path) return "";
       if (/^https?:\/\//i.test(path) || /^data:/i.test(path)) return path;
       const base = import.meta.env.VITE_BASE_URL || "";
       if (!base) return path;
-      return `${base}/${path.replace(/^\/+/, "")}`;
+      return `${base}/${String(path).replace(/^\/+/, "")}`;
     };
 
     if (currentProduct.mainImage) {
-      images.push(currentProduct.mainImage);
+      const abs = toAbsolute(currentProduct.mainImage);
+      if (abs) images.push(abs);
     }
 
     if (
@@ -85,9 +86,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     ) {
       currentProduct.skuFamilyId.images.forEach((img) => {
         const abs = toAbsolute(img);
-        if (!images.includes(abs)) {
-          images.push(abs);
-        }
+        if (abs && !images.includes(abs)) images.push(abs);
       });
     }
 
@@ -97,17 +96,15 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     ) {
       currentProduct.subSkuFamilyId.images.forEach((img) => {
         const abs = toAbsolute(img);
-        if (!images.includes(abs)) {
-          images.push(abs);
-        }
+        if (abs && !images.includes(abs)) images.push(abs);
       });
     }
 
-    while (images.length < 5) {
-      images.push(iphoneImage);
-    }
+    // If no valid images, return one dummy image
+    if (images.length === 0) return [iphoneImage];
 
-    return images.slice(0, 5);
+    // Return only the available images (no padding)
+    return images;
   };
 
   const productImages = getProductImages();
@@ -118,6 +115,11 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     }, 3000);
     return () => clearInterval(timer);
   }, [productImages.length]);
+
+  // Reset main image error when selected image changes
+  useEffect(() => {
+    setImageError(false);
+  }, [selectedImageIndex]);
 
   const processedProduct = {
     ...currentProduct,
@@ -836,7 +838,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                       src={
                         imageError ? iphoneImage : productImages[selectedImageIndex]
                       }
-                      onError={handleImageError}
+                      onError={() => setImageError(true)}
                     />
                   </div>
                 </div>
@@ -888,12 +890,15 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   className="absolute top-3 right-3 w-[40px] h-[40px] z-20 p-2 bg-white/80 rounded-md hover:bg-white transition-colors duration-200"
                   onClick={handleToggleWishlist}
                 >
-                  <FontAwesomeIcon
-                    icon={faClock}
-                    className={`text-sm ${
-                      isFavorite ? "text-red-500" : "text-gray-600"
-                    }`}
-                  />
+                  <svg
+                    className={`w-[24px] h-[24px] ${isFavorite ? "text-[#FB2C36]" : "text-gray-400"} hover:text-[#FB2C36] transition-colors duration-200 cursor-pointer`}
+                    fill={isFavorite ? "currentColor" : "none"}
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
+                  </svg>
                 </button>
                 <button
                   className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all duration-200"
@@ -937,8 +942,8 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                     <img
                       alt={`${processedProduct.name} ${index + 1}`}
                       className="w-full h-full object-contain"
-                      src={image}
-                      onError={handleImageError}
+                      src={thumbErrors[index] ? iphoneImage : image}
+                      onError={() => setThumbErrors((prev) => ({ ...prev, [index]: true }))}
                     />
                   </button>
                 ))}
@@ -981,7 +986,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
             
             {/* Mobile Colour Selection - Above Key Features */}
             {variantOptions.colors.length > 0 && (
-              <div className="md:hidden mb-4">
+              <div className=" mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-3">Colour</label>
                 <div className="flex items-center gap-3">
                   {variantOptions.colors.map((c) => {
@@ -1012,7 +1017,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
 
             {/* Mobile Size (RAM + Storage) Selection */}
             {getSizeOptions().length > 0 && (
-              <div className="md:hidden mb-4 border-b border-gray-200 pb-3">
+              <div className=" mb-4 border-b border-gray-200 pb-3">
                 <label className="block text-sm text-gray-500 font-medium mb-2">
                   Size : <span className="font-bold text-gray-900">{processedProduct.ram} + {processedProduct.storage}</span>
                 </label>
@@ -1039,7 +1044,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
             )}
 
             {/* Key Features Section - 6 Cards Grid */}
-            <div className="md:hidden">
+            <div className="">
               <h3 className="text-base font-bold text-gray-900 mb-3">Key Features</h3>
               <div className="grid grid-cols-2 gap-3">
                 {/* Card 1: SKU / Model ID */}
@@ -1111,9 +1116,9 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
               variantOptions.simTypes.length > 0) && (
               <div className="space-y-6">
                 {/* First Row: Color and RAM */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {variantOptions.colors.length > 0 && (
-                    <div className="hidden md:block bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
+                    <div className="hidden bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
                       <div className="flex items-center mb-3">
                         <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
                           <FontAwesomeIcon icon={faPalette} className="text-purple-600 text-sm" />
@@ -1157,7 +1162,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                     </div>
                   )}
                   {variantOptions.rams.length > 0 && (
-                    <div className="hidden md:block bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
+                    <div className="hidden bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
                       <div className="flex items-center mb-3">
                         <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
                           <FontAwesomeIcon icon={faMicrochip} className="text-green-600 text-sm" />
@@ -1192,10 +1197,10 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                       </div>
                     </div>
                   )}
-                </div>
+                </div> */}
 
                 {/* Second Row: Storage and SIM Type */}
-                <div className="hidden md:block grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* <div className="hidden grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {variantOptions.storages.length > 0 && (
                     <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200 mb-4">
                       <div className="flex items-center mb-3">
@@ -1268,11 +1273,11 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                       </div>
                     </div>
                   )}
-                </div>
+                </div> */}
               </div>
             )}
             {/* Desktop/Tablet quantity + total */}
-            <div className="hidden md:grid grid-cols-2 gap-3">
+            {/* <div className="hidden md:grid grid-cols-2 gap-3">
               <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                 <span className="text-xs text-gray-500 block font-medium mb-1">Minimum Order Quantity</span>
                 <span className="text-lg font-bold text-gray-900">{processedProduct.moq} units</span>
@@ -1284,7 +1289,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   {effectiveStockCount} units
                 </span>
               </div>
-            </div>
+            </div> */}
             {processedProduct.expiryTime && (
               <div
                 className={`p-4 rounded-lg text-sm font-medium ${

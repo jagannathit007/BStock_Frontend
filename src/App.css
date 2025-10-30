@@ -162,3 +162,11 @@
 backdrop-filter: blur(8px);
 -webkit-backdrop-filter: blur(8px);
 }
+
+@media (max-width:430px) {
+  .cartpageMedia{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}

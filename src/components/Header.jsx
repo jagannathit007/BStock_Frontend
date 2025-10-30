@@ -386,13 +386,18 @@ const Header = ({ onLogout }) => {
 
                     {/* Wishlist */}
                 <button
-                  className="p-2.5 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg relative cursor-pointer transition-all duration-200 group"
+                  className="p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg relative cursor-pointer transition-all duration-200 group"
                   onClick={handleWishlistClick}
                   title="My Wishlist"
                 >
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="9" strokeWidth="2" />
-                    <path d="M12 7v5l3 2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
                   </svg>
                 </button>
 
@@ -514,8 +519,8 @@ const Header = ({ onLogout }) => {
                         onClick={handleWatchlistNavigation}
                         className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
                       >
-                        <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
                         </svg>
                         My Watchlist
                       </button>

@@ -95,7 +95,7 @@ const ViewControls = ({
         <select 
           value={sortOption}
           onChange={handleSortChange}
-          className="border border-gray-200 cursor-pointer rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-white min-w-[180px] font-apple"
+          className="border border-gray-200 cursor-pointer rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-white min-w-[180px] font-apple"
         >
           <option value="">Sort by: Featured</option>
           <option value="price_asc">Sort by: Price Low to High</option>
