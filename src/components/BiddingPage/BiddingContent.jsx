@@ -12,8 +12,11 @@ import BiddingProductCard from "./BiddingProductCard";
 import ViewControls from "./ViewControls";
 import Loader from "../Loader"; // Import Loader
 import { convertPrice } from "../../utils/currencyUtils";
+import { useSocket } from "../../context/SocketContext";
+import Swal from "sweetalert2";
 
 const BiddingContent = () => {
+  const { socketService } = useSocket();
   const [viewMode, setViewMode] = useState("list");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -230,6 +233,103 @@ const BiddingContent = () => {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Socket integration for real-time bid updates
+  useEffect(() => {
+    if (!socketService) {
+      console.warn('BiddingContent: socketService not available');
+      return;
+    }
+
+    // Join bid rooms for all visible products
+    const joinBidRooms = () => {
+      fetchedProducts.forEach((product) => {
+        if (product.id && product.status !== 'closed') {
+          socketService.joinBid(product.id);
+        }
+      });
+    };
+
+    // Join rooms when products are loaded
+    if (fetchedProducts.length > 0) {
+      joinBidRooms();
+    }
+
+    // Listen for bid notifications (outbid, winning_bid, etc.)
+    const handleBidNotification = (data) => {
+      console.log('BiddingContent: Received bid notification:', data);
+      
+      const { type, bidData, message } = data;
+      
+      // Show notification to user
+      if (type === 'outbid') {
+        Swal.fire({
+          icon: 'info',
+          title: 'You\'ve been outbid!',
+          text: message || `Someone placed a higher bid on ${bidData?.lotNumber || 'this product'}`,
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 5000,
+          timerProgressBar: true,
+        });
+      } else if (type === 'winning_bid') {
+        Swal.fire({
+          icon: 'success',
+          title: 'Congratulations!',
+          text: message || 'You are now the highest bidder!',
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 5000,
+          timerProgressBar: true,
+        });
+      }
+
+      // Refresh products to get updated bid data
+      setRefreshTick((prev) => !prev);
+    };
+
+    // Listen for bid updates (when someone places a bid on any product)
+    const handleBidUpdate = (data) => {
+      console.log('BiddingContent: Received bid update:', data);
+      
+      // Update the specific product in the list
+      if (data.productId) {
+        setFetchedProducts((prevProducts) =>
+          prevProducts.map((product) => {
+            if (product.id === data.productId) {
+              // Update product with new bid data
+              return {
+                ...product,
+                currentBid: data.currentPrice || product.currentBid,
+                currentPrice: data.currentPrice || product.currentPrice,
+                highestBidder: data.highestBidder || product.highestBidder,
+              };
+            }
+            return product;
+          })
+        );
+      } else {
+        // If no productId, refresh all products
+        setRefreshTick((prev) => !prev);
+      }
+    };
+
+    // Setup socket listeners
+    socketService.onBidNotification(handleBidNotification);
+    socketService.onBidUpdate(handleBidUpdate);
+
+    // Cleanup: Leave all bid rooms and remove listeners
+    return () => {
+      fetchedProducts.forEach((product) => {
+        if (product.id) {
+          socketService.leaveBid(product.id);
+        }
+      });
+      socketService.removeBidListeners();
+    };
+  }, [socketService, fetchedProducts]);
 
   // const indexOfLastProduct = useMemo(() => currentPage * itemsPerPage, [currentPage, itemsPerPage]);
   const totalPages = useMemo(() => Math.max(Math.ceil(totalProductsCount / itemsPerPage), 1), [totalProductsCount, itemsPerPage]);
