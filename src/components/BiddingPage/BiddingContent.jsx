@@ -64,6 +64,7 @@ const BiddingContent = () => {
     const carrier = p.carrier || "";
     const units = qty;
     const grade = p.grade || "";
+    const color = p.color || "";
     const cityState = p.city && p.state ? `${p.city}, ${p.state}` : "";
 
     // ----- TIMER -----
@@ -90,11 +91,14 @@ const BiddingContent = () => {
 
     return {
       id,
+      oem: p.oem || "",
+      model: p.model || "",
       modelFull,
       memory,
       carrier,
       units,
       grade,
+      color,
       cityState,
       currentBid: `$${currentPriceNum.toFixed(2)}`,
       unitPrice: `$${unitPrice}`,
@@ -316,7 +320,7 @@ const BiddingContent = () => {
               className="absolute inset-0 bg-opacity-30 backdrop-blur-[1.5px] cursor-pointer"
               onClick={() => setShowMobileFilters(false)}
             ></div>
-            <div className="absolute left-0 top-0 h-full w-72 bg-white z-50 overflow-y-auto">
+            <div className="absolute left-0 top-28 bottom-0 w-72 bg-white z-[60] overflow-y-auto">
               <BiddingSideFilter
                 onClose={() => setShowMobileFilters(false)}
                 onFilterChange={handleFilterChange}
@@ -466,42 +470,36 @@ const BiddingContent = () => {
               </div>
 
               {/* Desktop Table View - Shown on medium and larger screens */}
-              <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="w-full overflow-x-auto">
-                  <table className="w-full" style={{ minWidth: 'max-content' }}>
-                    <thead className="bg-gray-50 border-b border-gray-200">
+              <div className="hidden md:block bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden">
+                <div className="w-full overflow-x-auto relative">
+                  <table className="w-full border border-gray-200" style={{ minWidth: 'max-content' }}>
+                    <thead className="bg-gray-50/90 backdrop-blur sticky top-0 z-10 border-b border-gray-200 shadow-sm">
                       <tr>
-                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider">
-                          MODEL / UNIT
+                        <th className="px-4 py-4 text-left text-[11px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-200 whitespace-nowrap w-24">
+                          BRAND
                         </th>
-                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-center text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          GRADE
+                        <th className="px-5 py-4 text-left text-[11px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-200">
+                          MODEL
                         </th>
-                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-center text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          CLOSES IN
+                        <th className="hidden md:table-cell px-4 py-4 text-right text-[11px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap w-24">
+                          PRICE
                         </th>
-                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-center text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          BIDS
-                        </th>
-                        <th className="hidden md:table-cell px-4 py-3 sm:px-6 sm:py-4 text-center text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                          UNIT PRICE
-                        </th>
-                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-center text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                        <th className="px-4 py-4 text-right text-[11px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap w-24">
                           CUR. BID
                         </th>
-                        <th className="hidden lg:table-cell px-4 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                        <th className="hidden lg:table-cell px-5 py-4 text-left text-[11px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap w-28">
                           NEXT MIN BID
                         </th>
-                        <th className="px-4 py-3 sm:px-6 sm:py-4 text-center text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                        <th className="px-5 py-4 text-center text-[11px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
                           BID NOW
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-white divide-y divide-gray-100">
                       {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
                         <tr>
                           <td
-                            colSpan={8}
+                            colSpan={6}
                             className="px-4 py-12 text-center"
                           >
                             <div className="flex justify-center">
@@ -513,7 +511,7 @@ const BiddingContent = () => {
                       {!isLoading && hasInitiallyLoaded && currentProducts.length === 0 && (
                         <tr>
                           <td
-                            colSpan={8}
+                            colSpan={6}
                             className="px-4 py-6 text-center text-2xl text-gray-500 font-bold"
                           >
                             No products found.
