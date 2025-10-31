@@ -56,14 +56,25 @@ class SocketServiceClass {
 
   // Get user data from localStorage
   private getUserData(): { userId: string; userType: UserType } | null {
-    const userId = localStorage.getItem('userId');
-    
-    if (!userId) {
-      console.warn('Missing userId in localStorage');
+    try {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) {
+        console.warn('Missing user in localStorage');
+        return null;
+      }
+      const user = JSON.parse(userStr);
+      const userId = user._id || user.id;
+      
+      if (!userId) {
+        console.warn('Missing userId in user object');
+        return null;
+      }
+      
+      return { userId: userId.toString(), userType: 'customer' };
+    } catch (error) {
+      console.error('Error parsing user data:', error);
       return null;
     }
-    
-    return { userId, userType: 'customer' }; // Assuming userType is always 'customer' for this example
   }
 
   // Join room with userId and userType
@@ -226,6 +237,85 @@ class SocketServiceClass {
     this.socket.off('userLeftNegotiation');
     this.socket.off('userTyping');
     this.socket.off('negotiationRead');
+  }
+
+  // Bid-specific socket methods
+  joinBid(productId: string) {
+    if (!this.socket) return;
+    
+    const userData = this.getUserData();
+    if (!userData) return;
+    
+    this.socket.emit('joinBid', {
+      productId,
+      userId: userData.userId,
+      userType: userData.userType
+    });
+  }
+
+  leaveBid(productId: string) {
+    if (!this.socket) return;
+    
+    const userData = this.getUserData();
+    if (!userData) return;
+    
+    this.socket.emit('leaveBid', {
+      productId,
+      userId: userData.userId,
+      userType: userData.userType
+    });
+  }
+
+  // Listen for bid notifications (outbid, winning_bid, etc.)
+  onBidNotification(callback: (data: any) => void) {
+    if (!this.socket) {
+      console.warn('Socket not available for onBidNotification');
+      return;
+    }
+    console.log('Setting up bid notification listener');
+    this.socket.on('bidNotification', (data) => {
+      console.log('User panel received bid notification:', data);
+      callback(data);
+    });
+  }
+
+  // Listen for bid updates (when someone places a bid on a product)
+  onBidUpdate(callback: (data: any) => void) {
+    if (!this.socket) {
+      console.warn('Socket not available for onBidUpdate');
+      return;
+    }
+    console.log('Setting up bid update listener');
+    this.socket.on('bidUpdate', (data) => {
+      console.log('User panel received bid update:', data);
+      callback(data);
+    });
+  }
+
+  // Listen for users joining bid rooms
+  onUserJoinedBid(callback: (data: any) => void) {
+    if (!this.socket) return;
+    this.socket.on('userJoinedBid', (data) => {
+      console.log('User joined bid:', data);
+      callback(data);
+    });
+  }
+
+  // Broadcast bid update (typically used by admin)
+  broadcastBidUpdate(productId: string, updateData: any) {
+    if (!this.socket) return;
+    this.socket.emit('broadcastBidUpdate', {
+      productId,
+      updateData
+    });
+  }
+
+  // Remove all bid listeners
+  removeBidListeners() {
+    if (!this.socket) return;
+    this.socket.off('bidNotification');
+    this.socket.off('bidUpdate');
+    this.socket.off('userJoinedBid');
   }
 }
 

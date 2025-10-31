@@ -18,10 +18,12 @@ import {
 import iphoneImage from "../../assets/iphone.png";
 import { convertPrice } from "../../utils/currencyUtils";
 import { BiddingService } from "../../services/bidding/bidding.services";
+import { useSocket } from "../../context/SocketContext";
 
 const BidProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { socketService } = useSocket();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -45,6 +47,51 @@ const BidProductDetails = () => {
       fetchBidProduct();
     }
   }, [id, navigate]);
+
+  // Socket integration for real-time updates
+  useEffect(() => {
+    if (!socketService || !id) return;
+
+    // Join bid room for this product
+    socketService.joinBid(id);
+
+    // Listen for bid updates
+    const handleBidUpdate = (data) => {
+      console.log('BidProductDetails: Received bid update:', data);
+      if (data.productId === id) {
+        setProduct((prevProduct) => {
+          if (!prevProduct) return prevProduct;
+          return {
+            ...prevProduct,
+            currentPrice: data.currentPrice || prevProduct.currentPrice,
+            currentBid: data.currentPrice || prevProduct.currentBid,
+            highestBidder: data.highestBidder || prevProduct.highestBidder,
+          };
+        });
+      }
+    };
+
+    // Listen for bid notifications
+    const handleBidNotification = (data) => {
+      console.log('BidProductDetails: Received bid notification:', data);
+      const productId = data.bidData?.productId || data.productId;
+      if (productId === id || productId?.toString() === id) {
+        // Refresh product data
+        BiddingService.getBidProductById(id)
+          .then((data) => setProduct(data))
+          .catch((error) => console.error('Failed to refresh product:', error));
+      }
+    };
+
+    socketService.onBidUpdate(handleBidUpdate);
+    socketService.onBidNotification(handleBidNotification);
+
+    // Cleanup
+    return () => {
+      socketService.leaveBid(id);
+      socketService.removeBidListeners();
+    };
+  }, [socketService, id]);
 
   const handleImageError = () => setImageError(true);
 

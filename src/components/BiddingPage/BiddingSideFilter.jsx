@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTimes } from "@fortawesome/free-solid-svg-icons";
 
 const BiddingSideFilter = ({ onFilterChange, onClose, appliedFilters }) => {
   const [loading, setLoading] = useState(true);
   const [facets, setFacets] = useState({ grades: [], models: [], capacities: [], carriers: [], priceRange: { min: 0, max: 0 } });
   const [selected, setSelected] = useState({ grades: [], models: [], capacities: [], carriers: [], minPrice: undefined, maxPrice: undefined });
+  const [collapsed, setCollapsed] = useState({ grades: false, models: false, capacities: false, carriers: false });
 
   useEffect(() => {
     let cancel;
@@ -74,6 +77,19 @@ const BiddingSideFilter = ({ onFilterChange, onClose, appliedFilters }) => {
     });
   };
 
+  const clearAll = () => {
+    const next = { grades: [], models: [], capacities: [], carriers: [], minPrice: facets.priceRange?.min, maxPrice: facets.priceRange?.max };
+    setSelected(next);
+    onFilterChange?.({
+      grade: [],
+      models: [],
+      capacities: [],
+      carriers: [],
+      minPrice: next.minPrice,
+      maxPrice: next.maxPrice,
+    });
+  };
+
   const onPriceChange = (key, value) => {
     const num = value === "" ? undefined : Number(value);
     setSelected((prev) => {
@@ -91,10 +107,20 @@ const BiddingSideFilter = ({ onFilterChange, onClose, appliedFilters }) => {
   };
 
   const renderGroup = (title, key, items) => (
-    <div className="mb-8">
-      <h4 className="text-base font-medium text-gray-900 mb-4 font-apple">{title}</h4>
-      <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-        {items.map((i) => (
+    <div className="mb-6 border-b border-gray-100 pb-4">
+      <div className="flex items-center justify-between mb-3">
+        <h4 className="text-base font-medium text-gray-900 font-apple">{title}</h4>
+        <button
+          className="text-xs text-gray-500 hover:text-gray-700"
+          onClick={() => setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }))}
+        >
+          {collapsed[key] ? 'Expand' : 'Collapse'}
+        </button>
+      </div>
+      {!collapsed[key] && (
+        <>
+          <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+            {items.map((i) => (
           <label
             key={i.value}
             className="flex items-center justify-between text-sm text-gray-700 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-all duration-200"
@@ -110,8 +136,10 @@ const BiddingSideFilter = ({ onFilterChange, onClose, appliedFilters }) => {
             </div>
           </label>
         ))}
-        {items.length === 0 && <div className="text-xs text-gray-400">No options</div>}
-      </div>
+            {items.length === 0 && <div className="text-xs text-gray-400">No options</div>}
+          </div>
+        </>
+      )}
     </div>
   );
 
@@ -213,14 +241,48 @@ const BiddingSideFilter = ({ onFilterChange, onClose, appliedFilters }) => {
           transform: scale(1.05);
         }
       `}</style>
-      <div className="px-6 py-8 bg-[#FAFAFF] rounded-xl shadow-md">
+      <div className="px-4 py-5 lg:px-6 lg:py-8 bg-[#FAFAFF] rounded-xl shadow-md">
         <div className="flex justify-between items-center mb-8">
           <h3 className="text-2xl font-semibold text-gray-900 font-apple">Filters</h3>
           {onClose && (
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 lg:hidden transition-colors duration-200">
-              Close
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 lg:hidden transition-colors duration-200 p-2 relative z-[70]">
+              <FontAwesomeIcon icon={faTimes} className="text-xl" />
             </button>
           )}
+        </div>
+
+        {/* Selected chips + Clear all */}
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2">
+            {selected.grades?.map((v) => (
+              <span key={`g-${v}`} className="inline-flex items-center bg-white border border-gray-200 text-xs text-gray-700 rounded-full px-2 py-1">
+                {v}
+                <button className="ml-2 text-gray-400 hover:text-gray-600" onClick={() => toggle('grades', v)}>×</button>
+              </span>
+            ))}
+            {selected.models?.map((v) => (
+              <span key={`m-${v}`} className="inline-flex items-center bg-white border border-gray-200 text-xs text-gray-700 rounded-full px-2 py-1">
+                {v}
+                <button className="ml-2 text-gray-400 hover:text-gray-600" onClick={() => toggle('models', v)}>×</button>
+              </span>
+            ))}
+            {selected.capacities?.map((v) => (
+              <span key={`c-${v}`} className="inline-flex items-center bg-white border border-gray-200 text-xs text-gray-700 rounded-full px-2 py-1">
+                {v}
+                <button className="ml-2 text-gray-400 hover:text-gray-600" onClick={() => toggle('capacities', v)}>×</button>
+              </span>
+            ))}
+            {selected.carriers?.map((v) => (
+              <span key={`cr-${v}`} className="inline-flex items-center bg-white border border-gray-200 text-xs text-gray-700 rounded-full px-2 py-1">
+                {v}
+                <button className="ml-2 text-gray-400 hover:text-gray-600" onClick={() => toggle('carriers', v)}>×</button>
+              </span>
+            ))}
+          </div>
+          <div className="mt-3 flex justify-between items-center">
+            <div className="text-xs text-gray-500">Use the controls below to refine results.</div>
+            <button onClick={clearAll} className="text-xs text-[#0071E0] hover:underline">Clear all</button>
+          </div>
         </div>
 
         {loading ? (
