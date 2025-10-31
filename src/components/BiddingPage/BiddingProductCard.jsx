@@ -351,13 +351,15 @@ const BiddingProductCard = ({
         {/* BRAND */}
         <td className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 w-24" onClick={handleProductClick}>
           <span className="font-medium">{product.oem || '-'}</span>
+          
         </td>
 
         {/* MODEL + DETAILS */}
         <td className="px-5 py-4 text-sm text-gray-900 border-r border-gray-200" onClick={handleProductClick}>
           <div className="flex flex-col justify-center h-full">
             <div className="flex items-center gap-2 justify-between">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-col">
+                <div>
                 {product.grade && (
                   <span 
                     className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] border border-gray-300 text-gray-700 bg-gray-100 cursor-pointer"
@@ -367,6 +369,34 @@ const BiddingProductCard = ({
                   </span>
                 )}
                 <span className="font-medium tracking-tight">{product.model || product.modelFull}</span>
+                </div>
+                {/* Closes in row */}
+            <div className="mt-1">
+              <div className="text-xs font-semibold text-red-600 tabular-nums">
+                {product.status === 'closed' ? (
+                  <span className=""></span>
+                ) : product.expiryTime ? (
+                  <Countdown
+                    date={product.expiryTime}
+                    renderer={({ days, hours, minutes, seconds, completed }) => {
+                      if (completed) return <span className="text-gray-500"></span>;
+                      return (
+                        <span className="text-red-600 font-semibold">
+                          {days > 0 ? `${days}d ` : ""}
+                          {String(hours).padStart(2, "0")}:
+                          {String(minutes).padStart(2, "0")}:
+                          {String(seconds).padStart(2, "0")}
+                        </span>
+                      );
+                    }}
+                  />
+                ) : product.status === 'pending' ? (
+                  <span className="text-gray-500"></span>
+                ) : (
+                  <span className="text-red-600 font-semibold">{product.timer || ''}</span>
+                )}
+              </div>
+            </div>
               </div>
               <div className="flex items-center gap-1 text-xs">
                 {product.memory && (
@@ -407,33 +437,7 @@ const BiddingProductCard = ({
               </div>
             </div>
 
-            {/* Closes in row */}
-            <div className="mt-1">
-              <div className="text-xs font-semibold text-red-600 tabular-nums">
-                {product.status === 'closed' ? (
-                  <span className=""></span>
-                ) : product.expiryTime ? (
-                  <Countdown
-                    date={product.expiryTime}
-                    renderer={({ days, hours, minutes, seconds, completed }) => {
-                      if (completed) return <span className="text-gray-500"></span>;
-                      return (
-                        <span className="text-red-600 font-semibold">
-                          {days > 0 ? `${days}d ` : ""}
-                          {String(hours).padStart(2, "0")}:
-                          {String(minutes).padStart(2, "0")}:
-                          {String(seconds).padStart(2, "0")}
-                        </span>
-                      );
-                    }}
-                  />
-                ) : product.status === 'pending' ? (
-                  <span className="text-gray-500"></span>
-                ) : (
-                  <span className="text-red-600 font-semibold">{product.timer || ''}</span>
-                )}
-              </div>
-            </div>
+            
           </div>
         </td>
 
