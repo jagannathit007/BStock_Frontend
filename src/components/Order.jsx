@@ -104,7 +104,7 @@ const Order = () => {
               />
               <input
                 type="text"
-                placeholder="Search by Order ID, Date, or Items"
+                placeholder="Search by Date, or Items"
                 value={searchQuery}
                 onChange={handleSearchChange}
                 className="pl-12 pr-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm w-full shadow-sm"
@@ -149,9 +149,9 @@ const Order = () => {
           <table className="w-full table-auto">
             <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
               <tr>
-                <th className="px-6 py-5 text-left text-sm font-bold text-gray-800 border-b-2 border-gray-200 align-middle tracking-wide">
+                {/* <th className="px-6 py-5 text-left text-sm font-bold text-gray-800 border-b-2 border-gray-200 align-middle tracking-wide">
                   Order ID
-                </th>
+                </th> */}
                 <th className="px-6 py-5 text-left text-sm font-bold text-gray-800 border-b-2 border-gray-200 align-middle tracking-wide">
                   Date
                 </th>
@@ -195,11 +195,11 @@ const Order = () => {
                     key={order._id}
                     className="hover:bg-blue-50 transition-all duration-200 border-b border-gray-100"
                   >
-                    <td className="px-6 py-5 text-sm font-semibold text-gray-900">
+                    {/* <td className="px-6 py-5 text-sm font-semibold text-gray-900">
                       <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
                         {order._id}
                       </span>
-                    </td>
+                    </td> */}
                     <td className="px-6 py-5 text-sm text-gray-600">
                       {new Date(order.createdAt).toLocaleDateString('en-US', {
                         year: 'numeric',

@@ -36,6 +36,7 @@ const FlashDeals = () => {
     const id = p._id || p.id || "";
     const name = p.skuFamilyId?.name || p.specification || "Product";
     const imageUrl =
+      p.subSkuFamilyId?.images?.[0] ||
       p.skuFamilyId?.images?.[0] ||
       "https://via.placeholder.com/400x300.png?text=Product";
     const storage = p.storage || "";
@@ -57,8 +58,8 @@ const FlashDeals = () => {
 
     return {
       id,
-      name,
-      description,
+      name:p.subSkuFamilyId?.name || p.skuFamilyId?.name || name,
+      description:p.subSkuFamilyId?.description || p.skuFamilyId?.description || description,
       storage,
       color,
       ram,
@@ -77,6 +78,9 @@ const FlashDeals = () => {
       expiryTime,
       notify: Boolean(p.notify),
       purchaseType: p.purchaseType || null,
+      sku: p.subSkuFamilyId?.code || p.skuFamilyId?.code || p.sku || "",
+      modelCode: p.subSkuFamilyId?.name || p.skuFamilyId?.name || "",
+      countryName: p.country || p.subSkuFamilyId?.country || (Array.isArray(p.skuFamilyId?.country) ? p.skuFamilyId.country[0] : ""),
     };
   };
 
@@ -321,22 +325,6 @@ const FlashDeals = () => {
             </div>
           )}
 
-          <div className="lg:hidden mb-4">
-            <button
-              className="w-full bg-white border border-gray-300 rounded-lg py-2 px-4 text-sm font-medium flex items-center justify-center"
-              onClick={() => setShowMobileFilters(true)}
-            >
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="currentColor"
-                viewBox="0 0 512 512"
-              >
-                <path d="M3.9 54.9C10.5 40.9 24.5 32 40 32H472c15.5 0 29.5 8.9 36.1 22.9s4.6 30.5-5.2 42.5L320 320.9V448c0 12.1-6.8 23.2-17.7 28.6s-23.8 4.3-33.5-3l-64-48c-8.1-6-12.8-15.5-12.8-25.6V320.9L9 97.3C-.7 85.4-2.8 68.8 3.9 54.9z" />
-              </svg>
-              Filters
-            </button>
-          </div>
-
           <ViewControls
             viewMode={viewMode}
             setViewMode={setViewMode}
@@ -345,6 +333,7 @@ const FlashDeals = () => {
             sortOption={sortOption}
             setSortOption={setSortOption}
             setCurrentPage={setCurrentPage}
+            onFilterClick={() => setShowMobileFilters(true)}
           />
 
           {viewMode === "grid" ? (

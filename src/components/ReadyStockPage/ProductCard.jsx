@@ -419,20 +419,20 @@ if (viewMode === "list") {
     return (
       <>
         <div
-          className="w-[1280px] h-[412px] gap-5 rounded-[12px] p-5 bg-[#FBFBFB] border-gray-200 mb-4"
-          style={{ maxWidth: "100%" }}
+          className="w-full rounded-[12px] p-0 sm:p-5 bg-[#FBFBFB] border-gray-200"
         >
           <div
-            className="w-full h-full bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group border border-gray-100 overflow-hidden"
+            className="w-full bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group border border-gray-100 overflow-hidden"
             onClick={!isInModal ? handleProductClick : undefined}
           >
-            <div className="p-6 h-full flex flex-col">
+            <div className="p-4 sm:p-6 flex flex-col gap-1 sm:gap-4">
               {/* Header */}
-              <div className="flex items-start justify-between mb-4">
+              <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-bold text-gray-900 group-hover:text-[#0071e3] transition-colors duration-200 mb-2">
-                    {name}
+                  <h3 className="text-lg flex font-bold text-gray-900 group-hover:text-[#0071e3] transition-colors duration-200 mb-2">
+                    {name} <span className="hidden sm:flex text-md font-normal text-gray-600"> - {description}</span>
                   </h3>
+                  {/* <span className="text-md sm:hidden font-normal text-gray-600">{description}</span>  */}
                 </div>
 
                 <div className="flex items-center space-x-2 ml-4">
@@ -455,7 +455,7 @@ if (viewMode === "list") {
 
                   <button
                     className={`rounded-full transition-all duration-200 hover:scale-105 flex items-center justify-center ${
-                      isFavorite ? "text-red-500 hover:bg-red-50" : "text-gray-400 hover:text-red-500"
+                       isFavorite ? "text-[#FB2C36]" : "text-[#1F2937] hover:text-[#FB2C36]"
                     }`}
                     title={isFavorite ? "Remove from wishlist" : "Add to wishlist"}
                     onClick={handleToggleWishlist}
@@ -470,7 +470,7 @@ if (viewMode === "list") {
                       opacity: 1,
                     }}
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
                     </svg>
                   </button>
@@ -489,13 +489,13 @@ if (viewMode === "list") {
               </div>
 
               {/* Price, Colors, Quantity */}
-              <div className="flex items-center space-x-4 mb-4">
+              <div className="flex flex-wrap justify-between sm:justify-start items-center gap-3 sm:gap-4 mt-2 sm:mt-0">
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-500">Start from</span>
                   <span className="text-lg font-semibold text-green-600">{convertPrice(selectedPrice || price)}</span>
                 </div>
-                <div className="w-px h-4 bg-gray-300" />
-                <div className="flex space-x-2">
+                {/* <div className="hidden sm:block w-px h-4 bg-gray-300" /> */}
+                {/* <div className="flex space-x-2 no-scrollbar">
                   {availableColors.length > 0 ? (
                     availableColors.map((color) => (
                       <button
@@ -539,8 +539,17 @@ if (viewMode === "list") {
                       <div className="w-4 h-4 bg-blue-500 rounded-full border border-gray-300" />
                     </>
                   )}
-                </div>
-                <div className="w-px h-4 bg-gray-300" />
+                </div> */}
+                <div className="hidden sm:block w-px h-4 bg-gray-300" />
+                  <div className="hidden sm:block text-sm flex font-medium text-gray-900">
+                    {[
+                      product?.storage,
+                      product?.ram,
+                      product?.color,
+                      product?.simType,
+                    ].filter(Boolean).join(' • ') || '-'}
+                  </div>
+                <div className="hidden sm:block w-px h-4 bg-gray-300" />
 
                 {/* QUANTITY SELECTOR */}
                 <div className="flex items-center border border-gray-300 rounded-lg">
@@ -569,41 +578,78 @@ if (viewMode === "list") {
                 </div>
               </div>
 
+              <div className="sm:hidden text-sm flex font-medium text-gray-900">
+                    {[
+                      product?.storage,
+                      product?.ram,
+                      product?.color,
+                      product?.simType,
+                    ].filter(Boolean).join(' • ') || '-'}
+                  </div>
+
               {/* Specifications */}
-              <div className="flex gap-3 mb-2 flex-1 justify-between" style={{ height: "128px", maxHeight: "128px", minHeight: "128px" }}>
-                <div className="rounded-lg p-2 text-center flex-1 flex flex-col justify-center" style={{ background: "#FAFDFF", border: "1px solid #E3F4FF", borderRadius: "8px" }}>
-                  <div className="text-xs text-gray-600 mb-1">SKU / Model ID</div>
-                  <div className="text-sm font-medium text-gray-900">{product?.sku || "IP15PM-A256-BLK"}</div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-5 gap-2.5 w-full">
+                <div className="hidden sm:block rounded-lg p-2 text-center flex-1 flex flex-col justify-center" style={{ background: "#FAFDFF", border: "1px solid #E3F4FF", borderRadius: "8px" }}>
+                  <div className="text-xs text-gray-600 mb-1">Condition</div>
+                  <div className="text-sm font-medium text-gray-900">{product?.condition || "-"}</div>
                 </div>
-                <div className="rounded-lg p-2 text-center flex-1 flex flex-col justify-center" style={{ background: "#FAFDFF", border: "1px solid #E3F4FF", borderRadius: "8px" }}>
-                  <div className="text-xs text-gray-600 mb-1">Specs</div>
-                  <div className="text-sm font-medium text-gray-900">256GB • E-SIM • A2321 Series</div>
-                </div>
-                <div className="rounded-lg p-2 text-center flex-1 flex flex-col justify-center" style={{ background: "#FAFDFF", border: "1px solid #E3F4FF", borderRadius: "8px" }}>
+                
+                <div className="hidden sm:block rounded-lg p-2 text-center flex-1 flex flex-col justify-center" style={{ background: "#FAFDFF", border: "1px solid #E3F4FF", borderRadius: "8px" }}>
                   <div className="text-xs text-gray-600 mb-1">Warehouse</div>
                   <div className="text-sm font-medium text-gray-900 flex items-center justify-center">
-                    <span className="w-4 h-3 bg-red-500 rounded-sm mr-1"></span>
-                    Hong Kong
+                    <span className="w-3 h-3 bg-red-500 rounded-sm mr-1"></span>
+                    {product?.countryName || product?.country || '—'}
                   </div>
                 </div>
-                <div className="rounded-lg p-2 text-center flex-1 flex flex-col justify-center" style={{ background: "#FAFDFF", border: "1px solid #E3F4FF", borderRadius: "8px" }}>
+                <div className="hidden sm:block rounded-lg p-2 text-center flex-1 flex flex-col justify-center" style={{ background: "#FAFDFF", border: "1px solid #E3F4FF", borderRadius: "8px" }}>
                   <div className="text-xs text-gray-600 mb-1">MOQ / Stock</div>
-                  <div className="text-sm font-medium text-gray-900">{moq} Units</div>
+                  <div className="text-sm font-medium text-gray-900">{moq} / {stockCount}</div>
                 </div>
-                <div className="rounded-lg p-2 text-center flex-1 flex flex-col justify-center" style={{ background: "#FAFDFF", border: "1px solid #E3F4FF", borderRadius: "8px" }}>
+                <div className="hidden md:block rounded-lg p-2 text-center flex-1 flex flex-col justify-center" style={{ background: "#FAFDFF", border: "1px solid #E3F4FF", borderRadius: "8px" }}>
                   <div className="text-xs text-gray-600 mb-1">Delivery EST</div>
                   <div className="text-sm font-medium text-gray-900">3-5 Days</div>
                 </div>
-                <div className="rounded-lg p-2 text-center flex-1 flex flex-col justify-center" style={{ background: "#FAFDFF", border: "1px solid #E3F4FF", borderRadius: "8px" }}>
+                <div className="hidden sm:block rounded-lg p-2 text-center flex-1 flex flex-col justify-center" style={{ background: "#FAFDFF", border: "1px solid #E3F4FF", borderRadius: "8px" }}>
                   <div className="text-xs text-gray-600 mb-1">Partial Purchase</div>
-                  <div className="text-sm font-medium text-gray-900">Allowed or Not Allowed</div>
+                  <div className="text-sm font-medium text-gray-900">{(product?.purchaseType || '').toLowerCase() === 'partial' ? 'Allowed' : 'Not Allowed'}</div>
                 </div>
               </div>
 
+              <div className="sm:hidden">
+                <button className="p-1 bg-gray-100 rounded-md text-sm m-1">{product?.condition}</button>
+                <button className="p-1 bg-gray-100 rounded-md text-sm m-1">{product?.countryName}</button>
+                <button className="p-1 bg-gray-100 rounded-md text-sm m-1">MOQ: {moq}</button>
+                <button className="p-1 bg-gray-100 rounded-md text-sm m-1">Stock: {stockCount}</button>
+              </div>
+                  {/* <div className="flex sm:hidden items-center border border-gray-300 rounded-lg w-fit mt-2">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); decQty(); }}
+                      className="px-3 py-1 text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                      disabled={isFullPurchase || quantity <= validMoq}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="text"
+                      value={quantity}
+                      onChange={onQtyInput}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-12 px-1 py-1 text-center text-sm font-medium bg-transparent outline-none"
+                      readOnly={isFullPurchase}
+                    />
+                    <button
+                      onClick={(e) => { e.stopPropagation(); incQty(); }}
+                      className="px-3 py-1 text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                      disabled={isFullPurchase || quantity >= validStock}
+                    >
+                      +
+                    </button>
+                  </div> */}
+
               {/* Action Buttons */}
-              <div className="flex gap-4" style={{ marginTop: "24px" }}>
+              <div className="flex flex-row gap-3 sm:gap-4 sm:mt-4 mt-2">
                 {isExpired ? (
-                  <button className="flex-1 bg-gray-300 text-gray-500 py-3 px-4 rounded-lg text-sm font-semibold cursor-not-allowed flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                  <button className="w-full sm:flex-1 bg-gray-300 text-gray-500 py-3 px-4 rounded-lg text-sm font-semibold cursor-not-allowed flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                     <FontAwesomeIcon icon={faCalendarXmark} className="mr-2" />
                     Expired
                   </button>
@@ -611,7 +657,7 @@ if (viewMode === "list") {
                   canNotify ? (
                     notify ? (
                       <button
-                        className="flex-1 border border-red-300 text-red-700 bg-white py-3 px-4 rounded-lg text-sm font-semibold hover:bg-red-50 cursor-pointer transition-all duration-200 flex items-center justify-center"
+                        className="w-full sm:flex-1 border border-red-300 text-red-700 bg-white py-3 px-4 rounded-lg text-sm font-semibold hover:bg-red-50 cursor-pointer transition-all duration-200 flex items-center justify-center"
                         onClick={(ev) => handleNotifyToggle(ev, false)}
                       >
                         <FontAwesomeIcon icon={faBellSlash} className="mr-2" />
@@ -619,7 +665,7 @@ if (viewMode === "list") {
                       </button>
                     ) : (
                       <button
-                        className="flex-1 border border-[#0071E3] text-[#0071E3] bg-white py-3 px-4 rounded-lg text-sm font-semibold hover:bg-blue-50 cursor-pointer transition-all duration-200 flex items-center justify-center"
+                        className="w-full sm:flex-1 border border-[#0071E3] text-[#0071E3] bg-white py-3 px-4 rounded-lg text-sm font-semibold hover:bg-blue-50 cursor-pointer transition-all duration-200 flex items-center justify-center"
                         onClick={(ev) => handleNotifyToggle(ev, true)}
                       >
                         <FontAwesomeIcon icon={faBell} className="mr-2" />
@@ -627,7 +673,7 @@ if (viewMode === "list") {
                       </button>
                     )
                   ) : (
-                    <button className="flex-1 bg-gray-300 text-gray-500 py-3 px-4 rounded-lg text-sm font-semibold cursor-not-allowed flex items-center justify-center">
+                    <button className="w-full sm:flex-1 bg-gray-300 text-gray-500 py-3 px-4 rounded-lg text-sm font-semibold cursor-not-allowed flex items-center justify-center">
                       <FontAwesomeIcon icon={faXmark} className="mr-2" />
                       Out of Stock
                     </button>
@@ -635,14 +681,14 @@ if (viewMode === "list") {
                 ) : (
                   <>
                     <button
-                      className="flex-1 border border-gray-200 text-gray-700 bg-white py-3 px-4 rounded-lg text-sm font-semibold hover:bg-gray-50 hover:border-gray-300 cursor-pointer transition-all duration-200 flex items-center justify-center"
+                      className="w-full sm:flex-1 border border-gray-200 text-gray-700 bg-white py-3 px-4 rounded-lg text-sm font-semibold hover:bg-gray-50 hover:border-gray-300 cursor-pointer transition-all duration-200 flex items-center justify-center"
                       onClick={handleDirectAddToCart}
                     >
                       <FontAwesomeIcon icon={faCartShopping} className="mr-2" />
-                      Add to Cart ({quantity})
+                      Add to Cart
                     </button>
                     <button
-                      className="flex-1 text-white py-3 px-4 rounded-lg text-sm font-semibold cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md bg-[#0071E3] hover:bg-[#005bb5] flex items-center justify-center"
+                      className="w-full sm:flex-1 text-white py-3 px-4 rounded-lg text-sm font-semibold cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md bg-[#0071E3] hover:bg-[#005bb5] flex items-center justify-center"
                       onClick={(e) => {
                         e.stopPropagation();
                         const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
@@ -735,7 +781,7 @@ if (viewMode === "list") {
       <div className="flex flex-col flex-1 w-full gap-3 min-h-0">
         {/* Product Title */}
         <h3 className="font-bold text-lg leading-none tracking-normal align-middle text-[#364153]">
-          {name}
+          {name} <span className="text-md font-normal text-gray-600"> - {description}</span>
         </h3>
 
         {/* Price Section */}
@@ -803,7 +849,7 @@ if (viewMode === "list") {
               )}
             </div>
           </div>
-          <span className="text-xs text-gray-500">SKU: {product?.sku || 'IP17PM512SLV'}</span>
+          {/* <span className="text-xs text-gray-500">SKU: {product?.sku || 'IP17PM512SLV'}</span> */}
         </div>
 
         {/* Specifications Grid */}
@@ -818,10 +864,10 @@ if (viewMode === "list") {
           </div>
           <div className="w-full h-[54px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
             <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">
-              Model Code
+              Stock
             </div>
             <div className="text-sm text-gray-500 font-medium leading-5 tracking-normal text-center align-middle mt-0.5">
-              {product?.modelCode || 'A2321'}
+              {stockCount || '0'} Units
             </div>
           </div>
           <div className="w-full h-[54px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">

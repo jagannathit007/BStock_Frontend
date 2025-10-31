@@ -58,8 +58,8 @@ const MainContent = () => {
 
     return {
       id,
-      name,
-      description,
+      name:p.subSkuFamilyId?.name || p.skuFamilyId?.name || p.specification || "Product",
+      description:p.subSkuFamilyId?.description || p.skuFamilyId?.description || description,
       // expose raw specs for card overlay
       storage,
       color,
@@ -81,6 +81,10 @@ const MainContent = () => {
       purchaseType: p.purchaseType || null,
       // Include related products data for variant selection
       relatedProducts: p.relatedProducts || [],
+      // Additional fields for list view display
+      sku: p.subSkuFamilyId?.code || p.skuFamilyId?.code || p.sku || "",
+      modelCode: p.subSkuFamilyId?.name || p.skuFamilyId?.name || "",
+      countryName: p.country || p.subSkuFamilyId?.country || (Array.isArray(p.skuFamilyId?.country) ? p.skuFamilyId.country[0] : ""),
     };
   };
 
@@ -371,22 +375,6 @@ const MainContent = () => {
             </div>
           )}
 
-          <div className="lg:hidden mb-4">
-            <button
-              className="w-full bg-white border border-gray-300 rounded-xl py-3 px-4 text-sm font-medium font-apple flex items-center justify-center hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 shadow-sm hover:shadow"
-              onClick={() => setShowMobileFilters(true)}
-            >
-              <svg
-                className="w-5 h-5 mr-2 text-gray-600"
-                fill="currentColor"
-                viewBox="0 0 512 512"
-              >
-                <path d="M3.9 54.9C10.5 40.9 24.5 32 40 32H472c15.5 0 29.5 8.9 36.1 22.9s4.6 30.5-5.2 42.5L320 320.9V448c0 12.1-6.8 23.2-17.7 28.6s-23.8 4.3-33.5-3l-64-48c-8.1-6-12.8-15.5-12.8-25.6V320.9L9 97.3C-.7 85.4-2.8 68.8 3.9 54.9z" />
-              </svg>
-              Filters
-            </button>
-          </div>
-
           <ViewControls
             viewMode={viewMode}
             setViewMode={setViewMode}
@@ -395,6 +383,7 @@ const MainContent = () => {
             sortOption={sortOption}
             setSortOption={setSortOption}
             setCurrentPage={setCurrentPage}
+            onFilterClick={() => setShowMobileFilters(true)}
           />
 
           {viewMode === "grid" ? (
