@@ -321,7 +321,7 @@ const Header = ({ onLogout }) => {
       />
 
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-2 sm:px-4 md:px-6 xl:px-[80px]">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center flex-shrink-0">
@@ -390,7 +390,7 @@ const Header = ({ onLogout }) => {
 
                     {/* Wishlist */}
                 <button
-                  className="p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg relative cursor-pointer group"
+                  className={`${!isLoggedIn ? 'px-3 py-2' : 'p-2.5'} text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg relative cursor-pointer group flex items-center space-x-2`}
                   onClick={handleWishlistClick}
                   title="My Wishlist"
                 >
@@ -403,11 +403,14 @@ const Header = ({ onLogout }) => {
                   >
                     <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
                   </svg>
+                  {!isLoggedIn && (
+                    <span className="hidden lg:inline-block text-sm font-medium">Wishlist</span>
+                  )}
                 </button>
 
                 {/* Cart */}
                 <button
-                  className="p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg relative cursor-pointer group"
+                  className={`${!isLoggedIn ? 'px-3 py-2' : 'p-2.5'} text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg relative cursor-pointer group flex items-center space-x-2`}
                   onClick={handleCartClick}
                   title="My Cart"
                 >
@@ -416,6 +419,9 @@ const Header = ({ onLogout }) => {
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold shadow-sm">
                       {cartItemCount > 99 ? '99+' : cartItemCount}
                     </span>
+                  )}
+                  {!isLoggedIn && (
+                    <span className="hidden lg:inline-block text-sm font-medium">Cart</span>
                   )}
                 </button>
 

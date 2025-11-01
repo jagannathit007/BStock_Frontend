@@ -23,6 +23,8 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
   const [selectedSpecifications, setSelectedSpecifications] = useState(currentFilters.specifications || []);
   const [specificationSearch, setSpecificationSearch] = useState("");
   const [filtersData, setFiltersData] = useState(null);
+  const [isLoadingFilters, setIsLoadingFilters] = useState(true);
+  const [hasFiltersLoaded, setHasFiltersLoaded] = useState(false);
   const prevFiltersStrRef = React.useRef("");
   
   // State for collapsible sections (all open by default)
@@ -102,11 +104,17 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
 
   useEffect(() => {
     const fetchFilters = async () => {
+      setIsLoadingFilters(true);
+      setFiltersData(null); // Clear filters while loading
       try {
         const data = await ProductService.getFilters();
         setFiltersData(data);
       } catch (err) {
         // Error is already toasted in service
+        setFiltersData(null);
+      } finally {
+        setIsLoadingFilters(false);
+        setHasFiltersLoaded(true);
       }
     };
     fetchFilters();
@@ -312,12 +320,12 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
 
   // Helper component for collapsible filter section
   const FilterSection = ({ sectionKey, title, children, isOpen, onToggle }) => (
-    <div className="border-b border-gray-200 last:border-b-0">
+    <div className="border-b border-gray-100 last:border-b-0">
       <button
         onClick={() => onToggle(sectionKey)}
-        className="w-full flex items-center justify-between py-4 text-left"
+        className="w-full flex items-center justify-between py-3 text-left hover:bg-gray-50/50 transition-colors rounded-lg px-1 -mx-1"
       >
-        <h4 className="text-sm font-semibold text-gray-900" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
+        <h4 className="text-sm font-semibold text-gray-800 tracking-tight">
           {title}
         </h4>
         <FontAwesomeIcon
@@ -327,7 +335,45 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
           }`}
         />
       </button>
-      {isOpen && <div className="pb-4">{children}</div>}
+      {isOpen && <div className="pb-3 pt-1">{children}</div>}
+    </div>
+  );
+
+  // Skeleton loader for filter section
+  const FilterSectionSkeleton = ({ title }) => (
+    <div className="border-b border-gray-100 last:border-b-0">
+      <div className="w-full flex items-center justify-between py-3 px-1">
+        <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+        <div className="h-3 w-3 bg-gray-200 rounded animate-pulse"></div>
+      </div>
+      <div className="pb-3 pt-1">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="flex items-center px-2 py-1.5">
+              <div className="h-4 w-4 bg-gray-200 rounded animate-pulse mr-2"></div>
+              <div className="h-3 bg-gray-200 rounded w-20 animate-pulse"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  // Skeleton loader for range slider
+  const RangeSliderSkeleton = () => (
+    <div className="border-b border-gray-100 last:border-b-0">
+      <div className="w-full flex items-center justify-between py-3 px-1">
+        <div className="h-4 bg-gray-200 rounded w-28 animate-pulse"></div>
+        <div className="h-3 w-3 bg-gray-200 rounded animate-pulse"></div>
+      </div>
+      <div className="pb-3 pt-1">
+        <div className="h-1 bg-gray-200 rounded-full animate-pulse mb-4"></div>
+        <div className="flex justify-between items-center">
+          <div className="h-3 bg-gray-200 rounded w-16 animate-pulse"></div>
+          <div className="h-3 bg-gray-200 rounded w-1 animate-pulse"></div>
+          <div className="h-3 bg-gray-200 rounded w-16 animate-pulse"></div>
+        </div>
+      </div>
     </div>
   );
 
@@ -335,29 +381,36 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
   const CheckboxGrid = ({ items, selectedItems, onToggle, columns = 2 }) => {
     const gridClass = columns === 3 ? "grid-cols-3" : "grid-cols-2";
     return (
-      <div className={`grid ${gridClass} gap-2`}>
-        {items.map((item) => (
-          <label
-            key={item}
-            className="flex items-center cursor-pointer group"
-          >
-            <input
-              type="checkbox"
-              checked={selectedItems.includes(item)}
-              onChange={() => onToggle(item)}
-              className="w-4 h-4 border-gray-300 rounded text-blue-600 focus:ring-blue-500"
-            />
-            <span className="ml-2 text-sm text-gray-700" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
-              {item}
-            </span>
-          </label>
-        ))}
+      <div className={`grid ${gridClass} gap-x-3 gap-y-2.5`}>
+        {items.map((item) => {
+          const isSelected = selectedItems.includes(item);
+          return (
+            <label
+              key={item}
+              className={`flex items-center cursor-pointer group px-2 py-1.5 rounded-md transition-colors ${
+                isSelected ? "bg-blue-50" : "hover:bg-gray-50"
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={() => onToggle(item)}
+                className="w-4 h-4 border-gray-300 rounded text-blue-600 focus:ring-blue-500 focus:ring-1 cursor-pointer"
+              />
+              <span className={`ml-2 text-xs text-gray-700 ${
+                isSelected ? "font-medium text-gray-900" : ""
+              }`}>
+                {item}
+              </span>
+            </label>
+          );
+        })}
       </div>
     );
   };
 
   return (
-    <aside className="bg-white h-fit sticky top-24 w-full lg:w-72">
+    <aside className="bg-white h-fit sticky top-24 w-full lg:w-72 border-r border-gray-100">
         <style>
           {`
             input[type="range"] {
@@ -405,8 +458,9 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
             .range-container {
               position: relative;
               height: 4px;
-              background: #f5f5f7;
+              background: #e5e7eb;
               border-radius: 2px;
+              margin: 12px 0;
             }
             input[type="checkbox"] {
               -webkit-appearance: none;
@@ -440,18 +494,46 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
             }
           `}
         </style>
-        <div className="px-6 py-6 bg-[#FAFAFF] shadow-sm">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-bold text-gray-900" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif" }}>
+        <div className="px-4 py-3 bg-white border-r border-gray-100">
+          <div className="flex justify-between items-center mb-3 pb-2.5 border-b border-gray-200">
+            <h3 className="text-sm font-semibold text-gray-900 tracking-tight uppercase">
               Filters
             </h3>
-            {onClose && (
-              <button className="text-gray-400 hover:text-gray-600 lg:hidden transition-colors duration-200" onClick={onClose}>
-                <FontAwesomeIcon icon={faTimes} className="h-6 w-6" />
+            <div className="flex items-center gap-2">
+              <button
+                onClick={clearAllFilters}
+                className="text-xs text-gray-500 hover:text-gray-700 font-medium transition-colors hidden lg:block"
+              >
+                Clear All
               </button>
-            )}
+              {onClose && (
+                <button className="text-gray-400 hover:text-gray-600 lg:hidden transition-colors duration-200" onClick={onClose}>
+                  <FontAwesomeIcon icon={faTimes} className="h-5 w-5" />
+                </button>
+              )}
+            </div>
           </div>
 
+          {isLoadingFilters ? (
+            <>
+              {/* Loading Skeletons */}
+              <RangeSliderSkeleton />
+              <FilterSectionSkeleton title="Brand" />
+              <FilterSectionSkeleton title="Category" />
+              <FilterSectionSkeleton title="Storage" />
+              <FilterSectionSkeleton title="RAM" />
+            </>
+          ) : !isLoadingFilters && hasFiltersLoaded && !filtersData ? (
+            <div className="text-center py-8">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-full mb-3">
+                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <p className="text-sm text-gray-500">Unable to load filters</p>
+            </div>
+          ) : (
+            <>
           {/* Price Range */}
           <FilterSection
             sectionKey="priceRange"
@@ -459,7 +541,7 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
             isOpen={openSections.priceRange}
             onToggle={toggleSection}
           >
-            <div className="range-container mb-3">
+            <div className="range-container">
               <input
                 type="range"
                 min={priceRange.min}
@@ -481,7 +563,7 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
                 aria-label="Maximum price"
               />
               <div
-                className="absolute h-1 bg-primary rounded-full"
+                className="absolute h-1 bg-blue-600 rounded-full"
                 style={{
                   left: `${
                     ((minPrice || priceRange.min) / priceRange.max) * 100
@@ -496,9 +578,14 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
                 }}
               ></div>
             </div>
-            <div className="flex justify-between text-sm text-gray-500 font-apple">
-              <span>{convertPrice(parseFloat(minPrice || priceRange.min))}</span>
-              <span>{convertPrice(parseFloat(maxPrice || priceRange.max))}</span>
+            <div className="flex justify-between items-center mt-2">
+              <div className="text-xs text-gray-600 font-medium">
+                {convertPrice(parseFloat(minPrice || priceRange.min))}
+              </div>
+              <div className="text-xs text-gray-400">-</div>
+              <div className="text-xs text-gray-600 font-medium">
+                {convertPrice(parseFloat(maxPrice || priceRange.max))}
+              </div>
             </div>
           </FilterSection>
 
@@ -612,22 +699,23 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
               isOpen={openSections.color}
               onToggle={toggleSection}
             >
-              <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-2.5 flex-wrap">
                 {colors.map((color) => {
                   const isSelected = selectedColors.includes(color.name);
                   return (
                     <button
                       key={color.name}
                       onClick={() => handleColorChange(color.name)}
-                      className={`w-10 h-10 rounded-full ${color.class} border-2 transition-all ${
+                      className={`w-8 h-8 rounded-full ${color.class} border-2 transition-all relative ${
                         isSelected
-                          ? "border-blue-500 scale-110"
-                          : "border-gray-200"
+                          ? "border-blue-600 ring-2 ring-blue-200"
+                          : "border-gray-300 hover:border-gray-400"
                       }`}
+                      title={color.name}
                     >
                       {isSelected && (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <svg className="w-4 h-4 text-white drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3">
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <svg className="w-3.5 h-3.5 text-white drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
                         </div>
@@ -680,7 +768,7 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
             isOpen={openSections.stockAvailability}
             onToggle={toggleSection}
           >
-            <div className="range-container mb-3">
+            <div className="range-container">
               <input
                 type="range"
                 min={stockRange.min}
@@ -702,7 +790,7 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
                 aria-label="Maximum stock"
               />
               <div
-                className="absolute h-1 bg-primary rounded-full"
+                className="absolute h-1 bg-blue-600 rounded-full"
                 style={{
                   left: `${
                     ((minStock || stockRange.min) / stockRange.max) * 100
@@ -717,9 +805,14 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
                 }}
               ></div>
             </div>
-            <div className="flex justify-between text-sm text-gray-500 font-apple">
-              <span>{minStock || stockRange.min}</span>
-              <span>{maxStock || stockRange.max}</span>
+            <div className="flex justify-between items-center mt-2">
+              <div className="text-xs text-gray-600 font-medium">
+                {minStock || stockRange.min}
+              </div>
+              <div className="text-xs text-gray-400">-</div>
+              <div className="text-xs text-gray-600 font-medium">
+                {maxStock || stockRange.max}
+              </div>
             </div>
           </FilterSection>
 
@@ -730,7 +823,7 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
             isOpen={openSections.moq}
             onToggle={toggleSection}
           >
-            <div className="range-container mb-3">
+            <div className="range-container">
               <input
                 type="range"
                 min={moqRange.min}
@@ -752,7 +845,7 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
                 aria-label="Maximum MOQ"
               />
               <div
-                className="absolute h-1 bg-primary rounded-full"
+                className="absolute h-1 bg-blue-600 rounded-full"
                 style={{
                   left: `${((minMoq || moqRange.min) / moqRange.max) * 100}%`,
                   width: `${
@@ -764,9 +857,14 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
                 }}
               ></div>
             </div>
-            <div className="flex justify-between text-sm text-gray-500 font-apple">
-              <span>{minMoq || moqRange.min}</span>
-              <span>{maxMoq || moqRange.max}</span>
+            <div className="flex justify-between items-center mt-2">
+              <div className="text-xs text-gray-600 font-medium">
+                {minMoq || moqRange.min}
+              </div>
+              <div className="text-xs text-gray-400">-</div>
+              <div className="text-xs text-gray-600 font-medium">
+                {maxMoq || moqRange.max}
+              </div>
             </div>
           </FilterSection>
 
@@ -778,10 +876,10 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
               isOpen={openSections.specification}
               onToggle={toggleSection}
             >
-              <div className="mb-3">
+              <div className="mb-2">
                 <div className="relative">
                   <svg
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
+                    className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-gray-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -790,11 +888,10 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
                   </svg>
                   <input
                     type="text"
-                    placeholder="Search..."
+                    placeholder="Search specifications..."
                     value={specificationSearch}
                     onChange={(e) => setSpecificationSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif" }}
+                    className="w-full pl-9 pr-3 py-1.5 border border-gray-200 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
                   />
                 </div>
               </div>
@@ -807,6 +904,8 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
                 columns={2}
               />
             </FilterSection>
+          )}
+            </>
           )}
       </div>
     </aside>

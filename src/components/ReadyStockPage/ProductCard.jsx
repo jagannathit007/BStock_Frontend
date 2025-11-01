@@ -455,7 +455,7 @@ if (viewMode === "list") {
                   </button>
 
                   <button
-                    className={`rounded-full transition-all duration-200 hover:scale-105 flex items-center justify-center ${
+                    className={`rounded-full transition-all duration-200 flex items-center justify-center ${
                        isFavorite ? "text-[#FB2C36]" : "text-[#1F2937] hover:text-[#FB2C36]"
                     }`}
                     title={isFavorite ? "Remove from wishlist" : "Add to wishlist"}
@@ -679,7 +679,7 @@ if (viewMode === "list") {
       {/* Image Container */}
       <div className="relative overflow-hidden mb-3 flex-shrink-0 w-full h-[200px] rounded-lg bg-gray-50">
         <img
-          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+          className="w-full h-full object-contain"
           src={
             imageError
               ? iphoneImage

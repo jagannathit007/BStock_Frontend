@@ -132,9 +132,7 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
             <Route
               path="/bidding"
               element={
-                <ProtectedRoute isLoggedIn={isLoggedIn}>
-                  <Layout><BiddingContent /></Layout>
-                </ProtectedRoute>
+                <Layout><BiddingContent isLoggedIn={isLoggedIn} /></Layout>
               }
             />
             <Route

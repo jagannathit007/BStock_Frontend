@@ -14,8 +14,11 @@ import Loader from "../Loader"; // Import Loader
 import { convertPrice } from "../../utils/currencyUtils";
 import { useSocket } from "../../context/SocketContext";
 import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 
-const BiddingContent = () => {
+const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
+  const navigate = useNavigate();
+  const isLoggedIn = isLoggedInProp ?? (localStorage.getItem('isLoggedIn') === 'true');
   const { socketService } = useSocket();
   const [viewMode, setViewMode] = useState("list");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -139,6 +142,13 @@ const BiddingContent = () => {
   };
 
   useEffect(() => {
+    // Don't fetch data if user is not logged in
+    if (!isLoggedIn) {
+      setIsLoading(false);
+      setHasInitiallyLoaded(true);
+      return;
+    }
+
     const controller = new AbortController();
     const fetchData = async () => {
       setIsLoading(true);
@@ -202,7 +212,7 @@ const BiddingContent = () => {
     };
     fetchData();
     return () => controller.abort();
-  }, [currentPage, itemsPerPage, filters, refreshTick, debouncedSearchQuery, sortOption]);
+  }, [currentPage, itemsPerPage, filters, refreshTick, debouncedSearchQuery, sortOption, isLoggedIn]);
 
 
   useEffect(() => {
@@ -236,8 +246,10 @@ const BiddingContent = () => {
 
   // Socket integration for real-time bid updates
   useEffect(() => {
-    if (!socketService) {
-      console.warn('BiddingContent: socketService not available');
+    if (!isLoggedIn || !socketService) {
+      if (!socketService) {
+        console.warn('BiddingContent: socketService not available');
+      }
       return;
     }
 
@@ -329,7 +341,7 @@ const BiddingContent = () => {
       });
       socketService.removeBidListeners();
     };
-  }, [socketService, fetchedProducts]);
+  }, [socketService, fetchedProducts, isLoggedIn]);
 
   // const indexOfLastProduct = useMemo(() => currentPage * itemsPerPage, [currentPage, itemsPerPage]);
   const totalPages = useMemo(() => Math.max(Math.ceil(totalProductsCount / itemsPerPage), 1), [totalProductsCount, itemsPerPage]);
@@ -401,12 +413,154 @@ const BiddingContent = () => {
     return value;
   };
 
+  // Generate dummy data for non-logged in users
+  const dummyProducts = useMemo(() => {
+    return Array.from({ length: 9 }, (_, i) => ({
+      id: `dummy-${i + 1}`,
+      oem: ["Apple", "Samsung", "Google"][i % 3],
+      model: ["iPhone 15 Pro", "Galaxy S24", "Pixel 8"][i % 3],
+      modelFull: ["Apple iPhone 15 Pro", "Samsung Galaxy S24", "Google Pixel 8"][i % 3],
+      memory: ["128GB", "256GB", "512GB"][i % 3],
+      carrier: ["Unlocked", "AT&T", "Verizon"][i % 3],
+      units: Math.floor(Math.random() * 100) + 10,
+      grade: ["A", "A+", "B"][i % 3],
+      color: ["Black", "White", "Blue"][i % 3],
+      cityState: "New York, NY",
+      currentBid: `$${(Math.random() * 500 + 200).toFixed(2)}`,
+      unitPrice: `$${(Math.random() * 1000 + 500).toFixed(2)}`,
+      bids: Math.floor(Math.random() * 20),
+      timer: `${Math.floor(Math.random() * 48)}h ${Math.floor(Math.random() * 60)}m`,
+      expiryTime: new Date(Date.now() + Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+      status: 'active',
+      imageUrl: "https://via.placeholder.com/400x300.png?text=Product",
+      highestBidder: null,
+      minNextBid: null,
+      currentPrice: null,
+      myMaxBid: "-",
+    }));
+  }, []);
+
+  const handleLoginClick = () => {
+    const hashPath = window.location.hash?.slice(1) || '/home';
+    const returnTo = encodeURIComponent(hashPath);
+    navigate(`/login?returnTo=${returnTo}`);
+  };
+
   if (selectedProduct) {
     return (
       <BiddingProductDetails
         product={selectedProduct}
         onBack={handleBackToList}
       />
+    );
+  }
+
+  // Show blurred dummy data with login prompt if not logged in
+  if (!isLoggedIn) {
+    return (
+      <>
+        <div className="relative h-[calc(100vh-200px)] overflow-hidden">
+          {/* Blurred Background Content */}
+          <div className="blur-md pointer-events-none select-none h-full">
+            <div className="flex flex-col lg:flex-row gap-6 h-full">
+              {/* Sidebar Filters - Desktop */}
+              <aside className="lg:w-72 hidden lg:block">
+                <div className="bg-white rounded-lg shadow-md p-4 h-full overflow-hidden">
+                  <div className="space-y-4">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                  </div>
+                </div>
+              </aside>
+
+              {/* Main Content */}
+              <main className="flex-1 flex flex-col h-full overflow-hidden">
+                {/* View Controls */}
+                <div className="mb-4 p-4 bg-white rounded-lg shadow-md flex-shrink-0">
+                  <div className="flex justify-between items-center">
+                    <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+                    <div className="h-8 bg-gray-200 rounded w-1/6"></div>
+                  </div>
+                </div>
+
+                {/* Grid View */}
+                {viewMode === "grid" ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 overflow-y-auto flex-1 pr-2">
+                    {dummyProducts.slice(0, 6).map((product, index) => (
+                      <div key={product.id} className="bg-white rounded-lg shadow-md p-4">
+                        <div className="h-32 bg-gray-200 rounded mb-4"></div>
+                        <div className="space-y-2">
+                          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                          <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="hidden md:block bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden flex-1">
+                    <div className="w-full h-full overflow-auto">
+                      <table className="w-full border border-gray-200">
+                        <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
+                          <tr>
+                            <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600">BRAND</th>
+                            <th className="px-5 py-4 text-left text-xs font-semibold text-gray-600">MODEL</th>
+                            <th className="px-4 py-4 text-right text-xs font-semibold text-gray-600">PRICE</th>
+                            <th className="px-4 py-4 text-right text-xs font-semibold text-gray-600">CUR. BID</th>
+                            <th className="px-5 py-4 text-left text-xs font-semibold text-gray-600">NEXT MIN BID</th>
+                            <th className="px-5 py-4 text-center text-xs font-semibold text-gray-600">BID NOW</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {dummyProducts.slice(0, 3).map((product) => (
+                            <tr key={product.id} className="border-b border-gray-100">
+                              <td className="px-4 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></td>
+                              <td className="px-5 py-4"><div className="h-4 bg-gray-200 rounded w-24"></div></td>
+                              <td className="px-4 py-4 text-right"><div className="h-4 bg-gray-200 rounded w-20 ml-auto"></div></td>
+                              <td className="px-4 py-4 text-right"><div className="h-4 bg-gray-200 rounded w-20 ml-auto"></div></td>
+                              <td className="px-5 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></td>
+                              <td className="px-5 py-4 text-center"><div className="h-8 bg-gray-200 rounded w-20 mx-auto"></div></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </main>
+            </div>
+          </div>
+
+          {/* Login Prompt Overlay - Centered */}
+          <div className="absolute inset-0 flex items-center justify-center z-50">
+            <div 
+              onClick={handleLoginClick}
+              className="bg-white rounded-2xl shadow-2xl p-8 md:p-10 max-w-md w-full mx-4 cursor-pointer transform transition-all hover:scale-105 hover:shadow-3xl"
+            >
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full mb-6 shadow-lg">
+                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+                  Login Required
+                </h2>
+                <p className="text-gray-600 mb-6 text-base md:text-lg">
+                  Please login to access the bidding platform and start placing bids on exclusive deals.
+                </p>
+                <button
+                  onClick={handleLoginClick}
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-lg font-semibold text-base md:text-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl"
+                >
+                  Login to Continue
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
     );
   }
 

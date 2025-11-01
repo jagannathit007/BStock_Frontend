@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import ProductCard from "./ProductCard";
+import ProductCardSkeleton from "./ProductCardSkeleton";
 import SideFilter from "../SideFilter";
 import ViewControls from "./ViewControls";
 import BiddingForm from "../negotiation/BiddingForm"; // Import BiddingForm
-import Loader from "../Loader"; // Import Loader
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChevronLeft,
@@ -95,6 +95,8 @@ const MainContent = () => {
     const fetchData = async () => {
       setIsLoading(true);
       setErrorMessage(null);
+      setFetchedProducts([]); // Clear products while loading
+      setTotalProductsCount(0); // Clear count while loading
       try {
         const baseUrl =
           import.meta.env.VITE_BASE_URL || "http://localhost:3200";
@@ -394,27 +396,51 @@ const MainContent = () => {
           {viewMode === "grid" ? (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-4 md:gap-6">
-                {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
-                  <div className="col-span-full flex justify-center py-12">
-                    <Loader size="lg" />
+                {isLoading ? (
+                  <>
+                    {Array.from({ length: itemsPerPage }).map((_, index) => (
+                      <div 
+                        key={`skeleton-${index}`}
+                        style={{
+                          animationDelay: `${index * 40}ms`,
+                          animation: "fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+                          opacity: 0,
+                        }}
+                      >
+                        <ProductCardSkeleton viewMode="grid" delay={index * 25} />
+                      </div>
+                    ))}
+                  </>
+                ) : !isLoading && hasInitiallyLoaded && currentProducts.length === 0 ? (
+                  <div className="col-span-full text-center py-16">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No products found</h3>
+                    <p className="text-sm text-gray-500">Try adjusting your filters or search query</p>
                   </div>
+                ) : (
+                  currentProducts.map((product, index) => (
+                    <div 
+                      key={product.id}
+                      style={{
+                        animationDelay: `${index * 40}ms`,
+                        animation: "productFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+                        opacity: 0,
+                      }}
+                    >
+                      <ProductCard
+                        product={product}
+                        viewMode={viewMode}
+                        onRefresh={handleRefresh}
+                        onOpenBiddingForm={handleOpenBiddingForm} // Pass handler
+                        onWishlistChange={handleWishlistChange}
+                      />
+                    </div>
+                  ))
                 )}
-                {!isLoading && hasInitiallyLoaded && currentProducts.length === 0 && (
-                  <div className="col-span-full text-center text-2xl text-gray-500 font-bold">
-                    No products found.
-                  </div>
-                )}
-                {currentProducts.map((product, index) => (
-                  <div key={product.id} className="animate-slideUp" style={{animationDelay: `${index * 0.1}s`}}>
-                    <ProductCard
-                      product={product}
-                      viewMode={viewMode}
-                      onRefresh={handleRefresh}
-                      onOpenBiddingForm={handleOpenBiddingForm} // Pass handler
-                      onWishlistChange={handleWishlistChange}
-                    />
-                  </div>
-                ))}
               </div>
               {totalPages > 1 && (
                 <div className="text-sm text-gray-600 mt-4 mb-2">
@@ -476,27 +502,51 @@ const MainContent = () => {
           ) : (
             <>
               <div className="flex flex-col gap-4">
-                {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
-                  <div className="flex justify-center py-12">
-                    <Loader size="lg" />
+                {isLoading ? (
+                  <>
+                    {Array.from({ length: itemsPerPage }).map((_, index) => (
+                      <div
+                        key={`skeleton-${index}`}
+                        style={{
+                          animationDelay: `${index * 40}ms`,
+                          animation: "fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+                          opacity: 0,
+                        }}
+                      >
+                        <ProductCardSkeleton viewMode="list" delay={index * 25} />
+                      </div>
+                    ))}
+                  </>
+                ) : !isLoading && hasInitiallyLoaded && currentProducts.length === 0 ? (
+                  <div className="text-center py-16">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No products found</h3>
+                    <p className="text-sm text-gray-500">Try adjusting your filters or search query</p>
                   </div>
+                ) : (
+                  currentProducts.map((product, index) => (
+                    <div 
+                      key={product.id}
+                      style={{
+                        animationDelay: `${index * 35}ms`,
+                        animation: "productFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+                        opacity: 0,
+                      }}
+                    >
+                      <ProductCard
+                        product={product}
+                        viewMode={viewMode}
+                        onRefresh={handleRefresh}
+                        onWishlistChange={handleWishlistChange}
+                        onOpenBiddingForm={handleOpenBiddingForm} // Pass handler
+                      />
+                    </div>
+                  ))
                 )}
-                {!isLoading && hasInitiallyLoaded && currentProducts.length === 0 && (
-                  <div className="text-center text-2xl text-gray-500 font-bold">
-                    No products found.
-                  </div>
-                )}
-                {currentProducts.map((product, index) => (
-                  <div key={product.id} className="animate-slideUp" style={{animationDelay: `${index * 0.1}s`}}>
-                    <ProductCard
-                      product={product}
-                      viewMode={viewMode}
-                      onRefresh={handleRefresh}
-                      onWishlistChange={handleWishlistChange}
-                      onOpenBiddingForm={handleOpenBiddingForm} // Pass handler
-                    />
-                  </div>
-                ))}
               </div>
               {totalPages > 1 && (
                 <div className="text-sm text-gray-600 mt-4 mb-2">
