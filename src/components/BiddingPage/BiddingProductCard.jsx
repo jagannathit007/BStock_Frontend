@@ -8,12 +8,15 @@ import {
   faEye,
   faClock,
   faBookmark,
+  faShoppingCart,
+  faCircleInfo,
   faSimCard,
 } from "@fortawesome/free-solid-svg-icons";
 import iphoneImage from "../../assets/iphone.png";
 import Countdown from "react-countdown";
 import Swal from "sweetalert2";
 import { useSocket } from "../../context/SocketContext";
+import toastHelper from "../../utils/toastHelper";
 
 // Reusable Spinner Component
 const Spinner = () => (
@@ -46,50 +49,25 @@ const BiddingProductCard = ({
   onOpenBiddingForm,
   renderBidValue,
   onBidSuccess,
-  index = 0,
 }) => {
   const navigate = useNavigate();
   const { socketService } = useSocket();
   const [imageError, setImageError] = useState(false);
   const [isSubmittingBid, setIsSubmittingBid] = useState(false);
-  const [myMaxBidInput, setMyMaxBidInput] = useState(() => {
-    if (product?.minNextBid) {
-      return product.minNextBid.toString();
-    }
-    const initial = typeof product?.myMaxBid === "string"
-      ? product.myMaxBid.replace(/[^0-9.,]/g, "")
-      : product?.myMaxBid || "";
-    return initial?.toString() || "";
-  });
+  const [myMaxBidInput, setMyMaxBidInput] = useState("");
 
-  // Update input when currentPrice, minNextBid, or currentBid changes (on refresh or socket update)
-  useEffect(() => {
-    // Calculate the latest bid value
-    let latestBidValue = null;
-    
-    // Priority: minNextBid > currentPrice > currentBid
+  // Helper function to get min bid placeholder text
+  const getMinBidPlaceholder = () => {
     if (product?.minNextBid !== undefined && product?.minNextBid !== null) {
-      latestBidValue = product.minNextBid;
-    } else if (product?.currentPrice !== undefined && product?.currentPrice !== null) {
-      // Extract numeric value from currentPrice if it's a string
-      const currentPriceNum = typeof product.currentPrice === 'string'
-        ? parseFloat(product.currentPrice.replace(/[$,]/g, ''))
-        : product.currentPrice;
-      latestBidValue = currentPriceNum;
-    } else if (product?.currentBid !== undefined && product?.currentBid !== null) {
-      // Extract numeric value from currentBid if it's a string
-      const currentBidNum = typeof product.currentBid === 'string'
-        ? parseFloat(product.currentBid.replace(/[$,]/g, ''))
-        : product.currentBid;
-      latestBidValue = currentBidNum;
+      const minBid = typeof product.minNextBid === 'string'
+        ? parseFloat(product.minNextBid.replace(/[$,]/g, ''))
+        : product.minNextBid;
+      if (!isNaN(minBid) && minBid > 0) {
+        return `Min: $${minBid.toFixed(2)}`;
+      }
     }
-    
-    // Only update if we have a valid value
-    if (latestBidValue !== null && !isNaN(latestBidValue) && latestBidValue > 0) {
-      const formattedValue = latestBidValue.toString();
-      setMyMaxBidInput(formattedValue);
-    }
-  }, [product?.minNextBid, product?.currentPrice, product?.currentBid]);
+    return "Enter next min bid amount";
+  };
 
   const {
     name,
@@ -150,19 +128,24 @@ const BiddingProductCard = ({
       console.log('Response status:', res?.status);
       console.log('Response data status:', res?.data?.status);
 
-      // Check for success: HTTP status 200-299, or response status 200, or message contains "success"
-      const httpStatusOk = res?.status >= 200 && res?.status < 300;
-      const responseStatusOk = res?.data?.status === 200;
-      const hasData = res?.data?.data !== null && res?.data?.data !== undefined;
-      const successMessage = res?.data?.message?.toLowerCase().includes('success');
-      
-      const isSuccess = httpStatusOk || responseStatusOk || hasData || successMessage;
-      
-      console.log('Is success:', isSuccess, { httpStatusOk, responseStatusOk, hasData, successMessage });
+      // Check if response data is null
+      const responseData = res?.data?.data;
+      const responseMessage = res?.data?.message || "Bid placed successfully";
 
-      if (isSuccess) {
-        const successMsg = res?.data?.message || "Bid placed successfully";
-        console.log('Bid successful, showing success message and refreshing...');
+      if (responseData === null || responseData === undefined) {
+        // Show Swal warning when data is null
+        console.log('Bid response data is null, showing warning');
+        Swal.fire({
+          icon: "warning",
+          title: "Warning",
+          text: responseMessage || "Unable to place bid. Please try again.",
+          showConfirmButton: true,
+          confirmButtonText: "OK",
+          confirmButtonColor: "#0071E0",
+        });
+      } else {
+        // Show toast notification when data is not null
+        console.log('Bid successful, showing toast notification and refreshing...');
         
         // Join bid room for this product to receive real-time updates
         if (socketService && product.id) {
@@ -170,15 +153,8 @@ const BiddingProductCard = ({
           socketService.joinBid(product.id);
         }
         
-        Swal.fire({
-          icon: "success",
-          title: successMsg,
-          toast: true,
-          position: "top-end",
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true,
-        });
+        // Show toast at top right
+        toastHelper.showTost(responseMessage, "success");
         
         // Refresh the table immediately after successful bid
         console.log('Calling onBidSuccess callback...');
@@ -188,18 +164,6 @@ const BiddingProductCard = ({
         } else {
           console.warn('onBidSuccess callback is not provided');
         }
-      } else {
-        const msg = res?.data?.message || "Failed to place bid";
-        console.log('Bid failed:', msg);
-        Swal.fire({
-          icon: "error",
-          title: msg,
-          toast: true,
-          position: "top-end",
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true,
-        });
       }
     } catch (err) {
       const msg = err?.response?.data?.message || err?.message || "Failed to place bid";
@@ -235,137 +199,133 @@ const BiddingProductCard = ({
 
   const isCurrentUserBidder = isCurrentUserHighestBidder();
 
-  // MOBILE CARD VIEW - Minimal and professional design
+  // MOBILE CARD VIEW - Matches the image style for mobile devices
   if (viewMode === "mobile") {
-    const statusText = auctionEnded || product.status === 'ended' || product.status === 'closed' 
-      ? "Ended" 
-      : "Active";
     const statusColor = auctionEnded || product.status === 'ended' || product.status === 'closed' 
       ? "bg-red-600" 
       : "bg-green-600";
+    const statusText = auctionEnded || product.status === 'ended' || product.status === 'closed' 
+      ? "Out of Stock" 
+      : "In Stock";
 
     return (
       <div
-        className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-3 transition-all duration-200 hover:shadow-md hover:border-gray-300"
+        className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-4"
         onClick={handleProductClick}
       >
-        {/* Top Section with Brand and Status */}
-        <div className="px-3 pt-3 pb-2.5 border-b border-gray-100">
-          <div className="flex items-start justify-between gap-2 mb-2">
-            {/* Brand */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="font-semibold text-sm text-gray-900">{product.oem || 'Brand'}</span>
-                {product.units && (
-                  <span className="text-xs text-gray-500">({product.units})</span>
-                )}
-              </div>
-              <h3 className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">
-                {product.model || product.modelFull}
+        {/* Header with Status Badge and Icons */}
+        <div className="relative px-3 pt-3 pb-2">
+          {/* Product Name with In Stock Badge */}
+          <div className="mb-2 flex items-start justify-between gap-2">
+            <div className="flex items-center gap-2 flex-1">
+              <h3 className="font-bold text-base text-gray-900 line-clamp-2">
+                {product.modelFull}
               </h3>
+              {product.grade && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-700 flex-shrink-0">
+                  {product.grade}
+                </span>
+              )}
             </div>
-            {/* Status Badge */}
-            <span className={`inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-semibold text-white flex-shrink-0 ${statusColor}`}>
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium ${statusColor} text-white flex-shrink-0`}>
+              <span className="w-1.5 h-1.5 bg-white rounded-full mr-1.5"></span>
               {statusText}
             </span>
           </div>
 
-          {/* Price Section */}
-          <div className="flex items-baseline justify-between mb-2">
-            <div>
-              <div className="text-[10px] text-gray-500 font-medium mb-0.5">Current Bid</div>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-xl font-bold text-blue-600">
-                  {renderBidValue ? renderBidValue(product.currentBid) : product.currentBid}
-                </span>
-                {product.unitPrice && (
-                  <span className="text-xs text-gray-500">
-                    / {renderBidValue ? renderBidValue(product.unitPrice) : product.unitPrice}
-                  </span>
-                )}
-              </div>
+          {/* Price - Start from */}
+          <div className="mb-2">
+            <div className="flex items-baseline gap-2">
+              <span className="text-sm text-gray-600">Start from</span>
+              <span className="text-2xl font-bold text-green-600">
+                {renderBidValue ? renderBidValue(product.currentBid) : product.currentBid}
+              </span>
             </div>
-            {product.grade && (
-              <div className="bg-gray-50 border border-gray-300 rounded-lg px-2 py-1">
-                <div className="text-[9px] text-gray-500 font-medium">Grade</div>
-                <div className="text-xs font-bold text-gray-900">{product.grade}</div>
-              </div>
-            )}
           </div>
 
-          {/* Specs Badges */}
-          {(product.memory || product.color || product.carrier) && (
-            <div className="flex items-center gap-1 flex-wrap">
+          {/* Badges: Capacity • Color • Carrier */}
+          <div className="mb-2">
+            <div className="flex items-center gap-1 text-xs text-gray-700">
               {product.memory && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-50 text-gray-700 border border-gray-200">
-                  {product.memory}
-                </span>
+                <>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-100 whitespace-nowrap">
+                    {product.memory}
+                  </span>
+                  {(product.color || product.units || (typeof product.carrier === 'string' && product.carrier.trim() !== '')) && (
+                    <span className="text-gray-400 mx-1">•</span>
+                  )}
+                </>
               )}
               {product.color && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-50 text-gray-700 border border-gray-200">
-                  {product.color}
-                </span>
+                <>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-100 whitespace-nowrap">
+                    {product.color}
+                  </span>
+                  {(product.units || (typeof product.carrier === 'string' && product.carrier.trim() !== '')) && (
+                    <span className="text-gray-400 mx-1">•</span>
+                  )}
+                </>
               )}
-              {product.carrier && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-50 text-gray-700 border border-gray-200">
-                  <FontAwesomeIcon icon={faSimCard} className="mr-0.5 text-[8px]" />
+              {product.units && (
+                <>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-100 whitespace-nowrap">
+                    {product.units} UNIT{product.units !== 1 ? 'S' : ''}
+                  </span>
+                  {typeof product.carrier === 'string' && product.carrier.trim() !== '' && (
+                    <span className="text-gray-400 mx-1">•</span>
+                  )}
+                </>
+              )}
+              {typeof product.carrier === 'string' && product.carrier.trim() !== '' && (
+                <span
+                  className="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-100 whitespace-nowrap cursor-pointer"
+                  title={`Carrier: ${product.carrier}`}
+                >
+                  <FontAwesomeIcon icon={faSimCard} className="mr-1" />
                   {product.carrier}
                 </span>
               )}
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Bottom Section with Timer and Bid Controls */}
-        <div className="px-3 py-2.5">
+        {/* Product Details */}
+        <div className="px-3 pb-3">
           {product.status === 'closed' ? (
-            <div className="flex items-center justify-center py-2">
-              <span className="text-sm font-semibold text-gray-600">Auction Closed</span>
+            <div className="flex items-center justify-center py-4">
+              <span className="text-lg font-semibold text-gray-600">Closed</span>
             </div>
           ) : (
             <>
-              {/* Timer */}
               {product.expiryTime && !auctionEnded && (
-                <div className="mb-2">
-                  <div className="bg-red-50 border border-red-200 rounded-lg py-1.5 px-2">
-                    <div className="flex items-center justify-center gap-1.5 mb-0.5">
-                      <svg className="w-3 h-3 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                      </svg>
-                      <span className="text-[10px] text-red-600 font-medium">Time Remaining</span>
-                    </div>
-                    <div className="text-sm text-red-600 font-bold text-center tabular-nums">
-                      {product.status === 'pending' ? (
-                        <span className="text-xs text-gray-500">Starting Soon</span>
-                      ) : (
-                        <Countdown
-                          date={product.expiryTime}
-                          renderer={({ days, hours, minutes, seconds, completed }) => {
-                            if (completed) return <span className="text-gray-500">Ended</span>;
-                            return (
-                              <span>
-                                {days > 0 && <span>{days}d </span>}
-                                {String(hours).padStart(2, "0")}:
-                                {String(minutes).padStart(2, "0")}:
-                                {String(seconds).padStart(2, "0")}
-                              </span>
-                            );
-                          }}
-                        />
-                      )}
+                <div className="grid grid-cols-1 gap-2.5 mb-2">
+                  <div className="w-full rounded-xl border border-red-200 bg-red-50 py-1 px-2 flex flex-col justify-center shadow-sm">
+                    
+                    <div className="text-sm text-red-600 font-bold text-center mt-0.5">
+                      <Countdown
+                        date={product.expiryTime}
+                        renderer={({ hours, minutes, seconds, completed }) => {
+                          if (completed) return <span className="text-xs"></span>;
+                          return (
+                            <span className="text-sm font-bold">
+                              {String(hours).padStart(2, "0")}:{String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
+                            </span>
+                          );
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Bid Input and Button */}
-              <div className="space-y-1.5">
-                <div className="relative">
-                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-medium">$</span>
+              {/* Next Min Bid input + Buttons in one row */}
+              <div className="flex items-center gap-2 mb-2">
+                <div className="relative flex-1 min-w-0">
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
                   <input
                     type="text"
-                    className="w-full pl-6 pr-2 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-50 disabled:cursor-not-allowed transition-all"
-                    placeholder="Bid amount"
+                    className="w-full pl-5 pr-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071E0] disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    placeholder={getMinBidPlaceholder()}
                     value={myMaxBidInput}
                     disabled={auctionEnded || isSubmittingBid || product.status === 'pending'}
                     title={product.status === 'pending' ? 'Bid not yet started' : ''}
@@ -377,32 +337,30 @@ const BiddingProductCard = ({
                   />
                 </div>
                 <button
-                  className={`w-full py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                  className={`py-2 px-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
                     auctionEnded || isCurrentUserBidder || isSubmittingBid || product.status === 'pending'
-                      ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                      : product.isLeading || isCurrentUserBidder
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : product.isLeading
                       ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer"
-                      : "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
+                      : "bg-[#0071E0] hover:bg-blue-600 text-white cursor-pointer"
                   }`}
                   onClick={handleBidButtonClick}
                   disabled={auctionEnded || isCurrentUserBidder || isSubmittingBid || product.status === 'pending'}
                   title={product.status === 'pending' ? 'Bid not yet started' : ''}
                 >
                   {isSubmittingBid ? (
-                    <span className="flex items-center justify-center gap-1.5">
+                    <>
                       <Spinner />
-                      <span>Placing…</span>
-                    </span>
+                      <span className="ml-1">Placing…</span>
+                    </>
                   ) : (
-                    <span className="flex items-center justify-center gap-1.5">
+                    <>
                       <FontAwesomeIcon
-                        icon={auctionEnded ? faClock : isCurrentUserBidder ? faCrown : (product.isLeading ? faCrown : faGavel)}
-                        className={isCurrentUserBidder || product.isLeading ? "text-yellow-300" : ""}
+                        icon={auctionEnded || isCurrentUserBidder ? faClock : (product.isLeading ? faCrown : faGavel)}
+                        className="mr-2"
                       />
-                      <span>
-                        {auctionEnded ? "Ended" : isCurrentUserBidder ? "Leading" : (product.isLeading ? "Leading" : "Place Bid")}
-                      </span>
-                    </span>
+                      {auctionEnded ? "Ended" : isCurrentUserBidder ? "Leading" : (product.isLeading ? "Leading" : "Bid")}
+                    </>
                   )}
                 </button>
               </div>
@@ -415,19 +373,10 @@ const BiddingProductCard = ({
 
   // LIST VIEW
   if (viewMode === "list") {
-    const rowStyle = {
-      animationDelay: `${(index || 0) * 30}ms`,
-      animation: "productFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
-      opacity: 0,
-    };
-
     return (
-      <tr 
-        className="group hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-transparent transition-all duration-200 border-b border-gray-100 last:border-b-0 hover:shadow-sm"
-        style={rowStyle}
-      >
+      <tr className="group hover:bg-blue-50/30 transition-all duration-150 border-b border-gray-100 last:border-b-0">
         {/* BRAND */}
-        <td className="px-4 py-3 align-middle border-r border-gray-100" onClick={handleProductClick}>
+        <td className="px-3 py-2.5 align-middle border-r border-gray-100" onClick={handleProductClick}>
           <div className="flex flex-col">
             <span className="font-semibold text-sm text-gray-900 leading-tight">{product.oem || '-'}</span>
             {product.units && (
@@ -437,7 +386,7 @@ const BiddingProductCard = ({
         </td>
 
         {/* MODEL + DETAILS */}
-        <td className="px-5 py-3 align-middle border-r border-gray-100" onClick={handleProductClick}>
+        <td className="px-4 py-2.5 align-middle border-r border-gray-100" onClick={handleProductClick}>
           <div className="space-y-1.5">
             {/* Model Name with Grade */}
             <div className="flex items-center gap-2 flex-wrap">
@@ -501,32 +450,32 @@ const BiddingProductCard = ({
         </td>
 
         {product.status === 'closed' ? (
-          <td className="px-4 py-3 text-center align-middle" colSpan={4}>
-            <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-600 border border-gray-300">
+          <td className="px-3 py-2.5 text-center align-middle" colSpan={4}>
+            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-600">
               Auction Closed
             </span>
           </td>
         ) : product.status === 'pending' ? (
           <>
             {/* UNIT PRICE */}
-            <td className="hidden md:table-cell px-4 py-3 text-right align-middle border-r border-gray-100">
+            <td className="hidden md:table-cell px-3 py-2.5 text-right align-middle border-r border-gray-100">
               <span className="text-xs text-gray-400">-</span>
             </td>
 
             {/* CURRENT BID */}
-            <td className="px-4 py-3 text-right align-middle border-r border-gray-100">
+            <td className="px-3 py-2.5 text-right align-middle border-r border-gray-100">
               <span className="text-xs text-gray-400">-</span>
             </td>
 
             {/* NEXT MIN BID INPUT */}
-            <td className="hidden lg:table-cell px-5 py-3 align-middle border-r border-gray-100">
+            <td className="hidden lg:table-cell px-4 py-2.5 align-middle border-r border-gray-100">
               <span className="text-xs text-gray-400">-</span>
             </td>
 
             {/* ACTION */}
-            <td className="px-4 py-3 text-center align-middle">
+            <td className="px-3 py-2.5 text-center align-middle">
               <button
-                className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-300"
+                className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-400 cursor-not-allowed"
                 disabled
               >
                 Starting Soon
@@ -536,7 +485,7 @@ const BiddingProductCard = ({
         ) : (
           <>
             {/* UNIT PRICE */}
-            <td className="hidden md:table-cell px-4 py-3 text-right align-middle border-r border-gray-100">
+            <td className="hidden md:table-cell px-3 py-2.5 text-right align-middle border-r border-gray-100">
               <div className="flex flex-col items-end">
                 <span className="text-xs text-gray-500 font-medium leading-tight">Unit</span>
                 <span className="text-sm font-semibold text-gray-900 tabular-nums mt-0.5">
@@ -546,7 +495,7 @@ const BiddingProductCard = ({
             </td>
 
             {/* CURRENT BID */}
-            <td className="px-4 py-3 text-right align-middle border-r border-gray-100">
+            <td className="px-3 py-2.5 text-right align-middle border-r border-gray-100">
               <div className="flex flex-col items-end">
                 <span className="text-xs text-gray-500 font-medium leading-tight">Current</span>
                 <span className="text-base font-bold text-blue-600 tabular-nums mt-0.5">
@@ -556,13 +505,13 @@ const BiddingProductCard = ({
             </td>
 
             {/* NEXT MIN BID INPUT */}
-            <td className="hidden lg:table-cell px-5 py-3 align-middle border-r border-gray-100">
-              <div className="relative max-w-[130px]">
-                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-medium">$</span>
+            <td className="hidden lg:table-cell px-4 py-2.5 align-middle border-r border-gray-100">
+              <div className="relative max-w-[120px]">
+                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-medium">$</span>
                 <input
                   type="text"
-                  className="w-full pl-6 pr-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-50 disabled:cursor-not-allowed transition-all shadow-sm"
-                  placeholder="0.00"
+                  className="w-full pl-5 pr-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-50 disabled:cursor-not-allowed transition-all"
+                  placeholder={getMinBidPlaceholder()}
                   value={myMaxBidInput}
                   disabled={auctionEnded || isSubmittingBid}
                   onClick={(e) => e.stopPropagation()}
@@ -575,9 +524,9 @@ const BiddingProductCard = ({
             </td>
 
             {/* ACTION */}
-            <td className="px-4 py-3 text-center align-middle">
+            <td className="px-3 py-2.5 text-center align-middle">
               <button
-                className={`inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 min-w-[100px] shadow-sm hover:shadow-md ${
+                className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 min-w-[90px] ${
                   auctionEnded
                     ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                     : isCurrentUserBidder
@@ -585,8 +534,8 @@ const BiddingProductCard = ({
                     : isSubmittingBid
                     ? "bg-blue-200 text-blue-700 cursor-not-allowed"
                     : product.isLeading
-                    ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 cursor-pointer"
-                    : "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 cursor-pointer"
+                    ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow cursor-pointer"
+                    : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow cursor-pointer"
                 }`}
                 onClick={handleBidButtonClick}
                 disabled={auctionEnded || isCurrentUserBidder || isSubmittingBid}
@@ -617,147 +566,112 @@ const BiddingProductCard = ({
 
   // GRID VIEW
   if (viewMode === "grid") {
-    const statusText = auctionEnded || product.status === 'ended' || product.status === 'closed' 
-      ? "Ended" 
-      : "Active";
-
     return (
       <div
-        className="rounded-xl border border-gray-200 bg-white overflow-hidden h-full flex flex-col transition-all duration-200 hover:shadow-md hover:border-gray-300"
+        className="rounded-lg shadow-md hover:shadow-xl transition-shadow duration-200 h-full flex flex-col bg-white overflow-hidden"
         onClick={handleProductClick}
-        style={{
-          animationDelay: `${(index || 0) * 40}ms`,
-          animation: "productFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
-          opacity: 0,
-        }}
       >
         {/* IMAGE */}
-        <div className="relative bg-gray-50 h-40 overflow-hidden">
+        <div className="relative bg-gray-100 h-48 sm:h-56">
           <img
-            className="w-full h-full object-contain p-2"
+            className="w-full h-full object-contain"
             src={imageError ? iphoneImage : imageUrl}
             alt={product.modelFull}
             onError={handleImageError}
           />
-          {/* Status Badge */}
-          <div className="absolute top-2 right-2">
-            <span className="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-semibold bg-gray-900 text-white">
-              {statusText}
-            </span>
-          </div>
-          {/* Bookmark */}
           <button
-            className="absolute top-2 left-2 w-7 h-7 rounded-lg bg-white flex items-center justify-center hover:bg-gray-50 transition-colors border border-gray-200"
+            className="absolute top-3 right-3 w-8 h-8 rounded-md bg-white flex items-center justify-center hover:bg-gray-100 transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
-            <FontAwesomeIcon icon={faBookmark} className="text-gray-600 text-xs" />
+            <FontAwesomeIcon icon={faBookmark} className="text-gray-600 text-sm" />
           </button>
         </div>
 
         {/* CARD BODY */}
-        <div className="flex-1 flex flex-col p-2.5">
-          {/* Brand & Model */}
-          <div className="mb-1.5">
-            <div className="flex items-center gap-1.5 mb-1">
-              <span className="text-xs font-semibold text-gray-900">{product.oem || 'Brand'}</span>
-              {product.grade && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border border-gray-300 text-gray-700 bg-white">
-                  {product.grade}
-                </span>
-              )}
-            </div>
-            <h3 className="font-semibold text-sm text-gray-900 line-clamp-2 leading-tight">
-              {product.model || product.modelFull}
+        <div className="p-3 flex-1 flex flex-col">
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <h3 className="font-semibold text-base text-gray-900 line-clamp-2 flex-1">
+              {product.modelFull}
             </h3>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-green-600 text-white flex-shrink-0">
+              <span className="w-1.5 h-1.5 bg-white rounded-full mr-1.5"></span>
+              In Stock
+            </span>
           </div>
 
-          {/* Price Section */}
-          <div className="mb-2">
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-[10px] text-gray-500 font-medium">Current Bid</span>
-              <span className="text-lg font-bold text-gray-900">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center">
+              <span className="text-sm text-gray-600 mr-1">From</span>
+              <span className="text-xl font-bold text-gray-900">
                 {renderBidValue ? renderBidValue(product.currentBid) : product.currentBid}
               </span>
+              <button className="ml-2 text-gray-400 hover:text-gray-600">
+                <FontAwesomeIcon icon={faCircleInfo} className="text-sm" />
+              </button>
             </div>
-            {product.unitPrice && (
-              <div className="text-xs text-gray-500 mt-0.5">
-                {renderBidValue ? renderBidValue(product.unitPrice) : product.unitPrice} / unit
+            {product.grade && (
+              <div className="bg-gray-50 border border-gray-200 rounded px-2 py-0.5">
+                <span className="text-xs text-gray-600">Grade: </span>
+                <span className="text-sm font-medium text-gray-900">{product.grade}</span>
               </div>
             )}
           </div>
 
-          {/* Quick Stats Grid */}
-          <div className="grid grid-cols-4 gap-1.5 mb-2">
-            <div className="bg-gray-50 border border-gray-200 rounded-lg py-1 px-1.5 flex flex-col justify-center items-center">
-              <div className="text-[9px] text-gray-600 font-medium leading-tight">Units</div>
-              <div className="text-xs text-gray-900 font-semibold leading-tight mt-0.5">
+          <div className="grid grid-cols-4 gap-2 w-full mb-2">
+            <div className="w-full h-[48px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
+              <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">Units</div>
+              <div className="text-sm text-gray-500 font-medium leading-5 tracking-normal text-center align-middle mt-0.5">
                 {product.units || "-"}
               </div>
             </div>
-            <div className="bg-gray-50 border border-gray-200 rounded-lg py-1 px-1.5 flex flex-col justify-center items-center">
-              <div className="text-[9px] text-gray-600 font-medium leading-tight">Memory</div>
-              <div className="text-xs text-gray-900 font-semibold leading-tight mt-0.5">
-                {product.memory || "-"}
+            <div className="w-full h-[48px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
+              <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">Spaces</div>
+              <div className="text-sm text-gray-500 font-medium leading-5 tracking-normal text-center align-middle mt-0.5">
+                {product.memory || "-" }
               </div>
             </div>
-            <div className="bg-gray-50 border border-gray-200 rounded-lg py-1 px-1.5 flex flex-col justify-center items-center">
-              <div className="text-[9px] text-gray-600 font-medium leading-tight">Bids</div>
-              <div className="text-xs text-gray-900 font-semibold leading-tight mt-0.5">
-                {product.bids || 0}
+            <div className="w-full h-[48px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
+              <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">Bids</div>
+              <div className="text-sm text-gray-500 font-medium leading-5 tracking-normal text-center align-middle mt-0.5">
+                {product.bids}
               </div>
             </div>
-            <div className="bg-gray-50 border border-gray-200 rounded-lg py-1 px-1.5 flex flex-col justify-center items-center">
-              <div className="text-[9px] text-gray-600 font-medium leading-tight">Time</div>
-              <div className="text-[10px] text-gray-900 font-semibold leading-tight mt-0.5 tabular-nums">
+            <div className="w-full h-[48px] rounded bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
+              <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">Closes In</div>
+              <div className="text-sm text-red-600 font-bold leading-5 tracking-normal text-center align-middle mt-0.5">
                 {product.expiryTime ? (
                   <Countdown
                     date={product.expiryTime}
                     renderer={({ hours, minutes, seconds, completed }) => {
-                      if (completed) return <span>End</span>;
+                      if (completed) return <span className="text-xs font-bold">Ended</span>;
                       return (
-                        <span>
+                        <span className="text-sm font-bold">
                           {String(hours).padStart(2, "0")}:
-                          {String(minutes).padStart(2, "0")}
+                          {String(minutes).padStart(2, "0")}:
+                          {String(seconds).padStart(2, "0")}
                         </span>
                       );
                     }}
                   />
                 ) : product.status === 'pending' ? (
-                  <span className="text-gray-500">Soon</span>
+                  <span className="text-gray-500">Pending</span>
                 ) : (
-                  "-"
+                  product.timer || "-"
                 )}
               </div>
             </div>
           </div>
 
-          {/* Specs Badges */}
-          {(product.color || product.carrier) && (
-            <div className="flex items-center gap-1 mb-2 flex-wrap">
-              {product.color && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-50 text-gray-700 border border-gray-200">
-                  {product.color}
-                </span>
-              )}
-              {product.carrier && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-50 text-gray-700 border border-gray-200">
-                  <FontAwesomeIcon icon={faSimCard} className="mr-0.5 text-[8px]" />
-                  {product.carrier}
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Bid Input + Action Button */}
-          <div className="mt-auto space-y-1.5">
-            <div className="relative">
-              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-medium">$</span>
+          {/* Input + Buttons in one row */}
+          <div className="flex mt-auto w-full gap-2 items-center">
+            <div className="relative flex-1 min-w-0">
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
               <input
                 type="text"
-                className="w-full pl-5 pr-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 bg-white disabled:bg-gray-50 disabled:cursor-not-allowed transition-all"
-                placeholder="Bid amount"
+                className="w-full pl-5 pr-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071E0] disabled:bg-gray-100 disabled:cursor-not-allowed"
+                placeholder={getMinBidPlaceholder()}
                 value={myMaxBidInput}
-                disabled={auctionEnded || isSubmittingBid || product.status === 'pending'}
+                disabled={auctionEnded || isSubmittingBid}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => {
                   const val = e.target.value.replace(/[^0-9.,]/g, "");
@@ -766,29 +680,44 @@ const BiddingProductCard = ({
               />
             </div>
             <button
-              className={`w-full py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 ${
-                auctionEnded || isCurrentUserBidder || isSubmittingBid || product.status === 'pending'
-                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                  : "bg-gray-900 hover:bg-gray-800 text-white cursor-pointer"
+              className={`border ${
+                auctionEnded || isCurrentUserBidder
+                  ? "border-gray-300 text-gray-400 bg-gray-100 cursor-not-allowed"
+                  : "border-gray-200 text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 cursor-pointer"
+              } py-1.5 px-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center justify-center`}
+              disabled={auctionEnded || isCurrentUserBidder}
+              onClick={(e) => {
+                e.stopPropagation();
+                // Handle add to cart
+              }}
+            >
+              <FontAwesomeIcon icon={faShoppingCart} className="mr-1" />
+              Add
+            </button>
+            <button
+              className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition-all duration-200 shadow-sm ${
+                auctionEnded || isCurrentUserBidder || isSubmittingBid
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : product.isLeading
+                  ? "hover:shadow-md bg-green-600 hover:bg-green-700 text-white cursor-pointer"
+                  : "hover:shadow-md bg-[#0071E3] hover:bg-[#005bb5] text-white cursor-pointer"
               }`}
               onClick={handleBidButtonClick}
-              disabled={auctionEnded || isCurrentUserBidder || isSubmittingBid || product.status === 'pending'}
+              disabled={auctionEnded || isCurrentUserBidder || isSubmittingBid}
             >
               {isSubmittingBid ? (
-                <span className="flex items-center justify-center gap-1.5">
+                <>
                   <Spinner />
-                  <span>Placing…</span>
-                </span>
+                  <span className="ml-1">Placing…</span>
+                </>
               ) : (
-                <span className="flex items-center justify-center gap-1.5">
+                <>
                   <FontAwesomeIcon
-                    icon={auctionEnded ? faClock : isCurrentUserBidder ? faCrown : (product.isLeading ? faCrown : faGavel)}
-                    className="text-[10px]"
+                    icon={auctionEnded || isCurrentUserBidder ? faClock : (product.isLeading ? faCrown : faGavel)}
+                    className="mr-1"
                   />
-                  <span>
-                    {auctionEnded ? "Ended" : isCurrentUserBidder ? "Leading" : (product.isLeading ? "Leading" : "Place Bid")}
-                  </span>
-                </span>
+                  {auctionEnded ? "Auction Ended" : isCurrentUserBidder ? "Leading" : (product.isLeading ? "Leading" : "Bid")}
+                </>
               )}
             </button>
           </div>
