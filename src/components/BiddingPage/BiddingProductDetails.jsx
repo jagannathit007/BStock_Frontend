@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faHeart,
   faChevronLeft,
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
@@ -25,7 +24,7 @@ import Countdown from "react-countdown";
 
 const BiddingProductDetails = ({ product, onBack }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isLiked, setIsLiked] = useState(false);
+
 
   // Sample images array - you can replace this with actual product images
   const productImages = [
