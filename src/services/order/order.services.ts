@@ -3,7 +3,8 @@ import toastHelper from '../../utils/toastHelper';
 
 export interface OrderItem {
   productId: string;
-  skuFamilyId: string;
+  skuFamilyId?: string | null;
+  subSkuFamilyId?: string | null;
   quantity: number;
   price: number;
 }

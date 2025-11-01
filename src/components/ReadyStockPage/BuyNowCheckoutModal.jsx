@@ -72,7 +72,8 @@ const BuyNowCheckoutModal = ({
       cartItems: [
         {
           productId: product.id,
-          skuFamilyId: product.id, // Using product ID as skuFamilyId fallback
+          skuFamilyId: product.skuFamilyId || null,
+          subSkuFamilyId: product.subSkuFamilyId || null,
           quantity: Number(quantity),
           price: Number(product.price),
         },

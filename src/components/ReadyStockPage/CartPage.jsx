@@ -71,9 +71,11 @@ const CartPage = () => {
         ? "Low Stock"
         : "In Stock";
 
+    const subSkuFamilyId = item.subSkuFamilyId?._id || item.subSkuFamilyId || null;
     return {
       id,
       skuFamilyId,
+      subSkuFamilyId,
       name,
       description,
       price,
@@ -230,7 +232,8 @@ const CartPage = () => {
       orderNumber: null,
       cartItems: cartItems.map((item) => ({
         productId: item.id,
-        skuFamilyId: item.skuFamilyId,
+        skuFamilyId: item.skuFamilyId || null,
+        subSkuFamilyId: item.subSkuFamilyId || null,
         quantity: Number(item.quantity),
         price: Number(item.price),
       })),
