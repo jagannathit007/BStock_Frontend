@@ -4,9 +4,7 @@ import {
   faEnvelope,
   faSpinner,
   faTimes,
-  faStore,
 } from "@fortawesome/free-solid-svg-icons";
-import { motion } from "framer-motion";
 
 const ForgotPasswordModal = ({ isOpen, onClose, onEmailSubmit }) => {
   const [email, setEmail] = useState("");
@@ -23,115 +21,57 @@ const ForgotPasswordModal = ({ isOpen, onClose, onEmailSubmit }) => {
     }, 1500);
   };
 
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0, y: 50 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.8,
-        staggerChildren: 0.2,
-      },
-    },
-  };
-
-  const childVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5 },
-    },
-  };
-
-  const buttonVariants = {
-    hover: {
-      scale: 1.05,
-      boxShadow: "0px 4px 20px rgba(59, 130, 246, 0.3)",
-      transition: { duration: 0.3 },
-    },
-    tap: { scale: 0.95 },
-  };
-
-  const logoVariants = {
-    hidden: { scale: 0, rotate: -180 },
-    visible: {
-      scale: 1,
-      rotate: 0,
-      transition: { type: "spring", stiffness: 260, damping: 20 },
-    },
-  };
-
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-[120] p-4 bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Subtle background animation for tech theme */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-0 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
-      </div>
-
-      <motion.div
-        className="w-full max-w-md"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        {/* Logo and Title Section */}
-        <motion.div className="text-center mb-8" variants={childVariants}>
-          <motion.div
-            className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full mb-4 shadow-lg"
-            variants={logoVariants}
-          >
-            <FontAwesomeIcon icon={faStore} className="text-white text-3xl" />
-          </motion.div>
-          <h2 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
-            GSM Bidding
-          </h2>
-          <p className="text-gray-600 mt-2 font-medium">Reset your password</p>
-        </motion.div>
+    <div className="fixed inset-0 flex items-center justify-center z-[120] p-4 bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className="w-full max-w-md">
+        {/* Logo and Header */}
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg sm:rounded-xl shadow-lg mb-3 sm:mb-4">
+            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2 sm:mb-3 tracking-tight">
+            Reset your password
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+            Enter your email to receive a password reset link
+          </p>
+        </div>
 
         {/* Modal Box */}
-        <motion.div
-          className="bg-white rounded-3xl shadow-2xl p-8 border border-blue-100 relative"
-          variants={childVariants}
-        >
+        <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-xl border border-white/20 p-3 sm:p-4 lg:p-5 relative">
           {/* Close Button */}
-          <motion.button
+          <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-blue-600 cursor-pointer transition-colors duration-200"
-            variants={childVariants}
+            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 cursor-pointer transition-colors duration-200"
           >
-            <FontAwesomeIcon icon={faTimes} size="lg" />
-          </motion.button>
+            <FontAwesomeIcon icon={faTimes} className="h-5 w-5" />
+          </button>
 
-          <div className="p-4">
-            <motion.p
-              className="text-gray-600 mb-6 text-center font-medium"
-              variants={childVariants}
-            >
+          <div className="space-y-3 sm:space-y-4 lg:space-y-5">
+            <p className="text-xs sm:text-sm text-gray-600 text-center">
               {isSubmitted
-                ? "We've sent a password reset link to your email."
-                : "Enter your email to receive a password reset link."}
-            </motion.p>
+                ? "We've sent a password reset link to your email. Please check your inbox."
+                : "Enter your email address and we'll send you a link to reset your password."}
+            </p>
 
             {!isSubmitted ? (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <motion.div className="space-y-2" variants={childVariants}>
+              <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 lg:space-y-5">
+                <div className="space-y-1 sm:space-y-2">
                   <label
                     htmlFor="email"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-xs sm:text-sm font-semibold text-gray-800"
                   >
                     Email Address
                   </label>
-                  <div className="relative">
+                  <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <FontAwesomeIcon
                         icon={faEnvelope}
-                        className="text-blue-400"
+                        className="text-gray-400 group-focus-within:text-blue-500 transition-colors text-sm"
                       />
                     </div>
                     <input
@@ -139,77 +79,48 @@ const ForgotPasswordModal = ({ isOpen, onClose, onEmailSubmit }) => {
                       id="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 bg-gray-50/50"
-                      placeholder="Enter your email"
+                      className="block w-full pl-10 pr-4 py-1.5 sm:py-2 border-2 rounded-lg transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:bg-white text-sm sm:text-sm border-gray-200 focus:border-blue-500"
+                      placeholder="Enter your email address"
                       required
                     />
                   </div>
-                </motion.div>
+                </div>
 
-                <motion.button
+                <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-xl font-medium focus:ring-4 focus:ring-blue-300 transition-all duration-300 flex items-center justify-center shadow-md"
-                  variants={buttonVariants}
-                  whileHover="hover"
-                  whileTap="tap"
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white cursor-pointer py-1 sm:py-2 px-6 rounded-lg font-semibold text-sm sm:text-sm focus:ring-4 focus:ring-blue-500/30 flex items-center justify-center disabled:opacity-70 shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   {isLoading ? (
-                    <>
+                    <div className="flex items-center gap-2">
                       <FontAwesomeIcon
                         icon={faSpinner}
-                        className="animate-spin mr-2"
+                        className="animate-spin h-5 w-5 text-white"
                       />
-                      Sending...
-                    </>
+                      <span>Sending...</span>
+                    </div>
                   ) : (
-                    "Send Reset Link"
+                    <span>Send Reset Link</span>
                   )}
-                </motion.button>
+                </button>
               </form>
             ) : (
-              <motion.div className="text-center py-4" variants={childVariants}>
-                <motion.button
+              <div className="text-center py-4">
+                <div className="mb-4 p-4 bg-green-50 text-green-700 rounded-lg text-sm border border-green-200">
+                  <p className="font-medium">Email sent successfully!</p>
+                  <p className="mt-1 text-xs">Check your inbox for the password reset link.</p>
+                </div>
+                <button
                   onClick={onClose}
-                  className="mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-6 rounded-xl font-medium focus:ring-4 focus:ring-blue-300 transition-all duration-300 shadow-md"
-                  variants={buttonVariants}
-                  whileHover="hover"
-                  whileTap="tap"
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-1 sm:py-2 px-6 rounded-lg font-semibold text-sm sm:text-sm focus:ring-4 focus:ring-blue-500/30 transition-all duration-300 shadow-lg hover:shadow-xl"
                 >
                   Close
-                </motion.button>
-              </motion.div>
+                </button>
+              </div>
             )}
           </div>
-        </motion.div>
-      </motion.div>
-
-      {/* Add custom CSS for blob animation */}
-      <style jsx>{`
-        @keyframes blob {
-          0% {
-            transform: translate(0px, 0px) scale(1);
-          }
-          33% {
-            transform: translate(30px, -50px) scale(1.1);
-          }
-          66% {
-            transform: translate(-20px, 20px) scale(0.9);
-          }
-          100% {
-            transform: translate(0px, 0px) scale(1);
-          }
-        }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-      `}</style>
+        </div>
+      </div>
     </div>
   );
 };
