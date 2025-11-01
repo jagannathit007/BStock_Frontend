@@ -36,6 +36,7 @@ import BuyNowCheckoutModal from "../BuyNowCheckoutModal";
 import iphoneImage from "../../../assets/iphone.png";
 import Swal from "sweetalert2";
 import { convertPrice } from "../../../utils/currencyUtils";
+import { PRIMARY_COLOR, PRIMARY_COLOR_LIGHT, PRIMARY_COLOR_DARK } from "../../../utils/colors";
 
 const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [currentProduct, setCurrentProduct] = useState(initialProduct);
@@ -638,7 +639,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       icon: faCircleDot,
       label: "Color",
       value: processedProduct.color,
-      color: "text-blue-600",
+      color: PRIMARY_COLOR,
     },
     {
       icon: faMicrochip,
@@ -714,21 +715,48 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     .filter(Boolean)
     .join(" • ");
 
+  // Helper function to convert string to title case
+  const toTitleCase = (str) => {
+    if (!str) return '';
+    return str.toString()
+      .toLowerCase()
+      .split(/\s+/)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  // Color mapping helper for specifications
+  const getSpecColor = (colorName) => {
+    const colorMap = {
+      primary: { bg: PRIMARY_COLOR_LIGHT, icon: PRIMARY_COLOR, hover: `${PRIMARY_COLOR}20` },
+      green: { bg: '#dcfce7', icon: '#16a34a', hover: '#bbf7d0' },
+      purple: { bg: '#f3e8ff', icon: '#9333ea', hover: '#e9d5ff' },
+      orange: { bg: '#fed7aa', icon: '#ea580c', hover: '#fdba74' },
+      indigo: { bg: '#e0e7ff', icon: '#4f46e5', hover: '#c7d2fe' },
+      pink: { bg: '#fce7f3', icon: '#db2777', hover: '#fbcfe8' },
+      cyan: { bg: '#cffafe', icon: '#0891b2', hover: '#a5f3fc' },
+      teal: { bg: '#ccfbf1', icon: '#0d9488', hover: '#99f6e4' },
+      amber: { bg: '#fef3c7', icon: '#d97706', hover: '#fde68a' },
+      emerald: { bg: '#d1fae5', icon: '#10b981', hover: '#a7f3d0' },
+    };
+    return colorMap[colorName] || colorMap.primary;
+  };
+
   // Get color swatch style based on color name (for circular swatches)
   const getColorSwatchStyle = (colorName) => {
-    if (!colorName) return "bg-gray-400";
+    if (!colorName) return { className: "bg-gray-400", style: {} };
     const color = colorName.toLowerCase();
-    if (color.includes("orange")) return "bg-orange-500";
-    if (color.includes("black")) return "bg-gray-900";
-    if (color.includes("white")) return "bg-white border border-gray-300";
-    if (color.includes("blue")) return "bg-blue-500";
-    if (color.includes("gold")) return "bg-gradient-to-br from-yellow-300 to-yellow-600";
-    if (color.includes("silver")) return "bg-gradient-to-br from-gray-300 to-gray-500";
-    if (color.includes("red")) return "bg-red-500";
-    if (color.includes("green")) return "bg-green-500";
-    if (color.includes("purple")) return "bg-purple-500";
-    if (color.includes("gray") || color.includes("grey")) return "bg-gray-500";
-    return "bg-gray-400";
+    if (color.includes("orange")) return { className: "bg-orange-500", style: {} };
+    if (color.includes("black")) return { className: "bg-gray-900", style: {} };
+    if (color.includes("white")) return { className: "bg-white border border-gray-300", style: {} };
+    if (color.includes("blue")) return { className: "", style: { backgroundColor: PRIMARY_COLOR } };
+    if (color.includes("gold")) return { className: "bg-gradient-to-br from-yellow-300 to-yellow-600", style: {} };
+    if (color.includes("silver")) return { className: "bg-gradient-to-br from-gray-300 to-gray-500", style: {} };
+    if (color.includes("red")) return { className: "bg-red-500", style: {} };
+    if (color.includes("green")) return { className: "bg-green-500", style: {} };
+    if (color.includes("purple")) return { className: "bg-purple-500", style: {} };
+    if (color.includes("gray") || color.includes("grey")) return { className: "bg-gray-500", style: {} };
+    return { className: "bg-gray-400", style: {} };
   };
 
   // Build RAM + Storage combinations for size selection (current + related products)
@@ -806,7 +834,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
             margin: 0 4px;
           }
           .swiper-pagination-custom .swiper-pagination-bullet-active {
-            background: #3b82f6;
+            background: ${PRIMARY_COLOR};
           }
           .thumbs-swiper .swiper-slide-thumb-active {
             opacity: 1;
@@ -926,7 +954,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                       onClick={() => setSelectedImageIndex(index)}
                       className={`w-2 h-2 rounded-full transition-all ${
                         selectedImageIndex === index
-                          ? "bg-blue-500"
+                          ? PRIMARY_COLOR
                           : "bg-white/50 hover:bg-white/70"
                       }`}
                     />
@@ -973,7 +1001,8 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   {convertPrice(processedProduct.price)}
                 </span>
                 {processedProduct.isNegotiable && (
-                  <span className="inline-flex items-center px-2 py-1 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-lg">
+                  <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-lg border"
+                    style={{ color: PRIMARY_COLOR, backgroundColor: PRIMARY_COLOR_LIGHT, borderColor: `${PRIMARY_COLOR}40` }}>
                     Negotiable
                   </span>
                 )}
@@ -1000,11 +1029,12 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                       <button
                         key={c}
                         onClick={() => handleVariantClick("color", c)}
-                        className={`w-10 h-10 rounded-full ${getColorSwatchStyle(c)} border-2 transition-all ${
+                        className={`w-10 h-10 rounded-full ${getColorSwatchStyle(c).className} border-2 transition-all ${
                           isSelected
                             ? "border-gray-900"
                             : "border-gray-200"
                         }`}
+                        style={getColorSwatchStyle(c).style}
                       >
                         {isSelected && (
                           <div className="w-full h-full flex items-center justify-center">
@@ -1037,8 +1067,9 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                           if (selectedVariant.storage !== size.storage) handleVariantClick("storage", size.storage);
                         }}
                         className={`px-4 py-2 rounded-[10px] text-sm font-semibold border transition-colors ${
-                          isSelected ? "border-blue-500 text-blue-600 bg-blue-50" : "border-gray-200 text-gray-800 bg-white"
+                          isSelected ? "border-gray-200 text-gray-800 bg-white" : "border-gray-200 text-gray-800 bg-white"
                         }`}
+                        style={isSelected ? { borderColor: PRIMARY_COLOR, color: PRIMARY_COLOR, backgroundColor: PRIMARY_COLOR_LIGHT } : {}}
                       >
                         {size.label}
                       </button>
@@ -1143,17 +1174,19 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                             onClick={() => handleVariantClick("color", c)}
                           >
                             <div className="flex items-center space-x-2">
-                              <div className={`w-3 h-3 rounded-full border ${
-                                c.toLowerCase().includes('gold') ? 'bg-gradient-to-br from-yellow-300 to-yellow-600' :
-                                c.toLowerCase().includes('silver') ? 'bg-gradient-to-br from-gray-300 to-gray-500' :
-                                c.toLowerCase().includes('black') ? 'bg-gray-900' :
-                                c.toLowerCase().includes('white') ? 'bg-white border-gray-300' :
-                                c.toLowerCase().includes('blue') ? 'bg-blue-500' :
-                                c.toLowerCase().includes('red') ? 'bg-red-500' :
-                                c.toLowerCase().includes('green') ? 'bg-green-500' :
-                                c.toLowerCase().includes('purple') ? 'bg-purple-500' :
-                                'bg-gray-400'
-                              }`}></div>
+                              <div 
+                                className={`w-3 h-3 rounded-full border ${
+                                  c.toLowerCase().includes('gold') ? 'bg-gradient-to-br from-yellow-300 to-yellow-600' :
+                                  c.toLowerCase().includes('silver') ? 'bg-gradient-to-br from-gray-300 to-gray-500' :
+                                  c.toLowerCase().includes('black') ? 'bg-gray-900' :
+                                  c.toLowerCase().includes('white') ? 'bg-white border-gray-300' :
+                                  c.toLowerCase().includes('red') ? 'bg-red-500' :
+                                  c.toLowerCase().includes('green') ? 'bg-green-500' :
+                                  c.toLowerCase().includes('purple') ? 'bg-purple-500' :
+                                  'bg-gray-400'
+                                }`}
+                                style={c.toLowerCase().includes('blue') ? { backgroundColor: PRIMARY_COLOR } : {}}
+                              ></div>
                               <span className="capitalize text-xs">{c}</span>
                             </div>
                             {selectedVariant.color === c && (
@@ -1413,7 +1446,10 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                     </button>
                   ) : (
                     <button
-                      className="flex-1 bg-blue-600 cursor-pointer text-white py-3 rounded-lg text-sm font-semibold hover:bg-blue-700 shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center"
+                      className="flex-1 cursor-pointer text-white py-3 rounded-lg text-sm font-semibold shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center"
+                      style={{ backgroundColor: PRIMARY_COLOR }}
+                      onMouseEnter={(e) => e.target.style.backgroundColor = PRIMARY_COLOR_DARK}
+                      onMouseLeave={(e) => e.target.style.backgroundColor = PRIMARY_COLOR}
                       onClick={(ev) => handleNotifyToggle(ev, true)}
                     >
                       <FontAwesomeIcon icon={faBell} className="mr-2" />
@@ -1440,7 +1476,10 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   {processedProduct.isNegotiable && (
                     <button
                       onClick={handleBiddingClick}
-                      className="flex-1 bg-blue-600 cursor-pointer text-white py-3 rounded-lg text-sm font-semibold hover:bg-blue-700 shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center"
+                      className="flex-1 cursor-pointer text-white py-3 rounded-lg text-sm font-semibold shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center"
+                      style={{ backgroundColor: PRIMARY_COLOR }}
+                      onMouseEnter={(e) => e.target.style.backgroundColor = PRIMARY_COLOR_DARK}
+                      onMouseLeave={(e) => e.target.style.backgroundColor = PRIMARY_COLOR}
                     >
                       <FontAwesomeIcon icon={faHandshake} className="mr-2" />
                       Make an Offer
@@ -1526,7 +1565,10 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                     </button>
                   ) : (
                     <button
-                      className="flex-1 bg-blue-600 cursor-pointer text-white py-3 rounded-lg text-sm font-semibold"
+                      className="flex-1 cursor-pointer text-white py-3 rounded-lg text-sm font-semibold"
+                      style={{ backgroundColor: PRIMARY_COLOR }}
+                      onMouseEnter={(e) => e.target.style.backgroundColor = PRIMARY_COLOR_DARK}
+                      onMouseLeave={(e) => e.target.style.backgroundColor = PRIMARY_COLOR}
                       onClick={(ev) => handleNotifyToggle(ev, true)}
                     >
                       Notify Me
@@ -1546,7 +1588,10 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   </button>
                   <button
                     onClick={handleBuyNowClick}
-                    className="flex-1 cursor-pointer bg-blue-600 text-white py-3 rounded-lg text-sm font-semibold"
+                    className="flex-1 cursor-pointer text-white py-3 rounded-lg text-sm font-semibold"
+                    style={{ backgroundColor: PRIMARY_COLOR }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = PRIMARY_COLOR_DARK}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = PRIMARY_COLOR}
                   >
                     <span className="inline-flex items-center justify-center gap-2">
                       <FontAwesomeIcon icon={faBolt} />
@@ -1560,38 +1605,62 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
         )}
 
         {/* Product Specifications Section */}
-        <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900 font-apple">Product Specifications</h2>
-            <p className="text-sm text-gray-600 mt-1">Detailed technical specifications and features</p>
+        <div className="mt-8 bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          {/* Header */}
+          <div className="px-4 sm:px-6 lg:px-8 py-5 sm:py-6 border-b border-gray-100">
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900">Product Specifications</h2>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">Comprehensive product details</p>
           </div>
-          <div className="p-6">
-            <div className="mb-8">
-              <h3 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">Basic Information</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+          <div className="p-4 sm:p-6 lg:p-8">
+            {/* Basic Information */}
+            <div className="mb-8 sm:mb-10">
+              <h3 className="text-sm font-semibold text-gray-700 mb-4 sm:mb-5 uppercase tracking-wide">Basic Information</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 {[
-                  { icon: faTag, label: "Brand", value: processedProduct.brand, color: "blue" },
+                  { icon: faTag, label: "Brand", value: processedProduct.brand, color: "primary" },
                   { icon: faBarcode, label: "Product Code", value: processedProduct.code, color: "green" },
                   { icon: faShield, label: "Condition", value: processedProduct.condition, color: "purple" },
                   { icon: faCheckCircle, label: "Status", value: processedProduct.status, color: "emerald" },
                 ]
                   .filter((item) => item.value)
-                  .map((item, index) => (
-                    <div key={index} className="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 hover:border-gray-200 transition-all duration-200 group">
-                      <div className={`w-10 h-10 bg-${item.color}-50 rounded-lg flex items-center justify-center mr-4 group-hover:bg-${item.color}-100 transition-colors duration-200`}>
-                        <FontAwesomeIcon icon={item.icon} className={`text-${item.color}-600 text-sm`} />
+                  .map((item, index) => {
+                    const colors = getSpecColor(item.color);
+                    return (
+                      <div 
+                        key={index} 
+                        className="group relative bg-gray-50 rounded-lg border border-gray-200 p-4 hover:bg-white hover:border-gray-300 hover:shadow-sm transition-all duration-200"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                            style={{ backgroundColor: colors.bg }}
+                          >
+                            <FontAwesomeIcon 
+                              icon={item.icon} 
+                              style={{ color: colors.icon }} 
+                              className="text-sm sm:text-base" 
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{item.label}</p>
+                            <p className="text-sm sm:text-base font-semibold text-gray-900 break-words leading-tight">
+                              {['Condition', 'RAM', 'Storage', 'SIM Type'].includes(item.label) 
+                                ? (item.value?.toString().toUpperCase() || '') 
+                                : toTitleCase(item.value)}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{item.label}</p>
-                        <p className="text-sm font-semibold text-gray-900 truncate">{item.value}</p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
               </div>
             </div>
-            <div className="mb-8">
-              <h3 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">Technical Specifications</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+            {/* Technical Specifications */}
+            <div className="mb-8 sm:mb-10">
+              <h3 className="text-sm font-semibold text-gray-700 mb-4 sm:mb-5 uppercase tracking-wide">Technical Specifications</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {[
                   { icon: faDatabase, label: "Storage", value: processedProduct.storage, color: "orange" },
                   { icon: faMicrochip, label: "RAM", value: processedProduct.ram, color: "indigo" },
@@ -1601,39 +1670,79 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   { icon: faWifi, label: "Network Bands", value: processedProduct.networkBands, color: "teal" },
                 ]
                   .filter((item) => item.value)
-                  .map((item, index) => (
-                    <div key={index} className="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 hover:border-gray-200 transition-all duration-200 group">
-                      <div className={`w-10 h-10 bg-${item.color}-50 rounded-lg flex items-center justify-center mr-4 group-hover:bg-${item.color}-100 transition-colors duration-200`}>
-                        <FontAwesomeIcon icon={item.icon} className={`text-${item.color}-600 text-sm`} />
+                  .map((item, index) => {
+                    const colors = getSpecColor(item.color);
+                    return (
+                      <div 
+                        key={index} 
+                        className="group relative bg-gray-50 rounded-lg border border-gray-200 p-4 hover:bg-white hover:border-gray-300 hover:shadow-sm transition-all duration-200"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                            style={{ backgroundColor: colors.bg }}
+                          >
+                            <FontAwesomeIcon 
+                              icon={item.icon} 
+                              style={{ color: colors.icon }} 
+                              className="text-sm sm:text-base" 
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{item.label}</p>
+                            <p className="text-sm sm:text-base font-semibold text-gray-900 break-words leading-tight">
+                              {['Condition', 'RAM', 'Storage', 'SIM Type'].includes(item.label) 
+                                ? (item.value?.toString().toUpperCase() || '') 
+                                : toTitleCase(item.value)}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{item.label}</p>
-                        <p className="text-sm font-semibold text-gray-900 truncate">{item.value}</p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
               </div>
             </div>
+
+            {/* Location & Purchase */}
             <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">Location & Purchase</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <h3 className="text-sm font-semibold text-gray-700 mb-4 sm:mb-5 uppercase tracking-wide">Location & Purchase</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {[
-                  { icon: faGlobe, label: "Country", value: processedProduct.country, color: "blue" },
+                  { icon: faGlobe, label: "Country", value: processedProduct.country, color: "primary" },
                   { icon: faTruck, label: "Purchase Type", value: processedProduct.purchaseType, color: "amber" },
                   { icon: faHandshake, label: "Negotiable", value: processedProduct.isNegotiable ? "Yes" : "No", color: "green" },
                 ]
                   .filter((item) => item.value)
-                  .map((item, index) => (
-                    <div key={index} className="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 hover:border-gray-200 transition-all duration-200 group">
-                      <div className={`w-10 h-10 bg-${item.color}-50 rounded-lg flex items-center justify-center mr-4 group-hover:bg-${item.color}-100 transition-colors duration-200`}>
-                        <FontAwesomeIcon icon={item.icon} className={`text-${item.color}-600 text-sm`} />
+                  .map((item, index) => {
+                    const colors = getSpecColor(item.color);
+                    return (
+                      <div 
+                        key={index} 
+                        className="group relative bg-gray-50 rounded-lg border border-gray-200 p-4 hover:bg-white hover:border-gray-300 hover:shadow-sm transition-all duration-200"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                            style={{ backgroundColor: colors.bg }}
+                          >
+                            <FontAwesomeIcon 
+                              icon={item.icon} 
+                              style={{ color: colors.icon }} 
+                              className="text-sm sm:text-base" 
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{item.label}</p>
+                            <p className="text-sm sm:text-base font-semibold text-gray-900 break-words leading-tight">
+                              {['Condition', 'RAM', 'Storage', 'SIM Type'].includes(item.label) 
+                                ? (item.value?.toString().toUpperCase() || '') 
+                                : toTitleCase(item.value)}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{item.label}</p>
-                        <p className="text-sm font-semibold text-gray-900 truncate">{item.value}</p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
               </div>
             </div>
           </div>

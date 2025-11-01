@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import ProductInfo from "./ProductInfo";
 import { ProductService } from "../../../services/products/products.services";
+import { PRIMARY_COLOR } from "../../../utils/colors";
 import {
   faMicrochip,
   faCamera,
@@ -56,7 +57,7 @@ const ProductDetails = () => {
         features: [
           {
             icon: faMicrochip,
-            color: "text-blue-600",
+            color: PRIMARY_COLOR,
             text: p.specification || p.skuFamilyId?.description || "High performance",
           },
           { icon: faCamera, color: "text-purple-600", text: "Advanced Camera" },
@@ -132,7 +133,7 @@ const ProductDetails = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 mx-auto" style={{ borderTopColor: PRIMARY_COLOR, borderBottomColor: PRIMARY_COLOR }}></div>
           <p className="mt-4 text-gray-600">Loading product details...</p>
         </div>
       </div>

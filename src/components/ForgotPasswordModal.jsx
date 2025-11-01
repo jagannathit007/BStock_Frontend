@@ -5,6 +5,7 @@ import {
   faSpinner,
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
+import { PRIMARY_COLOR, PRIMARY_COLOR_DARK, PRIMARY_COLOR_LIGHT } from "../utils/colors";
 
 const ForgotPasswordModal = ({ isOpen, onClose, onEmailSubmit }) => {
   const [email, setEmail] = useState("");
@@ -24,11 +25,11 @@ const ForgotPasswordModal = ({ isOpen, onClose, onEmailSubmit }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-[120] p-4 bg-gradient-to-br from-gray-50 to-blue-50">
+    <div className="fixed inset-0 flex items-center justify-center z-[120] p-4" style={{ background: `linear-gradient(to bottom right, #f9fafb, ${PRIMARY_COLOR_LIGHT})` }}>
       <div className="w-full max-w-md">
         {/* Logo and Header */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg sm:rounded-xl shadow-lg mb-3 sm:mb-4">
+          <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl shadow-lg mb-3 sm:mb-4" style={{ background: `linear-gradient(to bottom right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})` }}>
             <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
             </svg>
@@ -71,7 +72,10 @@ const ForgotPasswordModal = ({ isOpen, onClose, onEmailSubmit }) => {
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <FontAwesomeIcon
                         icon={faEnvelope}
-                        className="text-gray-400 group-focus-within:text-blue-500 transition-colors text-sm"
+                        style={{ color: 'inherit' }}
+                        className="text-gray-400 transition-colors text-sm"
+                        onFocus={(e) => e.target.style.color = PRIMARY_COLOR}
+                        onBlur={(e) => e.target.style.color = ''}
                       />
                     </div>
                     <input
@@ -79,7 +83,9 @@ const ForgotPasswordModal = ({ isOpen, onClose, onEmailSubmit }) => {
                       id="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="block w-full pl-10 pr-4 py-1.5 sm:py-2 border-2 rounded-lg transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:bg-white text-sm sm:text-sm border-gray-200 focus:border-blue-500"
+                      className="block w-full pl-10 pr-4 py-1.5 sm:py-2 border-2 rounded-lg transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:bg-white text-sm sm:text-sm border-gray-200"
+                      onFocus={(e) => { e.target.style.borderColor = PRIMARY_COLOR; e.target.style.boxShadow = `0 0 0 4px ${PRIMARY_COLOR}33`; }}
+                      onBlur={(e) => { e.target.style.borderColor = ''; e.target.style.boxShadow = ''; }}
                       placeholder="Enter your email address"
                       required
                     />
@@ -89,7 +95,12 @@ const ForgotPasswordModal = ({ isOpen, onClose, onEmailSubmit }) => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white cursor-pointer py-1 sm:py-2 px-6 rounded-lg font-semibold text-sm sm:text-sm focus:ring-4 focus:ring-blue-500/30 flex items-center justify-center disabled:opacity-70 shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="w-full text-white cursor-pointer py-1 sm:py-2 px-6 rounded-lg font-semibold text-sm sm:text-sm flex items-center justify-center disabled:opacity-70 shadow-lg hover:shadow-xl transition-all duration-300"
+                  style={{ background: `linear-gradient(to right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})` }}
+                  onMouseEnter={(e) => e.target.style.background = `linear-gradient(to right, ${PRIMARY_COLOR_DARK}, ${PRIMARY_COLOR_DARK})`}
+                  onMouseLeave={(e) => e.target.style.background = `linear-gradient(to right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})`}
+                  onFocus={(e) => e.target.style.boxShadow = `0 0 0 4px ${PRIMARY_COLOR}33`}
+                  onBlur={(e) => e.target.style.boxShadow = ''}
                 >
                   {isLoading ? (
                     <div className="flex items-center gap-2">
@@ -112,7 +123,12 @@ const ForgotPasswordModal = ({ isOpen, onClose, onEmailSubmit }) => {
                 </div>
                 <button
                   onClick={onClose}
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-1 sm:py-2 px-6 rounded-lg font-semibold text-sm sm:text-sm focus:ring-4 focus:ring-blue-500/30 transition-all duration-300 shadow-lg hover:shadow-xl"
+                  className="w-full text-white py-1 sm:py-2 px-6 rounded-lg font-semibold text-sm sm:text-sm transition-all duration-300 shadow-lg hover:shadow-xl"
+                  style={{ background: `linear-gradient(to right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})` }}
+                  onMouseEnter={(e) => e.target.style.background = `linear-gradient(to right, ${PRIMARY_COLOR_DARK}, ${PRIMARY_COLOR_DARK})`}
+                  onMouseLeave={(e) => e.target.style.background = `linear-gradient(to right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})`}
+                  onFocus={(e) => e.target.style.boxShadow = `0 0 0 4px ${PRIMARY_COLOR}33`}
+                  onBlur={(e) => e.target.style.boxShadow = ''}
                 >
                   Close
                 </button>

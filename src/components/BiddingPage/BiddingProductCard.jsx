@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -17,6 +17,7 @@ import Countdown from "react-countdown";
 import Swal from "sweetalert2";
 import { useSocket } from "../../context/SocketContext";
 import toastHelper from "../../utils/toastHelper";
+import { PRIMARY_COLOR, PRIMARY_COLOR_DARK } from "../../utils/colors";
 
 // Reusable Spinner Component
 const Spinner = () => (
@@ -664,6 +665,9 @@ const BiddingProductCard = ({
                     ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow cursor-pointer"
                     : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow cursor-pointer opacity-75"
                 }`}
+                style={!auctionEnded && !isCurrentUserBidder && !isSubmittingBid && !product.isLeading ? { background: `linear-gradient(to right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})` } : {}}
+                onMouseEnter={(e) => { if (!auctionEnded && !isCurrentUserBidder && !isSubmittingBid && !product.isLeading) e.target.style.background = `linear-gradient(to right, ${PRIMARY_COLOR_DARK}, ${PRIMARY_COLOR_DARK})`; }}
+                onMouseLeave={(e) => { if (!auctionEnded && !isCurrentUserBidder && !isSubmittingBid && !product.isLeading) e.target.style.background = `linear-gradient(to right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})`; }}
                 onClick={handleBidButtonClick}
                 disabled={auctionEnded || isCurrentUserBidder || isSubmittingBid || bidValidation.isValid === false}
                 title={bidValidation.isValid === false ? bidValidation.message : ''}
@@ -974,6 +978,9 @@ const BiddingProductCard = ({
                 ? "bg-[#0071E0] text-white hover:bg-blue-600"
                 : "bg-[#0071E0] text-white hover:bg-blue-600 opacity-75"
             }`}
+            style={!isSubmittingBid && !isLeading ? { backgroundColor: PRIMARY_COLOR } : {}}
+            onMouseEnter={(e) => { if (!isSubmittingBid && !isLeading) e.target.style.backgroundColor = PRIMARY_COLOR_DARK; }}
+            onMouseLeave={(e) => { if (!isSubmittingBid && !isLeading) e.target.style.backgroundColor = PRIMARY_COLOR; }}
             onClick={handleBidButtonClick}
             disabled={isSubmittingBid || bidValidation.isValid === false}
             title={bidValidation.isValid === false ? bidValidation.message : ''}

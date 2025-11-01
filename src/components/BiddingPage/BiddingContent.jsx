@@ -7,6 +7,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import BiddingProductDetails from "./BiddingProductDetails";
 import BiddingSideFilter from "./BiddingSideFilter";
+import { PRIMARY_COLOR, PRIMARY_COLOR_DARK } from "../../utils/colors";
 import BusinessDetailsPopup from "./BusinessDetailsPopup";
 import BiddingProductCard from "./BiddingProductCard";
 import ViewControls from "./ViewControls";
@@ -561,7 +562,7 @@ const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
               className="bg-white rounded-2xl shadow-2xl p-8 md:p-10 max-w-md w-full mx-4 cursor-pointer transform transition-all hover:scale-105 hover:shadow-3xl"
             >
               <div className="text-center">
-                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full mb-6 shadow-lg">
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 shadow-lg" style={{ background: `linear-gradient(to bottom right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})` }}>
                   <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
@@ -574,7 +575,10 @@ const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
                 </p>
                 <button
                   onClick={handleLoginClick}
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-lg font-semibold text-base md:text-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 shadow-lg hover:shadow-xl"
+                  className="w-full text-white py-3 px-6 rounded-lg font-semibold text-base md:text-lg transition-all duration-300 shadow-lg hover:shadow-xl"
+                  style={{ background: `linear-gradient(to right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})` }}
+                  onMouseEnter={(e) => e.target.style.background = `linear-gradient(to right, ${PRIMARY_COLOR_DARK}, ${PRIMARY_COLOR_DARK})`}
+                  onMouseLeave={(e) => e.target.style.background = `linear-gradient(to right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})`}
                 >
                   Login to Continue
                 </button>

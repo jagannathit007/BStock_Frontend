@@ -13,12 +13,12 @@ import {
   faTag,
   faFileArrowDown,
   faEye,
-  faCalendarXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import iphoneImage from "../../assets/iphone.png";
 import { convertPrice } from "../../utils/currencyUtils";
 import { BiddingService } from "../../services/bidding/bidding.services";
 import { useSocket } from "../../context/SocketContext";
+import { PRIMARY_COLOR, PRIMARY_COLOR_LIGHT, PRIMARY_COLOR_DARK } from "../../utils/colors";
 
 const BidProductDetails = () => {
   const { id } = useParams();
@@ -130,16 +130,60 @@ const BidProductDetails = () => {
     URL.revokeObjectURL(url);
   };
 
-  const handleMakeOffer = () => {
-    // TODO: Open bidding form modal
-    console.log("Make offer clicked");
-  };
+  // Calculate myMaxBid similar to BiddingContent
+  const myMaxBid = useMemo(() => {
+    const myMaxBidRaw = product?.maxBidPrice;
+    if (myMaxBidRaw == null) return "-";
+    const myMaxBidStr = String(myMaxBidRaw);
+    if (myMaxBidStr.includes("-") || isNaN(Number(myMaxBidStr))) return "-";
+    const numValue = Number(myMaxBidStr);
+    return numValue > 0 ? `$${numValue.toFixed(2)}` : "-";
+  }, [product?.maxBidPrice]);
+
+  // Calculate current bid from currentPrice or currentBid
+  const currentBid = useMemo(() => {
+    const bidValue = product?.currentPrice || product?.currentBid || product?.price || 0;
+    return convertPrice(typeof bidValue === 'string' ? parseFloat(bidValue.replace(/[$,]/g, '')) : bidValue);
+  }, [product?.currentPrice, product?.currentBid, product?.price]);
+
+  // Calculate starting price
+  const startingPrice = useMemo(() => {
+    const startValue = product?.startingBidPrice || product?.price || 0;
+    return convertPrice(typeof startValue === 'string' ? parseFloat(startValue.replace(/[$,]/g, '')) : startValue);
+  }, [product?.startingBidPrice, product?.price]);
+
+  // Calculate unit price
+  const unitPrice = useMemo(() => {
+    if (!product?.price) return "-";
+    return convertPrice(typeof product.price === 'string' ? parseFloat(product.price.replace(/[$,]/g, '')) : product.price);
+  }, [product?.price]);
+
+  // Calculate next minimum bid
+  const nextMinBid = useMemo(() => {
+    if (product?.minNextBid !== undefined && product?.minNextBid !== null) {
+      const minBid = typeof product.minNextBid === 'string'
+        ? parseFloat(product.minNextBid.replace(/[$,]/g, ''))
+        : product.minNextBid;
+      if (!isNaN(minBid) && minBid > 0) {
+        return convertPrice(minBid);
+      }
+    }
+    // Fallback: calculate from current bid + increment
+    const currentBidNum = typeof (product?.currentPrice || product?.currentBid) === 'string'
+      ? parseFloat((product.currentPrice || product.currentBid).replace(/[$,]/g, ''))
+      : (product?.currentPrice || product?.currentBid || 0);
+    return convertPrice(currentBidNum + 1);
+  }, [product?.minNextBid, product?.currentPrice, product?.currentBid]);
+
+  // Get total bids count
+  const totalBids = product?.bids?.length || product?.bids || 0;
+
 
   if (loading || !product) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 mx-auto" style={{ borderTopColor: PRIMARY_COLOR, borderBottomColor: PRIMARY_COLOR }}></div>
           <p className="mt-4 text-gray-600">Loading product details...</p>
         </div>
       </div>
@@ -189,8 +233,9 @@ const BidProductDetails = () => {
                     key={index}
                     onClick={() => setSelectedImageIndex(index)}
                     className={`w-2 h-2 rounded-full transition-all ${
-                      selectedImageIndex === index ? "bg-blue-500" : "bg-white/50 hover:bg-white/70"
+                      selectedImageIndex === index ? "" : "bg-white/50 hover:bg-white/70"
                     }`}
+                    style={selectedImageIndex === index ? { backgroundColor: PRIMARY_COLOR } : {}}
                   />
                 ))}
               </div>
@@ -229,13 +274,16 @@ const BidProductDetails = () => {
             </p>
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <span className="text-3xl font-semibold text-gray-900">
-                {convertPrice(product.currentPrice || product.price || 0)}
-              </span>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center space-x-3 flex-wrap">
+              <div className="flex flex-col">
+                <span className="text-2xl sm:text-3xl font-semibold text-blue-600">
+                  {currentBid}
+                </span>
+                <span className="text-xs text-gray-500 mt-0.5">Current Bid</span>
+              </div>
               <span className="inline-flex items-center px-2 py-1 text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded-lg">
-                Starting Price
+                Starting: {startingPrice}
               </span>
             </div>
             {product.lotNumber && (
@@ -245,13 +293,36 @@ const BidProductDetails = () => {
             )}
           </div>
 
+          {/* Bid Information Section */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Bid Information</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-white rounded-lg p-3 border border-gray-200">
+                <span className="text-xs text-gray-500 block font-medium mb-1">Total Bids</span>
+                <span className="text-lg font-bold text-gray-900">{totalBids}</span>
+              </div>
+              <div className="bg-white rounded-lg p-3 border border-gray-200">
+                <span className="text-xs text-gray-500 block font-medium mb-1">Your Bid</span>
+                <span className="text-lg font-bold text-gray-900">{myMaxBid}</span>
+              </div>
+              <div className="bg-white rounded-lg p-3 border border-gray-200">
+                <span className="text-xs text-gray-500 block font-medium mb-1">Next Min Bid</span>
+                <span className="text-lg font-bold text-blue-600">{nextMinBid}</span>
+              </div>
+              <div className="bg-white rounded-lg p-3 border border-gray-200">
+                <span className="text-xs text-gray-500 block font-medium mb-1">Unit Price</span>
+                <span className="text-lg font-bold text-gray-900">{unitPrice}</span>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
             <h3 className="text-sm font-semibold text-gray-900 mb-2">Key Features</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {product.grade && (
                 <div className="flex items-center bg-white rounded-lg p-2 shadow-sm border border-gray-100">
-                  <div className="w-6 h-6 bg-blue-50 rounded-md flex items-center justify-center mr-2">
-                    <FontAwesomeIcon icon={faShield} className="text-blue-600 text-xs" />
+                  <div className="w-6 h-6 rounded-md flex items-center justify-center mr-2" style={{ backgroundColor: PRIMARY_COLOR_LIGHT }}>
+                    <FontAwesomeIcon icon={faShield} className="text-xs" style={{ color: PRIMARY_COLOR }} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <span className="text-xs text-gray-500 font-medium">Grade</span>
@@ -313,12 +384,14 @@ const BidProductDetails = () => {
             </div>
             <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
               <span className="text-xs text-gray-500 block font-medium mb-1">Status</span>
-              <span className={`text-lg font-bold capitalize ${
-                product.status === 'pending' ? 'text-yellow-600' :
-                product.status === 'approved' ? 'text-green-600' :
-                product.status === 'active' ? 'text-blue-600' :
-                'text-gray-600'
-              }`}>{product.status}</span>
+              <span 
+                className={`text-lg font-bold capitalize ${
+                  product.status === 'pending' ? 'text-yellow-600' :
+                  product.status === 'approved' ? 'text-green-600' :
+                  'text-gray-600'
+                }`}
+                style={product.status === 'active' ? { color: PRIMARY_COLOR } : {}}
+              >{product.status}</span>
             </div>
             {product.oem && (
               <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
@@ -328,14 +401,6 @@ const BidProductDetails = () => {
             )}
           </div>
 
-          <div className="flex space-x-3">
-            <button
-              onClick={handleMakeOffer}
-              className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg text-sm font-semibold hover:bg-blue-700 shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center"
-            >
-              Make an Offer
-            </button>
-          </div>
         </div>
       </div>
 
@@ -346,81 +411,88 @@ const BidProductDetails = () => {
           <p className="text-sm text-gray-600 mt-1">Detailed product information</p>
         </div>
         <div className="p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-1.5 sm:gap-3 md:gap-4 lg:gap-4" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
+            {/* Row 1: OEM and Model */}
             {product.oem && (
-              <div className="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 hover:border-gray-200 transition-all duration-200 group">
-                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mr-4 group-hover:bg-blue-100 transition-colors duration-200">
-                  <FontAwesomeIcon icon={faTag} className="text-blue-600 text-sm" />
+              <div className="flex items-center p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 hover:border-gray-200 transition-all duration-200 group min-w-0 w-full">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0 transition-colors duration-200" style={{ backgroundColor: PRIMARY_COLOR_LIGHT }}>
+                  <FontAwesomeIcon icon={faTag} className="text-xs sm:text-sm" style={{ color: PRIMARY_COLOR }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">OEM</p>
-                  <p className="text-sm font-semibold text-gray-900 truncate">{product.oem}</p>
+                  <p className="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">OEM</p>
+                  <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{product.oem}</p>
                 </div>
               </div>
             )}
             {product.model && (
-              <div className="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 hover:border-gray-200 transition-all duration-200 group">
-                <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center mr-4 group-hover:bg-indigo-100 transition-colors duration-200">
-                  <FontAwesomeIcon icon={faMicrochip} className="text-indigo-600 text-sm" />
+              <div className="flex items-center p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 hover:border-gray-200 transition-all duration-200 group min-w-0 w-full">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-indigo-50 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0 group-hover:bg-indigo-100 transition-colors duration-200">
+                  <FontAwesomeIcon icon={faMicrochip} className="text-xs sm:text-sm text-indigo-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Model</p>
-                  <p className="text-sm font-semibold text-gray-900 truncate">{product.model}</p>
+                  <p className="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Model</p>
+                  <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{product.model}</p>
                 </div>
               </div>
             )}
+            
+            {/* Row 2: Grade and Capacity */}
             {product.grade && (
-              <div className="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 hover:border-gray-200 transition-all duration-200 group">
-                <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center mr-4 group-hover:bg-purple-100 transition-colors duration-200">
-                  <FontAwesomeIcon icon={faShield} className="text-purple-600 text-sm" />
+              <div className="flex items-center p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 hover:border-gray-200 transition-all duration-200 group min-w-0 w-full">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-50 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0 group-hover:bg-purple-100 transition-colors duration-200">
+                  <FontAwesomeIcon icon={faShield} className="text-xs sm:text-sm text-purple-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Grade</p>
-                  <p className="text-sm font-semibold text-gray-900 truncate">{product.grade}</p>
+                  <p className="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Grade</p>
+                  <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{product.grade}</p>
                 </div>
               </div>
             )}
             {product.capacity && (
-              <div className="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 hover:border-gray-200 transition-all duration-200 group">
-                <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center mr-4 group-hover:bg-orange-100 transition-colors duration-200">
-                  <FontAwesomeIcon icon={faDatabase} className="text-orange-600 text-sm" />
+              <div className="flex items-center p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 hover:border-gray-200 transition-all duration-200 group min-w-0 w-full">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-orange-50 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0 group-hover:bg-orange-100 transition-colors duration-200">
+                  <FontAwesomeIcon icon={faDatabase} className="text-xs sm:text-sm text-orange-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Capacity</p>
-                  <p className="text-sm font-semibold text-gray-900 truncate">{product.capacity}</p>
+                  <p className="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Capacity</p>
+                  <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{product.capacity}</p>
                 </div>
               </div>
             )}
+            
+            {/* Row 3: Color and Carrier */}
             {product.color && (
-              <div className="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 hover:border-gray-200 transition-all duration-200 group">
-                <div className="w-10 h-10 bg-pink-50 rounded-lg flex items-center justify-center mr-4 group-hover:bg-pink-100 transition-colors duration-200">
-                  <FontAwesomeIcon icon={faPalette} className="text-pink-600 text-sm" />
+              <div className="flex items-center p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 hover:border-gray-200 transition-all duration-200 group min-w-0 w-full">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-pink-50 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0 group-hover:bg-pink-100 transition-colors duration-200">
+                  <FontAwesomeIcon icon={faPalette} className="text-xs sm:text-sm text-pink-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Color</p>
-                  <p className="text-sm font-semibold text-gray-900 truncate">{product.color}</p>
+                  <p className="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Color</p>
+                  <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{product.color}</p>
                 </div>
               </div>
             )}
             {product.carrier && (
-              <div className="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 hover:border-gray-200 transition-all duration-200 group">
-                <div className="w-10 h-10 bg-cyan-50 rounded-lg flex items-center justify-center mr-4 group-hover:bg-cyan-100 transition-colors duration-200">
-                  <FontAwesomeIcon icon={faGlobe} className="text-cyan-600 text-sm" />
+              <div className="flex items-center p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 hover:border-gray-200 transition-all duration-200 group min-w-0 w-full">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-cyan-50 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0 group-hover:bg-cyan-100 transition-colors duration-200">
+                  <FontAwesomeIcon icon={faGlobe} className="text-xs sm:text-sm text-cyan-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Carrier</p>
-                  <p className="text-sm font-semibold text-gray-900 truncate">{product.carrier || 'N/A'}</p>
+                  <p className="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Carrier</p>
+                  <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{product.carrier || 'N/A'}</p>
                 </div>
               </div>
             )}
+            
+            {/* Row 4: Package Type (if exists, will show in first column) */}
             {product.packageType && (
-              <div className="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 hover:border-gray-200 transition-all duration-200 group">
-                <div className="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center mr-4 group-hover:bg-teal-100 transition-colors duration-200">
-                  <FontAwesomeIcon icon={faTag} className="text-teal-600 text-sm" />
+              <div className="flex items-center p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 hover:border-gray-200 transition-all duration-200 group min-w-0 w-full">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-teal-50 rounded-lg flex items-center justify-center mr-3 sm:mr-4 flex-shrink-0 group-hover:bg-teal-100 transition-colors duration-200">
+                  <FontAwesomeIcon icon={faTag} className="text-xs sm:text-sm text-teal-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Package Type</p>
-                  <p className="text-sm font-semibold text-gray-900 truncate">{product.packageType}</p>
+                  <p className="text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Package Type</p>
+                  <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{product.packageType}</p>
                 </div>
               </div>
             )}
@@ -438,7 +510,10 @@ const BidProductDetails = () => {
             </div>
             <div className="flex items-center gap-3">
               <button
-                className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm"
+                className="inline-flex items-center text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm transition-colors"
+                style={{ backgroundColor: PRIMARY_COLOR }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = PRIMARY_COLOR_DARK}
+                onMouseLeave={(e) => e.target.style.backgroundColor = PRIMARY_COLOR}
                 onClick={downloadManifestCsv}
               >
                 <FontAwesomeIcon icon={faFileArrowDown} className="w-4 h-4 mr-2" />
