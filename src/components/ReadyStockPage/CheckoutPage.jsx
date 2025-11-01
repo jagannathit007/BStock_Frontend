@@ -21,8 +21,19 @@ const CheckoutPage = () => {
 
   const mapCartItemToUi = (item) => {
     const id = item.productId;
-    const name = item.skuFamilyId?.name || "Product";
-    const imageUrl = item.skuFamilyId?.images?.[0] || "https://via.placeholder.com/400x300.png?text=Product";
+    const name = item.subSkuFamilyId?.name || item.skuFamilyId?.name || "Product";
+    const baseUrl = import.meta.env.VITE_BASE_URL || "http://localhost:3200";
+    
+    // Prioritize subSkuFamilyId image, then skuFamilyId image, then dummy image
+    let imageUrl = null;
+    if (item.subSkuFamilyId?.images?.[0]) {
+      imageUrl = `${baseUrl}/${item.subSkuFamilyId.images[0]}`;
+    } else if (item.skuFamilyId?.images?.[0]) {
+      imageUrl = `${baseUrl}/${item.skuFamilyId.images[0]}`;
+    } else {
+      imageUrl = iphoneImage; // Use dummy image if no image available
+    }
+    
     const storage = item.storage || "";
     const color = item.color || "";
     const description = [storage, color].filter(Boolean).join(" • ") || item.specification || "";

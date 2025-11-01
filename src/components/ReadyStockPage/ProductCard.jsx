@@ -205,7 +205,9 @@ const ProductCard = ({
       }
 
       const productId = id || product?._id;
-      const res = await CartService.add(productId, quantity);
+      // Extract subSkuFamilyId from product (could be an object with _id or just the string ID)
+      const subSkuFamilyId = product?.subSkuFamilyId?._id || product?.subSkuFamilyId || null;
+      const res = await CartService.add(productId, quantity, subSkuFamilyId);
       const ok = res?.success === true || res?.status === 200;
 
       if (ok) {

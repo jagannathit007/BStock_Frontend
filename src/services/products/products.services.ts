@@ -114,7 +114,9 @@ export class ProductService {
     const url = `${baseUrl}/api/customer/get-product`;
 
     try {
-      const res = await api.post(url, { id });
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const custId = user?._id || null;
+      const res = await api.post(url, { id, custId });
       
       if (res.data?.data === null) {
         throw new Error(res.data?.message || "Failed to fetch Product");
