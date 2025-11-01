@@ -343,14 +343,14 @@ const FlashDeals = () => {
 
           {viewMode === "grid" ? (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-4 md:gap-6">
                 {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
-                  <div className="col-span-3 flex justify-center py-12">
+                  <div className="col-span-full flex justify-center py-12">
                     <Loader size="lg" />
                   </div>
                 )}
                 {!isLoading && hasInitiallyLoaded && currentProducts.length === 0 && (
-                  <div className="col-span-3 text-center text-2xl text-gray-500 font-bold">
+                  <div className="col-span-full text-center text-2xl text-gray-500 font-bold">
                     No products found.
                   </div>
                 )}
@@ -426,14 +426,14 @@ const FlashDeals = () => {
             </>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+              <div className="flex flex-col gap-4">
                 {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
-                  <div className="col-span-2 flex justify-center py-12">
+                  <div className="flex justify-center py-12">
                     <Loader size="lg" />
                   </div>
                 )}
                 {!isLoading && hasInitiallyLoaded && currentProducts.length === 0 && (
-                  <div className="col-span-2 text-center text-2xl text-gray-500 font-bold">
+                  <div className="text-center text-2xl text-gray-500 font-bold">
                     No products found.
                   </div>
                 )}
