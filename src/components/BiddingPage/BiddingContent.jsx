@@ -586,24 +586,19 @@ const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Mobile Filters Overlay */}
         {showMobileFilters && (
-          <div className="fixed inset-0 z-[99] lg:hidden">
+          <div className="fixed inset-0 z-40 lg:hidden">
             <div
-              className="absolute inset-0 bg-black/30 backdrop-blur-[1.5px] cursor-pointer"
+              className="absolute inset-0 bg-opacity-30 backdrop-blur-[1.5px] cursor-pointer"
               onClick={() => setShowMobileFilters(false)}
             ></div>
-            <div className="absolute left-0 top-0 h-full w-80 bg-white z-50 shadow-2xl flex flex-col">
-              <div className="flex-1 overflow-y-auto">
-                <div className="min-h-0">
-                  <BiddingSideFilter
-                    key="mobile-filter"
-                    onClose={() => setShowMobileFilters(false)}
-                    onFilterChange={handleFilterChange}
-                    appliedFilters={filters}
-                  />
-                </div>
-              </div>
+            <div className="absolute left-0 top-28 bottom-0 w-72 bg-white z-[60] overflow-y-auto">
+              <BiddingSideFilter
+                onClose={() => setShowMobileFilters(false)}
+                onFilterChange={handleFilterChange}
+                appliedFilters={filters}
+              />
               <button
-                className="w-full bg-[#0071E0] text-white py-3 px-4 text-sm font-medium lg:hidden cursor-pointer hover:bg-blue-800 shadow-lg flex-shrink-0"
+                className="w-full bg-[#0071E0] text-white py-3 px-4 text-sm font-medium lg:hidden sticky bottom-0 cursor-pointer hover:bg-blue-800"
                 onClick={() => setShowMobileFilters(false)}
               >
                 Apply Filters
@@ -645,10 +640,10 @@ const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
                   </div>
                 </div>
               )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
                 {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
                   <div className="col-span-full">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                       {Array.from({ length: 6 }).map((_, index) => (
                         <div key={index} className="bg-white rounded-xl border border-gray-200 p-4 animate-pulse">
                           <div className="h-48 bg-gray-200 rounded-lg mb-4"></div>
@@ -773,14 +768,7 @@ const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
                   </div>
                 )}
                 {currentProducts.map((product, index) => (
-                  <div 
-                    key={product.id}
-                    style={{
-                      animationDelay: `${index * 40}ms`,
-                      animation: "productFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
-                      opacity: 0,
-                    }}
-                  >
+                  <div key={product.id} className="animate-slideUp" style={{ animationDelay: `${index * 0.1}s` }}>
                     <BiddingProductCard
                       product={product}
                       viewMode="mobile"
@@ -793,32 +781,32 @@ const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
               </div>
 
               {/* Desktop Table View - Shown on medium and larger screens */}
-              <div className="hidden md:block bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="hidden md:block bg-white rounded-lg border border-gray-200 shadow-sm">
                 <div className="w-full overflow-x-auto relative" style={{ overflowY: 'visible', maxHeight: 'none' }}>
                   <table className="w-full" style={{ minWidth: 'max-content' }}>
-                    <thead className="bg-gradient-to-br from-gray-50 via-gray-50 to-gray-100/80 sticky top-0 z-10 border-b border-gray-200">
+                    <thead className="bg-gradient-to-r from-gray-50 to-gray-100/50 sticky top-0 z-10 border-b-2 border-gray-200">
                       <tr>
-                        <th className="px-4 py-3 text-left text-[11px] font-bold text-gray-700 uppercase tracking-widest whitespace-nowrap border-r border-gray-100">
+                        <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-600 uppercase tracking-widest whitespace-nowrap border-r border-gray-200/60">
                           Brand
                         </th>
-                        <th className="px-5 py-3 text-left text-[11px] font-bold text-gray-700 uppercase tracking-widest border-r border-gray-100">
+                        <th className="px-4 py-2.5 text-left text-[10px] font-bold text-gray-600 uppercase tracking-widest border-r border-gray-200/60">
                           Product Details
                         </th>
-                        <th className="hidden md:table-cell px-4 py-3 text-right text-[11px] font-bold text-gray-700 uppercase tracking-widest whitespace-nowrap border-r border-gray-100">
+                        <th className="hidden md:table-cell px-3 py-2.5 text-right text-[10px] font-bold text-gray-600 uppercase tracking-widest whitespace-nowrap border-r border-gray-200/60">
                           Unit Price
                         </th>
-                        <th className="px-4 py-3 text-right text-[11px] font-bold text-gray-700 uppercase tracking-widest whitespace-nowrap border-r border-gray-100">
+                        <th className="px-3 py-2.5 text-right text-[10px] font-bold text-gray-600 uppercase tracking-widest whitespace-nowrap border-r border-gray-200/60">
                           Current Bid
                         </th>
-                        <th className="hidden lg:table-cell px-5 py-3 text-left text-[11px] font-bold text-gray-700 uppercase tracking-widest whitespace-nowrap border-r border-gray-100">
+                        <th className="hidden lg:table-cell px-4 py-2.5 text-left text-[10px] font-bold text-gray-600 uppercase tracking-widest whitespace-nowrap border-r border-gray-200/60">
                           Your Bid
                         </th>
-                        <th className="px-4 py-3 text-center text-[11px] font-bold text-gray-700 uppercase tracking-widest whitespace-nowrap">
+                        <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-600 uppercase tracking-widest whitespace-nowrap">
                           Action
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-100">
+                    <tbody className="bg-white">
                       {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
                         <tr>
                           <td
@@ -827,15 +815,7 @@ const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
                           >
                             <div className="space-y-3">
                               {Array.from({ length: 5 }).map((_, index) => (
-                                <div 
-                                  key={index} 
-                                  className="flex items-center space-x-4 animate-pulse"
-                                  style={{
-                                    animationDelay: `${index * 50}ms`,
-                                    animation: "skeletonFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards",
-                                    opacity: 0,
-                                  }}
-                                >
+                                <div key={index} className="flex items-center space-x-4 animate-pulse">
                                   <div className="h-4 bg-gray-200 rounded w-20"></div>
                                   <div className="h-4 bg-gray-200 rounded w-32"></div>
                                   <div className="h-4 bg-gray-200 rounded w-16"></div>
@@ -871,7 +851,7 @@ const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
                           viewMode={viewMode}
                           onOpenBiddingForm={handleOpenBiddingForm}
                           renderBidValue={renderBidValue}
-                          onBidSuccess={handleRefresh}
+                        onBidSuccess={handleRefresh}
                           index={index}
                         />
                       ))}
