@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -15,6 +15,7 @@ import {
 import iphoneImage from "../../assets/iphone.png";
 import Countdown from "react-countdown";
 import Swal from "sweetalert2";
+import { useSocket } from "../../context/SocketContext";
 
 // Reusable Spinner Component
 const Spinner = () => (
@@ -49,6 +50,7 @@ const BiddingProductCard = ({
   onBidSuccess,
 }) => {
   const navigate = useNavigate();
+  const { socketService } = useSocket();
   const [imageError, setImageError] = useState(false);
   const [isSubmittingBid, setIsSubmittingBid] = useState(false);
   const [myMaxBidInput, setMyMaxBidInput] = useState(() => {
@@ -60,6 +62,35 @@ const BiddingProductCard = ({
       : product?.myMaxBid || "";
     return initial?.toString() || "";
   });
+
+  // Update input when currentPrice, minNextBid, or currentBid changes (on refresh or socket update)
+  useEffect(() => {
+    // Calculate the latest bid value
+    let latestBidValue = null;
+    
+    // Priority: minNextBid > currentPrice > currentBid
+    if (product?.minNextBid !== undefined && product?.minNextBid !== null) {
+      latestBidValue = product.minNextBid;
+    } else if (product?.currentPrice !== undefined && product?.currentPrice !== null) {
+      // Extract numeric value from currentPrice if it's a string
+      const currentPriceNum = typeof product.currentPrice === 'string'
+        ? parseFloat(product.currentPrice.replace(/[$,]/g, ''))
+        : product.currentPrice;
+      latestBidValue = currentPriceNum;
+    } else if (product?.currentBid !== undefined && product?.currentBid !== null) {
+      // Extract numeric value from currentBid if it's a string
+      const currentBidNum = typeof product.currentBid === 'string'
+        ? parseFloat(product.currentBid.replace(/[$,]/g, ''))
+        : product.currentBid;
+      latestBidValue = currentBidNum;
+    }
+    
+    // Only update if we have a valid value
+    if (latestBidValue !== null && !isNaN(latestBidValue) && latestBidValue > 0) {
+      const formattedValue = latestBidValue.toString();
+      setMyMaxBidInput(formattedValue);
+    }
+  }, [product?.minNextBid, product?.currentPrice, product?.currentBid]);
 
   const {
     name,
@@ -115,19 +146,52 @@ const BiddingProductCard = ({
         }
       );
 
-      if (res?.data?.data) {
+      console.log('Bid response:', res);
+      console.log('Response data:', res?.data);
+      console.log('Response status:', res?.status);
+      console.log('Response data status:', res?.data?.status);
+
+      // Check for success: HTTP status 200-299, or response status 200, or message contains "success"
+      const httpStatusOk = res?.status >= 200 && res?.status < 300;
+      const responseStatusOk = res?.data?.status === 200;
+      const hasData = res?.data?.data !== null && res?.data?.data !== undefined;
+      const successMessage = res?.data?.message?.toLowerCase().includes('success');
+      
+      const isSuccess = httpStatusOk || responseStatusOk || hasData || successMessage;
+      
+      console.log('Is success:', isSuccess, { httpStatusOk, responseStatusOk, hasData, successMessage });
+
+      if (isSuccess) {
+        const successMsg = res?.data?.message || "Bid placed successfully";
+        console.log('Bid successful, showing success message and refreshing...');
+        
+        // Join bid room for this product to receive real-time updates
+        if (socketService && product.id) {
+          console.log('Joining bid room for product:', product.id);
+          socketService.joinBid(product.id);
+        }
+        
         Swal.fire({
           icon: "success",
-          title: res?.data?.message,
+          title: successMsg,
           toast: true,
           position: "top-end",
           showConfirmButton: false,
           timer: 3000,
           timerProgressBar: true,
         });
-        if (onBidSuccess) onBidSuccess();
+        
+        // Refresh the table immediately after successful bid
+        console.log('Calling onBidSuccess callback...');
+        if (onBidSuccess) {
+          onBidSuccess();
+          console.log('onBidSuccess callback called');
+        } else {
+          console.warn('onBidSuccess callback is not provided');
+        }
       } else {
         const msg = res?.data?.message || "Failed to place bid";
+        console.log('Bid failed:', msg);
         Swal.fire({
           icon: "error",
           title: msg,
