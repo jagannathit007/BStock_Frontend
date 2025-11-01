@@ -64,6 +64,19 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
 
   useEffect(() => {
     if (isOpen) {
+      // Check for token before making API calls
+      const token = localStorage.getItem('token');
+      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      
+      if (!token || !isLoggedIn) {
+        // Close modal and redirect to login
+        onClose();
+        const hashPath = window.location.hash?.slice(1) || '/home';
+        const returnTo = encodeURIComponent(hashPath);
+        navigate(`/login?returnTo=${returnTo}`);
+        return;
+      }
+      
       fetchNegotiations();
       fetchAcceptedNegotiations();
       setupSocketListeners();
@@ -75,6 +88,7 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
         socketService.removeNegotiationListeners();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, activeTab, socketService]);
 
   // Setup socket listeners for real-time updates
@@ -150,6 +164,16 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
   };
 
   const fetchNegotiations = async () => {
+    // Check token before making API call
+    const token = localStorage.getItem('token');
+    if (!token) {
+      onClose();
+      const hashPath = window.location.hash?.slice(1) || '/home';
+      const returnTo = encodeURIComponent(hashPath);
+      navigate(`/login?returnTo=${returnTo}`);
+      return;
+    }
+    
     setLoading(true);
     try {
       // Fetch both active and accepted negotiations to show complete bid flow
@@ -173,12 +197,25 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
       setNegotiations(groupedNegotiations);
     } catch (error) {
       console.error('Error fetching negotiations:', error);
+      // If error is due to unauthorized, redirect to login
+      if (error?.response?.status === 401 || error?.message?.includes('401')) {
+        onClose();
+        const hashPath = window.location.hash?.slice(1) || '/home';
+        const returnTo = encodeURIComponent(hashPath);
+        navigate(`/login?returnTo=${returnTo}`);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const fetchAcceptedNegotiations = async () => {
+    // Check token before making API call
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return;
+    }
+    
     try {
       const response = userType === 'admin' 
         ? await NegotiationService.getAcceptedNegotiationsAdmin(1, 50)
@@ -187,6 +224,13 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
       setAcceptedNegotiations(response.negotiations || []);
     } catch (error) {
       console.error('Error fetching accepted negotiations:', error);
+      // If error is due to unauthorized, redirect to login
+      if (error?.response?.status === 401 || error?.message?.includes('401')) {
+        onClose();
+        const hashPath = window.location.hash?.slice(1) || '/home';
+        const returnTo = encodeURIComponent(hashPath);
+        navigate(`/login?returnTo=${returnTo}`);
+      }
     }
   };
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -15,6 +15,7 @@ import {
 import iphoneImage from "../../assets/iphone.png";
 import Countdown from "react-countdown";
 import Swal from "sweetalert2";
+import { useSocket } from "../../context/SocketContext";
 
 // Reusable Spinner Component
 const Spinner = () => (
@@ -49,6 +50,7 @@ const BiddingProductCard = ({
   onBidSuccess,
 }) => {
   const navigate = useNavigate();
+  const { socketService } = useSocket();
   const [imageError, setImageError] = useState(false);
   const [isSubmittingBid, setIsSubmittingBid] = useState(false);
   const [myMaxBidInput, setMyMaxBidInput] = useState(() => {
@@ -60,6 +62,35 @@ const BiddingProductCard = ({
       : product?.myMaxBid || "";
     return initial?.toString() || "";
   });
+
+  // Update input when currentPrice, minNextBid, or currentBid changes (on refresh or socket update)
+  useEffect(() => {
+    // Calculate the latest bid value
+    let latestBidValue = null;
+    
+    // Priority: minNextBid > currentPrice > currentBid
+    if (product?.minNextBid !== undefined && product?.minNextBid !== null) {
+      latestBidValue = product.minNextBid;
+    } else if (product?.currentPrice !== undefined && product?.currentPrice !== null) {
+      // Extract numeric value from currentPrice if it's a string
+      const currentPriceNum = typeof product.currentPrice === 'string'
+        ? parseFloat(product.currentPrice.replace(/[$,]/g, ''))
+        : product.currentPrice;
+      latestBidValue = currentPriceNum;
+    } else if (product?.currentBid !== undefined && product?.currentBid !== null) {
+      // Extract numeric value from currentBid if it's a string
+      const currentBidNum = typeof product.currentBid === 'string'
+        ? parseFloat(product.currentBid.replace(/[$,]/g, ''))
+        : product.currentBid;
+      latestBidValue = currentBidNum;
+    }
+    
+    // Only update if we have a valid value
+    if (latestBidValue !== null && !isNaN(latestBidValue) && latestBidValue > 0) {
+      const formattedValue = latestBidValue.toString();
+      setMyMaxBidInput(formattedValue);
+    }
+  }, [product?.minNextBid, product?.currentPrice, product?.currentBid]);
 
   const {
     name,
@@ -115,19 +146,52 @@ const BiddingProductCard = ({
         }
       );
 
-      if (res?.data?.data) {
+      console.log('Bid response:', res);
+      console.log('Response data:', res?.data);
+      console.log('Response status:', res?.status);
+      console.log('Response data status:', res?.data?.status);
+
+      // Check for success: HTTP status 200-299, or response status 200, or message contains "success"
+      const httpStatusOk = res?.status >= 200 && res?.status < 300;
+      const responseStatusOk = res?.data?.status === 200;
+      const hasData = res?.data?.data !== null && res?.data?.data !== undefined;
+      const successMessage = res?.data?.message?.toLowerCase().includes('success');
+      
+      const isSuccess = httpStatusOk || responseStatusOk || hasData || successMessage;
+      
+      console.log('Is success:', isSuccess, { httpStatusOk, responseStatusOk, hasData, successMessage });
+
+      if (isSuccess) {
+        const successMsg = res?.data?.message || "Bid placed successfully";
+        console.log('Bid successful, showing success message and refreshing...');
+        
+        // Join bid room for this product to receive real-time updates
+        if (socketService && product.id) {
+          console.log('Joining bid room for product:', product.id);
+          socketService.joinBid(product.id);
+        }
+        
         Swal.fire({
           icon: "success",
-          title: res?.data?.message,
+          title: successMsg,
           toast: true,
           position: "top-end",
           showConfirmButton: false,
           timer: 3000,
           timerProgressBar: true,
         });
-        if (onBidSuccess) onBidSuccess();
+        
+        // Refresh the table immediately after successful bid
+        console.log('Calling onBidSuccess callback...');
+        if (onBidSuccess) {
+          onBidSuccess();
+          console.log('onBidSuccess callback called');
+        } else {
+          console.warn('onBidSuccess callback is not provided');
+        }
       } else {
         const msg = res?.data?.message || "Failed to place bid";
+        console.log('Bid failed:', msg);
         Swal.fire({
           icon: "error",
           title: msg,
@@ -277,7 +341,7 @@ const BiddingProductCard = ({
                     <div className="text-sm text-red-600 font-bold text-center mt-0.5">
                       <Countdown
                         date={product.expiryTime}
-                        renderer={({ days, hours, minutes, seconds, completed }) => {
+                        renderer={({ hours, minutes, seconds, completed }) => {
                           if (completed) return <span className="text-xs"></span>;
                           return (
                             <span className="text-sm font-bold">
@@ -347,150 +411,143 @@ const BiddingProductCard = ({
   // LIST VIEW
   if (viewMode === "list") {
     return (
-      <tr className="even:bg-gray-50 hover:bg-gray-100/60 cursor-pointer transition-colors border-b border-gray-200">
+      <tr className="group hover:bg-blue-50/30 transition-all duration-150 border-b border-gray-100 last:border-b-0">
         {/* BRAND */}
-        <td className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 w-24" onClick={handleProductClick}>
-          <span className="font-medium">{product.oem || '-'}</span>
-          
+        <td className="px-3 py-2.5 align-middle border-r border-gray-100" onClick={handleProductClick}>
+          <div className="flex flex-col">
+            <span className="font-semibold text-sm text-gray-900 leading-tight">{product.oem || '-'}</span>
+            {product.units && (
+              <span className="text-xs text-gray-500 mt-0.5">{product.units} {product.units === 1 ? 'unit' : 'units'}</span>
+            )}
+          </div>
         </td>
 
         {/* MODEL + DETAILS */}
-        <td className="px-5 py-4 text-sm text-gray-900 border-r border-gray-200" onClick={handleProductClick}>
-          <div className="flex flex-col justify-center h-full">
-            <div className="flex items-center gap-2 justify-between">
-              <div className="flex items-center gap-2 flex-col">
-                <div>
-                {product.grade && (
-                  <span 
-                    className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] border border-gray-300 text-gray-700 bg-gray-100 cursor-pointer"
-                    title={`Grade: ${product.grade}`}
-                  >
-                    {product.grade}
-                  </span>
-                )}
-                <span className="font-medium tracking-tight">{product.model || product.modelFull}</span>
-                </div>
-                {/* Closes in row */}
-            <div className="mt-1">
-              <div className="text-xs font-semibold text-red-600 tabular-nums">
-                {product.status === 'closed' ? (
-                  <span className=""></span>
-                ) : product.expiryTime ? (
-                  <Countdown
-                    date={product.expiryTime}
-                    renderer={({ days, hours, minutes, seconds, completed }) => {
-                      if (completed) return <span className="text-gray-500"></span>;
-                      return (
-                        <span className="text-red-600 font-semibold">
-                          {days > 0 ? `${days}d ` : ""}
-                          {String(hours).padStart(2, "0")}:
-                          {String(minutes).padStart(2, "0")}:
-                          {String(seconds).padStart(2, "0")}
-                        </span>
-                      );
-                    }}
-                  />
-                ) : product.status === 'pending' ? (
-                  <span className="text-gray-500"></span>
-                ) : (
-                  <span className="text-red-600 font-semibold">{product.timer || ''}</span>
-                )}
-              </div>
+        <td className="px-4 py-2.5 align-middle border-r border-gray-100" onClick={handleProductClick}>
+          <div className="space-y-1.5">
+            {/* Model Name with Grade */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-semibold text-sm text-gray-900 leading-tight">{product.model || product.modelFull}</span>
+              {product.grade && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border border-gray-300 text-gray-700 bg-white">
+                  {product.grade}
+                </span>
+              )}
             </div>
-              </div>
-              <div className="flex items-center gap-1 text-xs">
-                {product.memory && (
-                  <>
-                    <span 
-                      className="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 whitespace-nowrap cursor-pointer"
-                      title={`Capacity: ${product.memory}`}
-                    >
-                      {product.memory}
-                    </span>
-                    {(product.color || product.carrier) && (
-                      <span className="text-gray-400 mx-1">•</span>
-                    )}
-                  </>
-                )}
-                {product.color && (
-                  <>
-                    <span 
-                      className="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 whitespace-nowrap cursor-pointer"
-                      title={`Color: ${product.color}`}
-                    >
-                      {product.color}
-                    </span>
-                    {product.carrier && (
-                      <span className="text-gray-400 mx-1">•</span>
-                    )}
-                  </>
-                )}
-                {product.carrier && (
-                  <span 
-                    className="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 whitespace-nowrap cursor-pointer"
-                    title={`Carrier: ${product.carrier}`}
-                  >
-                    <FontAwesomeIcon icon={faSimCard} className="mr-1" />
-                    SIM
-                  </span>
-                )}
-              </div>
+            
+            {/* Specs Row */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {product.memory && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-50 text-gray-700 border border-gray-200">
+                  {product.memory}
+                </span>
+              )}
+              {product.color && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-50 text-gray-700 border border-gray-200">
+                  {product.color}
+                </span>
+              )}
+              {product.carrier && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-50 text-gray-700 border border-gray-200">
+                  <FontAwesomeIcon icon={faSimCard} className="mr-0.5 text-[9px]" />
+                  {product.carrier}
+                </span>
+              )}
             </div>
 
-            
+            {/* Timer */}
+            {product.status !== 'closed' && product.expiryTime && (
+              <div className="flex items-center gap-1 mt-1">
+                <svg className="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                </svg>
+                {product.status === 'pending' ? (
+                  <span className="text-xs text-gray-500 font-medium">Starting soon</span>
+                ) : (
+                  <div className="text-xs font-bold text-red-600 tabular-nums">
+                    <Countdown
+                      date={product.expiryTime}
+                      renderer={({ days, hours, minutes, seconds, completed }) => {
+                        if (completed) return <span className="text-gray-500">Ended</span>;
+                        return (
+                          <span>
+                            {days > 0 ? `${days}d ` : ""}
+                            {String(hours).padStart(2, "0")}:
+                            {String(minutes).padStart(2, "0")}:
+                            {String(seconds).padStart(2, "0")}
+                          </span>
+                        );
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </td>
 
         {product.status === 'closed' ? (
-          <td className="px-4 py-3 text-sm text-gray-600 text-center" colSpan={4}>
-            Closed
+          <td className="px-3 py-2.5 text-center align-middle" colSpan={4}>
+            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-600">
+              Auction Closed
+            </span>
           </td>
         ) : product.status === 'pending' ? (
           <>
-            {/* UNIT PRICE - Hide data */}
-            <td className="hidden md:table-cell px-4 py-3 text-sm text-gray-400 whitespace-nowrap text-right tabular-nums border-r border-gray-200 w-24">
-              -
+            {/* UNIT PRICE */}
+            <td className="hidden md:table-cell px-3 py-2.5 text-right align-middle border-r border-gray-100">
+              <span className="text-xs text-gray-400">-</span>
             </td>
 
-            {/* CURRENT BID - Hide data */}
-            <td className="px-4 py-3 text-sm text-gray-400 whitespace-nowrap text-right tabular-nums border-r border-gray-200 w-24">
-              -
+            {/* CURRENT BID */}
+            <td className="px-3 py-2.5 text-right align-middle border-r border-gray-100">
+              <span className="text-xs text-gray-400">-</span>
             </td>
 
-            {/* NEXT MIN BID INPUT - Hide data */}
-            <td className="hidden lg:table-cell px-4 py-3 text-sm text-gray-400 whitespace-nowrap border-r border-gray-200 w-28">
-              -
+            {/* NEXT MIN BID INPUT */}
+            <td className="hidden lg:table-cell px-4 py-2.5 align-middle border-r border-gray-100">
+              <span className="text-xs text-gray-400">-</span>
             </td>
 
-            {/* ACTION - Hide data */}
-            <td className="px-2 py-2 text-center whitespace-nowrap w-24">
+            {/* ACTION */}
+            <td className="px-3 py-2.5 text-center align-middle">
               <button
-                className="bg-gray-300 text-gray-500 cursor-not-allowed inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold shadow-sm"
+                className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-400 cursor-not-allowed"
                 disabled
               >
-                -
+                Starting Soon
               </button>
             </td>
           </>
         ) : (
           <>
             {/* UNIT PRICE */}
-            <td className="hidden md:table-cell px-4 py-3 text-sm text-gray-900 whitespace-nowrap text-right tabular-nums border-r border-gray-200 w-24">
-              {renderBidValue ? renderBidValue(product.unitPrice) : product.unitPrice}
+            <td className="hidden md:table-cell px-3 py-2.5 text-right align-middle border-r border-gray-100">
+              <div className="flex flex-col items-end">
+                <span className="text-xs text-gray-500 font-medium leading-tight">Unit</span>
+                <span className="text-sm font-semibold text-gray-900 tabular-nums mt-0.5">
+                  {renderBidValue ? renderBidValue(product.unitPrice) : product.unitPrice}
+                </span>
+              </div>
             </td>
 
             {/* CURRENT BID */}
-            <td className="px-4 py-3 text-sm font-medium text-gray-900 whitespace-nowrap text-right tabular-nums border-r border-gray-200 w-24">
-              {renderBidValue ? renderBidValue(product.currentBid) : product.currentBid}
+            <td className="px-3 py-2.5 text-right align-middle border-r border-gray-100">
+              <div className="flex flex-col items-end">
+                <span className="text-xs text-gray-500 font-medium leading-tight">Current</span>
+                <span className="text-base font-bold text-blue-600 tabular-nums mt-0.5">
+                  {renderBidValue ? renderBidValue(product.currentBid) : product.currentBid}
+                </span>
+              </div>
             </td>
 
             {/* NEXT MIN BID INPUT */}
-            <td className="hidden lg:table-cell px-4 py-3 text-sm text-gray-600 whitespace-nowrap border-r border-gray-200 w-28">
-              <div className="relative">
-                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">$</span>
+            <td className="hidden lg:table-cell px-4 py-2.5 align-middle border-r border-gray-100">
+              <div className="relative max-w-[120px]">
+                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-medium">$</span>
                 <input
                   type="text"
-                  className="w-24 pl-5 pr-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0071E0] disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="w-full pl-5 pr-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-50 disabled:cursor-not-allowed transition-all"
                   placeholder="0.00"
                   value={myMaxBidInput}
                   disabled={auctionEnded || isSubmittingBid}
@@ -504,12 +561,18 @@ const BiddingProductCard = ({
             </td>
 
             {/* ACTION */}
-            <td className="px-2 py-2 text-center whitespace-nowrap w-24">
+            <td className="px-3 py-2.5 text-center align-middle">
               <button
-                className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold shadow-sm ${
-                  auctionEnded || isCurrentUserBidder || isSubmittingBid
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-[#0071E0] text-white hover:bg-blue-600 cursor-pointer"
+                className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 min-w-[90px] ${
+                  auctionEnded
+                    ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                    : isCurrentUserBidder
+                    ? "bg-green-100 text-green-700 border border-green-300 cursor-not-allowed"
+                    : isSubmittingBid
+                    ? "bg-blue-200 text-blue-700 cursor-not-allowed"
+                    : product.isLeading
+                    ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow cursor-pointer"
+                    : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow cursor-pointer"
                 }`}
                 onClick={handleBidButtonClick}
                 disabled={auctionEnded || isCurrentUserBidder || isSubmittingBid}
@@ -517,15 +580,17 @@ const BiddingProductCard = ({
                 {isSubmittingBid ? (
                   <>
                     <Spinner />
-                    <span className="ml-1">Placing…</span>
+                    <span>Placing…</span>
                   </>
                 ) : (
                   <>
                     <FontAwesomeIcon
-                      icon={auctionEnded || isCurrentUserBidder ? faClock : (product.isLeading ? faCrown : faGavel)}
-                      className="mr-1"
+                      icon={auctionEnded ? faClock : isCurrentUserBidder ? faCrown : (product.isLeading ? faCrown : faGavel)}
+                      className={isCurrentUserBidder ? "text-green-600" : ""}
                     />
-                    {auctionEnded ? "Ended" : isCurrentUserBidder ? "Leading" : (product.isLeading ? "Leading" : "Bid")}
+                    <span>
+                      {auctionEnded ? "Ended" : isCurrentUserBidder ? "Leading" : (product.isLeading ? "Leading" : "Place Bid")}
+                    </span>
                   </>
                 )}
               </button>
@@ -614,7 +679,7 @@ const BiddingProductCard = ({
                 {product.expiryTime ? (
                   <Countdown
                     date={product.expiryTime}
-                    renderer={({ days, hours, minutes, seconds, completed }) => {
+                    renderer={({ hours, minutes, seconds, completed }) => {
                       if (completed) return <span className="text-xs font-bold">Ended</span>;
                       return (
                         <span className="text-sm font-bold">

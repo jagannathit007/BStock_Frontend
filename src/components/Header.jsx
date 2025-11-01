@@ -105,7 +105,9 @@ const Header = ({ onLogout }) => {
   // removed duplicate simple cart click; unified below with auth-redirect
 
   const handleNegotiationClick = () => {
-    if (!isLoggedIn) {
+    // Check both isLoggedIn and token existence
+    const token = localStorage.getItem('token');
+    if (!isLoggedIn || !token) {
       try { localStorage.setItem('postLoginAction', JSON.stringify({ type: 'negotiations' })); } catch {}
       const hashPath = window.location.hash?.slice(1) || '/home';
       const returnTo = encodeURIComponent(hashPath);
@@ -116,7 +118,9 @@ const Header = ({ onLogout }) => {
   };
 
   const handleWishlistClick = () => {
-    if (!isLoggedIn) {
+    // Check both isLoggedIn and token existence
+    const token = localStorage.getItem('token');
+    if (!isLoggedIn || !token) {
       try { localStorage.setItem('postLoginAction', JSON.stringify({ type: 'wishlist' })); } catch {}
       const hashPath = window.location.hash?.slice(1) || '/home';
       const returnTo = encodeURIComponent(hashPath);
@@ -273,12 +277,23 @@ const Header = ({ onLogout }) => {
   const processPostLoginAction = () => {
     try {
       const isNowLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      const token = localStorage.getItem('token');
       const raw = localStorage.getItem('postLoginAction');
-      if (!isNowLoggedIn || !raw) return;
+      if (!isNowLoggedIn || !token || !raw) return;
       const { type } = JSON.parse(raw);
       if (type === 'wallet') setIsWalletModalOpen(true);
-      if (type === 'wishlist') setIsWishlistModalOpen(true);
-      if (type === 'negotiations') setIsNegotiationModalOpen(true);
+      if (type === 'wishlist') {
+        // Double-check token before opening wishlist
+        if (token) {
+          setIsWishlistModalOpen(true);
+        }
+      }
+      if (type === 'negotiations') {
+        // Double-check token before opening negotiations
+        if (token) {
+          setIsNegotiationModalOpen(true);
+        }
+      }
       localStorage.removeItem('postLoginAction');
     } catch {}
   };
