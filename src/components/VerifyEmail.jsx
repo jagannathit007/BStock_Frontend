@@ -21,17 +21,32 @@ const VerifyEmail = () => {
       }
 
       try {
+        // Clear any existing auth data FIRST before verification to prevent auto-login
+        localStorage.removeItem("token");
+        localStorage.removeItem("isLoggedIn");
+        localStorage.removeItem("user");
+        
         const res = await AuthService.verifyEmail(token);
-        if (res.data && res.data.token) {
-          localStorage.setItem("token", res.data.token);
-          localStorage.setItem("isLoggedIn", "true");
+        // Check if verification was successful (response structure: res.data.data)
+        const responseData = res?.data?.data || res?.data;
+        if (res?.data?.status === 200 || responseData) {
           setSuccess(true);
-          // Redirect after 2 seconds
-          setTimeout(() => navigate("/"), 1500);
+          // Ensure localStorage is completely cleared (do it again to be safe)
+          localStorage.clear();
+          // Dispatch event to reset login state globally
+          window.dispatchEvent(new Event('loginStateChanged'));
+          // Redirect to login page after 2 seconds - use replace to prevent back navigation
+          setTimeout(() => {
+            // Use window.location for a hard redirect to ensure clean state
+            window.location.href = window.location.origin + window.location.pathname + '#/login';
+          }, 2000);
         } else {
           setError("Verification failed. Please try again.");
         }
       } catch (err) {
+        // Even on error, ensure we're not logged in
+        localStorage.clear();
+        window.dispatchEvent(new Event('loginStateChanged'));
         setError(err.message || "Verification failed. The link may be invalid or expired.");
       } finally {
         setIsLoading(false);
@@ -75,12 +90,12 @@ const VerifyEmail = () => {
           <>
             <FontAwesomeIcon icon={faCheckCircle} className="text-green-600 text-6xl mb-4" />
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Email Verified Successfully!</h1>
-            <p className="text-gray-600 mb-6">Your account is now active. Redirecting to home...</p>
+            <p className="text-gray-600 mb-6">Your account is now active. Redirecting to login page...</p>
             <Link
-              to="/"
+              to="/login"
               className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
             >
-              Go to Home
+              Go to Login
             </Link>
           </>
         ) : (
