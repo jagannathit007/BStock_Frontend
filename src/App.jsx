@@ -195,11 +195,17 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
       setIsLoggedIn(false);
       // Dispatch event to notify other components of logout
       window.dispatchEvent(new Event('loginStateChanged'));
+      // Redirect to home page after logout
+      window.location.hash = '#/home';
     };
 
     return (
       <HashRouter>
-        <AppContent isLoggedIn={isLoggedIn} handleLogout={handleLogout} handleLogin={handleLogin} />
+        <AppContent 
+          isLoggedIn={isLoggedIn} 
+          handleLogout={handleLogout} 
+          handleLogin={handleLogin}
+        />
       </HashRouter>
     );
   };

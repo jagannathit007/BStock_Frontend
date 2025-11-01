@@ -77,6 +77,16 @@ const WishlistModal = ({ isOpen, onClose }) => {
   };
 
   const fetchWishlist = async (page) => {
+    // Check token before making API call
+    const token = localStorage.getItem('token');
+    if (!token) {
+      onClose();
+      const hashPath = window.location.hash?.slice(1) || '/home';
+      const returnTo = encodeURIComponent(hashPath);
+      navigate(`/login?returnTo=${returnTo}`);
+      return;
+    }
+    
     setIsLoading(true);
     try {
       const data = await ProductService.getWishlist(page, itemsPerPage);
@@ -99,10 +109,23 @@ const WishlistModal = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     if (isOpen) {
+      // Check for token before making API calls
+      const token = localStorage.getItem('token');
+      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      
+      if (!token || !isLoggedIn) {
+        // Close modal and redirect to login
+        onClose();
+        const hashPath = window.location.hash?.slice(1) || '/home';
+        const returnTo = encodeURIComponent(hashPath);
+        navigate(`/login?returnTo=${returnTo}`);
+        return;
+      }
+      
       setCurrentPage(1);
       fetchWishlist(1);
     }
-  }, [isOpen]);
+  }, [isOpen, navigate, onClose]);
 
   useEffect(() => {
     if (isOpen && currentPage > 1) {
@@ -134,6 +157,16 @@ const WishlistModal = ({ isOpen, onClose }) => {
   }, [isOpen, currentPage]);
 
   const handleWishlistChange = async (productId, newStatus) => {
+    // Check token before making API call
+    const token = localStorage.getItem('token');
+    if (!token) {
+      onClose();
+      const hashPath = window.location.hash?.slice(1) || '/home';
+      const returnTo = encodeURIComponent(hashPath);
+      navigate(`/login?returnTo=${returnTo}`);
+      return;
+    }
+    
     if (!newStatus) {
       try {
         // Optimistic update - remove from UI immediately

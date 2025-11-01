@@ -338,6 +338,17 @@ const ProductCard = ({
 
   const handleToggleWishlist = async (e) => {
     e.stopPropagation();
+    
+    // Check for token before making API call
+    const token = localStorage.getItem('token');
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    
+    if (!token || !isLoggedIn) {
+      const hashPath = window.location.hash?.slice(1) || '/home';
+      const returnTo = encodeURIComponent(hashPath);
+      return navigate(`/login?returnTo=${returnTo}`);
+    }
+    
     const productId = id || product._id;
     const newWishlistStatus = !isFavorite;
     setIsFavorite(newWishlistStatus);

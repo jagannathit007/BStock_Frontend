@@ -155,6 +155,14 @@ export class ProductService {
   static toggleWishlist = async (
     wishlistData: WishlistToggleRequest
   ): Promise<WishlistToggleResponse> => {
+    // Check for token before making API call
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      const errorMessage = 'Authentication required. Please login to continue.';
+      toastHelper.showTost(errorMessage, 'error');
+      throw new Error(errorMessage);
+    }
+
     const baseUrl = env.baseUrl;
     const url = `${baseUrl}/api/customer/toggle-wishlist`;
 
@@ -213,6 +221,14 @@ export class ProductService {
     prevPage: number | null;
     nextPage: number | null;
   }> => {
+    // Check for token before making API call
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      const errorMessage = 'Authentication required. Please login to continue.';
+      toastHelper.showTost(errorMessage, 'error');
+      throw new Error(errorMessage);
+    }
+
     const baseUrl = env.baseUrl;
     const url = `${baseUrl}/api/customer/get-wishlist`;
 

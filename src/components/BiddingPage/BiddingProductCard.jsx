@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -62,6 +62,35 @@ const BiddingProductCard = ({
       : product?.myMaxBid || "";
     return initial?.toString() || "";
   });
+
+  // Update input when currentPrice, minNextBid, or currentBid changes (on refresh or socket update)
+  useEffect(() => {
+    // Calculate the latest bid value
+    let latestBidValue = null;
+    
+    // Priority: minNextBid > currentPrice > currentBid
+    if (product?.minNextBid !== undefined && product?.minNextBid !== null) {
+      latestBidValue = product.minNextBid;
+    } else if (product?.currentPrice !== undefined && product?.currentPrice !== null) {
+      // Extract numeric value from currentPrice if it's a string
+      const currentPriceNum = typeof product.currentPrice === 'string'
+        ? parseFloat(product.currentPrice.replace(/[$,]/g, ''))
+        : product.currentPrice;
+      latestBidValue = currentPriceNum;
+    } else if (product?.currentBid !== undefined && product?.currentBid !== null) {
+      // Extract numeric value from currentBid if it's a string
+      const currentBidNum = typeof product.currentBid === 'string'
+        ? parseFloat(product.currentBid.replace(/[$,]/g, ''))
+        : product.currentBid;
+      latestBidValue = currentBidNum;
+    }
+    
+    // Only update if we have a valid value
+    if (latestBidValue !== null && !isNaN(latestBidValue) && latestBidValue > 0) {
+      const formattedValue = latestBidValue.toString();
+      setMyMaxBidInput(formattedValue);
+    }
+  }, [product?.minNextBid, product?.currentPrice, product?.currentBid]);
 
   const {
     name,

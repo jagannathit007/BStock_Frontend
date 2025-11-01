@@ -503,16 +503,19 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
 
   const handleToggleWishlist = async (e) => {
     e.stopPropagation();
-    const productId = processedProduct._id || processedProduct.id;
-    const newWishlistStatus = !isFavorite;
-
+    
+    // Check for token before making API call
+    const token = localStorage.getItem('token');
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    if (!isLoggedIn) {
+    
+    if (!token || !isLoggedIn) {
       const hashPath = window.location.hash?.slice(1) || '/home';
       const returnTo = encodeURIComponent(hashPath);
       return navigate(`/login?returnTo=${returnTo}`);
     }
 
+    const productId = processedProduct._id || processedProduct.id;
+    const newWishlistStatus = !isFavorite;
     setIsFavorite(newWishlistStatus);
 
     try {

@@ -73,6 +73,15 @@ const WatchlistContent = () => {
   };
 
   const fetchWatchlist = async (page) => {
+    // Check token before making API call
+    const token = localStorage.getItem('token');
+    if (!token) {
+      const hashPath = window.location.hash?.slice(1) || '/home';
+      const returnTo = encodeURIComponent(hashPath);
+      navigate(`/login?returnTo=${returnTo}`);
+      return;
+    }
+    
     setIsLoading(true);
     try {
       const data = await ProductService.getWishlist(page, itemsPerPage);
@@ -126,6 +135,14 @@ const WatchlistContent = () => {
   }, [currentPage]);
 
   const handleWatchlistChange = async (productId, newStatus) => {
+    // Check token before making API call
+    const token = localStorage.getItem('token');
+    if (!token) {
+      const hashPath = window.location.hash?.slice(1) || '/home';
+      const returnTo = encodeURIComponent(hashPath);
+      return navigate(`/login?returnTo=${returnTo}`);
+    }
+    
     if (!newStatus) {
       try {
         // Optimistic update - remove from UI immediately
