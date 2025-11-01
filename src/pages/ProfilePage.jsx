@@ -1571,7 +1571,7 @@ const ProfilePage = () => {
     handleBusinessFileChange(key, file), [handleBusinessFileChange]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <div>
         <div className="flex flex-col lg:flex-row gap-12">
           {/* Left sidebar with profile picture and navigation */}

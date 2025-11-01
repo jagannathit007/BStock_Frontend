@@ -616,6 +616,8 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     description: processedProduct.description || "",
     notify: processedProduct.notify,
     purchaseType: processedProduct.purchaseType,
+    skuFamilyId: processedProduct.skuFamilyId?._id || processedProduct.skuFamilyId || null,
+    subSkuFamilyId: processedProduct.subSkuFamilyId?._id || processedProduct.subSkuFamilyId || null,
   };
 
   const totalAmount =

@@ -21,6 +21,8 @@ const CheckoutPage = () => {
 
   const mapCartItemToUi = (item) => {
     const id = item.productId;
+    const skuFamilyId = item.skuFamilyId?._id || item.skuFamilyId || null;
+    const subSkuFamilyId = item.subSkuFamilyId?._id || item.subSkuFamilyId || null;
     const name = item.subSkuFamilyId?.name || item.skuFamilyId?.name || "Product";
     const baseUrl = import.meta.env.VITE_BASE_URL || "http://localhost:3200";
     
@@ -40,7 +42,7 @@ const CheckoutPage = () => {
     const price = Number(item.price) || 0;
     const stockCount = Number(item.stock) || 0;
     const moq = Number(item.moq) || 1;
-    return { id, name, description, price, stockCount, moq, imageUrl, quantity: Number(item.quantity) || Math.max(moq, 1) };
+    return { id, skuFamilyId, subSkuFamilyId, name, description, price, stockCount, moq, imageUrl, quantity: Number(item.quantity) || Math.max(moq, 1) };
   };
 
   const fetchCart = useCallback(async () => {
@@ -83,7 +85,13 @@ const CheckoutPage = () => {
       orderId: null,
       totalAmount: totalPrice,
       orderNumber: null,
-      cartItems: cartItems.map((it) => ({ productId: it.id, quantity: Number(it.quantity), price: Number(it.price) })),
+      cartItems: cartItems.map((it) => ({ 
+        productId: it.id, 
+        skuFamilyId: it.skuFamilyId || null,
+        subSkuFamilyId: it.subSkuFamilyId || null,
+        quantity: Number(it.quantity), 
+        price: Number(it.price) 
+      })),
       billingAddress,
       shippingAddress,
     });
