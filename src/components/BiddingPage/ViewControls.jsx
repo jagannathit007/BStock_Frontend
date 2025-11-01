@@ -1,4 +1,5 @@
 import React from "react";
+import { PRIMARY_COLOR } from "../../utils/colors";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faTableCellsLarge,
@@ -73,7 +74,9 @@ const ViewControls = ({
             placeholder="Search auctions, products..."
             value={searchQuery}
             onChange={handleSearchChange}
-            className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all duration-200"
+            className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white outline-none transition-all duration-200"
+            onFocus={(e) => { e.target.style.borderColor = PRIMARY_COLOR; e.target.style.boxShadow = `0 0 0 2px ${PRIMARY_COLOR}26`; }}
+            onBlur={(e) => { e.target.style.borderColor = ''; e.target.style.boxShadow = ''; }}
           />
           {/* <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
             <kbd className="hidden sm:inline-flex items-center px-2 py-1 border border-gray-200 rounded text-xs font-mono text-gray-500 bg-gray-100">

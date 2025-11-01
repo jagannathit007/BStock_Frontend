@@ -8,6 +8,7 @@ import NegotiationModal from "./negotiation/NegotiationModal";
 import WatchlistModal from "./WishListPage/WatchlistModal";
 import WalletModal from "./WalletTransactionsPage/WalletTransactions";
 import { convertPrice } from "../utils/currencyUtils";
+import { PRIMARY_COLOR, PRIMARY_COLOR_LIGHT, PRIMARY_COLOR_DARK } from "../utils/colors";
 
 const Header = ({ onLogout }) => {
   const navigate = useNavigate();
@@ -341,7 +342,7 @@ const Header = ({ onLogout }) => {
             {/* Logo */}
             <div className="flex items-center flex-shrink-0">
               <div className="flex items-center space-x-3">
-                <div className="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl shadow-sm">
+                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl shadow-sm" style={{ background: `linear-gradient(to bottom right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})` }}>
                   <svg
                     className="w-6 h-6 text-white"
                     fill="currentColor"
@@ -372,7 +373,10 @@ const Header = ({ onLogout }) => {
               <div className="flex items-center space-x-1">
                 {/* Negotiations */}
                 <button
-                  className={`${!isLoggedIn ? 'px-3 py-2' : 'p-2.5'} text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg relative cursor-pointer group flex items-center space-x-2`}
+                  className={`${!isLoggedIn ? 'px-3 py-2' : 'p-2.5'} text-gray-500 rounded-lg relative cursor-pointer group flex items-center space-x-2 transition-colors`}
+                  style={{ '--hover-text': PRIMARY_COLOR, '--hover-bg': PRIMARY_COLOR_LIGHT } || {}}
+                  onMouseEnter={(e) => { e.target.style.color = PRIMARY_COLOR; e.target.style.backgroundColor = PRIMARY_COLOR_LIGHT; }}
+                  onMouseLeave={(e) => { e.target.style.color = ''; e.target.style.backgroundColor = ''; }}
                   onClick={handleNegotiationClick}
                   title="My Negotiations"
                 >
@@ -384,7 +388,10 @@ const Header = ({ onLogout }) => {
 
                     {/* Wishlist */}
                 <button
-                  className={`${!isLoggedIn ? 'px-3 py-2' : 'p-2.5'} text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg relative cursor-pointer group flex items-center space-x-2`}
+                  className={`${!isLoggedIn ? 'px-3 py-2' : 'p-2.5'} text-gray-500 rounded-lg relative cursor-pointer group flex items-center space-x-2 transition-colors`}
+                  style={{ '--hover-text': PRIMARY_COLOR, '--hover-bg': PRIMARY_COLOR_LIGHT } || {}}
+                  onMouseEnter={(e) => { e.target.style.color = PRIMARY_COLOR; e.target.style.backgroundColor = PRIMARY_COLOR_LIGHT; }}
+                  onMouseLeave={(e) => { e.target.style.color = ''; e.target.style.backgroundColor = ''; }}
                   onClick={handleWishlistClick}
                   title="My Wishlist"
                 >
@@ -402,7 +409,10 @@ const Header = ({ onLogout }) => {
 
                 {/* Cart */}
                 <button
-                  className={`${!isLoggedIn ? 'px-3 py-2' : 'p-2.5'} text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg relative cursor-pointer group flex items-center space-x-2`}
+                  className={`${!isLoggedIn ? 'px-3 py-2' : 'p-2.5'} text-gray-500 rounded-lg relative cursor-pointer group flex items-center space-x-2 transition-colors`}
+                  style={{ '--hover-text': PRIMARY_COLOR, '--hover-bg': PRIMARY_COLOR_LIGHT } || {}}
+                  onMouseEnter={(e) => { e.target.style.color = PRIMARY_COLOR; e.target.style.backgroundColor = PRIMARY_COLOR_LIGHT; }}
+                  onMouseLeave={(e) => { e.target.style.color = ''; e.target.style.backgroundColor = ''; }}
                   onClick={handleCartClick}
                   title="My Cart"
                 >
@@ -419,7 +429,10 @@ const Header = ({ onLogout }) => {
               {!isLoggedIn && (
                 <button
                   onClick={handleLoginClick}
-                  className="ml-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer"
+                  className="ml-2 px-4 py-2 text-sm font-semibold text-white rounded-lg cursor-pointer transition-colors"
+                  style={{ backgroundColor: PRIMARY_COLOR }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = PRIMARY_COLOR_DARK}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = PRIMARY_COLOR}
                   title="Login"
                 >
                   Login
@@ -442,7 +455,7 @@ const Header = ({ onLogout }) => {
                         onError={handleImageError}
                       />
                     ) : (
-                      <div className="w-8 h-8 rounded-full border-2 border-gray-200 bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full border-2 border-gray-200 flex items-center justify-center" style={{ background: `linear-gradient(to bottom right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})` }}>
                         <span className="text-white text-sm font-semibold">
                           {getInitials}
                         </span>
@@ -452,7 +465,7 @@ const Header = ({ onLogout }) => {
                       <p className="text-sm font-medium text-gray-900">{userName || 'User'}</p>
                       <div className="flex items-center gap-1.5">
                         <p className="text-xs text-gray-500">Account</p>
-                        <span className="text-xs font-semibold text-blue-600">{convertPrice(walletBalance)}</span>
+                        <span className="text-xs font-semibold" style={{ color: PRIMARY_COLOR }}>{convertPrice(walletBalance)}</span>
                       </div>
                     </div>
                     <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -473,7 +486,7 @@ const Header = ({ onLogout }) => {
                               onError={handleImageError}
                             />
                           ) : (
-                            <div className="w-10 h-10 rounded-full border border-gray-200 bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                            <div className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center" style={{ background: `linear-gradient(to bottom right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})` }}>
                               <span className="text-white text-sm font-semibold">
                                 {getInitials}
                               </span>

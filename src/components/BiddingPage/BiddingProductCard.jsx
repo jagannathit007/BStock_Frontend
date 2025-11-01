@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -17,6 +17,7 @@ import Countdown from "react-countdown";
 import Swal from "sweetalert2";
 import { useSocket } from "../../context/SocketContext";
 import toastHelper from "../../utils/toastHelper";
+import { PRIMARY_COLOR, PRIMARY_COLOR_DARK } from "../../utils/colors";
 
 // Reusable Spinner Component
 const Spinner = () => (
@@ -55,18 +56,68 @@ const BiddingProductCard = ({
   const [imageError, setImageError] = useState(false);
   const [isSubmittingBid, setIsSubmittingBid] = useState(false);
   const [myMaxBidInput, setMyMaxBidInput] = useState("");
+  
+  // Helper function to get min and max bid values
+  const getBidRange = () => {
+    const minBid = product?.minBid ? (typeof product.minBid === 'number' ? product.minBid : Number(product.minBid)) : null;
+    const maxBid = product?.maxBid ? (typeof product.maxBid === 'number' ? product.maxBid : Number(product.maxBid)) : null;
+    const maxBidPrice = product?.maxBidPrice ? (typeof product.maxBidPrice === 'number' ? product.maxBidPrice : Number(product.maxBidPrice)) : null;
+    const minNextBid = product?.minNextBid ? (typeof product.minNextBid === 'string' 
+      ? parseFloat(product.minNextBid.replace(/[$,]/g, '')) 
+      : product.minNextBid) : null;
+    
+    return {
+      minBid: minBid || minNextBid,
+      maxBid: maxBid || maxBidPrice
+    };
+  };
 
-  // Helper function to get min bid placeholder text
-  const getMinBidPlaceholder = () => {
-    if (product?.minNextBid !== undefined && product?.minNextBid !== null) {
-      const minBid = typeof product.minNextBid === 'string'
-        ? parseFloat(product.minNextBid.replace(/[$,]/g, ''))
-        : product.minNextBid;
-      if (!isNaN(minBid) && minBid > 0) {
-        return `Min: $${minBid.toFixed(2)}`;
-      }
+  // Helper function to validate bid amount and get validation state
+  const getBidValidation = () => {
+    if (!myMaxBidInput || myMaxBidInput.trim() === '') {
+      return { isValid: null, message: '', showMaxWarning: false };
     }
-    return "Enter next min bid amount";
+    
+    const amountNum = Number(String(myMaxBidInput).replace(/[,]/g, ""));
+    if (isNaN(amountNum) || amountNum <= 0) {
+      return { isValid: false, message: 'Enter a valid amount', showMaxWarning: false };
+    }
+    
+    const { minBid, maxBid } = getBidRange();
+    
+    if (minBid !== null && !isNaN(minBid) && amountNum < minBid) {
+      return { isValid: false, message: `Minimum bid is $${minBid.toFixed(2)}`, showMaxWarning: false };
+    }
+    
+    // Show max warning if amount exceeds max (but still allow validation to be false)
+    if (maxBid !== null && !isNaN(maxBid) && amountNum > maxBid) {
+      return { isValid: false, message: '', showMaxWarning: true, maxBid: maxBid };
+    }
+    
+    return { isValid: true, message: '', showMaxWarning: false };
+  };
+  
+  const bidValidation = getBidValidation();
+  const bidRange = getBidRange();
+
+  // Helper function to get min bid placeholder text (Max removed as per requirement)
+  const getMinBidPlaceholder = () => {
+    // Try to get minBid from product
+    const minBid = product?.minBid ? (typeof product.minBid === 'number' ? product.minBid : Number(product.minBid)) : null;
+    
+    // Get minNextBid as fallback for minimum
+    const minNextBid = product?.minNextBid ? (typeof product.minNextBid === 'string' 
+      ? parseFloat(product.minNextBid.replace(/[$,]/g, '')) 
+      : product.minNextBid) : null;
+    
+    const effectiveMinBid = minBid || minNextBid;
+    
+      // Show only min (Max removed from placeholder)
+      if (effectiveMinBid !== null && !isNaN(effectiveMinBid) && effectiveMinBid > 0) {
+        return `Your next bid : $${effectiveMinBid.toFixed(2)}`;
+      }
+    
+    return "Enter bid amount";
   };
 
   const {
@@ -106,6 +157,25 @@ const BiddingProductCard = ({
       const amountNum = Number(String(myMaxBidInput).replace(/[,]/g, ""));
       if (!amountNum || isNaN(amountNum) || amountNum <= 0) {
         return Swal.fire({ icon: "warning", title: "Enter a valid amount" });
+      }
+
+      // Validate bid amount is within minBid and maxBid range
+      const { minBid, maxBid } = getBidRange();
+
+      if (minBid !== null && !isNaN(minBid) && amountNum < minBid) {
+        return Swal.fire({
+          icon: "warning",
+          title: "Bid Too Low",
+          text: `Your bid must be at least $${minBid.toFixed(2)}. Minimum bid for this product is $${minBid.toFixed(2)}.`,
+        });
+      }
+
+      if (maxBid !== null && !isNaN(maxBid) && amountNum > maxBid) {
+        return Swal.fire({
+          icon: "warning",
+          title: "Bid Too High",
+          text: `Your bid cannot exceed $${maxBid.toFixed(2)}. Maximum bid for this product is $${maxBid.toFixed(2)}.`,
+        });
       }
 
       setIsSubmittingBid(true);
@@ -321,33 +391,49 @@ const BiddingProductCard = ({
               {/* Next Min Bid input + Buttons in one row */}
               <div className="flex flex-col gap-1 mb-2">
                 <div className="flex items-center gap-2">
-                  <div className="relative flex-1 min-w-0">
-                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
+                  <div className="relative flex-1 min-w-[200px]">
                     <input
                       type="text"
-                      className="w-full pl-5 pr-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071E0] disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      className={`w-full pl-2 pr-2 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                        bidValidation.isValid === false 
+                          ? 'border-red-300 focus:ring-red-500 bg-red-50' 
+                          : bidValidation.isValid === true 
+                          ? 'border-green-300 focus:ring-green-500 bg-green-50' 
+                          : 'border-gray-300 focus:ring-[#0071E0]'
+                      }`}
                       placeholder={getMinBidPlaceholder()}
                       value={myMaxBidInput}
                       disabled={auctionEnded || isSubmittingBid || product.status === 'pending'}
-                      title={product.status === 'pending' ? 'Bid not yet started' : ''}
                       onClick={(e) => e.stopPropagation()}
                       onChange={(e) => {
                         const val = e.target.value.replace(/[^0-9.,]/g, "");
                         setMyMaxBidInput(val);
                       }}
                     />
+                    {bidValidation.showMaxWarning && bidValidation.maxBid && (
+                      <span className="text-xs text-red-600 pl-1 mt-0.5">
+                        Max bid limit: {'$'}{bidValidation.maxBid.toFixed(2)}
+                      </span>
+                    )}
+                    {bidValidation.message && !bidValidation.showMaxWarning && (
+                      <span className={`text-xs pl-1 ${bidValidation.isValid === false ? 'text-red-600' : 'text-green-600'}`}>
+                        {bidValidation.message}
+                      </span>
+                    )}
                   </div>
                   <button
                     className={`py-2 px-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                      auctionEnded || isCurrentUserBidder || isSubmittingBid || product.status === 'pending'
+                      auctionEnded || isCurrentUserBidder || isSubmittingBid || product.status === 'pending' || bidValidation.isValid === false || bidValidation.showMaxWarning
                         ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                         : product.isLeading
                         ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer"
-                        : "bg-[#0071E0] hover:bg-blue-600 text-white cursor-pointer"
+                        : bidValidation.isValid === true
+                        ? "bg-[#0071E0] hover:bg-blue-600 text-white cursor-pointer"
+                        : "bg-[#0071E0] hover:bg-blue-600 text-white cursor-pointer opacity-75"
                     }`}
                     onClick={handleBidButtonClick}
-                    disabled={auctionEnded || isCurrentUserBidder || isSubmittingBid || product.status === 'pending'}
-                    title={product.status === 'pending' ? 'Bid not yet started' : ''}
+                    disabled={auctionEnded || isCurrentUserBidder || isSubmittingBid || product.status === 'pending' || bidValidation.isValid === false || bidValidation.showMaxWarning}
+                    title={product.status === 'pending' ? 'Bid not yet started' : (bidValidation.showMaxWarning ? `Maximum bid is $${bidValidation.maxBid?.toFixed(2) || ''}` : (bidValidation.isValid === false ? bidValidation.message : ''))}
                   >
                     {isSubmittingBid ? (
                       <>
@@ -365,9 +451,14 @@ const BiddingProductCard = ({
                     )}
                   </button>
                 </div>
-                {product.maxBidPrice != null && product.maxBidPrice !== undefined && (
-                  <span className="text-xs text-red-600 pl-1">
-                    Your max bid: ${typeof product.maxBidPrice === 'number' ? product.maxBidPrice.toFixed(2) : product.maxBidPrice}
+                {product.maxBid != null && product.maxBid !== undefined && (
+                  <span className="text-xs text-gray-600 pl-1">
+                    Max bid limit: ${typeof product.maxBid === 'number' ? product.maxBid.toFixed(2) : product.maxBid}
+                  </span>
+                )}
+                {product.minBid != null && product.minBid !== undefined && (
+                  <span className="text-xs text-gray-500 pl-1">
+                    Min bid: ${typeof product.minBid === 'number' ? product.minBid.toFixed(2) : product.minBid}
                   </span>
                 )}
               </div>
@@ -514,11 +605,16 @@ const BiddingProductCard = ({
             {/* NEXT MIN BID INPUT */}
             <td className="hidden lg:table-cell px-4 py-2.5 align-middle border-r border-gray-100">
               <div className="flex flex-col gap-1">
-                <div className="relative max-w-[120px]">
-                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-medium">$</span>
+                <div className="relative min-w-[180px] max-w-[220px]">
                   <input
                     type="text"
-                    className="w-full pl-5 pr-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-50 disabled:cursor-not-allowed transition-all"
+                    className={`w-full pl-2 pr-2 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:border-blue-500 bg-white disabled:bg-gray-50 disabled:cursor-not-allowed transition-all ${
+                      bidValidation.isValid === false 
+                        ? 'border-red-300 focus:ring-red-500 bg-red-50' 
+                        : bidValidation.isValid === true 
+                        ? 'border-green-300 focus:ring-green-500 bg-green-50' 
+                        : 'border-gray-300 focus:ring-blue-500'
+                    }`}
                     placeholder={getMinBidPlaceholder()}
                     value={myMaxBidInput}
                     disabled={auctionEnded || isSubmittingBid}
@@ -528,10 +624,25 @@ const BiddingProductCard = ({
                       setMyMaxBidInput(val);
                     }}
                   />
+                  {bidValidation.showMaxWarning && bidValidation.maxBid && (
+                    <span className="text-xs text-red-600 mt-0.5">
+                      Max bid limit: {'$'}{bidValidation.maxBid.toFixed(2)}
+                    </span>
+                  )}
+                  {bidValidation.message && !bidValidation.showMaxWarning && (
+                    <span className={`text-xs ${bidValidation.isValid === false ? 'text-red-600' : 'text-green-600'}`}>
+                      {bidValidation.message}
+                    </span>
+                  )}
                 </div>
-                {product.maxBidPrice != null && product.maxBidPrice !== undefined && (
-                  <span className="text-xs text-red-600">
-                    Your max bid: ${typeof product.maxBidPrice === 'number' ? product.maxBidPrice.toFixed(2) : product.maxBidPrice}
+                {product.maxBid != null && product.maxBid !== undefined && (
+                  <span className="text-xs text-gray-600">
+                    Max bid limit: ${typeof product.maxBid === 'number' ? product.maxBid.toFixed(2) : product.maxBid}
+                  </span>
+                )}
+                {product.minBid != null && product.minBid !== undefined && (
+                  <span className="text-xs text-gray-500">
+                    Min bid: ${typeof product.minBid === 'number' ? product.minBid.toFixed(2) : product.minBid}
                   </span>
                 )}
               </div>
@@ -545,14 +656,20 @@ const BiddingProductCard = ({
                     ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                     : isCurrentUserBidder
                     ? "bg-green-100 text-green-700 border border-green-300 cursor-not-allowed"
-                    : isSubmittingBid
+                    : isSubmittingBid || bidValidation.isValid === false || bidValidation.showMaxWarning
                     ? "bg-blue-200 text-blue-700 cursor-not-allowed"
                     : product.isLeading
                     ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow cursor-pointer"
-                    : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow cursor-pointer"
+                    : bidValidation.isValid === true
+                    ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow cursor-pointer"
+                    : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow cursor-pointer opacity-75"
                 }`}
+                style={!auctionEnded && !isCurrentUserBidder && !isSubmittingBid && !product.isLeading ? { background: `linear-gradient(to right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})` } : {}}
+                onMouseEnter={(e) => { if (!auctionEnded && !isCurrentUserBidder && !isSubmittingBid && !product.isLeading) e.target.style.background = `linear-gradient(to right, ${PRIMARY_COLOR_DARK}, ${PRIMARY_COLOR_DARK})`; }}
+                onMouseLeave={(e) => { if (!auctionEnded && !isCurrentUserBidder && !isSubmittingBid && !product.isLeading) e.target.style.background = `linear-gradient(to right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})`; }}
                 onClick={handleBidButtonClick}
-                disabled={auctionEnded || isCurrentUserBidder || isSubmittingBid}
+                disabled={auctionEnded || isCurrentUserBidder || isSubmittingBid || bidValidation.isValid === false || bidValidation.showMaxWarning}
+                title={bidValidation.showMaxWarning ? `Maximum bid is $${bidValidation.maxBid?.toFixed(2) || ''}` : (bidValidation.isValid === false ? bidValidation.message : '')}
               >
                 {isSubmittingBid ? (
                   <>
@@ -679,11 +796,16 @@ const BiddingProductCard = ({
           {/* Input + Buttons in one row */}
           <div className="flex flex-col mt-auto w-full gap-1">
             <div className="flex w-full gap-2 items-center">
-              <div className="relative flex-1 min-w-0">
-                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
+              <div className="relative flex-1 min-w-[200px]">
                 <input
                   type="text"
-                  className="w-full pl-5 pr-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071E0] disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className={`w-full pl-2 pr-2 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                    bidValidation.isValid === false 
+                      ? 'border-red-300 focus:ring-red-500 bg-red-50' 
+                      : bidValidation.isValid === true 
+                      ? 'border-green-300 focus:ring-green-500 bg-green-50' 
+                      : 'border-gray-300 focus:ring-[#0071E0]'
+                  }`}
                   placeholder={getMinBidPlaceholder()}
                   value={myMaxBidInput}
                   disabled={auctionEnded || isSubmittingBid}
@@ -693,6 +815,16 @@ const BiddingProductCard = ({
                     setMyMaxBidInput(val);
                   }}
                 />
+                {bidValidation.showMaxWarning && bidValidation.maxBid && (
+                  <span className="text-xs text-red-600 pl-1 mt-0.5">
+                    Max bid limit: {'$'}{bidValidation.maxBid.toFixed(2)}
+                  </span>
+                )}
+                {bidValidation.message && !bidValidation.showMaxWarning && (
+                  <span className={`text-xs pl-1 ${bidValidation.isValid === false ? 'text-red-600' : 'text-green-600'}`}>
+                    {bidValidation.message}
+                  </span>
+                )}
               </div>
             <button
               className={`border ${
@@ -711,14 +843,17 @@ const BiddingProductCard = ({
             </button>
             <button
               className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition-all duration-200 shadow-sm ${
-                auctionEnded || isCurrentUserBidder || isSubmittingBid
+                auctionEnded || isCurrentUserBidder || isSubmittingBid || bidValidation.isValid === false || bidValidation.showMaxWarning
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                   : product.isLeading
                   ? "hover:shadow-md bg-green-600 hover:bg-green-700 text-white cursor-pointer"
-                  : "hover:shadow-md bg-[#0071E3] hover:bg-[#005bb5] text-white cursor-pointer"
+                  : bidValidation.isValid === true
+                  ? "hover:shadow-md bg-[#0071E3] hover:bg-[#005bb5] text-white cursor-pointer"
+                  : "hover:shadow-md bg-[#0071E3] hover:bg-[#005bb5] text-white cursor-pointer opacity-75"
               }`}
               onClick={handleBidButtonClick}
-              disabled={auctionEnded || isCurrentUserBidder || isSubmittingBid}
+              disabled={auctionEnded || isCurrentUserBidder || isSubmittingBid || bidValidation.isValid === false || bidValidation.showMaxWarning}
+              title={bidValidation.showMaxWarning ? `Maximum bid is $${bidValidation.maxBid?.toFixed(2) || ''}` : (bidValidation.isValid === false ? bidValidation.message : '')}
             >
               {isSubmittingBid ? (
                 <>
@@ -736,9 +871,14 @@ const BiddingProductCard = ({
               )}
             </button>
             </div>
-            {product.maxBidPrice != null && product.maxBidPrice !== undefined && (
-              <span className="text-xs text-red-600 pl-1">
-                Your max bid: ${typeof product.maxBidPrice === 'number' ? product.maxBidPrice.toFixed(2) : product.maxBidPrice}
+            {product.maxBid != null && product.maxBid !== undefined && (
+              <span className="text-xs text-gray-600 pl-1">
+                Max bid limit: ${typeof product.maxBid === 'number' ? product.maxBid.toFixed(2) : product.maxBid}
+              </span>
+            )}
+            {product.minBid != null && product.minBid !== undefined && (
+              <span className="text-xs text-gray-500 pl-1">
+                Min bid: ${typeof product.minBid === 'number' ? product.minBid.toFixed(2) : product.minBid}
               </span>
             )}
           </div>
@@ -832,14 +972,20 @@ const BiddingProductCard = ({
         <div className="flex space-x-2">
           <button
             className={`flex-1 px-3 py-2 rounded-3xl text-xs sm:text-sm font-medium cursor-pointer flex items-center justify-center ${
-              isSubmittingBid
+              isSubmittingBid || bidValidation.isValid === false || bidValidation.showMaxWarning
                 ? "bg-gray-400 cursor-not-allowed"
                 : isLeading
                 ? "bg-green-600 text-white hover:bg-green-700"
-                : "bg-[#0071E0] text-white hover:bg-blue-600"
+                : bidValidation.isValid === true
+                ? "bg-[#0071E0] text-white hover:bg-blue-600"
+                : "bg-[#0071E0] text-white hover:bg-blue-600 opacity-75"
             }`}
+            style={!isSubmittingBid && !isLeading ? { backgroundColor: PRIMARY_COLOR } : {}}
+            onMouseEnter={(e) => { if (!isSubmittingBid && !isLeading) e.target.style.backgroundColor = PRIMARY_COLOR_DARK; }}
+            onMouseLeave={(e) => { if (!isSubmittingBid && !isLeading) e.target.style.backgroundColor = PRIMARY_COLOR; }}
             onClick={handleBidButtonClick}
-            disabled={isSubmittingBid}
+            disabled={isSubmittingBid || bidValidation.isValid === false || bidValidation.showMaxWarning}
+            title={bidValidation.showMaxWarning ? `Maximum bid is $${bidValidation.maxBid?.toFixed(2) || ''}` : (bidValidation.isValid === false ? bidValidation.message : '')}
           >
             {isSubmittingBid ? (
               <>

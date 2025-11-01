@@ -1,4 +1,5 @@
 import React from "react";
+import { PRIMARY_COLOR, PRIMARY_COLOR_LIGHT } from "../../../utils/colors";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faTv,
@@ -14,8 +15,8 @@ const ProductSpecs = () => {
     {
       title: "Display",
       icon: faTv,
-      iconColor: "text-blue-600",
-      iconBg: "bg-blue-100",
+      iconColor: PRIMARY_COLOR,
+      iconBg: PRIMARY_COLOR_LIGHT,
       items: [
         { label: "Size:", value: "6.7 inches" },
         { label: "Type:", value: "Super Retina XDR" },
@@ -99,11 +100,13 @@ const ProductSpecs = () => {
           >
             <div className="flex items-center mb-4">
               <div
-                className={`w-10 h-10 ${spec.iconBg} rounded-lg flex items-center justify-center mr-3`}
+                className="w-10 h-10 rounded-lg flex items-center justify-center mr-3"
+                style={typeof spec.iconBg === 'string' && spec.iconBg.startsWith('bg-') ? {} : { backgroundColor: spec.iconBg }}
               >
                 <FontAwesomeIcon
                   icon={spec.icon}
-                  className={`${spec.iconColor}`}
+                  style={typeof spec.iconColor === 'string' && spec.iconColor.startsWith('text-') ? {} : { color: spec.iconColor }}
+                  className={typeof spec.iconColor === 'string' && spec.iconColor.startsWith('text-') ? spec.iconColor : ''}
                 />
               </div>
               <h3 className="text-lg font-semibold text-gray-900">

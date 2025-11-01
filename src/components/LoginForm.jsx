@@ -17,6 +17,7 @@ import { jwtDecode } from "jwt-decode";
 import ForgotPasswordModal from "./ForgotPasswordModal";
 import { AuthService } from "../services/auth/auth.services";
 import loginImage from "../../public/images/login.png";
+import { PRIMARY_COLOR, PRIMARY_COLOR_DARK, PRIMARY_COLOR_LIGHT } from "../utils/colors";
 
 // Validation schema
 const loginSchema = yup.object({
@@ -295,13 +296,13 @@ const LoginForm = ({ onLogin }) => {
 
   // Right side image section
   const ImageSection = () => (
-    <div className="relative w-full h-full min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 flex items-center justify-center overflow-hidden">
+    <div className="relative w-full h-full min-h-screen flex items-center justify-center overflow-hidden" style={{ background: `linear-gradient(to bottom right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})` }}>
       <img
         src={loginImage}
         alt="Premium GSM Bidding Platform"
         className="absolute inset-0 w-full h-full object-cover opacity-20"
       />
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-600/90 via-blue-700/80 to-indigo-800/90"></div>
+      <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom right, ${PRIMARY_COLOR}E6, ${PRIMARY_COLOR_DARK}CC)` }}></div>
       
       
       <div className="relative z-10 text-center text-white px-6 lg:px-8 max-w-2xl">
@@ -313,7 +314,7 @@ const LoginForm = ({ onLogin }) => {
         <h2 className="text-2xl lg:text-3xl xl:text-5xl font-bold mb-4 lg:mb-6 leading-tight">
           Access the best deals, anytime
         </h2>
-        <p className="text-lg lg:text-xl text-blue-100 leading-relaxed">
+        <p className="text-lg lg:text-xl leading-relaxed" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
           Discover exclusive deals, trusted sellers, and unbeatable prices—all in one secure platform.
         </p>
       </div>
@@ -344,14 +345,14 @@ const LoginForm = ({ onLogin }) => {
           background: rgba(0, 0, 0, 0.3);
         }
       `}</style>
-      <div className="h-screen flex bg-gradient-to-br from-gray-50 to-blue-50 overflow-hidden" style={{height: '100vh', maxHeight: '100vh'}}>
+      <div className="h-screen flex overflow-hidden" style={{height: '100vh', maxHeight: '100vh', background: `linear-gradient(to bottom right, #f9fafb, ${PRIMARY_COLOR_LIGHT})` }}>
         <div className="flex-1 flex justify-center px-2 sm:px-4 lg:px-6 bg-transparent py-2 sm:py-3 lg:py-4 items-start min-w-0 min-h-0 scroll-container" style={{height: '100%', maxHeight: '100vh'}}>
           <div className="w-full flex justify-center items-center min-h-full">
             {showLoginForm && (
             <div className="max-w-md w-full space-y-4 sm:space-y-5 lg:space-y-6 px-2 sm:px-3 lg:px-4 py-3 sm:py-4">
               {/* Logo and Header */}
               <div className="text-center">
-                <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg sm:rounded-xl shadow-lg mb-3 sm:mb-4">
+                <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl shadow-lg mb-3 sm:mb-4" style={{ background: `linear-gradient(to bottom right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})` }}>
                   <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                   </svg>
@@ -391,7 +392,10 @@ const LoginForm = ({ onLogin }) => {
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <FontAwesomeIcon
                         icon={faEnvelope}
-                        className="text-gray-400 group-focus-within:text-blue-500 transition-colors text-sm"
+                        style={{ color: 'inherit' }}
+                        className="text-gray-400 transition-colors text-sm"
+                        onFocus={(e) => e.target.style.color = PRIMARY_COLOR}
+                        onBlur={(e) => e.target.style.color = ''}
                       />
                     </div>
                     <input
@@ -403,11 +407,13 @@ const LoginForm = ({ onLogin }) => {
                           trigger("email");
                         },
                       })}
-                      className={`block w-full pl-8 pr-3 py-1.5 sm:py-2 border-2 rounded-lg transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:bg-white text-sm sm:text-sm ${
+                      className={`block w-full pl-8 pr-3 py-1.5 sm:py-2 border-2 rounded-lg transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:bg-white text-sm sm:text-sm ${
                         errors.email
                           ? "border-red-400 focus:border-red-500"
-                          : "border-gray-200 focus:border-blue-500"
+                          : "border-gray-200"
                       }`}
+                      onFocus={(e) => { if (!errors.email) { e.target.style.borderColor = PRIMARY_COLOR; e.target.style.boxShadow = `0 0 0 4px ${PRIMARY_COLOR}33`; } }}
+                      onBlur={(e) => { if (!errors.email) { e.target.style.borderColor = ''; e.target.style.boxShadow = ''; } }}
                       placeholder="Enter your email address"
                     />
                   </div>
@@ -439,11 +445,13 @@ const LoginForm = ({ onLogin }) => {
                           trigger("password");
                         },
                       })}
-                      className={`block w-full pl-8 pr-10 py-1.5 sm:py-2 border-2 rounded-lg transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:bg-white text-sm sm:text-sm ${
+                      className={`block w-full pl-8 pr-10 py-1.5 sm:py-2 border-2 rounded-lg transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:bg-white text-sm sm:text-sm ${
                         errors.password
                           ? "border-red-400 focus:border-red-500"
-                          : "border-gray-200 focus:border-blue-500"
+                          : "border-gray-200"
                       }`}
+                      onFocus={(e) => { if (!errors.password) { e.target.style.borderColor = PRIMARY_COLOR; e.target.style.boxShadow = `0 0 0 4px ${PRIMARY_COLOR}33`; } }}
+                      onBlur={(e) => { if (!errors.password) { e.target.style.borderColor = ''; e.target.style.boxShadow = ''; } }}
                       placeholder="Enter your password"
                     />
                     <button
@@ -453,7 +461,10 @@ const LoginForm = ({ onLogin }) => {
                     >
                       <FontAwesomeIcon
                         icon={showPassword ? faEye : faEyeSlash}
-                        className="text-gray-400 hover:text-blue-600 transition-colors text-xs"
+                        className="text-gray-400 transition-colors text-xs"
+                        style={{ color: 'inherit' }}
+                        onMouseEnter={(e) => e.target.style.color = PRIMARY_COLOR}
+                        onMouseLeave={(e) => e.target.style.color = ''}
                       />
                     </button>
                   </div>
@@ -471,7 +482,10 @@ const LoginForm = ({ onLogin }) => {
                       type="checkbox"
                       checked={rememberMe}
                       onChange={(e) => setRememberMe(e.target.checked)}
-                      className="h-4 w-4 text-blue-600 border-2 border-gray-300 rounded-lg focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 cursor-pointer"
+                      className="h-4 w-4 border-2 border-gray-300 rounded-lg transition-all duration-200 cursor-pointer"
+                      style={{ accentColor: PRIMARY_COLOR }}
+                      onFocus={(e) => { e.target.style.boxShadow = `0 0 0 4px ${PRIMARY_COLOR}33`; }}
+                      onBlur={(e) => { e.target.style.boxShadow = ''; }}
                     />
                     <label className="ml-3 block text-[14px] font-medium text-gray-700 cursor-pointer group-hover:text-gray-900 transition-colors">
                       Remember me
@@ -480,7 +494,10 @@ const LoginForm = ({ onLogin }) => {
                   <button
                     type="button"
                     onClick={handleForgotPassword}
-                    className="text-[14px] text-blue-600 hover:text-blue-800 font-semibold cursor-pointer transition-colors hover:underline"
+                    className="text-[14px] font-semibold cursor-pointer transition-colors hover:underline"
+                    style={{ color: PRIMARY_COLOR }}
+                    onMouseEnter={(e) => e.target.style.color = PRIMARY_COLOR_DARK}
+                    onMouseLeave={(e) => e.target.style.color = PRIMARY_COLOR}
                   >
                     Forgot password?
                   </button>
@@ -488,7 +505,12 @@ const LoginForm = ({ onLogin }) => {
 
                 <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white cursor-pointer py-1 sm:py-2 px-6 rounded-lg font-semibold text-sm sm:text-sm focus:ring-4 focus:ring-blue-500/30 flex items-center justify-center disabled:opacity-70 shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="w-full text-white cursor-pointer py-1 sm:py-2 px-6 rounded-lg font-semibold text-sm sm:text-sm flex items-center justify-center disabled:opacity-70 shadow-lg hover:shadow-xl transition-all duration-300"
+                  style={{ background: `linear-gradient(to right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})` }}
+                  onMouseEnter={(e) => e.target.style.background = `linear-gradient(to right, ${PRIMARY_COLOR_DARK}, ${PRIMARY_COLOR_DARK})`}
+                  onMouseLeave={(e) => e.target.style.background = `linear-gradient(to right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})`}
+                  onFocus={(e) => e.target.style.boxShadow = `0 0 0 4px ${PRIMARY_COLOR}30`}
+                  onBlur={(e) => e.target.style.boxShadow = ''}
                   disabled={isLoading || isSubmitting}
                 >
                   {isLoading || isSubmitting ? (
@@ -538,7 +560,8 @@ const LoginForm = ({ onLogin }) => {
                     <div className="flex justify-center items-center py-4 bg-gray-50/50 rounded-xl border-2 border-gray-200">
                       <FontAwesomeIcon
                         icon={faSpinner}
-                        className="animate-spin text-blue-600 mr-3"
+                        className="animate-spin mr-3"
+                        style={{ color: PRIMARY_COLOR }}
                       />
                       <span className="text-gray-700 font-medium">
                         Signing in with Google...
@@ -556,7 +579,10 @@ const LoginForm = ({ onLogin }) => {
                   Don't have an account?{" "}
                   <Link
                     to="/signup"
-                    className="text-blue-600 hover:text-blue-800 font-semibold transition-colors hover:underline"
+                    className="font-semibold transition-colors hover:underline"
+                    style={{ color: PRIMARY_COLOR }}
+                    onMouseEnter={(e) => e.target.style.color = PRIMARY_COLOR_DARK}
+                    onMouseLeave={(e) => e.target.style.color = PRIMARY_COLOR}
                   >
                     Create one here
                   </Link>
