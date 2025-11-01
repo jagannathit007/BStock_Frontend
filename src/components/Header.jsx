@@ -350,39 +350,43 @@ const Header = ({ onLogout }) => {
             {/* Right Side */}
             <div className="flex items-center space-x-2">
 
-              {/* Wallet Info */}
-              <button
-                onClick={handleWalletClick}
-                className="hidden lg:flex items-center space-x-2 cursor-pointer px-4 py-2 hover:bg-gray-50 rounded-lg border border-gray-200"
-                title="My Wallet"
-              >
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                    <svg className="h-4 w-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"/>
-                    </svg>
+              {/* Wallet Info - Only show when logged in */}
+              {isLoggedIn && (
+                <button
+                  onClick={handleWalletClick}
+                  className="hidden lg:flex items-center space-x-2 cursor-pointer px-4 py-2 hover:bg-gray-50 rounded-lg border border-gray-200"
+                  title="My Wallet"
+                >
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                      <svg className="h-4 w-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"/>
+                      </svg>
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <span className="text-xs text-gray-500 font-medium">Balance</span>
+                      <span className="text-sm font-semibold text-gray-900">
+                        {convertPrice(walletBalance)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex flex-col items-start">
-                    <span className="text-xs text-gray-500 font-medium">Balance</span>
-                    <span className="text-sm font-semibold text-gray-900">
-                      {isLoggedIn ? convertPrice(walletBalance) : (0).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              </button>
+                </button>
+              )}
 
               {/* Navigation Buttons */}
               <div className="flex items-center space-x-1">
-                {/* Negotiations */}
-                <button
-                  className="p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg relative cursor-pointer group"
-                  onClick={handleNegotiationClick}
-                  title="My Negotiations"
-                >
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </button>
+                {/* Negotiations - Only show when logged in */}
+                {isLoggedIn && (
+                  <button
+                    className="p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg relative cursor-pointer group"
+                    onClick={handleNegotiationClick}
+                    title="My Negotiations"
+                  >
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </button>
+                )}
 
                     {/* Wishlist */}
                 <button

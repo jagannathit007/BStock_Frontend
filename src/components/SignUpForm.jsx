@@ -18,7 +18,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import countriesData from "../data/countries.json";
 import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { jwtDecode } from "jwt-decode";
 import { AuthService } from "../services/auth/auth.services";
 import loginImage from "../../public/images/login.png";
@@ -283,45 +282,6 @@ const SignUpForm = () => {
     }
   };
 
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0, y: 50 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.8,
-        staggerChildren: 0.2,
-      },
-    },
-  };
-
-  const childVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5 },
-    },
-  };
-
-  const buttonVariants = {
-    hover: {
-      scale: 1.02,
-      boxShadow: "0px 8px 25px rgba(79, 70, 229, 0.3)",
-      transition: { duration: 0.3 },
-    },
-    tap: { scale: 0.98 },
-  };
-
-  const logoVariants = {
-    hidden: { scale: 0, rotate: -180 },
-    visible: {
-      scale: 1,
-      rotate: 0,
-      transition: { type: "spring", stiffness: 260, damping: 20 },
-    },
-  };
 
   // Right side image section
   const ImageSection = () => (
@@ -333,10 +293,6 @@ const SignUpForm = () => {
       />
       <div className="absolute inset-0 bg-gradient-to-br from-blue-600/90 via-blue-700/80 to-indigo-800/90"></div>
       
-      {/* Floating elements */}
-      <div className="absolute top-20 left-10 w-16 lg:w-20 h-16 lg:h-20 bg-white/10 rounded-full animate-float"></div>
-      <div className="absolute top-40 right-20 w-12 lg:w-16 h-12 lg:h-16 bg-white/5 rounded-full animate-float" style={{animationDelay: '1s'}}></div>
-      <div className="absolute bottom-40 left-20 w-10 lg:w-12 h-10 lg:h-12 bg-white/10 rounded-full animate-float" style={{animationDelay: '2s'}}></div>
       
       <div className="relative z-10 text-center text-white px-6 lg:px-8 max-w-2xl">
         <div className="inline-flex items-center justify-center w-16 lg:w-20 h-16 lg:h-20 bg-white/20 rounded-2xl lg:rounded-3xl mb-6 lg:mb-8 backdrop-blur-sm">
@@ -381,15 +337,10 @@ const SignUpForm = () => {
       <div className="h-screen flex bg-gradient-to-br from-gray-50 to-blue-50 overflow-hidden" style={{height: '100vh', maxHeight: '100vh'}}>
         <div className="flex-1 flex justify-center px-2 sm:px-4 lg:px-6 bg-transparent py-2 sm:py-3 lg:py-4 items-start min-w-0 min-h-0 scroll-container" style={{height: '100%', maxHeight: '100vh'}}>
           <div className="w-full flex justify-center items-center min-h-full">
-            <motion.div
-              className="max-w-xl w-full space-y-4 sm:space-y-5 lg:space-y-6 px-2 sm:px-3 lg:px-4 py-3 sm:py-4"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-            >
+            <div className="max-w-xl w-full space-y-4 sm:space-y-5 lg:space-y-6 px-2 sm:px-3 lg:px-4 py-3 sm:py-4">
               {/* Logo and Header */}
-              <motion.div className="text-center" variants={childVariants}>
-                <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg sm:rounded-xl shadow-lg mb-3 sm:mb-4 animate-float">
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg sm:rounded-xl shadow-lg mb-3 sm:mb-4">
                   <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                   </svg>
@@ -405,16 +356,12 @@ const SignUpForm = () => {
                 <p className="text-sm font-medium">{error}</p>
               </div>
             )}
-          </motion.div>
+          </div>
               {/* Form Card */}
-              <motion.div
-                className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-xl border border-white/20 p-3 sm:p-4 lg:p-5"
-                variants={childVariants}
-              >
-                <motion.form
+              <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-xl border border-white/20 p-3 sm:p-4 lg:p-5">
+                <form
                   className="space-y-3 sm:space-y-4 lg:space-y-5"
                   onSubmit={handleSubmit(onSubmit)}
-                  variants={childVariants}
                 >
                 {/* Name and Email Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
@@ -856,13 +803,10 @@ const SignUpForm = () => {
               </label>
             </div>
                 {/* Create Account Button */}
-                <motion.button
+                <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-1 sm:py-2 px-6 rounded-lg font-semibold text-xs sm:text-sm focus:ring-4 focus:ring-blue-500/30 cursor-pointer transition-all duration-300 flex items-center justify-center disabled:opacity-70 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-1 sm:py-2 px-6 rounded-lg font-semibold text-xs sm:text-sm focus:ring-4 focus:ring-blue-500/30 cursor-pointer transition-all duration-300 flex items-center justify-center disabled:opacity-70 shadow-lg hover:shadow-xl"
                   disabled={isLoading || isSubmitting}
-                  variants={buttonVariants}
-                  whileHover="hover"
-                  whileTap="tap"
                 >
               {isLoading || isSubmitting ? (
                 <div className="flex items-center gap-2">
@@ -892,7 +836,7 @@ const SignUpForm = () => {
               ) : (
                 <span>Create Account</span>
               )}
-            </motion.button>
+            </button>
 
             {/* Divider */}
             <div className="relative my-6.5">
@@ -924,11 +868,11 @@ const SignUpForm = () => {
                 ></div>
               )}
             </div>
-                </motion.form>
-              </motion.div>
+                </form>
+              </div>
 
               {/* Login Link */}
-              <motion.div className="text-center" variants={childVariants}>
+              <div className="text-center">
                 <p className="text-gray-600 text-sm font-medium">
                   Already have an account?{" "}
                   <Link
@@ -938,10 +882,10 @@ const SignUpForm = () => {
                     Sign in here
                   </Link>
                 </p>
-              </motion.div>
+              </div>
 
               {/* Security Notice */}
-              {/* <motion.div className="text-center" variants={childVariants}>
+              {/* <div className="text-center">
                 <div className="inline-flex items-center px-3 py-2 bg-green-50 text-green-700 rounded-full text-xs font-medium">
                   <FontAwesomeIcon
                     icon={faShieldHalved}
@@ -949,8 +893,8 @@ const SignUpForm = () => {
                   />
                   Enterprise-grade security
                 </div>
-              </motion.div> */}
-            </motion.div>
+              </div> */}
+            </div>
           </div>
         </div>
 

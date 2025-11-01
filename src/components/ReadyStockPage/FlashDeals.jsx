@@ -12,7 +12,7 @@ import {
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
-import HeroSlider from "./HeroSlider";
+// import HeroSlider from "./HeroSlider";
 
 const FlashDeals = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -295,7 +295,7 @@ const FlashDeals = () => {
 
   return (
     <div>
-      <HeroSlider/>
+      {/* <HeroSlider/> */}
       <div className="flex flex-col lg:flex-row gap-6">
         {showMobileFilters && (
           <div className="fixed inset-0 z-[99] lg:hidden">
