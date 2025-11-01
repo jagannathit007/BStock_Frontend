@@ -85,6 +85,8 @@ const MainContent = () => {
       sku: p.subSkuFamilyId?.code || p.skuFamilyId?.code || p.sku || "",
       modelCode: p.subSkuFamilyId?.name || p.skuFamilyId?.name || "",
       countryName: p.country || p.subSkuFamilyId?.country || (Array.isArray(p.skuFamilyId?.country) ? p.skuFamilyId.country[0] : ""),
+      // Preserve subSkuFamilyId for cart operations
+      subSkuFamilyId: p.subSkuFamilyId || null,
     };
   };
 
@@ -96,6 +98,8 @@ const MainContent = () => {
       try {
         const baseUrl =
           import.meta.env.VITE_BASE_URL || "http://localhost:3200";
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        const custId = user?._id || null;
         const response = await axios.post(
           `${baseUrl}/api/customer/get-product-list`,
           {
@@ -103,6 +107,7 @@ const MainContent = () => {
             limit: itemsPerPage,
             search: searchQuery,
             sort: getSortObject(sortOption),
+            custId: custId,
             ...filters,
           },
           {

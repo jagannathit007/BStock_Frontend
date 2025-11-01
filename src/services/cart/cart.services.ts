@@ -26,9 +26,13 @@ export interface GenericResponse {
 }
 
 export class CartService {
-  static async add(productId: string, quantity: number): Promise<GenericResponse> {
+  static async add(productId: string, quantity: number, subSkuFamilyId?: string | null): Promise<GenericResponse> {
     try {
-      const res = await api.post('/api/customer/cart/add', { productId, quantity });
+      const requestBody: any = { productId, quantity };
+      if (subSkuFamilyId) {
+        requestBody.subSkuFamilyId = subSkuFamilyId;
+      }
+      const res = await api.post('/api/customer/cart/add', requestBody);
       const ok = res.data?.success === true || res.data?.status === 200;
       toastHelper.showTost(res.data?.message || (ok ? 'Added to cart' : 'Failed to add to cart'), ok ? 'success' : 'error');
       return res.data;

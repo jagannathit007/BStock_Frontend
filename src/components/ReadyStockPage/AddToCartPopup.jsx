@@ -75,7 +75,9 @@ const AddToCartPopup = ({ product, onClose }) => {
   const handleConfirm = async () => {
     try {
       setError(null);
-      const res = await CartService.add(id, quantity);
+      // Extract subSkuFamilyId from product (could be an object with _id or just the string ID)
+      const subSkuFamilyId = product?.subSkuFamilyId?._id || product?.subSkuFamilyId || null;
+      const res = await CartService.add(id, quantity, subSkuFamilyId);
       const ok = res?.success === true || res?.status === 200;
       if (ok) {
         onClose();
