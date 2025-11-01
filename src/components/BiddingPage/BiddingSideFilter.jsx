@@ -7,7 +7,7 @@ const BiddingSideFilter = ({ onFilterChange, onClose, appliedFilters }) => {
   const [loading, setLoading] = useState(true);
   const [facets, setFacets] = useState({ grades: [], models: [], capacities: [], carriers: [], priceRange: { min: 0, max: 0 } });
   const [selected, setSelected] = useState({ grades: [], models: [], capacities: [], carriers: [], minPrice: undefined, maxPrice: undefined });
-  const [collapsed, setCollapsed] = useState({ grades: false, models: false, capacities: false, carriers: false });
+  const [collapsed, setCollapsed] = useState({ priceRange: false, grades: false, models: false, capacities: false, carriers: false });
 
   useEffect(() => {
     let cancel;
@@ -57,7 +57,8 @@ const BiddingSideFilter = ({ onFilterChange, onClose, appliedFilters }) => {
       minPrice: appliedFilters.minPrice ?? prev.minPrice,
       maxPrice: appliedFilters.maxPrice ?? prev.maxPrice,
     }));
-  }, [appliedFilters]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appliedFilters?.grade, appliedFilters?.grades, appliedFilters?.models, appliedFilters?.capacities, appliedFilters?.carriers, appliedFilters?.minPrice, appliedFilters?.maxPrice]);
 
   const toggle = (key, value) => {
     setSelected((prev) => {
@@ -90,55 +91,57 @@ const BiddingSideFilter = ({ onFilterChange, onClose, appliedFilters }) => {
     });
   };
 
-  const onPriceChange = (key, value) => {
-    const num = value === "" ? undefined : Number(value);
-    setSelected((prev) => {
-      const next = { ...prev, [key]: num };
-      onFilterChange?.({
-        grade: next.grades,
-        models: next.models,
-        capacities: next.capacities,
-        carriers: next.carriers,
-        minPrice: next.minPrice,
-        maxPrice: next.maxPrice,
-      });
-      return next;
-    });
-  };
 
   const renderGroup = (title, key, items) => (
-    <div className="mb-6 border-b border-gray-100 pb-4">
-      <div className="flex items-center justify-between mb-3">
-        <h4 className="text-base font-medium text-gray-900 font-apple">{title}</h4>
-        <button
-          className="text-xs text-gray-500 hover:text-gray-700"
-          onClick={() => setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }))}
+    <div className="border-b border-gray-100 last:border-b-0">
+      <button
+        onClick={() => setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }))}
+        className="w-full flex items-center justify-between py-3 text-left hover:bg-gray-50/50 transition-colors rounded-lg px-1 -mx-1"
+      >
+        <h4 className="text-sm font-semibold text-gray-800 tracking-tight">
+          {title}
+        </h4>
+        <svg
+          className={`w-3 h-3 text-gray-400 transition-transform duration-200 ${collapsed[key] ? '' : 'transform rotate-180'}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
         >
-          {collapsed[key] ? 'Expand' : 'Collapse'}
-        </button>
-      </div>
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
       {!collapsed[key] && (
-        <>
-          <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-            {items.map((i) => (
-          <label
-            key={i.value}
-            className="flex items-center justify-between text-sm text-gray-700 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-all duration-200"
-          >
-            <span className="truncate mr-2">{i.value}</span>
-            <div className="flex items-center space-x-3">
-              <span className="text-gray-400 text-xs">{i.count}</span>
-              <input
-                type="checkbox"
-                checked={selected[key]?.includes(i.value)}
-                onChange={() => toggle(key, i.value)}
-              />
-            </div>
-          </label>
-        ))}
-            {items.length === 0 && <div className="text-xs text-gray-400">No options</div>}
+        <div className="pb-3 pt-1">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
+            {items.length > 0 ? (
+              items.map((i) => {
+                const isSelected = selected[key]?.includes(i.value);
+                return (
+                  <label
+                    key={i.value}
+                    className={`flex items-center cursor-pointer group px-2 py-1.5 rounded-md transition-colors ${
+                      isSelected ? "bg-blue-50" : "hover:bg-gray-50"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggle(key, i.value)}
+                      className="w-4 h-4 border-gray-300 rounded text-blue-600 focus:ring-blue-500 focus:ring-1 cursor-pointer"
+                    />
+                    <span className={`ml-2 text-xs text-gray-700 ${
+                      isSelected ? "font-medium text-gray-900" : ""
+                    }`}>
+                      {i.value}
+                    </span>
+                  </label>
+                );
+              })
+            ) : (
+              <div className="col-span-2 text-xs text-gray-400 py-2">No options available</div>
+            )}
           </div>
-        </>
+        </div>
       )}
     </div>
   );
@@ -160,7 +163,7 @@ const BiddingSideFilter = ({ onFilterChange, onClose, appliedFilters }) => {
   };
 
   return (
-    <aside className="w-full bg-white rounded-xl border border-gray-200">
+    <aside className="bg-white h-fit sticky top-24 w-full lg:w-72 border-r border-gray-100">
       <style>{`
         input[type="range"] {
           -webkit-appearance: none;
@@ -175,40 +178,41 @@ const BiddingSideFilter = ({ onFilterChange, onClose, appliedFilters }) => {
         input[type="range"]::-webkit-slider-thumb {
           -webkit-appearance: none;
           appearance: none;
-          width: 20px;
-          height: 20px;
+          width: 18px;
+          height: 18px;
           background: #0071e3;
           border-radius: 50%;
           cursor: pointer;
           pointer-events: auto;
-          box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
+          box-shadow: 0 2px 6px rgba(0, 113, 227, 0.3);
           border: 2px solid white;
           transition: all 0.2s ease;
         }
         input[type="range"]::-webkit-slider-thumb:hover {
           transform: scale(1.1);
-          box-shadow: 0 4px 12px rgba(0, 113, 227, 0.4);
+          box-shadow: 0 4px 10px rgba(0, 113, 227, 0.4);
         }
         input[type="range"]::-moz-range-thumb {
-          width: 20px;
-          height: 20px;
+          width: 18px;
+          height: 18px;
           background: #0071e3;
           border-radius: 50%;
           cursor: pointer;
           pointer-events: auto;
-          box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
+          box-shadow: 0 2px 6px rgba(0, 113, 227, 0.3);
           border: 2px solid white;
           transition: all 0.2s ease;
         }
         input[type="range"]::-moz-range-thumb:hover {
           transform: scale(1.1);
-          box-shadow: 0 4px 12px rgba(0, 113, 227, 0.4);
+          box-shadow: 0 4px 10px rgba(0, 113, 227, 0.4);
         }
         .range-container {
           position: relative;
           height: 4px;
-          background: #f5f5f7;
+          background: #e5e7eb;
           border-radius: 2px;
+          margin: 12px 0;
         }
         input[type="checkbox"] {
           -webkit-appearance: none;
@@ -221,6 +225,7 @@ const BiddingSideFilter = ({ onFilterChange, onClose, appliedFilters }) => {
           cursor: pointer;
           position: relative;
           transition: all 0.2s ease;
+          flex-shrink: 0;
         }
         input[type="checkbox"]:checked {
           background: #0071e3;
@@ -238,101 +243,135 @@ const BiddingSideFilter = ({ onFilterChange, onClose, appliedFilters }) => {
         }
         input[type="checkbox"]:hover {
           border-color: #0071e3;
-          transform: scale(1.05);
         }
       `}</style>
-      <div className="px-4 py-5 lg:px-6 lg:py-8 bg-[#FAFAFF] rounded-xl shadow-md">
-        <div className="flex justify-between items-center mb-8">
-          <h3 className="text-2xl font-semibold text-gray-900 font-apple">Filters</h3>
-          {onClose && (
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 lg:hidden transition-colors duration-200 p-2 relative z-[70]">
-              <FontAwesomeIcon icon={faTimes} className="text-xl" />
+      <div className="px-4 py-3 bg-white border-r border-gray-100">
+        <div className="flex justify-between items-center mb-3 pb-2.5 border-b border-gray-200">
+          <h3 className="text-sm font-semibold text-gray-900 tracking-tight uppercase">
+            Filters
+          </h3>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={clearAll}
+              className="text-xs text-gray-500 hover:text-gray-700 font-medium transition-colors hidden lg:block"
+            >
+              Clear All
             </button>
-          )}
+            {onClose && (
+              <button className="text-gray-400 hover:text-gray-600 lg:hidden transition-colors duration-200" onClick={onClose}>
+                <FontAwesomeIcon icon={faTimes} className="h-5 w-5" />
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Selected chips + Clear all */}
-        <div className="mb-6">
-          <div className="flex flex-wrap gap-2">
-            {selected.grades?.map((v) => (
-              <span key={`g-${v}`} className="inline-flex items-center bg-white border border-gray-200 text-xs text-gray-700 rounded-full px-2 py-1">
-                {v}
-                <button className="ml-2 text-gray-400 hover:text-gray-600" onClick={() => toggle('grades', v)}>×</button>
-              </span>
-            ))}
-            {selected.models?.map((v) => (
-              <span key={`m-${v}`} className="inline-flex items-center bg-white border border-gray-200 text-xs text-gray-700 rounded-full px-2 py-1">
-                {v}
-                <button className="ml-2 text-gray-400 hover:text-gray-600" onClick={() => toggle('models', v)}>×</button>
-              </span>
-            ))}
-            {selected.capacities?.map((v) => (
-              <span key={`c-${v}`} className="inline-flex items-center bg-white border border-gray-200 text-xs text-gray-700 rounded-full px-2 py-1">
-                {v}
-                <button className="ml-2 text-gray-400 hover:text-gray-600" onClick={() => toggle('capacities', v)}>×</button>
-              </span>
-            ))}
-            {selected.carriers?.map((v) => (
-              <span key={`cr-${v}`} className="inline-flex items-center bg-white border border-gray-200 text-xs text-gray-700 rounded-full px-2 py-1">
-                {v}
-                <button className="ml-2 text-gray-400 hover:text-gray-600" onClick={() => toggle('carriers', v)}>×</button>
-              </span>
-            ))}
-          </div>
-          <div className="mt-3 flex justify-between items-center">
-            <div className="text-xs text-gray-500">Use the controls below to refine results.</div>
-            <button onClick={clearAll} className="text-xs text-[#0071E0] hover:underline">Clear all</button>
-          </div>
-        </div>
 
         {loading ? (
-          <div className="text-sm text-gray-500">Loading filters...</div>
+          <>
+            {/* Loading Skeletons */}
+            <div className="border-b border-gray-100 last:border-b-0">
+              <div className="w-full flex items-center justify-between py-3 px-1">
+                <div className="h-4 bg-gray-200 rounded w-28 animate-pulse"></div>
+                <div className="h-3 w-3 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+              <div className="pb-3 pt-1">
+                <div className="h-1 bg-gray-200 rounded-full animate-pulse mb-4"></div>
+                <div className="flex justify-between items-center">
+                  <div className="h-3 bg-gray-200 rounded w-16 animate-pulse"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1 animate-pulse"></div>
+                  <div className="h-3 bg-gray-200 rounded w-16 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="border-b border-gray-100 last:border-b-0">
+                <div className="w-full flex items-center justify-between py-3 px-1">
+                  <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+                  <div className="h-3 w-3 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+                <div className="pb-3 pt-1">
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
+                    {Array.from({ length: 4 }).map((_, index) => (
+                      <div key={index} className="flex items-center px-2 py-1.5">
+                        <div className="h-4 w-4 bg-gray-200 rounded animate-pulse mr-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-20 animate-pulse"></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </>
         ) : (
           <>
-            {/* Price range */}
-            <div className="mb-8">
-              <h4 className="text-base font-medium text-gray-900 mb-4 font-apple">Price Range</h4>
-              <div className="range-container mb-3">
-                <input
-                  type="range"
-                  min={facets.priceRange?.min || 0}
-                  max={facets.priceRange?.max || 0}
-                  value={selected.minPrice ?? facets.priceRange?.min ?? 0}
-                  onChange={(e) => handlePriceSliderChange('minPrice', e.target.value)}
-                  className="min-range"
-                  style={{ zIndex: 2 }}
-                  aria-label="Minimum price"
-                />
-                <input
-                  type="range"
-                  min={facets.priceRange?.min || 0}
-                  max={facets.priceRange?.max || 0}
-                  value={selected.maxPrice ?? facets.priceRange?.max ?? 0}
-                  onChange={(e) => handlePriceSliderChange('maxPrice', e.target.value)}
-                  className="max-range"
-                  style={{ zIndex: 1 }}
-                  aria-label="Maximum price"
-                />
-                <div
-                  className="absolute h-1 bg-primary rounded-full"
-                  style={{
-                    left: `${
-                      ((selected.minPrice ?? facets.priceRange?.min ?? 0) / (facets.priceRange?.max || 1)) * 100
-                    }%`,
-                    width: `${
-                      (((selected.maxPrice ?? facets.priceRange?.max ?? 0) -
-                        (selected.minPrice ?? facets.priceRange?.min ?? 0)) /
-                        (facets.priceRange?.max || 1)) *
-                      100
-                    }%`,
-                    zIndex: 0,
-                  }}
-                ></div>
-              </div>
-              <div className="flex justify-between text-sm text-gray-500 font-apple">
-                <span>${selected.minPrice ?? facets.priceRange?.min ?? 0}</span>
-                <span>${selected.maxPrice ?? facets.priceRange?.max ?? 0}</span>
-              </div>
+            {/* Price Range */}
+            <div className="border-b border-gray-100 last:border-b-0">
+              <button
+                onClick={() => setCollapsed((prev) => ({ ...prev, priceRange: !prev.priceRange }))}
+                className="w-full flex items-center justify-between py-3 text-left hover:bg-gray-50/50 transition-colors rounded-lg px-1 -mx-1"
+              >
+                <h4 className="text-sm font-semibold text-gray-800 tracking-tight">
+                  Price Range
+                </h4>
+                <svg
+                  className={`w-3 h-3 text-gray-400 transition-transform duration-200 ${collapsed.priceRange ? '' : 'transform rotate-180'}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {!collapsed.priceRange && (
+                <div className="pb-3 pt-1">
+                  <div className="range-container">
+                    <input
+                      type="range"
+                      min={facets.priceRange?.min || 0}
+                      max={facets.priceRange?.max || 0}
+                      value={selected.minPrice ?? facets.priceRange?.min ?? 0}
+                      onChange={(e) => handlePriceSliderChange('minPrice', e.target.value)}
+                      className="min-range"
+                      style={{ zIndex: 2 }}
+                      aria-label="Minimum price"
+                    />
+                    <input
+                      type="range"
+                      min={facets.priceRange?.min || 0}
+                      max={facets.priceRange?.max || 0}
+                      value={selected.maxPrice ?? facets.priceRange?.max ?? 0}
+                      onChange={(e) => handlePriceSliderChange('maxPrice', e.target.value)}
+                      className="max-range"
+                      style={{ zIndex: 1 }}
+                      aria-label="Maximum price"
+                    />
+                    <div
+                      className="absolute h-1 bg-blue-600 rounded-full"
+                      style={{
+                        left: `${
+                          ((selected.minPrice ?? facets.priceRange?.min ?? 0) / (facets.priceRange?.max || 1)) * 100
+                        }%`,
+                        width: `${
+                          (((selected.maxPrice ?? facets.priceRange?.max ?? 0) -
+                            (selected.minPrice ?? facets.priceRange?.min ?? 0)) /
+                            (facets.priceRange?.max || 1)) *
+                          100
+                        }%`,
+                        zIndex: 0,
+                      }}
+                    ></div>
+                  </div>
+                  <div className="flex justify-between items-center mt-2">
+                    <div className="text-xs text-gray-600 font-medium">
+                      ${selected.minPrice ?? facets.priceRange?.min ?? 0}
+                    </div>
+                    <div className="text-xs text-gray-400">-</div>
+                    <div className="text-xs text-gray-600 font-medium">
+                      ${selected.maxPrice ?? facets.priceRange?.max ?? 0}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {renderGroup('Condition', 'grades', facets.grades)}

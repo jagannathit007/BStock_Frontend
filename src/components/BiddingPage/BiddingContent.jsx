@@ -24,8 +24,7 @@ const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
-  const [myMaxBidInput, setMyMaxBidInput] = useState("");
+  const [itemsPerPage] = useState(8); // Reduced to 8 items per page to prevent scrolling
   const [showBusinessPopup, setShowBusinessPopup] = useState(false);
 
   // Real product data state management
@@ -505,7 +504,7 @@ const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
                 {/* Grid View */}
                 {viewMode === "grid" ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 overflow-y-auto flex-1 pr-2">
-                    {dummyProducts.slice(0, 6).map((product, index) => (
+                    {dummyProducts.slice(0, 6).map((product) => (
                       <div key={product.id} className="bg-white rounded-lg shadow-md p-4">
                         <div className="h-32 bg-gray-200 rounded mb-4"></div>
                         <div className="space-y-2">
@@ -584,7 +583,7 @@ const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
 
   return (
     <>
-      <div className="flex flex-col lg:flex-row gap-6 min-h-screen">
+      <div className="flex flex-col lg:flex-row gap-6">
         {/* Mobile Filters Overlay */}
         {showMobileFilters && (
           <div className="fixed inset-0 z-40 lg:hidden">
@@ -614,7 +613,7 @@ const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 flex flex-col">
+        <main className="flex-1 flex flex-col min-h-0">
           {/* View Controls */}
           <ViewControls
             viewMode={viewMode}
@@ -632,19 +631,39 @@ const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
           {viewMode === "grid" ? (
             <>
               {errorMessage && (
-                <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
-                  {errorMessage}
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl">
+                  <div className="flex items-center">
+                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                    <span className="font-medium">{errorMessage}</span>
+                  </div>
                 </div>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
                 {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
-                  <div className="col-span-3 flex justify-center py-12">
-                    <Loader size="lg" />
+                  <div className="col-span-full">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                      {Array.from({ length: 6 }).map((_, index) => (
+                        <div key={index} className="bg-white rounded-xl border border-gray-200 p-4 animate-pulse">
+                          <div className="h-48 bg-gray-200 rounded-lg mb-4"></div>
+                          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                          <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+                          <div className="h-8 bg-gray-200 rounded w-full"></div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
                 {!isLoading && hasInitiallyLoaded && currentProducts.length === 0 && (
-                  <div className="col-span-3 text-center text-2xl text-gray-500 font-bold">
-                    No products found.
+                  <div className="col-span-full text-center py-16">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2 font-apple">No products found</h3>
+                    <p className="text-sm text-gray-500 font-apple">Try adjusting your filters or search query</p>
                   </div>
                 )}
                 {currentProducts.map((product, index) => (
@@ -661,71 +680,91 @@ const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
               </div>
 
               {/* Pagination */}
-              <div className="flex items-center justify-between border-t border-gray-200 pt-6">
-                <button
-                  onClick={() => paginate(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${currentPage === 1
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                >
-                  <FontAwesomeIcon icon={faChevronLeft} className="mr-2" />
-                  Previous
-                </button>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between border-t border-gray-200 pt-6 mt-6">
+                  <button
+                    onClick={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors font-apple ${currentPage === 1
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-gray-700 hover:bg-gray-100"
+                      }`}
+                  >
+                    <FontAwesomeIcon icon={faChevronLeft} className="mr-2" />
+                    Previous
+                  </button>
 
-                <div className="hidden md:flex space-x-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                    (number) => (
-                      <button
-                        key={number}
-                        onClick={() => paginate(number)}
-                        className={`px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${currentPage === number
-                            ? "bg-[#0071E0] text-white"
-                            : "text-gray-700 hover:bg-gray-100"
-                          }`}
-                      >
-                        {number}
-                      </button>
-                    )
-                  )}
+                  <div className="hidden md:flex space-x-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (number) => (
+                        <button
+                          key={number}
+                          onClick={() => paginate(number)}
+                          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors font-apple ${currentPage === number
+                              ? "bg-[#0071E0] text-white"
+                              : "text-gray-700 hover:bg-gray-100"
+                            }`}
+                        >
+                          {number}
+                        </button>
+                      )
+                    )}
+                  </div>
+
+                  <div className="md:hidden text-sm text-gray-700 font-apple">
+                    Page {currentPage} of {totalPages}
+                  </div>
+
+                  <button
+                    onClick={() => paginate(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors font-apple ${currentPage === totalPages
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-gray-700 hover:bg-gray-100"
+                      }`}
+                  >
+                    Next
+                    <FontAwesomeIcon icon={faChevronRight} className="ml-2" />
+                  </button>
                 </div>
-
-                <div className="md:hidden text-sm text-gray-700">
-                  Page {currentPage} of {totalPages}
-                </div>
-
-                <button
-                  onClick={() => paginate(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${currentPage === totalPages
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                >
-                  Next
-                  <FontAwesomeIcon icon={faChevronRight} className="ml-2" />
-                </button>
-              </div>
+              )}
             </>
           ) : (
             <>
               {errorMessage && (
-                <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
-                  {errorMessage}
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl">
+                  <div className="flex items-center">
+                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                    <span className="font-medium">{errorMessage}</span>
+                  </div>
                 </div>
               )}
               
               {/* Mobile Card View - Shown on mobile devices when in list mode */}
               <div className="md:hidden mb-6">
                 {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
-                  <div className="flex justify-center py-12">
-                    <Loader size="lg" />
+                  <div className="space-y-4">
+                    {Array.from({ length: 3 }).map((_, index) => (
+                      <div key={index} className="bg-white rounded-xl border border-gray-200 p-4 animate-pulse">
+                        <div className="h-32 bg-gray-200 rounded-lg mb-3"></div>
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
+                        <div className="h-8 bg-gray-200 rounded w-full"></div>
+                      </div>
+                    ))}
                   </div>
                 )}
                 {!isLoading && hasInitiallyLoaded && currentProducts.length === 0 && (
-                  <div className="text-center text-2xl text-gray-500 font-bold">
-                    No products found.
+                  <div className="text-center py-16">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2 font-apple">No products found</h3>
+                    <p className="text-sm text-gray-500 font-apple">Try adjusting your filters or search query</p>
                   </div>
                 )}
                 {currentProducts.map((product, index) => (
@@ -742,40 +781,49 @@ const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
               </div>
 
               {/* Desktop Table View - Shown on medium and larger screens */}
-              <div className="hidden md:block bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden">
-                <div className="w-full overflow-x-auto relative">
-                  <table className="w-full border border-gray-200" style={{ minWidth: 'max-content' }}>
-                    <thead className="bg-gray-50/90 backdrop-blur sticky top-0 z-10 border-b border-gray-200 shadow-sm">
+              <div className="hidden md:block bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div className="w-full overflow-x-auto relative" style={{ overflowY: 'visible', maxHeight: 'none' }}>
+                  <table className="w-full" style={{ minWidth: 'max-content' }}>
+                    <thead className="bg-gradient-to-r from-gray-50 to-gray-100/50 sticky top-0 z-10 border-b-2 border-gray-200">
                       <tr>
-                        <th className="px-4 py-4 text-left text-[11px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-200 whitespace-nowrap w-24">
-                          BRAND
+                        <th className="px-3 py-2.5 text-left text-[10px] font-bold text-gray-600 uppercase tracking-widest whitespace-nowrap border-r border-gray-200/60">
+                          Brand
                         </th>
-                        <th className="px-5 py-4 text-left text-[11px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-200">
-                          MODEL
+                        <th className="px-4 py-2.5 text-left text-[10px] font-bold text-gray-600 uppercase tracking-widest border-r border-gray-200/60">
+                          Product Details
                         </th>
-                        <th className="hidden md:table-cell px-4 py-4 text-right text-[11px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap w-24">
-                          PRICE
+                        <th className="hidden md:table-cell px-3 py-2.5 text-right text-[10px] font-bold text-gray-600 uppercase tracking-widest whitespace-nowrap border-r border-gray-200/60">
+                          Unit Price
                         </th>
-                        <th className="px-4 py-4 text-right text-[11px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap w-24">
-                          CUR. BID
+                        <th className="px-3 py-2.5 text-right text-[10px] font-bold text-gray-600 uppercase tracking-widest whitespace-nowrap border-r border-gray-200/60">
+                          Current Bid
                         </th>
-                        <th className="hidden lg:table-cell px-5 py-4 text-left text-[11px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap w-28">
-                          NEXT MIN BID
+                        <th className="hidden lg:table-cell px-4 py-2.5 text-left text-[10px] font-bold text-gray-600 uppercase tracking-widest whitespace-nowrap border-r border-gray-200/60">
+                          Your Bid
                         </th>
-                        <th className="px-5 py-4 text-center text-[11px] sm:text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
-                          BID NOW
+                        <th className="px-3 py-2.5 text-center text-[10px] font-bold text-gray-600 uppercase tracking-widest whitespace-nowrap">
+                          Action
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-100">
+                    <tbody className="bg-white">
                       {(isLoading || !hasInitiallyLoaded) && currentProducts.length === 0 && (
                         <tr>
                           <td
                             colSpan={6}
-                            className="px-4 py-12 text-center"
+                            className="px-4 py-12"
                           >
-                            <div className="flex justify-center">
-                              <Loader size="lg" />
+                            <div className="space-y-3">
+                              {Array.from({ length: 5 }).map((_, index) => (
+                                <div key={index} className="flex items-center space-x-4 animate-pulse">
+                                  <div className="h-4 bg-gray-200 rounded w-20"></div>
+                                  <div className="h-4 bg-gray-200 rounded w-32"></div>
+                                  <div className="h-4 bg-gray-200 rounded w-16"></div>
+                                  <div className="h-4 bg-gray-200 rounded w-16"></div>
+                                  <div className="h-4 bg-gray-200 rounded w-20"></div>
+                                  <div className="h-8 bg-gray-200 rounded w-24"></div>
+                                </div>
+                              ))}
                             </div>
                           </td>
                         </tr>
@@ -784,9 +832,15 @@ const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
                         <tr>
                           <td
                             colSpan={6}
-                            className="px-4 py-6 text-center text-2xl text-gray-500 font-bold"
+                            className="px-4 py-16 text-center"
                           >
-                            No products found.
+                            <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                              </svg>
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2 font-apple">No products found</h3>
+                            <p className="text-sm text-gray-500 font-apple">Try adjusting your filters or search query</p>
                           </td>
                         </tr>
                       )}
@@ -807,52 +861,54 @@ const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
               </div>
 
               {/* Pagination */}
-              <div className="flex items-center justify-between border-t border-gray-200 pt-6">
-                <button
-                  onClick={() => paginate(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${currentPage === 1
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                >
-                  <FontAwesomeIcon icon={faChevronLeft} className="mr-2" />
-                  Previous
-                </button>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between border-t border-gray-200 pt-6 mt-6">
+                  <button
+                    onClick={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors font-apple ${currentPage === 1
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-gray-700 hover:bg-gray-100"
+                      }`}
+                  >
+                    <FontAwesomeIcon icon={faChevronLeft} className="mr-2" />
+                    Previous
+                  </button>
 
-                <div className="hidden md:flex space-x-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                    (number) => (
-                      <button
-                        key={number}
-                        onClick={() => paginate(number)}
-                        className={`px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${currentPage === number
-                            ? "bg-[#0071E0] text-white"
-                            : "text-gray-700 hover:bg-gray-100"
-                          }`}
-                      >
-                        {number}
-                      </button>
-                    )
-                  )}
+                  <div className="hidden md:flex space-x-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (number) => (
+                        <button
+                          key={number}
+                          onClick={() => paginate(number)}
+                          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors font-apple ${currentPage === number
+                              ? "bg-[#0071E0] text-white"
+                              : "text-gray-700 hover:bg-gray-100"
+                            }`}
+                        >
+                          {number}
+                        </button>
+                      )
+                    )}
+                  </div>
+
+                  <div className="md:hidden text-sm text-gray-700 font-apple">
+                    Page {currentPage} of {totalPages}
+                  </div>
+
+                  <button
+                    onClick={() => paginate(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors font-apple ${currentPage === totalPages
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-gray-700 hover:bg-gray-100"
+                      }`}
+                  >
+                    Next
+                    <FontAwesomeIcon icon={faChevronRight} className="ml-2" />
+                  </button>
                 </div>
-
-                <div className="md:hidden text-sm text-gray-700">
-                  Page {currentPage} of {totalPages}
-                </div>
-
-                <button
-                  onClick={() => paginate(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg cursor-pointer ${currentPage === totalPages
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                >
-                  Next
-                  <FontAwesomeIcon icon={faChevronRight} className="ml-2" />
-                </button>
-              </div>
+              )}
             </>
           )}
         </main>
