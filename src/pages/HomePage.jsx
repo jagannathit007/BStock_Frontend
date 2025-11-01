@@ -1,12 +1,48 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronDown, faChevronUp, faCheckCircle, faUsers, faGlobe, faNewspaper, faHandshake } from "@fortawesome/free-solid-svg-icons";
+import { faChevronDown, faChevronUp, faTruck, faRecycle } from "@fortawesome/free-solid-svg-icons";
 
 const HomePage = () => {
   const navigate = useNavigate();
   const [openFaq, setOpenFaq] = useState(null);
   const [email, setEmail] = useState("");
+  const [visibleSections, setVisibleSections] = useState(new Set());
+  const sectionRefs = useRef({});
+
+  // Intersection Observer for scroll animations
+  useEffect(() => {
+    const observers = [];
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.1
+    };
+
+    const observerCallback = (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setVisibleSections((prev) => new Set([...prev, entry.target.id]));
+        }
+      });
+    };
+
+    Object.values(sectionRefs.current).forEach((ref) => {
+      if (ref) {
+        const observer = new IntersectionObserver(observerCallback, observerOptions);
+        observer.observe(ref);
+        observers.push(observer);
+      }
+    });
+
+    return () => {
+      observers.forEach((observer) => observer.disconnect());
+    };
+  }, []);
+
+  const setSectionRef = (id) => (el) => {
+    if (el) sectionRefs.current[id] = el;
+  };
 
   const handleNavigateToReadyStock = () => {
     navigate("/ready-stock");
@@ -29,7 +65,6 @@ const HomePage = () => {
 
   const handleNewsletterSubmit = (e) => {
     e.preventDefault();
-    // Handle newsletter subscription
     console.log("Newsletter subscription:", email);
     setEmail("");
   };
@@ -57,230 +92,456 @@ const HomePage = () => {
     }
   ];
 
-  const testimonials = [
+  const ceos = [
     {
-      name: "Parm Dhillon",
-      position: "Managing Director",
-      company: "Sunstrike International",
-      text: "XGSM is unique in what they do. They have provided us with premium and valuable market insights through their advanced search technology. It's amazing how they've accomplished this in such a short time! Attending their Dubai event was a game-changer for us, strengthening our position in the mobile trading industry. Highly recommended for anyone serious about mobile trading!",
-      rating: 5
+      name: "Sufiyan",
+      position: "Co-Founder & CEO",
+      description: "Visionary leader with extensive experience in the wholesale electronics industry. Sufiyan brings innovative strategies and deep market insights to XGSM, driving the company's mission to connect trusted traders worldwide.",
+      expertise: "Strategic Planning, Business Development, Market Analysis"
     },
     {
-      name: "Hozan Ali",
-      position: "Sales Manager",
-      company: "GLP Wireless",
-      text: "XGSM has made collaboration really easy. The platform is intuitive and connects us with verified traders worldwide.",
-      rating: 5
-    },
-    {
-      name: "Imran Haidar",
-      position: "CEO",
-      company: "Universal Telecom",
-      text: "Mobile-friendly platform the industry needed. XGSM has transformed how we do business.",
-      rating: 5
+      name: "Mustakim",
+      position: "Co-Founder & CEO",
+      description: "Passionate entrepreneur dedicated to transforming the wholesale trading landscape. Mustakim's expertise in technology and business operations ensures XGSM delivers exceptional value to distributors and retailers globally.",
+      expertise: "Operations Management, Technology Innovation, Customer Relations"
     }
   ];
 
-  const trustedCompanies = [
-    { name: "Sunstrike International", logo: "SS" },
-    { name: "PCS Wireless", logo: "PC" },
-    { name: "GLP Wireless", logo: "GL" },
-    { name: "Universal Telecom", logo: "UT" },
+  const stats = [
+    { value: "11+", label: "Years of experience", suffix: "since 2014" },
+    { value: "100%", label: "Customer satisfaction", suffix: "guaranteed" },
+    { value: "1.3M+", label: "iPhones successfully sold", suffix: "" },
+    { value: "700+", label: "Active wholesale clients", suffix: "globally" },
+    { value: "<1.5%", label: "Average RMA rate", suffix: "maintained" }
   ];
 
+  // Custom SVG Icons for Product Categories
+  const IPhoneIcon = () => (
+    <svg className="w-full h-full" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="7" y="2" width="10" height="20" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
+      <path d="M10 18h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      <circle cx="12" cy="6" r="1" fill="currentColor"/>
+    </svg>
+  );
+
+  const PartsIcon = () => (
+    <svg className="w-full h-full" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
+      <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      <circle cx="16" cy="16" r="1.5" fill="currentColor"/>
+    </svg>
+  );
+
+  const AccessoriesIcon = () => (
+    <svg className="w-full h-full" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2L15 8L22 9L17 13L18 20L12 17L6 20L7 13L2 9L9 8L12 2Z" stroke="currentColor" strokeWidth="2" fill="none"/>
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" fill="none"/>
+    </svg>
+  );
+
+  const AuctionIcon = () => (
+    <svg className="w-full h-full" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2L15 8L22 9L17 13L18 20L12 17L6 20L7 13L2 9L9 8L12 2Z" stroke="currentColor" strokeWidth="2" fill="none"/>
+      <path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/>
+    </svg>
+  );
+
+  const productCategories = [
+    {
+      icon: IPhoneIcon,
+      title: "iPhones",
+      description: "Shop premium pre-owned iPhones at wholesale prices",
+      color: "from-blue-500 to-blue-600",
+      bgGradient: "from-blue-50 to-blue-100",
+      href: "/ready-stock"
+    },
+    {
+      icon: PartsIcon,
+      title: "Parts",
+      description: "High-quality iPhone replacement parts",
+      color: "from-purple-500 to-purple-600",
+      bgGradient: "from-purple-50 to-purple-100",
+      href: "/ready-stock"
+    },
+    {
+      icon: AccessoriesIcon,
+      title: "Accessories",
+      description: "Genuine Apple accessories at wholesale prices",
+      color: "from-green-500 to-green-600",
+      bgGradient: "from-green-50 to-green-100",
+      href: "/ready-stock"
+    },
+    {
+      icon: AuctionIcon,
+      title: "Auctions",
+      description: "Place your bid now and secure your batch",
+      color: "from-orange-500 to-orange-600",
+      bgGradient: "from-orange-50 to-orange-100",
+      href: "/bidding"
+    }
+  ];
+
+  const isVisible = (id) => visibleSections.has(id);
+
   return (
-    <div className="bg-gray-900">
-      {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black overflow-hidden">
-        {/* Background decoration */}
+    <div className="bg-white">
+      {/* Hero Section - Apple Style */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-white">
+        <div className="absolute inset-0 bg-gradient-to-b from-gray-50 to-white"></div>
+        
+        {/* Subtle background elements */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-4000"></div>
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
-          <div className="text-center">
-            <div className="inline-flex items-center px-4 py-2 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-full text-xs md:text-sm font-semibold mb-8 animate-slideUp shadow-lg backdrop-blur-sm">
-              <span className="w-2 h-2 bg-blue-400 rounded-full mr-2 animate-pulse"></span>
-              AI-Powered Platform with Verified Traders
-            </div>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold mb-6 md:mb-8 text-white leading-tight">
-              <span className="block mb-2">AI-Powered</span>
-              <span className="block text-blue-400 mb-2">Platform</span>
-              <span className="block">with Verified</span>
-              <span className="block text-blue-400">Traders</span>
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-32 text-center">
+          <div 
+            className={`transition-all duration-1000 ${isVisible('hero') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+            ref={setSectionRef('hero')}
+            id="hero"
+          >
+            <p className="text-lg md:text-xl text-gray-600 mb-6 font-medium tracking-wide">
+              Europe's trusted Distributor since 2014
+            </p>
+            <h1 className="text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold text-gray-900 mb-8 leading-none tracking-tight">
+              <span className="block lg:inline">Premium <span className="text-blue-600">Wholesale</span></span>
+              <span className="hidden lg:inline"> </span>
+              <br className="block lg:hidden" />
+              <span className="block lg:inline">iPhones</span>
             </h1>
-            <p className="text-lg md:text-xl text-gray-300 mb-10 md:mb-12 max-w-4xl mx-auto leading-relaxed">
-              At XGSM, we simplify global trading with fast, efficient, and user-friendly solutions designed specifically for traders, distributors, and retailers in the consumer electronics industry.
+            <p className="text-xl md:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed font-light">
+              Connecting distributors and retailers with the largest inventory of premium pre-owned iPhones. 
+              Trusted by 700+ wholesalers across 60+ countries.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={handleNavigateToReadyStock}
-                className="bg-blue-500 text-white px-8 py-4 rounded-xl font-semibold hover:bg-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-base md:text-lg"
+                className="bg-blue-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
               >
-                Join now with free membership
+                Shop Ready Stock
               </button>
               <button
                 onClick={handleNavigateToBidding}
-                className="border-2 border-gray-600 text-white px-8 py-4 rounded-xl font-semibold hover:bg-gray-800 hover:border-gray-500 transition-all duration-300 text-base md:text-lg"
+                className="border-2 border-gray-900 text-gray-900 px-8 py-4 rounded-full font-semibold text-lg hover:bg-gray-900 hover:text-white transition-all duration-300"
               >
-                Start free
+                View Auctions
               </button>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Features Section */}
-      <div className="bg-gray-800 py-16 md:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-            <div className="group text-center p-6 rounded-2xl bg-gray-700/50 hover:bg-gray-700 border border-gray-600/50 hover:border-blue-500/50 transition-all duration-300">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                <FontAwesomeIcon icon={faCheckCircle} className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-3">No. 1 Platform for verified traders</h3>
-            </div>
-
-            <div className="group text-center p-6 rounded-2xl bg-gray-700/50 hover:bg-gray-700 border border-gray-600/50 hover:border-green-500/50 transition-all duration-300">
-              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                <FontAwesomeIcon icon={faUsers} className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-3">Connect with Genuine Leads</h3>
-            </div>
-
-            <div className="group text-center p-6 rounded-2xl bg-gray-700/50 hover:bg-gray-700 border border-gray-600/50 hover:border-purple-500/50 transition-all duration-300">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                <FontAwesomeIcon icon={faGlobe} className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-3">Advanced Search Powered by OpenAI</h3>
-            </div>
-
-            <div className="group text-center p-6 rounded-2xl bg-gray-700/50 hover:bg-gray-700 border border-gray-600/50 hover:border-orange-500/50 transition-all duration-300">
-              <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                <FontAwesomeIcon icon={faNewspaper} className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-3">TradingFeed All in One Space</h3>
-            </div>
-          </div>
+        {/* Scroll indicator */}
+        <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce">
+          <FontAwesomeIcon icon={faChevronDown} className="text-gray-400 text-2xl" />
         </div>
-      </div>
+      </section>
 
-      {/* Main Content Section */}
-      <div className="bg-gradient-to-br from-gray-900 to-gray-800 py-16 md:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* About Section - Apple Style */}
+      <section 
+        id="about"
+        ref={setSectionRef('about')}
+        className={`py-24 md:py-32 bg-white transition-all duration-1000 ${isVisible('about') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+      >
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
-              The world's markets<br />
-              <span className="text-blue-400">at your fingertips</span>
+            <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight">
+              About XGSM
             </h2>
-            <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-              At XGSM, we simplify global trading with fast, efficient, and user-friendly solutions designed specifically for traders, distributors, and retailers in the consumer electronics industry. Our platform helps you connect, share offers, and build genuine relationships with industry leaders.
+            <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-light">
+              Looking for a trusted and reliable supplier? XGSM is the premier platform for distributors and consumer electronic retailers. 
+              We offer access to a massive inventory, ensuring that you'll never run out of the latest phones.
+            </p>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto mt-6 leading-relaxed">
+              <span className="font-semibold text-gray-900">"We have 100% customer satisfaction"</span>
             </p>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Trusted Companies Section */}
-      <div className="bg-gray-800 py-12 md:py-16">
+      {/* Stats Section - Coolmix Style */}
+      <section 
+        id="stats"
+        ref={setSectionRef('stats')}
+        className={`py-24 md:py-32 bg-gray-50 transition-all duration-1000 ${isVisible('stats') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-sm md:text-base text-gray-400 mb-8 font-semibold">Trusted by industry leading-Companies</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 items-center opacity-70">
-            {trustedCompanies.map((company, index) => (
-              <div key={index} className="flex items-center justify-center">
-                <div className="w-32 h-16 md:w-40 md:h-20 bg-gray-700 border border-gray-600 rounded-lg flex items-center justify-center text-gray-300 font-semibold text-lg md:text-xl hover:border-gray-500 transition-colors">
-                  {company.logo}
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8 md:gap-12">
+            {stats.map((stat, index) => (
+              <div 
+                key={index}
+                className="text-center group"
+                style={{
+                  animationDelay: `${index * 100}ms`,
+                  animation: isVisible('stats') ? "fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
+                  opacity: isVisible('stats') ? 1 : 0
+                }}
+              >
+                <div className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-3 group-hover:scale-105 transition-transform duration-300">
+                  {stat.value}
                 </div>
+                <div className="text-base md:text-lg text-gray-600 font-medium mb-1">{stat.label}</div>
+                {stat.suffix && (
+                  <div className="text-sm text-gray-500">{stat.suffix}</div>
+                )}
               </div>
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Stats Section */}
-      <div className="bg-gradient-to-br from-gray-900 to-black text-white py-16 md:py-20 border-t border-gray-800">
+      {/* Product Categories - Apple Style */}
+      <section 
+        id="categories"
+        ref={setSectionRef('categories')}
+        className={`py-24 md:py-32 bg-white transition-all duration-1000 ${isVisible('categories') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">One Platform. Endless Deals.</h2>
-            <p className="text-lg md:text-xl text-gray-400 max-w-3xl mx-auto">
-              Access thousands of trusted buyers and sellers all around the world - all in one network. Every trader is verified. Say goodbye to scams and say hello to secure, serious trading.
+          <div className="text-center mb-16">
+            <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+              What We Offer
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Explore our comprehensive range of products and services designed for wholesale traders
             </p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div className="group">
-              <div className="text-4xl md:text-5xl lg:text-6xl font-bold mb-2 text-blue-400 group-hover:scale-110 transition-transform">0k+</div>
-              <div className="text-gray-400 text-sm md:text-base">Companies</div>
-            </div>
-            <div className="group">
-              <div className="text-4xl md:text-5xl lg:text-6xl font-bold mb-2 text-blue-400 group-hover:scale-110 transition-transform">0+</div>
-              <div className="text-gray-400 text-sm md:text-base">Countries</div>
-            </div>
-            <div className="group">
-              <div className="text-4xl md:text-5xl lg:text-6xl font-bold mb-2 text-blue-400 group-hover:scale-110 transition-transform">0k+</div>
-              <div className="text-gray-400 text-sm md:text-base">Posts</div>
-            </div>
-            <div className="group">
-              <div className="text-4xl md:text-5xl lg:text-6xl font-bold mb-2 text-blue-400 group-hover:scale-110 transition-transform">0k+</div>
-              <div className="text-gray-400 text-sm md:text-base">Deals</div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+            {productCategories.map((category, index) => {
+              const IconComponent = category.icon;
+              return (
+                <div
+                  key={index}
+                  onClick={() => navigate(category.href)}
+                  className="group cursor-pointer relative overflow-hidden bg-white border border-gray-200 rounded-3xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
+                  style={{
+                    animationDelay: `${index * 100}ms`,
+                    animation: isVisible('categories') ? "fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
+                    opacity: isVisible('categories') ? 1 : 0
+                  }}
+                >
+                  {/* Background Gradient */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${category.bgGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
+                  
+                  <div className="relative p-8">
+                    {/* Icon Container with Enhanced Design */}
+                    <div className="relative mb-6">
+                      <div className={`absolute inset-0 bg-gradient-to-br ${category.color} rounded-3xl blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500`}></div>
+                      <div className={`relative w-20 h-20 bg-gradient-to-br ${category.color} rounded-3xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-xl`}>
+                        <div className="w-12 h-12 text-white">
+                          <IconComponent />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Content */}
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-gray-900 transition-colors">
+                      {category.title}
+                    </h3>
+                    <p className="text-gray-600 leading-relaxed text-base group-hover:text-gray-700 transition-colors">
+                      {category.description}
+                    </p>
+                    
+                    {/* Arrow Indicator */}
+                    <div className="mt-6 flex items-center text-gray-400 group-hover:text-gray-600 transition-colors">
+                      <span className="text-sm font-medium mr-2">Explore</span>
+                      <svg className="w-5 h-5 transform group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Testimonials Section */}
-      <div className="bg-gray-800 py-16 md:py-24">
+      {/* CEOs Section */}
+      <section 
+        id="ceos"
+        ref={setSectionRef('ceos')}
+        className={`py-24 md:py-32 bg-gray-50 transition-all duration-1000 ${isVisible('ceos') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Trusted from over +3K happy client around the world
+          <div className="text-center mb-16">
+            <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+              Meet Our Leadership
             </h2>
+            <p className="text-xl text-gray-600">
+              Visionary founders driving innovation in wholesale trading
+            </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <div key={index} className="bg-gray-700/50 border border-gray-600/50 rounded-2xl p-6 md:p-8 hover:bg-gray-700 hover:border-gray-600 transition-all duration-300">
-                <div className="flex mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <svg key={i} className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
+          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {ceos.map((ceo, index) => (
+              <div
+                key={index}
+                className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-1"
+                style={{
+                  animationDelay: `${index * 150}ms`,
+                  animation: isVisible('ceos') ? "fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
+                  opacity: isVisible('ceos') ? 1 : 0
+                }}
+              >
+                <div className="flex items-center mb-6">
+                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mr-4">
+                    <span className="text-white text-2xl font-bold">
+                      {ceo.name.charAt(0)}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900">{ceo.name}</h3>
+                    <p className="text-gray-600 text-lg">{ceo.position}</p>
+                  </div>
                 </div>
-                <p className="text-gray-300 mb-6 leading-relaxed text-sm md:text-base">{testimonial.text}</p>
-                <div>
-                  <p className="font-semibold text-white">{testimonial.name}</p>
-                  <p className="text-sm text-gray-400">{testimonial.position} - {testimonial.company}</p>
+                <p className="text-gray-700 mb-6 leading-relaxed text-base">
+                  {ceo.description}
+                </p>
+                <div className="pt-6 border-t border-gray-100">
+                  <p className="text-sm font-semibold text-gray-500 mb-2">Expertise</p>
+                  <p className="text-gray-700 text-sm leading-relaxed">{ceo.expertise}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Global Delivery Section */}
+      <section 
+        id="delivery"
+        ref={setSectionRef('delivery')}
+        className={`py-24 md:py-32 bg-gradient-to-b from-gray-50 to-white transition-all duration-1000 ${isVisible('delivery') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full mb-6 shadow-xl">
+              <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+              Delivering Worldwide!
+            </h2>
+            <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed font-light">
+              Express worldwide shipping to distributors and retailers across the globe
+            </p>
+          </div>
+          
+          {/* Delivery Features Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+            <div 
+              className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+              style={{
+                animationDelay: '0ms',
+                animation: isVisible('delivery') ? "fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
+                opacity: isVisible('delivery') ? 1 : 0
+              }}
+            >
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4">
+                <FontAwesomeIcon icon={faTruck} className="w-7 h-7 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Express Shipping</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Fast and reliable delivery to all major destinations worldwide
+              </p>
+            </div>
+
+            <div 
+              className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+              style={{
+                animationDelay: '100ms',
+                animation: isVisible('delivery') ? "fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
+                opacity: isVisible('delivery') ? 1 : 0
+              }}
+            >
+              <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-4">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Secure Packaging</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Products carefully packaged to ensure safe delivery anywhere in the world
+              </p>
+            </div>
+
+            <div 
+              className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+              style={{
+                animationDelay: '200ms',
+                animation: isVisible('delivery') ? "fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards" : "none",
+                opacity: isVisible('delivery') ? 1 : 0
+              }}
+            >
+              <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mb-4">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Tracking Support</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Real-time tracking for all shipments with 24/7 customer support
+              </p>
+            </div>
+          </div>
+
+          {/* Statistics */}
+          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            <div className="group">
+              <div className="text-4xl md:text-5xl font-bold text-blue-600 mb-2 group-hover:scale-110 transition-transform duration-300">60+</div>
+              <div className="text-gray-600 font-medium">Countries Served</div>
+            </div>
+            <div className="group">
+              <div className="text-4xl md:text-5xl font-bold text-blue-600 mb-2 group-hover:scale-110 transition-transform duration-300">24/7</div>
+              <div className="text-gray-600 font-medium">Shipping Support</div>
+            </div>
+            <div className="group">
+              <div className="text-4xl md:text-5xl font-bold text-blue-600 mb-2 group-hover:scale-110 transition-transform duration-300">5-7</div>
+              <div className="text-gray-600 font-medium">Days Average Delivery</div>
+            </div>
+            <div className="group">
+              <div className="text-4xl md:text-5xl font-bold text-blue-600 mb-2 group-hover:scale-110 transition-transform duration-300">100%</div>
+              <div className="text-gray-600 font-medium">Safe Delivery Rate</div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* FAQ Section */}
-      <div className="bg-gradient-to-br from-gray-900 to-gray-800 py-16 md:py-24">
+      <section 
+        id="faq"
+        ref={setSectionRef('faq')}
+        className={`py-24 md:py-32 bg-gray-50 transition-all duration-1000 ${isVisible('faq') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+      >
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Frequently Asked Questions</h2>
+          <div className="text-center mb-16">
+            <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+              Frequently Asked Questions
+            </h2>
           </div>
 
           <div className="space-y-4">
             {faqs.map((faq, index) => (
-              <div key={index} className="bg-gray-700/50 border border-gray-600/50 rounded-xl overflow-hidden hover:border-gray-600 transition-colors">
+              <div
+                key={index}
+                className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-gray-300 transition-colors"
+              >
                 <button
                   onClick={() => toggleFaq(index)}
-                  className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-700/50 transition-colors duration-200"
+                  className="w-full px-8 py-6 text-left flex items-center justify-between hover:bg-gray-50 transition-colors duration-200"
                 >
-                  <span className="font-semibold text-white text-sm md:text-base">{faq.question}</span>
+                  <span className="font-semibold text-gray-900 text-lg">{faq.question}</span>
                   <FontAwesomeIcon 
                     icon={openFaq === index ? faChevronUp : faChevronDown} 
-                    className="w-5 h-5 text-gray-400 flex-shrink-0 ml-4"
+                    className="w-5 h-5 text-gray-400 flex-shrink-0 ml-4 transition-transform"
                   />
                 </button>
                 {openFaq === index && (
-                  <div className="px-6 py-4 bg-gray-800/50 text-gray-300 leading-relaxed text-sm md:text-base border-t border-gray-600/50">
+                  <div className="px-8 py-6 bg-gray-50 text-gray-700 leading-relaxed text-base border-t border-gray-200">
                     {faq.answer}
                   </div>
                 )}
@@ -288,14 +549,20 @@ const HomePage = () => {
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Newsletter Section */}
-      <div className="bg-gradient-to-br from-gray-900 to-black text-white py-16 md:py-20 border-t border-gray-800">
+      <section 
+        id="newsletter"
+        ref={setSectionRef('newsletter')}
+        className={`py-24 md:py-32 bg-white transition-all duration-1000 ${isVisible('newsletter') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+      >
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Unlock the magic!</h2>
-          <p className="text-lg md:text-xl text-gray-400 mb-8">
-            Join XGSM today and let's start your trading journey from scratch.
+          <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+            Get in touch
+          </h2>
+          <p className="text-xl text-gray-600 mb-10">
+            Join our newsletter and stay updated with the latest wholesale deals
           </p>
           <form onSubmit={handleNewsletterSubmit} className="max-w-md mx-auto flex gap-3">
             <input
@@ -303,18 +570,18 @@ const HomePage = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
-              className="flex-1 px-4 py-3 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-6 py-4 rounded-full text-gray-900 bg-gray-50 border border-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
               required
             />
             <button
               type="submit"
-              className="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600 transition-all duration-300 whitespace-nowrap"
+              className="bg-blue-600 text-white px-8 py-4 rounded-full font-semibold hover:bg-blue-700 transition-all duration-300 whitespace-nowrap text-lg shadow-lg hover:shadow-xl"
             >
               Subscribe
             </button>
           </form>
         </div>
-      </div>
+      </section>
     </div>
   );
 };
