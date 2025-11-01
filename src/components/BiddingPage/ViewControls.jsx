@@ -27,8 +27,8 @@ const ViewControls = ({
   };
 
   return (
-    <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-8 gap-6">
-      <div className="flex items-center space-x-4 w-full lg:w-auto">
+    <div className="flex flex-col lg:flex-row items-start lg:items-center mb-8 gap-6 lg:gap-0">
+      <div className="flex items-center space-x-4 w-full lg:hidden lg:flex-shrink-0">
         {/* <div className="flex bg-gray-100 rounded-2xl p-1.5 w-full lg:w-auto"> */}
           {/* <button
             className={`flex-1 lg:flex-none px-4 py-3 cursor-pointer text-sm font-medium rounded-xl transition-all duration-200 font-apple ${
@@ -56,8 +56,8 @@ const ViewControls = ({
           </button> */}
         {/* </div> */}
       </div>
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 w-full lg:w-auto">
-        <div className="relative flex-1">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 w-full lg:flex-1 lg:min-w-0">
+        <div className="relative flex-1 min-w-0">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
             <svg
               className="h-5 w-5 text-gray-400"
@@ -85,7 +85,7 @@ const ViewControls = ({
           <select 
             value={sortOption}
             onChange={handleSortChange}
-            className="flex-1 sm:flex-none border border-gray-200 cursor-pointer rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0071E0]/20 focus:border-[#0071E0] transition-all duration-200 bg-white sm:min-w-[180px] font-apple"
+            className="flex-1 sm:flex-none border border-gray-200 cursor-pointer rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0071E0]/20 focus:border-[#0071E0] transition-all duration-200 bg-white sm:min-w-[180px] font-apple"
           >
             <option value="">Sort by: Featured</option>
             <option value="ending_soon">Sort by: Ending Soon</option>
@@ -99,7 +99,7 @@ const ViewControls = ({
           {onFiltersClick && (
             <button
               onClick={onFiltersClick}
-              className="lg:hidden relative flex items-center justify-center w-11 h-11 rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 hover:border-[#0071E0] transition-all duration-200 shadow-sm active:scale-95"
+              className="lg:hidden relative flex items-center justify-center w-11 h-11 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 hover:border-[#0071E0] transition-all duration-200 shadow-sm active:scale-95"
               aria-label="Filters"
             >
               <svg
