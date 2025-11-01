@@ -32,7 +32,7 @@ const BiddingContent = () => {
   const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [filters, setFilters] = useState({});
-  const [refreshTick, setRefreshTick] = useState(false);
+  const [refreshTick, setRefreshTick] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('');
@@ -139,6 +139,15 @@ const BiddingContent = () => {
   };
 
   useEffect(() => {
+    console.log('useEffect triggered - fetching products. Dependencies:', {
+      currentPage,
+      itemsPerPage,
+      filters,
+      refreshTick,
+      debouncedSearchQuery,
+      sortOption
+    });
+    
     const controller = new AbortController();
     const fetchData = async () => {
       setIsLoading(true);
@@ -158,7 +167,7 @@ const BiddingContent = () => {
         if (debouncedSearchQuery && debouncedSearchQuery.trim()) {
           requestBody.search = debouncedSearchQuery.trim();
         }
-        console.log('Request body:', requestBody);
+        console.log('Fetching products with request body:', requestBody);
         const response = await axios.post(
           `${baseUrl}/api/customer/get-bid-products`,
           requestBody,
@@ -284,10 +293,21 @@ const BiddingContent = () => {
           timer: 5000,
           timerProgressBar: true,
         });
+      } else if (type === 'bid_placed') {
+        Swal.fire({
+          icon: 'info',
+          title: 'New Bid Placed',
+          text: message || `A new bid has been placed on ${bidData?.lotNumber || 'this product'}`,
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 4000,
+          timerProgressBar: true,
+        });
       }
 
       // Refresh products to get updated bid data
-      setRefreshTick((prev) => !prev);
+      setRefreshTick((prev) => prev + 1);
     };
 
     // Listen for bid updates (when someone places a bid on any product)
@@ -312,7 +332,7 @@ const BiddingContent = () => {
         );
       } else {
         // If no productId, refresh all products
-        setRefreshTick((prev) => !prev);
+        setRefreshTick((prev) => prev + 1);
       }
     };
 
@@ -382,9 +402,14 @@ const BiddingContent = () => {
   };
 
 
-  const handleRefresh = () => {
-    setRefreshTick((prev) => !prev);
-  };
+  const handleRefresh = useCallback(() => {
+    console.log('handleRefresh called - incrementing refreshTick to trigger refetch');
+    setRefreshTick((prev) => {
+      const newValue = prev + 1;
+      console.log('refreshTick incremented from', prev, 'to', newValue);
+      return newValue;
+    });
+  }, []);
 
   const renderBidValue = (value) => {
     // Check if the value is a price (contains $ or is a number)
