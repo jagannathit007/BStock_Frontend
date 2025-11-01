@@ -419,38 +419,37 @@ if (viewMode === "list") {
     return (
       <>
         <div
-          className="w-full rounded-[12px] p-0 sm:p-5 bg-[#FBFBFB] border-gray-200"
+          className="w-full rounded-lg p-0 sm:p-3 bg-[#FBFBFB] border-gray-200"
         >
           <div
-            className="w-full bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group border border-gray-100 overflow-hidden"
+            className="w-full bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group border border-gray-100 overflow-hidden"
             onClick={!isInModal ? handleProductClick : undefined}
           >
-            <div className="p-4 sm:p-6 flex flex-col gap-1 sm:gap-4">
+            <div className="p-3 sm:p-4 flex flex-col gap-2 sm:gap-3">
               {/* Header */}
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-lg flex font-bold text-gray-900 group-hover:text-[#0071e3] transition-colors duration-200 mb-2">
-                    {name} <span className="hidden sm:flex text-md font-normal text-gray-600"> - {description}</span>
+                  <h3 className="text-sm sm:text-base flex font-semibold text-gray-900 group-hover:text-[#0071e3] transition-colors duration-200 mb-1 leading-tight">
+                    {name} <span className="hidden sm:flex text-xs font-normal text-gray-500"> - {description}</span>
                   </h3>
-                  {/* <span className="text-md sm:hidden font-normal text-gray-600">{description}</span>  */}
                 </div>
 
-                <div className="flex items-center space-x-2 ml-4">
+                <div className="flex items-center space-x-1.5 ml-3">
                   <button
                     className="rounded-full transition-all duration-200 flex items-center justify-center"
                     title="Information"
                     style={{
-                      width: "32px",
-                      height: "32px",
+                      width: "28px",
+                      height: "28px",
                       borderRadius: "90px",
-                      padding: "10px",
+                      padding: "6px",
                       background: "#FFFFFF",
-                      boxShadow: "0px 4px 6px -4px #0000001A, 0px 10px 15px -3px #0000001A",
+                      boxShadow: "0px 2px 4px -2px #0000001A, 0px 4px 8px -2px #0000001A",
                       backdropFilter: "blur(8px)",
                       opacity: 1,
                     }}
                   >
-                    <span className="text-sm font-medium" style={{ color: "#1F2937" }}><FiAlertCircle/></span>
+                    <FiAlertCircle className="w-3.5 h-3.5" style={{ color: "#1F2937" }} />
                   </button>
 
                   <button
@@ -460,26 +459,25 @@ if (viewMode === "list") {
                     title={isFavorite ? "Remove from wishlist" : "Add to wishlist"}
                     onClick={handleToggleWishlist}
                     style={{
-                      width: "32px",
-                      height: "32px",
+                      width: "28px",
+                      height: "28px",
                       borderRadius: "90px",
-                      // padding: "10px",
                       background: "#FFFFFF",
-                      boxShadow: "0px 4px 6px -4px #0000001A, 0px 10px 15px -3px #0000001A",
+                      boxShadow: "0px 2px 4px -2px #0000001A, 0px 4px 8px -2px #0000001A",
                       backdropFilter: "blur(8px)",
                       opacity: 1,
                     }}
                   >
-                    <svg className="w-4 h-4" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <svg className="w-3.5 h-3.5" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
                     </svg>
                   </button>
 
-                  <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${getStatusBadgeClass()}`}>
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] font-semibold ${getStatusBadgeClass()}`}>
                     {isExpired ? (
-                      <FontAwesomeIcon icon={faCalendarXmark} className="w-3 h-3 mr-1" />
+                      <FontAwesomeIcon icon={faCalendarXmark} className="w-2.5 h-2.5 mr-0.5" />
                     ) : (
-                      <svg className="w-3 h-3 mr-1" viewBox="0 0 512 512" fill="currentColor">
+                      <svg className="w-2.5 h-2.5 mr-0.5" viewBox="0 0 512 512" fill="currentColor">
                         <path d="M256 512a256 256 0 1 1 0-512 256 256 0 1 1 0 512zM374 145.7c-10.7-7.8-25.7-5.4-33.5 5.3L221.1 315.2 169 263.1c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l72 72c5 5 11.8 7.5 18.8 7s13.4-4.1 17.5-9.8L379.3 179.2c7.8-10.7 5.4-25.7-5.3-33.5z" />
                       </svg>
                     )}
@@ -489,59 +487,13 @@ if (viewMode === "list") {
               </div>
 
               {/* Price, Colors, Quantity */}
-              <div className="flex flex-wrap justify-between sm:justify-start items-center gap-3 sm:gap-4 mt-2 sm:mt-0">
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-500">Start from</span>
-                  <span className="text-lg font-semibold text-green-600">{convertPrice(selectedPrice || price)}</span>
+              <div className="flex flex-wrap justify-between sm:justify-start items-center gap-2 sm:gap-3 mt-1 sm:mt-0">
+                <div className="flex items-center space-x-1.5">
+                  <span className="text-[10px] sm:text-xs text-gray-500">Start from</span>
+                  <span className="text-base sm:text-lg font-semibold text-green-600">{convertPrice(selectedPrice || price)}</span>
                 </div>
-                {/* <div className="hidden sm:block w-px h-4 bg-gray-300" /> */}
-                {/* <div className="flex space-x-2 no-scrollbar">
-                  {availableColors.length > 0 ? (
-                    availableColors.map((color) => (
-                      <button
-                        key={color.value}
-                        onClick={(e) => handleColorSelect(e, color.value)}
-                        className={`w-4 h-4 rounded-full border-2 transition-all ${
-                          selectedColor.toLowerCase() === color.value
-                            ? 'border-blue-500 scale-110'
-                            : 'border-gray-300 hover:border-gray-400'
-                        } ${
-                          color.value === 'black' ? 'bg-black' :
-                          color.value === 'white' ? 'bg-white' :
-                          color.value === 'gold' ? 'bg-gradient-to-br from-yellow-300 to-yellow-600' :
-                          color.value === 'silver' ? 'bg-gray-400' :
-                          color.value === 'blue' ? 'bg-blue-500' :
-                          color.value === 'red' ? 'bg-red-500' :
-                          color.value === 'green' ? 'bg-green-500' :
-                          color.value === 'purple' ? 'bg-purple-500' :
-                          'bg-gray-600'
-                        } flex items-center justify-center`}
-                        title={color.name}
-                      >
-                        {selectedColor.toLowerCase() === color.value && (
-                          <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </button>
-                    ))
-                  ) : (
-                    // Fallback to static colors if no variants available
-                    <>
-                      <div className="w-4 h-4 bg-gray-600 rounded-full border border-gray-300" />
-                      <div className="w-4 h-4 bg-white rounded-full border border-gray-300" />
-                      <div className="w-4 h-4 bg-orange-500 rounded-full border border-gray-300 flex items-center justify-center">
-                        <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                      <div className="w-4 h-4 bg-black rounded-full border border-gray-300" />
-                      <div className="w-4 h-4 bg-blue-500 rounded-full border border-gray-300" />
-                    </>
-                  )}
-                </div> */}
-                <div className="hidden sm:block w-px h-4 bg-gray-300" />
-                  <div className="hidden sm:block text-sm flex font-medium text-gray-900">
+                <div className="hidden sm:block w-px h-3 bg-gray-300" />
+                  <div className="hidden sm:block text-xs flex font-medium text-gray-900">
                     {[
                       product?.storage,
                       product?.ram,
@@ -549,13 +501,13 @@ if (viewMode === "list") {
                       product?.simType,
                     ].filter(Boolean).join(' • ') || '-'}
                   </div>
-                <div className="hidden sm:block w-px h-4 bg-gray-300" />
+                <div className="hidden sm:block w-px h-3 bg-gray-300" />
 
                 {/* QUANTITY SELECTOR */}
                 <div className="flex items-center border border-gray-300 rounded-lg">
                   <button
                     onClick={(e) => { e.stopPropagation(); decQty(); }}
-                    className="px-3 py-1 text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                    className="px-2 py-1 text-[11px] sm:text-xs text-gray-600 hover:bg-gray-100 disabled:opacity-50"
                     disabled={isFullPurchase || quantity <= validMoq}
                   >
                     -
@@ -565,12 +517,12 @@ if (viewMode === "list") {
                     value={quantity}
                     onChange={onQtyInput}
                     onClick={(e) => e.stopPropagation()}
-                    className="w-12 px-1 py-1 text-center text-sm font-medium bg-transparent outline-none"
+                    className="w-10 sm:w-12 px-1 py-1 text-center text-xs sm:text-sm font-medium bg-transparent outline-none"
                     readOnly={isFullPurchase}
                   />
                   <button
                     onClick={(e) => { e.stopPropagation(); incQty(); }}
-                    className="px-3 py-1 text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                    className="px-2 py-1 text-[11px] sm:text-xs text-gray-600 hover:bg-gray-100 disabled:opacity-50"
                     disabled={isFullPurchase || quantity >= validStock}
                   >
                     +
@@ -578,7 +530,7 @@ if (viewMode === "list") {
                 </div>
               </div>
 
-              <div className="sm:hidden text-sm flex font-medium text-gray-900">
+              <div className="sm:hidden text-xs flex font-medium text-gray-900">
                     {[
                       product?.storage,
                       product?.ram,
@@ -588,107 +540,109 @@ if (viewMode === "list") {
                   </div>
 
               {/* Specifications */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-5 gap-2.5 w-full">
-                <div className="hidden sm:block rounded-lg p-2 text-center flex-1 flex flex-col justify-center" style={{ background: "#FAFDFF", border: "1px solid #E3F4FF", borderRadius: "8px" }}>
-                  <div className="text-xs text-gray-600 mb-1">Condition</div>
-                  <div className="text-sm font-medium text-gray-900">{product?.condition || "-"}</div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-5 gap-2 w-full">
+                <div className="hidden sm:block rounded-lg p-1.5 text-center flex-1 flex flex-col justify-center" style={{ background: "#FAFDFF", border: "1px solid #E3F4FF", borderRadius: "6px" }}>
+                  <div className="text-[10px] text-gray-600 mb-0.5">Condition</div>
+                  <div className="text-xs font-semibold text-gray-900">{product?.condition || "-"}</div>
                 </div>
                 
-                <div className="hidden sm:block rounded-lg p-2 text-center flex-1 flex flex-col justify-center" style={{ background: "#FAFDFF", border: "1px solid #E3F4FF", borderRadius: "8px" }}>
-                  <div className="text-xs text-gray-600 mb-1">Warehouse</div>
-                  <div className="text-sm font-medium text-gray-900 flex items-center justify-center">
-                    <span className="w-3 h-3 bg-red-500 rounded-sm mr-1"></span>
+                <div className="hidden sm:block rounded-lg p-1.5 text-center flex-1 flex flex-col justify-center" style={{ background: "#FAFDFF", border: "1px solid #E3F4FF", borderRadius: "6px" }}>
+                  <div className="text-[10px] text-gray-600 mb-0.5">Warehouse</div>
+                  <div className="text-xs font-semibold text-gray-900 flex items-center justify-center">
+                    <span className="w-2 h-2 bg-red-500 rounded-sm mr-1"></span>
                     {product?.countryName || product?.country || '—'}
                   </div>
                 </div>
-                <div className="hidden sm:block rounded-lg p-2 text-center flex-1 flex flex-col justify-center" style={{ background: "#FAFDFF", border: "1px solid #E3F4FF", borderRadius: "8px" }}>
-                  <div className="text-xs text-gray-600 mb-1">MOQ / Stock</div>
-                  <div className="text-sm font-medium text-gray-900">{moq} / {stockCount}</div>
+                <div className="hidden sm:block rounded-lg p-1.5 text-center flex-1 flex flex-col justify-center" style={{ background: "#FAFDFF", border: "1px solid #E3F4FF", borderRadius: "6px" }}>
+                  <div className="text-[10px] text-gray-600 mb-0.5">MOQ / Stock</div>
+                  <div className="text-xs font-semibold text-gray-900">{moq} / {stockCount}</div>
                 </div>
-                <div className="hidden md:block rounded-lg p-2 text-center flex-1 flex flex-col justify-center" style={{ background: "#FAFDFF", border: "1px solid #E3F4FF", borderRadius: "8px" }}>
-                  <div className="text-xs text-gray-600 mb-1">Delivery EST</div>
-                  <div className="text-sm font-medium text-gray-900">3-5 Days</div>
+                <div className="hidden md:block rounded-lg p-1.5 text-center flex-1 flex flex-col justify-center" style={{ background: "#FAFDFF", border: "1px solid #E3F4FF", borderRadius: "6px" }}>
+                  <div className="text-[10px] text-gray-600 mb-0.5">Delivery EST</div>
+                  <div className="text-xs font-semibold text-gray-900">3-5 Days</div>
                 </div>
-                <div className="hidden sm:block rounded-lg p-2 text-center flex-1 flex flex-col justify-center" style={{ background: "#FAFDFF", border: "1px solid #E3F4FF", borderRadius: "8px" }}>
-                  <div className="text-xs text-gray-600 mb-1">Partial Purchase</div>
-                  <div className="text-sm font-medium text-gray-900">{(product?.purchaseType || '').toLowerCase() === 'partial' ? 'Allowed' : 'Not Allowed'}</div>
+                <div className="hidden sm:block rounded-lg p-1.5 text-center flex-1 flex flex-col justify-center" style={{ background: "#FAFDFF", border: "1px solid #E3F4FF", borderRadius: "6px" }}>
+                  <div className="text-[10px] text-gray-600 mb-0.5">Partial Purchase</div>
+                  <div className="text-xs font-semibold text-gray-900">{(product?.purchaseType || '').toLowerCase() === 'partial' ? 'Allowed' : 'Not Allowed'}</div>
                 </div>
               </div>
 
-              <div className="sm:hidden">
-                <button className="p-1 bg-gray-100 rounded-md text-sm m-1">{product?.condition}</button>
-                <button className="p-1 bg-gray-100 rounded-md text-sm m-1">{product?.countryName}</button>
-                <button className="p-1 bg-gray-100 rounded-md text-sm m-1">MOQ: {moq}</button>
-                <button className="p-1 bg-gray-100 rounded-md text-sm m-1">Stock: {stockCount}</button>
+              <div className="sm:hidden flex flex-wrap gap-1">
+                <button className="px-2 py-0.5 bg-gray-100 rounded-md text-[10px] font-medium">{product?.condition}</button>
+                <button className="px-2 py-0.5 bg-gray-100 rounded-md text-[10px] font-medium">{product?.countryName}</button>
+                <button className="px-2 py-0.5 bg-gray-100 rounded-md text-[10px] font-medium">MOQ: {moq}</button>
+                <button className="px-2 py-0.5 bg-gray-100 rounded-md text-[10px] font-medium">Stock: {stockCount}</button>
               </div>
-                  {/* <div className="flex sm:hidden items-center border border-gray-300 rounded-lg w-fit mt-2">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); decQty(); }}
-                      className="px-3 py-1 text-gray-600 hover:bg-gray-100 disabled:opacity-50"
-                      disabled={isFullPurchase || quantity <= validMoq}
-                    >
-                      -
-                    </button>
-                    <input
-                      type="text"
-                      value={quantity}
-                      onChange={onQtyInput}
-                      onClick={(e) => e.stopPropagation()}
-                      className="w-12 px-1 py-1 text-center text-sm font-medium bg-transparent outline-none"
-                      readOnly={isFullPurchase}
+
+              {!isExpired && !isOutOfStock && isFlashDeal && (
+                <div className="mb-2 flex justify-center">
+                  <div className="inline-flex items-center bg-gradient-to-r from-red-50 to-pink-50 text-red-700 px-3 py-1.5 rounded-full text-[10px] font-semibold shadow-sm border border-red-200 w-full justify-center">
+                    <FontAwesomeIcon icon={faClock} className="w-2.5 h-2.5 mr-1.5" />
+                    <Countdown
+                      date={product.expiryTime}
+                      renderer={({ days, hours, minutes, seconds, completed }) => {
+                        if (completed) {
+                          return (
+                            <span className="font-semibold">Flash Deal Ended</span>
+                          );
+                        }
+                        return (
+                          <span className="font-semibold">
+                            {days > 0 ? `${days}d ` : ""}
+                            {String(hours).padStart(2, "0")}:
+                            {String(minutes).padStart(2, "0")}:
+                            {String(seconds).padStart(2, "0")}
+                          </span>
+                        );
+                      }}
                     />
-                    <button
-                      onClick={(e) => { e.stopPropagation(); incQty(); }}
-                      className="px-3 py-1 text-gray-600 hover:bg-gray-100 disabled:opacity-50"
-                      disabled={isFullPurchase || quantity >= validStock}
-                    >
-                      +
-                    </button>
-                  </div> */}
+                  </div>
+                </div>
+              )}
 
               {/* Action Buttons */}
-              <div className="flex flex-row gap-3 sm:gap-4 sm:mt-4 mt-2">
+              <div className="flex flex-row gap-2 sm:gap-3 sm:mt-3 mt-2">
                 {isExpired ? (
-                  <button className="w-full sm:flex-1 bg-gray-300 text-gray-500 py-3 px-4 rounded-lg text-sm font-semibold cursor-not-allowed flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                    <FontAwesomeIcon icon={faCalendarXmark} className="mr-2" />
+                  <button className="w-full sm:flex-1 bg-gray-300 text-gray-500 py-2 px-3 rounded-lg text-[11px] sm:text-xs font-semibold cursor-not-allowed flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                    <FontAwesomeIcon icon={faCalendarXmark} className="w-3 h-3 mr-1.5" />
                     Expired
                   </button>
                 ) : isOutOfStock ? (
                   canNotify ? (
                     notify ? (
                       <button
-                        className="w-full sm:flex-1 border border-red-300 text-red-700 bg-white py-3 px-4 rounded-lg text-sm font-semibold hover:bg-red-50 cursor-pointer transition-all duration-200 flex items-center justify-center"
+                        className="w-full sm:flex-1 border border-red-300 text-red-700 bg-white py-2 px-3 rounded-lg text-[11px] sm:text-xs font-semibold hover:bg-red-50 cursor-pointer transition-all duration-200 flex items-center justify-center"
                         onClick={(ev) => handleNotifyToggle(ev, false)}
                       >
-                        <FontAwesomeIcon icon={faBellSlash} className="mr-2" />
+                        <FontAwesomeIcon icon={faBellSlash} className="w-3 h-3 mr-1.5" />
                         Turn Off
                       </button>
                     ) : (
                       <button
-                        className="w-full sm:flex-1 border border-[#0071E3] text-[#0071E3] bg-white py-3 px-4 rounded-lg text-sm font-semibold hover:bg-blue-50 cursor-pointer transition-all duration-200 flex items-center justify-center"
+                        className="w-full sm:flex-1 border border-[#0071E3] text-[#0071E3] bg-white py-2 px-3 rounded-lg text-[11px] sm:text-xs font-semibold hover:bg-blue-50 cursor-pointer transition-all duration-200 flex items-center justify-center"
                         onClick={(ev) => handleNotifyToggle(ev, true)}
                       >
-                        <FontAwesomeIcon icon={faBell} className="mr-2" />
+                        <FontAwesomeIcon icon={faBell} className="w-3 h-3 mr-1.5" />
                         Notify Me
                       </button>
                     )
                   ) : (
-                    <button className="w-full sm:flex-1 bg-gray-300 text-gray-500 py-3 px-4 rounded-lg text-sm font-semibold cursor-not-allowed flex items-center justify-center">
-                      <FontAwesomeIcon icon={faXmark} className="mr-2" />
+                    <button className="w-full sm:flex-1 bg-gray-300 text-gray-500 py-2 px-3 rounded-lg text-[11px] sm:text-xs font-semibold cursor-not-allowed flex items-center justify-center">
+                      <FontAwesomeIcon icon={faXmark} className="w-3 h-3 mr-1.5" />
                       Out of Stock
                     </button>
                   )
                 ) : (
                   <>
                     <button
-                      className="w-full sm:flex-1 border border-gray-200 text-gray-700 bg-white py-3 px-4 rounded-lg text-sm font-semibold hover:bg-gray-50 hover:border-gray-300 cursor-pointer transition-all duration-200 flex items-center justify-center"
+                      className="w-full sm:flex-1 border border-gray-200 text-gray-700 bg-white py-2 px-3 rounded-lg text-[11px] sm:text-xs font-semibold hover:bg-gray-50 hover:border-gray-300 cursor-pointer transition-all duration-200 flex items-center justify-center"
                       onClick={handleDirectAddToCart}
                     >
-                      <FontAwesomeIcon icon={faCartShopping} className="mr-2" />
+                      <FontAwesomeIcon icon={faCartShopping} className="w-3 h-3 mr-1.5" />
                       Add to Cart
                     </button>
                     <button
-                      className="w-full sm:flex-1 text-white py-3 px-4 rounded-lg text-sm font-semibold cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md bg-[#0071E3] hover:bg-[#005bb5] flex items-center justify-center"
+                      className="w-full sm:flex-1 text-white py-2 px-3 rounded-lg text-[11px] sm:text-xs font-semibold cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md bg-[#0071E3] hover:bg-[#005bb5] flex items-center justify-center"
                       onClick={(e) => {
                         e.stopPropagation();
                         const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
@@ -717,13 +671,13 @@ if (viewMode === "list") {
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group overflow-hidden flex flex-col w-[406.67px] h-[100%] p-4 pb-5 max-w-full box-border mx-auto ${getCardBackgroundClass()}`}
+      className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group overflow-hidden flex flex-col w-full h-full p-3 pb-3 box-border ${getCardBackgroundClass()}`}
       onClick={!isInModal ? handleProductClick : undefined}
     >
       {/* Image Container */}
-      <div className="relative overflow-hidden mb-5 flex-shrink-0 w-full h-[300px] rounded-t-xl max-w-[375px]">
+      <div className="relative overflow-hidden mb-3 flex-shrink-0 w-full h-[200px] rounded-lg bg-gray-50">
         <img
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
           src={
             imageError
               ? iphoneImage
@@ -734,20 +688,20 @@ if (viewMode === "list") {
         />
         
         {/* In Stock Badge */}
-        <div className="absolute top-3 left-3">
+        <div className="absolute top-2 left-2">
           <span
-            className={`inline-flex items-center px-2 py-1.5 rounded-full text-xs font-semibold ${getStatusBadgeClass()}`}
+            className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${getStatusBadgeClass()}`}
           >
             {isExpired ? (
               <FontAwesomeIcon
                 icon={faCalendarXmark}
-                className="w-3 h-3 mr-1"
+                className="w-2.5 h-2.5 mr-0.5"
               />
             ) : (
               <svg
                 data-prefix="fas"
                 data-icon="circle-check"
-                className="w-3 h-3 mr-1"
+                className="w-2.5 h-2.5 mr-0.5"
                 role="img"
                 viewBox="0 0 512 512"
                 aria-hidden="true"
@@ -763,14 +717,14 @@ if (viewMode === "list") {
         </div>
         
         {/* Bookmark/Wishlist Icon */}
-        <div className="absolute top-3 right-3">
+        <div className="absolute top-2 right-2">
           <button
-            className={`p-2 bg-white rounded-full cursor-pointer shadow-lg hover:shadow-xl transition-all duration-200 ${
+            className={`p-1.5 bg-white rounded-full cursor-pointer shadow-md hover:shadow-lg transition-all duration-200 ${
               isFavorite ? "text-[#FB2C36]" : "text-gray-400 hover:text-[#FB2C36]"
-            } w-[40px] h-[40px] flex items-center justify-center border border-gray-200`}
+            } w-[32px] h-[32px] flex items-center justify-center border border-gray-200`}
             onClick={handleToggleWishlist}
           >
-            <svg className="w-[24px] h-[24px]" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
             </svg>
           </button>
@@ -778,30 +732,28 @@ if (viewMode === "list") {
       </div>
 
       {/* Content Section */}
-      <div className="flex flex-col flex-1 w-full gap-3 min-h-0">
+      <div className="flex flex-col flex-1 w-full gap-2 min-h-0">
         {/* Product Title */}
-        <h3 className="font-bold text-lg leading-none tracking-normal align-middle text-[#364153]">
-          {name} <span className="text-md font-normal text-gray-600"> - {description}</span>
+        <h3 className="font-semibold text-sm leading-tight tracking-normal text-[#364153] line-clamp-2">
+          {name} <span className="text-xs font-normal text-gray-500"> - {description}</span>
         </h3>
 
         {/* Price Section */}
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <span className="text-sm text-gray-500 mr-1">From</span>
-            <span className="text-lg font-semibold text-gray-900">
+            <span className="text-[10px] text-gray-500 mr-1">From</span>
+            <span className="text-base font-semibold text-gray-900">
               {convertPrice(selectedPrice || price)}
             </span>
           </div>
-          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-white shadow-lg backdrop-blur-sm opacity-100">
-            <span className="text-md font-medium text-gray-700 font-sans">
-              <FiAlertCircle />
-            </span>
+          <div className="flex items-center justify-center w-5 h-5 rounded-full bg-white shadow-md backdrop-blur-sm opacity-100">
+            <FiAlertCircle className="w-3 h-3 text-gray-600" />
           </div>
         </div>
 
         {/* Color Options and SKU */}
         <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1.5">
             {/* Color Swatches */}
             <div className="flex space-x-1">
               {availableColors.length > 0 ? (
@@ -809,10 +761,10 @@ if (viewMode === "list") {
                   <button
                     key={color.value}
                     onClick={(e) => handleColorSelect(e, color.value)}
-                    className={`w-4 h-4 rounded-full border-2 transition-all ${
+                    className={`w-3 h-3 rounded-full border transition-all ${
                       selectedColor.toLowerCase() === color.value
-                        ? 'border-blue-500 scale-110'
-                        : 'border-gray-300 hover:border-gray-400'
+                        ? 'border-blue-500 scale-110 border-2'
+                        : 'border-gray-300 hover:border-gray-400 border'
                     } ${
                       color.value === 'black' ? 'bg-black' :
                       color.value === 'white' ? 'bg-white' :
@@ -827,7 +779,7 @@ if (viewMode === "list") {
                     title={color.name}
                   >
                     {selectedColor.toLowerCase() === color.value && (
-                      <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="w-1.5 h-1.5 text-white" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     )}
@@ -836,62 +788,61 @@ if (viewMode === "list") {
               ) : (
                 // Fallback to static colors if no variants available
                 <>
-                  <div className="w-4 h-4 bg-gray-600 rounded-full border border-gray-300"></div>
-                  <div className="w-4 h-4 bg-white rounded-full border border-gray-300"></div>
-                  <div className="w-4 h-4 bg-orange-500 rounded-full border border-gray-300 flex items-center justify-center">
-                    <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <div className="w-3 h-3 bg-gray-600 rounded-full border border-gray-300"></div>
+                  <div className="w-3 h-3 bg-white rounded-full border border-gray-300"></div>
+                  <div className="w-3 h-3 bg-orange-500 rounded-full border border-gray-300 flex items-center justify-center">
+                    <svg className="w-1.5 h-1.5 text-white" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
                   </div>
-                  <div className="w-4 h-4 bg-black rounded-full border border-gray-300"></div>
-                  <div className="w-4 h-4 bg-blue-500 rounded-full border border-gray-300"></div>
+                  <div className="w-3 h-3 bg-black rounded-full border border-gray-300"></div>
+                  <div className="w-3 h-3 bg-blue-500 rounded-full border border-gray-300"></div>
                 </>
               )}
             </div>
           </div>
-          {/* <span className="text-xs text-gray-500">SKU: {product?.sku || 'IP17PM512SLV'}</span> */}
         </div>
 
         {/* Specifications Grid */}
-        <div className="grid grid-cols-2 gap-2.5 w-full mb-3">
-          <div className="w-full h-[54px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
-            <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">
+        <div className="grid grid-cols-2 gap-2 w-full mb-2">
+          <div className="w-full h-[42px] rounded border border-gray-100 bg-white py-0.5 px-1.5 flex flex-col justify-center items-center box-border">
+            <div className="text-[10px] text-gray-600 font-normal leading-tight tracking-normal text-center">
               MOQ
             </div>
-            <div className="text-sm text-gray-500 font-medium leading-5 tracking-normal text-center align-middle mt-0.5">
-              {moq} Units
+            <div className="text-xs text-gray-900 font-semibold leading-tight tracking-normal text-center mt-0.5">
+              {moq}
             </div>
           </div>
-          <div className="w-full h-[54px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
-            <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">
+          <div className="w-full h-[42px] rounded border border-gray-100 bg-white py-0.5 px-1.5 flex flex-col justify-center items-center box-border">
+            <div className="text-[10px] text-gray-600 font-normal leading-tight tracking-normal text-center">
               Stock
             </div>
-            <div className="text-sm text-gray-500 font-medium leading-5 tracking-normal text-center align-middle mt-0.5">
-              {stockCount || '0'} Units
+            <div className="text-xs text-gray-900 font-semibold leading-tight tracking-normal text-center mt-0.5">
+              {stockCount || '0'}
             </div>
           </div>
-          <div className="w-full h-[54px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
-            <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">
-              Delivery Time (EST)
+          <div className="w-full h-[42px] rounded border border-gray-100 bg-white py-0.5 px-1.5 flex flex-col justify-center items-center box-border">
+            <div className="text-[10px] text-gray-600 font-normal leading-tight tracking-normal text-center">
+              Delivery
             </div>
-            <div className="text-sm text-gray-500 font-medium leading-5 tracking-normal text-center align-middle mt-0.5">
+            <div className="text-xs text-gray-900 font-semibold leading-tight tracking-normal text-center mt-0.5">
               3-5 Days
             </div>
           </div>
-          <div className="w-full h-[54px] rounded border border-gray-100 bg-white py-1 px-2 flex flex-col justify-center items-center box-border">
-            <div className="text-xs text-gray-900 font-normal leading-5 tracking-normal text-center align-middle">
+          <div className="w-full h-[42px] rounded border border-gray-100 bg-white py-0.5 px-1.5 flex flex-col justify-center items-center box-border">
+            <div className="text-[10px] text-gray-600 font-normal leading-tight tracking-normal text-center">
               SIM Type
             </div>
-            <div className="text-sm text-gray-500 font-medium leading-5 tracking-normal text-center align-middle mt-0.5">
+            <div className="text-xs text-gray-900 font-semibold leading-tight tracking-normal text-center mt-0.5">
               {product?.simType || 'E-SIM'}
             </div>
           </div>
         </div>
 
         {!isExpired && !isOutOfStock && isFlashDeal && (
-          <div className="mb-3 flex justify-center">
-            <div className="inline-flex items-center bg-gradient-to-r from-red-50 to-pink-50 text-red-700 px-4 py-2 rounded-full text-xs font-semibold shadow-sm border border-red-200 w-full justify-center">
-              <FontAwesomeIcon icon={faClock} className="w-3 h-3 mr-2" />
+          <div className="mb-2 flex justify-center">
+            <div className="inline-flex items-center bg-gradient-to-r from-red-50 to-pink-50 text-red-700 px-3 py-1.5 rounded-full text-[10px] font-semibold shadow-sm border border-red-200 w-full justify-center">
+              <FontAwesomeIcon icon={faClock} className="w-2.5 h-2.5 mr-1.5" />
               <Countdown
                 date={product.expiryTime}
                 renderer={({ days, hours, minutes, seconds, completed }) => {
@@ -902,7 +853,7 @@ if (viewMode === "list") {
                   }
                   return (
                     <span className="font-semibold">
-                      {days > 0 ? `${days} days ` : ""}
+                      {days > 0 ? `${days}d ` : ""}
                       {String(hours).padStart(2, "0")}:
                       {String(minutes).padStart(2, "0")}:
                       {String(seconds).padStart(2, "0")}
@@ -916,14 +867,14 @@ if (viewMode === "list") {
       </div>
 
       {/* Button Container */}
-      <div className="flex mt-auto w-full h-[46px] gap-4">
+      <div className="flex mt-auto w-full gap-2">
         {isExpired ? (
           <>
             <button
-              className="flex-1 bg-gray-300 text-gray-500 py-2 px-3 rounded-lg text-xs font-semibold cursor-not-allowed"
+              className="flex-1 bg-gray-300 text-gray-500 py-1.5 px-2 rounded-lg text-[11px] font-semibold cursor-not-allowed flex items-center justify-center"
               onClick={(e) => e.stopPropagation()}
             >
-              <FontAwesomeIcon icon={faCalendarXmark} className="mr-1" />
+              <FontAwesomeIcon icon={faCalendarXmark} className="w-3 h-3 mr-1" />
               Expired
             </button>
           </>
@@ -931,20 +882,20 @@ if (viewMode === "list") {
           <>
             {notify ? (
               <button
-                className="flex-1 border border-red-300 text-red-700 bg-white py-2 px-3 rounded-lg text-xs font-semibold hover:bg-red-50 cursor-pointer transition-all duration-200 flex items-center justify-center"
+                className="flex-1 border border-red-300 text-red-700 bg-white py-1.5 px-2 rounded-lg text-[11px] font-semibold hover:bg-red-50 cursor-pointer transition-all duration-200 flex items-center justify-center"
                 onClick={(ev) => handleNotifyToggle(ev, false)}
                 title="Turn off notifications for notifying me when back in stock"
               >
-                <FontAwesomeIcon icon={faBellSlash} className="mr-1" />
+                <FontAwesomeIcon icon={faBellSlash} className="w-3 h-3 mr-1" />
                 Turn Off
               </button>
             ) : (
               <button
-                className="flex-1 border border-[#0071E3] text-[#0071E3] bg-white py-2 px-3 rounded-lg text-xs font-semibold hover:bg-blue-50 cursor-pointer transition-all duration-200 flex items-center justify-center"
+                className="flex-1 border border-[#0071E3] text-[#0071E3] bg-white py-1.5 px-2 rounded-lg text-[11px] font-semibold hover:bg-blue-50 cursor-pointer transition-all duration-200 flex items-center justify-center"
                 onClick={(ev) => handleNotifyToggle(ev, true)}
                 title="Notify me when back in stock"
               >
-                <FontAwesomeIcon icon={faBell} className="mr-1" />
+                <FontAwesomeIcon icon={faBell} className="w-3 h-3 mr-1" />
                 Notify Me
               </button>
             )}
@@ -952,14 +903,14 @@ if (viewMode === "list") {
         ) : (
           <>
             <button
-              className="flex-1 border border-gray-200 text-gray-700 bg-white py-2 px-3 rounded-lg text-xs font-semibold hover:bg-gray-50 hover:border-gray-300 cursor-pointer transition-all duration-200 flex items-center justify-center"
+              className="flex-1 border border-gray-200 text-gray-700 bg-white py-1.5 px-2 rounded-lg text-[11px] font-semibold hover:bg-gray-50 hover:border-gray-300 cursor-pointer transition-all duration-200 flex items-center justify-center"
               onClick={handleAddToCart}
             >
-              <FontAwesomeIcon icon={faCartShopping} className="mr-1" />
+              <FontAwesomeIcon icon={faCartShopping} className="w-3 h-3 mr-1" />
               Add to Cart
             </button>
             <button
-              className="flex-1 text-white py-2 px-3 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md bg-[#0071E3] hover:bg-[#005bb5]"
+              className="flex-1 text-white py-1.5 px-2 rounded-lg text-[11px] font-semibold cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md bg-[#0071E3] hover:bg-[#005bb5] flex items-center justify-center"
               onClick={(e) => {
                 e.stopPropagation();
                 const isLoggedIn =
