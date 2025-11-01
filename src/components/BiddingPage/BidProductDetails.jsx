@@ -19,6 +19,7 @@ import iphoneImage from "../../assets/iphone.png";
 import { convertPrice } from "../../utils/currencyUtils";
 import { BiddingService } from "../../services/bidding/bidding.services";
 import { useSocket } from "../../context/SocketContext";
+import { PRIMARY_COLOR, PRIMARY_COLOR_LIGHT, PRIMARY_COLOR_DARK } from "../../utils/colors";
 
 const BidProductDetails = () => {
   const { id } = useParams();
@@ -139,7 +140,7 @@ const BidProductDetails = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 mx-auto" style={{ borderTopColor: PRIMARY_COLOR, borderBottomColor: PRIMARY_COLOR }}></div>
           <p className="mt-4 text-gray-600">Loading product details...</p>
         </div>
       </div>
@@ -189,8 +190,9 @@ const BidProductDetails = () => {
                     key={index}
                     onClick={() => setSelectedImageIndex(index)}
                     className={`w-2 h-2 rounded-full transition-all ${
-                      selectedImageIndex === index ? "bg-blue-500" : "bg-white/50 hover:bg-white/70"
+                      selectedImageIndex === index ? "" : "bg-white/50 hover:bg-white/70"
                     }`}
+                    style={selectedImageIndex === index ? { backgroundColor: PRIMARY_COLOR } : {}}
                   />
                 ))}
               </div>
@@ -250,8 +252,8 @@ const BidProductDetails = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {product.grade && (
                 <div className="flex items-center bg-white rounded-lg p-2 shadow-sm border border-gray-100">
-                  <div className="w-6 h-6 bg-blue-50 rounded-md flex items-center justify-center mr-2">
-                    <FontAwesomeIcon icon={faShield} className="text-blue-600 text-xs" />
+                  <div className="w-6 h-6 rounded-md flex items-center justify-center mr-2" style={{ backgroundColor: PRIMARY_COLOR_LIGHT }}>
+                    <FontAwesomeIcon icon={faShield} className="text-xs" style={{ color: PRIMARY_COLOR }} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <span className="text-xs text-gray-500 font-medium">Grade</span>
@@ -313,12 +315,14 @@ const BidProductDetails = () => {
             </div>
             <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
               <span className="text-xs text-gray-500 block font-medium mb-1">Status</span>
-              <span className={`text-lg font-bold capitalize ${
-                product.status === 'pending' ? 'text-yellow-600' :
-                product.status === 'approved' ? 'text-green-600' :
-                product.status === 'active' ? 'text-blue-600' :
-                'text-gray-600'
-              }`}>{product.status}</span>
+              <span 
+                className={`text-lg font-bold capitalize ${
+                  product.status === 'pending' ? 'text-yellow-600' :
+                  product.status === 'approved' ? 'text-green-600' :
+                  'text-gray-600'
+                }`}
+                style={product.status === 'active' ? { color: PRIMARY_COLOR } : {}}
+              >{product.status}</span>
             </div>
             {product.oem && (
               <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
@@ -331,7 +335,10 @@ const BidProductDetails = () => {
           <div className="flex space-x-3">
             <button
               onClick={handleMakeOffer}
-              className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg text-sm font-semibold hover:bg-blue-700 shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center"
+              className="flex-1 text-white py-3 px-6 rounded-lg text-sm font-semibold shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center"
+              style={{ backgroundColor: PRIMARY_COLOR }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = PRIMARY_COLOR_DARK}
+              onMouseLeave={(e) => e.target.style.backgroundColor = PRIMARY_COLOR}
             >
               Make an Offer
             </button>
@@ -349,8 +356,10 @@ const BidProductDetails = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {product.oem && (
               <div className="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 hover:border-gray-200 transition-all duration-200 group">
-                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mr-4 group-hover:bg-blue-100 transition-colors duration-200">
-                  <FontAwesomeIcon icon={faTag} className="text-blue-600 text-sm" />
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center mr-4 transition-colors duration-200" style={{ backgroundColor: PRIMARY_COLOR_LIGHT }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = PRIMARY_COLOR_LIGHT}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = PRIMARY_COLOR_LIGHT}>
+                  <FontAwesomeIcon icon={faTag} className="text-sm" style={{ color: PRIMARY_COLOR }} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">OEM</p>
@@ -438,7 +447,10 @@ const BidProductDetails = () => {
             </div>
             <div className="flex items-center gap-3">
               <button
-                className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm"
+                className="inline-flex items-center text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-sm transition-colors"
+                style={{ backgroundColor: PRIMARY_COLOR }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = PRIMARY_COLOR_DARK}
+                onMouseLeave={(e) => e.target.style.backgroundColor = PRIMARY_COLOR}
                 onClick={downloadManifestCsv}
               >
                 <FontAwesomeIcon icon={faFileArrowDown} className="w-4 h-4 mr-2" />

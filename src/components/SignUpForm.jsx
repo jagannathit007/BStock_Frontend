@@ -4,14 +4,11 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faStore,
   faEnvelope,
   faLock,
   faEye,
   faEyeSlash,
   faUser,
-  faPhone,
-  faShieldHalved,
   faSpinner,
   faChevronDown,
   faSearch,
@@ -21,6 +18,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { AuthService } from "../services/auth/auth.services";
 import loginImage from "../../public/images/login.png";
+import { PRIMARY_COLOR, PRIMARY_COLOR_DARK, PRIMARY_COLOR_LIGHT } from "../utils/colors";
 
 // Validation schema
 const signupSchema = yup.object({
@@ -90,8 +88,6 @@ const SignUpForm = () => {
 
   const watchedWhatsapp = watch("whatsapp");
   const watchedWhatsappCode = watch("whatsappCode");
-  const watchedPassword = watch("password");
-  const watchedConfirmPassword = watch("confirmPassword");
 
   useEffect(() => {
     // Sort countries alphabetically
@@ -272,7 +268,7 @@ const SignUpForm = () => {
     };
 
     try {
-      const res = await AuthService.register(registerData);
+      await AuthService.register(registerData);
       // For regular sign-up, redirect to verification prompt page
       navigate("/verify-email");
     } catch (err) {
@@ -285,13 +281,13 @@ const SignUpForm = () => {
 
   // Right side image section
   const ImageSection = () => (
-    <div className="relative w-full h-full min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 flex items-center justify-center overflow-hidden">
+    <div className="relative w-full h-full min-h-screen flex items-center justify-center overflow-hidden" style={{ background: `linear-gradient(to bottom right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})` }}>
       <img
         src={loginImage}
         alt="Premium GSM Bidding Platform"
         className="absolute inset-0 w-full h-full object-cover opacity-20"
       />
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-600/90 via-blue-700/80 to-indigo-800/90"></div>
+      <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom right, ${PRIMARY_COLOR}E6, ${PRIMARY_COLOR_DARK}CC)` }}></div>
       
       
       <div className="relative z-10 text-center text-white px-6 lg:px-8 max-w-2xl">
@@ -301,9 +297,9 @@ const SignUpForm = () => {
           </svg>
         </div>
         <h2 className="text-2xl lg:text-3xl xl:text-5xl font-bold mb-4 lg:mb-6 leading-tight">
-          Join the xGSM community
+          Join the XGSM community
         </h2>
-        <p className="text-lg lg:text-xl text-blue-100 leading-relaxed">
+        <p className="text-lg lg:text-xl leading-relaxed" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
           Create your account to access exclusive deals, trusted sellers, and unbeatable prices on mobile devices.
         </p>
       </div>
@@ -334,13 +330,13 @@ const SignUpForm = () => {
           background: rgba(0, 0, 0, 0.3);
         }
       `}</style>
-      <div className="h-screen flex bg-gradient-to-br from-gray-50 to-blue-50 overflow-hidden" style={{height: '100vh', maxHeight: '100vh'}}>
+      <div className="h-screen flex overflow-hidden" style={{height: '100vh', maxHeight: '100vh', background: `linear-gradient(to bottom right, #f9fafb, ${PRIMARY_COLOR_LIGHT})` }}>
         <div className="flex-1 flex justify-center px-2 sm:px-4 lg:px-6 bg-transparent py-2 sm:py-3 lg:py-4 items-start min-w-0 min-h-0 scroll-container" style={{height: '100%', maxHeight: '100vh'}}>
           <div className="w-full flex justify-center items-center min-h-full">
             <div className="max-w-xl w-full space-y-4 sm:space-y-5 lg:space-y-6 px-2 sm:px-3 lg:px-4 py-3 sm:py-4">
               {/* Logo and Header */}
               <div className="text-center">
-                <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg sm:rounded-xl shadow-lg mb-3 sm:mb-4">
+                <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl shadow-lg mb-3 sm:mb-4" style={{ background: `linear-gradient(to bottom right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})` }}>
                   <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                   </svg>
@@ -374,7 +370,10 @@ const SignUpForm = () => {
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <FontAwesomeIcon
                           icon={faUser}
-                          className="text-gray-400 group-focus-within:text-blue-500 transition-colors text-sm"
+                          style={{ color: 'inherit' }}
+                          className="text-gray-400 transition-colors text-sm"
+                          onFocus={(e) => e.target.style.color = PRIMARY_COLOR}
+                          onBlur={(e) => e.target.style.color = ''}
                         />
                       </div>
                       <input
@@ -384,11 +383,13 @@ const SignUpForm = () => {
                             handleFieldChange("fullName", e.target.value);
                           },
                         })}
-                        className={`block w-full pl-10 pr-4 py-1 sm:py-2 border-2 rounded-lg transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:bg-white text-xs sm:text-sm ${
+                        className={`block w-full pl-10 pr-4 py-1 sm:py-2 border-2 rounded-lg transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:bg-white text-xs sm:text-sm ${
                           errors.fullName
                             ? "border-red-400 focus:border-red-500"
-                            : "border-gray-200 focus:border-blue-500"
+                            : "border-gray-200"
                         }`}
+                        onFocus={(e) => { if (!errors.fullName) { e.target.style.borderColor = PRIMARY_COLOR; e.target.style.boxShadow = `0 0 0 4px ${PRIMARY_COLOR}33`; } }}
+                        onBlur={(e) => { if (!errors.fullName) { e.target.style.borderColor = ''; e.target.style.boxShadow = ''; } }}
                         placeholder="Enter your full name"
                       />
                     </div>
@@ -408,7 +409,10 @@ const SignUpForm = () => {
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <FontAwesomeIcon
                           icon={faEnvelope}
-                          className="text-gray-400 group-focus-within:text-blue-500 transition-colors text-sm"
+                          style={{ color: 'inherit' }}
+                          className="text-gray-400 transition-colors text-sm"
+                          onFocus={(e) => e.target.style.color = PRIMARY_COLOR}
+                          onBlur={(e) => e.target.style.color = ''}
                         />
                       </div>
                       <input
@@ -418,11 +422,13 @@ const SignUpForm = () => {
                             handleFieldChange("email", e.target.value);
                           },
                         })}
-                        className={`block w-full pl-10 pr-4 py-1 sm:py-2 border-2 rounded-lg transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:bg-white text-xs sm:text-sm ${
+                        className={`block w-full pl-10 pr-4 py-1 sm:py-2 border-2 rounded-lg transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:bg-white text-xs sm:text-sm ${
                           errors.email
                             ? "border-red-400 focus:border-red-500"
-                            : "border-gray-200 focus:border-blue-500"
+                            : "border-gray-200"
                         }`}
+                        onFocus={(e) => { if (!errors.email) { e.target.style.borderColor = PRIMARY_COLOR; e.target.style.boxShadow = `0 0 0 4px ${PRIMARY_COLOR}33`; } }}
+                        onBlur={(e) => { if (!errors.email) { e.target.style.borderColor = ''; e.target.style.boxShadow = ''; } }}
                         placeholder="Enter your email address"
                       />
                     </div>
@@ -449,11 +455,13 @@ const SignUpForm = () => {
                         setShowPhoneDropdown(!showPhoneDropdown);
                         if (showPhoneDropdown) setPhoneSearchTerm(""); // Clear search when closing
                       }}
-                      className={`flex items-center justify-between cursor-pointer w-full px-3 py-1 sm:py-2 bg-gray-50/50 border-2 rounded-lg focus:ring-4 focus:ring-blue-500/20 text-gray-700 text-xs sm:text-sm hover:bg-gray-100 transition-all duration-300 ${
+                      className={`flex items-center justify-between cursor-pointer w-full px-3 py-1 sm:py-2 bg-gray-50/50 border-2 rounded-lg text-gray-700 text-xs sm:text-sm hover:bg-gray-100 transition-all duration-300 ${
                         errors.phoneCode
                           ? "border-red-400 focus:border-red-500"
-                          : "border-gray-200 focus:border-blue-500"
+                          : "border-gray-200"
                       }`}
+                      onFocus={(e) => { if (!errors.phoneCode) { e.target.style.borderColor = PRIMARY_COLOR; e.target.style.boxShadow = `0 0 0 4px ${PRIMARY_COLOR}33`; } }}
+                      onBlur={(e) => { if (!errors.phoneCode) { e.target.style.borderColor = ''; e.target.style.boxShadow = ''; } }}
                     >
                       <div className="flex items-center">
                         {countries.find(
@@ -541,11 +549,13 @@ const SignUpForm = () => {
                           handleFieldChange("mobileNumber", e.target.value);
                         },
                       })}
-                      className={`block w-full px-3 py-1 sm:py-2 text-xs sm:text-sm border-2 rounded-lg transition-all duration-300 bg-gray-50/50 focus:ring-4 focus:ring-blue-500/20 focus:bg-white ${
+                      className={`block w-full px-3 py-1 sm:py-2 text-xs sm:text-sm border-2 rounded-lg transition-all duration-300 bg-gray-50/50 focus:bg-white ${
                         errors.mobileNumber
                           ? "border-red-400 focus:border-red-500"
-                          : "border-gray-200 focus:border-blue-500"
+                          : "border-gray-200"
                       }`}
+                      onFocus={(e) => { if (!errors.mobileNumber) { e.target.style.borderColor = PRIMARY_COLOR; e.target.style.boxShadow = `0 0 0 4px ${PRIMARY_COLOR}33`; } }}
+                      onBlur={(e) => { if (!errors.mobileNumber) { e.target.style.borderColor = ''; e.target.style.boxShadow = ''; } }}
                       placeholder="Phone number"
                     />
                   </div>
@@ -571,11 +581,13 @@ const SignUpForm = () => {
                         setShowWhatsappDropdown(!showWhatsappDropdown);
                         if (showWhatsappDropdown) setWhatsappSearchTerm(""); // Clear search when closing
                       }}
-                      className={`flex items-center justify-between cursor-pointer w-full px-3 py-1 sm:py-2 bg-gray-50/50 border-2 rounded-lg focus:ring-4 focus:ring-blue-500/20 text-gray-700 text-xs sm:text-sm hover:bg-gray-100 transition-all duration-300 ${
+                      className={`flex items-center justify-between cursor-pointer w-full px-3 py-1 sm:py-2 bg-gray-50/50 border-2 rounded-lg text-gray-700 text-xs sm:text-sm hover:bg-gray-100 transition-all duration-300 ${
                         errors.whatsappCode
                           ? "border-red-400 focus:border-red-500"
-                          : "border-gray-200 focus:border-blue-500"
+                          : "border-gray-200"
                       }`}
+                      onFocus={(e) => { if (!errors.whatsappCode) { e.target.style.borderColor = PRIMARY_COLOR; e.target.style.boxShadow = `0 0 0 4px ${PRIMARY_COLOR}33`; } }}
+                      onBlur={(e) => { if (!errors.whatsappCode) { e.target.style.borderColor = ''; e.target.style.boxShadow = ''; } }}
                     >
                       <div className="flex items-center">
                         {countries.find(
@@ -663,11 +675,13 @@ const SignUpForm = () => {
                           handleFieldChange("whatsapp", e.target.value);
                         },
                       })}
-                      className={`block w-full px-3 py-1 sm:py-2 text-xs sm:text-sm border-2 rounded-lg transition-all duration-300 bg-gray-50/50 focus:ring-4 focus:ring-blue-500/20 focus:bg-white ${
+                      className={`block w-full px-3 py-1 sm:py-2 text-xs sm:text-sm border-2 rounded-lg transition-all duration-300 bg-gray-50/50 focus:bg-white ${
                         errors.whatsapp
                           ? "border-red-400 focus:border-red-500"
-                          : "border-gray-200 focus:border-blue-500"
+                          : "border-gray-200"
                       }`}
+                      onFocus={(e) => { if (!errors.whatsapp) { e.target.style.borderColor = PRIMARY_COLOR; e.target.style.boxShadow = `0 0 0 4px ${PRIMARY_COLOR}33`; } }}
+                      onBlur={(e) => { if (!errors.whatsapp) { e.target.style.borderColor = ''; e.target.style.boxShadow = ''; } }}
                       placeholder="WhatsApp number"
                     />
                   </div>
@@ -691,7 +705,10 @@ const SignUpForm = () => {
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <FontAwesomeIcon
                           icon={faLock}
-                          className="text-gray-400 group-focus-within:text-blue-500 transition-colors text-sm"
+                          style={{ color: 'inherit' }}
+                          className="text-gray-400 transition-colors text-sm"
+                          onFocus={(e) => e.target.style.color = PRIMARY_COLOR}
+                          onBlur={(e) => e.target.style.color = ''}
                         />
                       </div>
                       <input
@@ -701,11 +718,13 @@ const SignUpForm = () => {
                             handleFieldChange("password", e.target.value);
                           },
                         })}
-                        className={`block w-full pl-10 pr-10 py-1 sm:py-2 border-2 rounded-lg transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:bg-white text-xs sm:text-sm ${
+                        className={`block w-full pl-10 pr-10 py-1 sm:py-2 border-2 rounded-lg transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:bg-white text-xs sm:text-sm ${
                           errors.password
                             ? "border-red-400 focus:border-red-500"
-                            : "border-gray-200 focus:border-blue-500"
+                            : "border-gray-200"
                         }`}
+                        onFocus={(e) => { if (!errors.password) { e.target.style.borderColor = PRIMARY_COLOR; e.target.style.boxShadow = `0 0 0 4px ${PRIMARY_COLOR}33`; } }}
+                        onBlur={(e) => { if (!errors.password) { e.target.style.borderColor = ''; e.target.style.boxShadow = ''; } }}
                         placeholder="Create password"
                       />
                       <button
@@ -715,7 +734,10 @@ const SignUpForm = () => {
                       >
                         <FontAwesomeIcon
                           icon={showPassword ? faEye : faEyeSlash}
-                          className="text-gray-400 hover:text-blue-600 transition-colors text-sm"
+                          className="text-gray-400 transition-colors text-sm"
+                          style={{ color: 'inherit' }}
+                          onMouseEnter={(e) => e.target.style.color = PRIMARY_COLOR}
+                          onMouseLeave={(e) => e.target.style.color = ''}
                         />
                       </button>
                     </div>
@@ -735,7 +757,10 @@ const SignUpForm = () => {
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <FontAwesomeIcon
                           icon={faLock}
-                          className="text-gray-400 group-focus-within:text-blue-500 transition-colors text-sm"
+                          style={{ color: 'inherit' }}
+                          className="text-gray-400 transition-colors text-sm"
+                          onFocus={(e) => e.target.style.color = PRIMARY_COLOR}
+                          onBlur={(e) => e.target.style.color = ''}
                         />
                       </div>
                       <input
@@ -745,11 +770,13 @@ const SignUpForm = () => {
                             handleFieldChange("confirmPassword", e.target.value);
                           },
                         })}
-                        className={`block w-full pl-10 pr-10 py-1 sm:py-2 border-2 rounded-lg transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:ring-4 focus:ring-blue-500/20 focus:bg-white text-xs sm:text-sm ${
+                        className={`block w-full pl-10 pr-10 py-1 sm:py-2 border-2 rounded-lg transition-all duration-300 bg-gray-50/50 text-gray-900 placeholder-gray-500 focus:bg-white text-xs sm:text-sm ${
                           errors.confirmPassword
                             ? "border-red-400 focus:border-red-500"
-                            : "border-gray-200 focus:border-blue-500"
+                            : "border-gray-200"
                         }`}
+                        onFocus={(e) => { if (!errors.confirmPassword) { e.target.style.borderColor = PRIMARY_COLOR; e.target.style.boxShadow = `0 0 0 4px ${PRIMARY_COLOR}33`; } }}
+                        onBlur={(e) => { if (!errors.confirmPassword) { e.target.style.borderColor = ''; e.target.style.boxShadow = ''; } }}
                         placeholder="Confirm password"
                       />
                       <button
@@ -759,7 +786,10 @@ const SignUpForm = () => {
                       >
                         <FontAwesomeIcon
                           icon={showConfirmPassword ? faEye : faEyeSlash}
-                          className="text-gray-400 hover:text-blue-600 transition-colors text-sm"
+                          className="text-gray-400 transition-colors text-sm"
+                          style={{ color: 'inherit' }}
+                          onMouseEnter={(e) => e.target.style.color = PRIMARY_COLOR}
+                          onMouseLeave={(e) => e.target.style.color = ''}
                         />
                       </button>
                     </div>
@@ -779,7 +809,10 @@ const SignUpForm = () => {
                   name="terms"
                   type="checkbox"
                   required
-                  className="h-5 w-5 cursor-pointer text-blue-600 focus:ring-4 focus:ring-blue-500/20 border-2 border-gray-300 rounded-lg transition-all duration-200"
+                  className="h-5 w-5 cursor-pointer border-2 border-gray-300 rounded-lg transition-all duration-200"
+                  style={{ accentColor: PRIMARY_COLOR }}
+                  onFocus={(e) => { e.target.style.boxShadow = `0 0 0 4px ${PRIMARY_COLOR}33`; }}
+                  onBlur={(e) => { e.target.style.boxShadow = ''; }}
                 />
               </div>
               <label
@@ -789,14 +822,20 @@ const SignUpForm = () => {
                 I agree to the{" "}
                 <a
                   href="#"
-                  className="text-blue-600 hover:text-blue-800 font-semibold transition-colors hover:underline"
+                  className="font-semibold transition-colors hover:underline"
+                  style={{ color: PRIMARY_COLOR }}
+                  onMouseEnter={(e) => e.target.style.color = PRIMARY_COLOR_DARK}
+                  onMouseLeave={(e) => e.target.style.color = PRIMARY_COLOR}
                 >
                   Terms of Service
                 </a>{" "}
                 and{" "}
                 <a
                   href="#"
-                  className="text-blue-600 hover:text-blue-800 font-semibold transition-colors hover:underline"
+                  className="font-semibold transition-colors hover:underline"
+                  style={{ color: PRIMARY_COLOR }}
+                  onMouseEnter={(e) => e.target.style.color = PRIMARY_COLOR_DARK}
+                  onMouseLeave={(e) => e.target.style.color = PRIMARY_COLOR}
                 >
                   Privacy Policy
                 </a>
@@ -805,7 +844,12 @@ const SignUpForm = () => {
                 {/* Create Account Button */}
                 <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-1 sm:py-2 px-6 rounded-lg font-semibold text-xs sm:text-sm focus:ring-4 focus:ring-blue-500/30 cursor-pointer transition-all duration-300 flex items-center justify-center disabled:opacity-70 shadow-lg hover:shadow-xl"
+                  className="w-full text-white py-1 sm:py-2 px-6 rounded-lg font-semibold text-xs sm:text-sm cursor-pointer transition-all duration-300 flex items-center justify-center disabled:opacity-70 shadow-lg hover:shadow-xl"
+                  style={{ background: `linear-gradient(to right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})` }}
+                  onMouseEnter={(e) => e.target.style.background = `linear-gradient(to right, ${PRIMARY_COLOR_DARK}, ${PRIMARY_COLOR_DARK})`}
+                  onMouseLeave={(e) => e.target.style.background = `linear-gradient(to right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})`}
+                  onFocus={(e) => e.target.style.boxShadow = `0 0 0 4px ${PRIMARY_COLOR}33`}
+                  onBlur={(e) => e.target.style.boxShadow = ''}
                   disabled={isLoading || isSubmitting}
                 >
               {isLoading || isSubmitting ? (
@@ -855,7 +899,8 @@ const SignUpForm = () => {
                 <div className="flex justify-center items-center py-4 bg-gray-50/50 rounded-xl border-2 border-gray-200">
                   <FontAwesomeIcon
                     icon={faSpinner}
-                    className="animate-spin text-blue-600 mr-3"
+                    className="animate-spin mr-3"
+                    style={{ color: PRIMARY_COLOR }}
                   />
                   <span className="text-gray-700 font-medium">
                     Signing up with Google...
@@ -877,7 +922,10 @@ const SignUpForm = () => {
                   Already have an account?{" "}
                   <Link
                     to="/login"
-                    className="text-blue-600 hover:text-blue-800 font-semibold transition-colors hover:underline"
+                    className="font-semibold transition-colors hover:underline"
+                  style={{ color: PRIMARY_COLOR }}
+                  onMouseEnter={(e) => e.target.style.color = PRIMARY_COLOR_DARK}
+                  onMouseLeave={(e) => e.target.style.color = PRIMARY_COLOR}
                   >
                     Sign in here
                   </Link>

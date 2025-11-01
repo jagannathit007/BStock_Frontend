@@ -21,6 +21,7 @@ import { IoTimeOutline, IoPeopleOutline } from "react-icons/io5";
 import { RiAuctionLine } from "react-icons/ri";
 import { convertPrice } from "../../utils/currencyUtils";
 import Countdown from "react-countdown";
+import { PRIMARY_COLOR, PRIMARY_COLOR_LIGHT, PRIMARY_COLOR_DARK } from "../../utils/colors";
 
 const BiddingProductDetails = ({ product, onBack }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -114,7 +115,7 @@ const BiddingProductDetails = ({ product, onBack }) => {
                     <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium shadow-lg">
                       In Stock
                     </span>
-                    <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium shadow-lg">
+                    <span className="text-white px-3 py-1 rounded-full text-sm font-medium shadow-lg" style={{ backgroundColor: PRIMARY_COLOR }}>
                       Live Auction
                     </span>
                   </div>
@@ -176,9 +177,10 @@ const BiddingProductDetails = ({ product, onBack }) => {
                         alt={`Thumbnail ${index + 1}`}
                         className={`w-16 h-16 lg:w-20 lg:h-20 object-contain bg-white rounded-lg border-2 transition-all duration-300 hover:scale-110 hover:shadow-lg ${
                           currentImageIndex === index
-                            ? "border-blue-500 scale-110 shadow-md"
+                            ? "scale-110 shadow-md"
                             : "border-gray-200 hover:border-gray-300"
                         }`}
+                        style={index === currentImageIndex ? { borderColor: PRIMARY_COLOR } : {}}
                       />
                     </div>
                   ))}
@@ -278,8 +280,8 @@ const BiddingProductDetails = ({ product, onBack }) => {
                 <div className="grid grid-cols-4 gap-3">
                   {/* Condition */}
                   <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2 bg-gray-50">
-                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                      <FaStar className="text-blue-600 text-sm" />
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: PRIMARY_COLOR_LIGHT }}>
+                      <FaStar className="text-sm" style={{ color: PRIMARY_COLOR }} />
                     </div>
                     <div>
                       <div className="text-[11px] text-gray-500">Condition</div>
@@ -337,7 +339,9 @@ const BiddingProductDetails = ({ product, onBack }) => {
                   </span>
                   <input
                     type="number"
-                    className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 sm:text-sm"
+                    onFocus={(e) => { e.target.style.borderColor = PRIMARY_COLOR; e.target.style.boxShadow = `0 0 0 2px ${PRIMARY_COLOR}40`; }}
+                    onBlur={(e) => { e.target.style.borderColor = ''; e.target.style.boxShadow = ''; }}
                     placeholder="1,246"
                     min="1246"
                   />
@@ -346,7 +350,10 @@ const BiddingProductDetails = ({ product, onBack }) => {
                   Minimum bid: $1,246
                 </p>
 
-                <button className="mt-4 w-full bg-[#0071E0] hover:bg-blue-600 text-white font-semibold py-2.5 rounded-3xl shadow flex items-center justify-center gap-2 transition-all">
+                <button className="mt-4 w-full text-white font-semibold py-2.5 rounded-3xl shadow flex items-center justify-center gap-2 transition-all"
+                  style={{ backgroundColor: PRIMARY_COLOR }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = PRIMARY_COLOR_DARK}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = PRIMARY_COLOR}>
                   <FaGavel className="text-sm" />
                   Place Bid
                 </button>

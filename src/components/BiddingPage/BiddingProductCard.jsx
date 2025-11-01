@@ -14,6 +14,7 @@ import iphoneImage from "../../assets/iphone.png";
 import Countdown from "react-countdown";
 import Swal from "sweetalert2";
 import { useSocket } from "../../context/SocketContext";
+import { PRIMARY_COLOR, PRIMARY_COLOR_DARK } from "../../utils/colors";
 
 // Reusable Spinner Component
 const Spinner = () => (
@@ -275,7 +276,7 @@ const BiddingProductCard = ({
             <div>
               <div className="text-[10px] text-gray-500 font-medium mb-0.5">Current Bid</div>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-xl font-bold text-blue-600">
+                <span className="text-xl font-bold" style={{ color: PRIMARY_COLOR }}>
                   {renderBidValue ? renderBidValue(product.currentBid) : product.currentBid}
                 </span>
                 {product.unitPrice && (
@@ -364,7 +365,9 @@ const BiddingProductCard = ({
                   <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-medium">$</span>
                   <input
                     type="text"
-                    className="w-full pl-6 pr-2 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-50 disabled:cursor-not-allowed transition-all"
+                    className="w-full pl-6 pr-2 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-1 bg-white disabled:bg-gray-50 disabled:cursor-not-allowed transition-all"
+                    onFocus={(e) => { e.target.style.borderColor = PRIMARY_COLOR; e.target.style.boxShadow = `0 0 0 1px ${PRIMARY_COLOR}`; }}
+                    onBlur={(e) => { e.target.style.borderColor = ''; e.target.style.boxShadow = ''; }}
                     placeholder="Bid amount"
                     value={myMaxBidInput}
                     disabled={auctionEnded || isSubmittingBid || product.status === 'pending'}
@@ -382,8 +385,12 @@ const BiddingProductCard = ({
                       ? "bg-gray-200 text-gray-500 cursor-not-allowed"
                       : product.isLeading || isCurrentUserBidder
                       ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer"
-                      : "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
+                      : "text-white cursor-pointer"
                   }`}
+                  style={!auctionEnded && !isCurrentUserBidder && !isSubmittingBid && product.status !== 'pending' && !product.isLeading && !isCurrentUserBidder 
+                    ? { backgroundColor: PRIMARY_COLOR } : {}}
+                  onMouseEnter={(e) => { if (!auctionEnded && !isCurrentUserBidder && !isSubmittingBid && product.status !== 'pending' && !product.isLeading && !isCurrentUserBidder) e.target.style.backgroundColor = PRIMARY_COLOR_DARK; }}
+                  onMouseLeave={(e) => { if (!auctionEnded && !isCurrentUserBidder && !isSubmittingBid && product.status !== 'pending' && !product.isLeading && !isCurrentUserBidder) e.target.style.backgroundColor = PRIMARY_COLOR; }}
                   onClick={handleBidButtonClick}
                   disabled={auctionEnded || isCurrentUserBidder || isSubmittingBid || product.status === 'pending'}
                   title={product.status === 'pending' ? 'Bid not yet started' : ''}
@@ -561,7 +568,9 @@ const BiddingProductCard = ({
                 <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-medium">$</span>
                 <input
                   type="text"
-                  className="w-full pl-6 pr-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                  className="w-full pl-6 pr-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 bg-white disabled:bg-gray-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                  onFocus={(e) => { e.target.style.borderColor = PRIMARY_COLOR; e.target.style.boxShadow = `0 0 0 2px ${PRIMARY_COLOR}40`; }}
+                  onBlur={(e) => { e.target.style.borderColor = ''; e.target.style.boxShadow = ''; }}
                   placeholder="0.00"
                   value={myMaxBidInput}
                   disabled={auctionEnded || isSubmittingBid}
@@ -585,9 +594,12 @@ const BiddingProductCard = ({
                     : isSubmittingBid
                     ? "bg-blue-200 text-blue-700 cursor-not-allowed"
                     : product.isLeading
-                    ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 cursor-pointer"
-                    : "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 cursor-pointer"
+                    ? "text-white cursor-pointer"
+                    : "text-white cursor-pointer"
                 }`}
+                style={{ background: product.isLeading ? `linear-gradient(to right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})` : `linear-gradient(to right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})` }}
+                onMouseEnter={(e) => { if (!auctionEnded && !isCurrentUserBidder && !isSubmittingBid) e.target.style.background = `linear-gradient(to right, ${PRIMARY_COLOR_DARK}, ${PRIMARY_COLOR_DARK})`; }}
+                onMouseLeave={(e) => { if (!auctionEnded && !isCurrentUserBidder && !isSubmittingBid) e.target.style.background = `linear-gradient(to right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})`; }}
                 onClick={handleBidButtonClick}
                 disabled={auctionEnded || isCurrentUserBidder || isSubmittingBid}
               >
@@ -886,8 +898,11 @@ const BiddingProductCard = ({
                 ? "bg-gray-400 cursor-not-allowed"
                 : isLeading
                 ? "bg-green-600 text-white hover:bg-green-700"
-                : "bg-[#0071E0] text-white hover:bg-blue-600"
+                : "text-white"
             }`}
+            style={!isSubmittingBid && !isLeading ? { backgroundColor: PRIMARY_COLOR } : {}}
+            onMouseEnter={(e) => { if (!isSubmittingBid && !isLeading) e.target.style.backgroundColor = PRIMARY_COLOR_DARK; }}
+            onMouseLeave={(e) => { if (!isSubmittingBid && !isLeading) e.target.style.backgroundColor = PRIMARY_COLOR; }}
             onClick={handleBidButtonClick}
             disabled={isSubmittingBid}
           >

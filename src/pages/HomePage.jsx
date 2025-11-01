@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronDown, faChevronUp, faTruck, faRecycle } from "@fortawesome/free-solid-svg-icons";
+import { faChevronDown, faChevronUp, faTruck } from "@fortawesome/free-solid-svg-icons";
+import { PRIMARY_COLOR, PRIMARY_COLOR_LIGHT, PRIMARY_COLOR_LIGHTER, PRIMARY_COLOR_DARK } from "../utils/colors";
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -192,7 +193,7 @@ const HomePage = () => {
         
         {/* Subtle background elements */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" style={{ backgroundColor: PRIMARY_COLOR_LIGHT }}></div>
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
         </div>
 
@@ -206,7 +207,7 @@ const HomePage = () => {
               Europe's trusted Distributor since 2014
             </p>
             <h1 className="text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold text-gray-900 mb-8 leading-none tracking-tight">
-              <span className="block lg:inline">Premium <span className="text-blue-600">Wholesale</span></span>
+              <span className="block lg:inline">Premium <span style={{ color: PRIMARY_COLOR }}>Wholesale</span></span>
               <span className="hidden lg:inline"> </span>
               <br className="block lg:hidden" />
               <span className="block lg:inline">iPhones</span>
@@ -218,7 +219,10 @@ const HomePage = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={handleNavigateToReadyStock}
-                className="bg-blue-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+                className="text-white px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+                style={{ backgroundColor: PRIMARY_COLOR }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = PRIMARY_COLOR_DARK}
+                onMouseLeave={(e) => e.target.style.backgroundColor = PRIMARY_COLOR}
               >
                 Shop Ready Stock
               </button>
@@ -322,17 +326,34 @@ const HomePage = () => {
                   }}
                 >
                   {/* Background Gradient */}
-                  <div className={`absolute inset-0 bg-gradient-to-br ${category.bgGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
+                  {category.title === "iPhones" ? (
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ background: `linear-gradient(to bottom right, ${PRIMARY_COLOR_LIGHTER}, ${PRIMARY_COLOR_LIGHT})` }}></div>
+                  ) : (
+                    <div className={`absolute inset-0 bg-gradient-to-br ${category.bgGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
+                  )}
                   
                   <div className="relative p-8">
                     {/* Icon Container with Enhanced Design */}
                     <div className="relative mb-6">
-                      <div className={`absolute inset-0 bg-gradient-to-br ${category.color} rounded-3xl blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500`}></div>
-                      <div className={`relative w-20 h-20 bg-gradient-to-br ${category.color} rounded-3xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-xl`}>
-                        <div className="w-12 h-12 text-white">
-                          <IconComponent />
-                        </div>
-                      </div>
+                      {category.title === "iPhones" ? (
+                        <>
+                          <div className="absolute inset-0 rounded-3xl blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500" style={{ background: `linear-gradient(to bottom right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})` }}></div>
+                          <div className="relative w-20 h-20 rounded-3xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-xl" style={{ background: `linear-gradient(to bottom right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})` }}>
+                            <div className="w-12 h-12 text-white">
+                              <IconComponent />
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className={`absolute inset-0 bg-gradient-to-br ${category.color} rounded-3xl blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500`}></div>
+                          <div className={`relative w-20 h-20 bg-gradient-to-br ${category.color} rounded-3xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-xl`}>
+                            <div className="w-12 h-12 text-white">
+                              <IconComponent />
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                     
                     {/* Content */}
@@ -386,7 +407,7 @@ const HomePage = () => {
                 }}
               >
                 <div className="flex items-center mb-6">
-                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mr-4">
+                  <div className="w-20 h-20 rounded-full flex items-center justify-center mr-4" style={{ background: `linear-gradient(to bottom right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})` }}>
                     <span className="text-white text-2xl font-bold">
                       {ceo.name.charAt(0)}
                     </span>
@@ -418,7 +439,7 @@ const HomePage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="text-center mb-16">
-            <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full mb-6 shadow-xl">
+            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full mb-6 shadow-xl" style={{ background: `linear-gradient(to bottom right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})` }}>
               <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -441,7 +462,7 @@ const HomePage = () => {
                 opacity: isVisible('delivery') ? 1 : 0
               }}
             >
-              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4">
+              <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style={{ background: `linear-gradient(to bottom right, ${PRIMARY_COLOR}, ${PRIMARY_COLOR_DARK})` }}>
                 <FontAwesomeIcon icon={faTruck} className="w-7 h-7 text-white" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">Express Shipping</h3>
@@ -492,19 +513,19 @@ const HomePage = () => {
           {/* Statistics */}
           <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div className="group">
-              <div className="text-4xl md:text-5xl font-bold text-blue-600 mb-2 group-hover:scale-110 transition-transform duration-300">60+</div>
+              <div className="text-4xl md:text-5xl font-bold mb-2 group-hover:scale-110 transition-transform duration-300" style={{ color: PRIMARY_COLOR }}>60+</div>
               <div className="text-gray-600 font-medium">Countries Served</div>
             </div>
             <div className="group">
-              <div className="text-4xl md:text-5xl font-bold text-blue-600 mb-2 group-hover:scale-110 transition-transform duration-300">24/7</div>
+              <div className="text-4xl md:text-5xl font-bold mb-2 group-hover:scale-110 transition-transform duration-300" style={{ color: PRIMARY_COLOR }}>24/7</div>
               <div className="text-gray-600 font-medium">Shipping Support</div>
             </div>
             <div className="group">
-              <div className="text-4xl md:text-5xl font-bold text-blue-600 mb-2 group-hover:scale-110 transition-transform duration-300">5-7</div>
+              <div className="text-4xl md:text-5xl font-bold mb-2 group-hover:scale-110 transition-transform duration-300" style={{ color: PRIMARY_COLOR }}>5-7</div>
               <div className="text-gray-600 font-medium">Days Average Delivery</div>
             </div>
             <div className="group">
-              <div className="text-4xl md:text-5xl font-bold text-blue-600 mb-2 group-hover:scale-110 transition-transform duration-300">100%</div>
+              <div className="text-4xl md:text-5xl font-bold mb-2 group-hover:scale-110 transition-transform duration-300" style={{ color: PRIMARY_COLOR }}>100%</div>
               <div className="text-gray-600 font-medium">Safe Delivery Rate</div>
             </div>
           </div>
@@ -570,12 +591,17 @@ const HomePage = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
-              className="flex-1 px-6 py-4 rounded-full text-gray-900 bg-gray-50 border border-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+              className="flex-1 px-6 py-4 rounded-full text-gray-900 bg-gray-50 border border-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent text-lg"
+              onFocus={(e) => e.target.style.boxShadow = `0 0 0 2px ${PRIMARY_COLOR}40`}
+              onBlur={(e) => e.target.style.boxShadow = 'none'}
               required
             />
             <button
               type="submit"
-              className="bg-blue-600 text-white px-8 py-4 rounded-full font-semibold hover:bg-blue-700 transition-all duration-300 whitespace-nowrap text-lg shadow-lg hover:shadow-xl"
+              className="text-white px-8 py-4 rounded-full font-semibold transition-all duration-300 whitespace-nowrap text-lg shadow-lg hover:shadow-xl"
+              style={{ backgroundColor: PRIMARY_COLOR }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = PRIMARY_COLOR_DARK}
+              onMouseLeave={(e) => e.target.style.backgroundColor = PRIMARY_COLOR}
             >
               Subscribe
             </button>
