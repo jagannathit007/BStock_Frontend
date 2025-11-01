@@ -319,50 +319,57 @@ const BiddingProductCard = ({
               )}
 
               {/* Next Min Bid input + Buttons in one row */}
-              <div className="flex items-center gap-2 mb-2">
-                <div className="relative flex-1 min-w-0">
-                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
-                  <input
-                    type="text"
-                    className="w-full pl-5 pr-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071E0] disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    placeholder={getMinBidPlaceholder()}
-                    value={myMaxBidInput}
-                    disabled={auctionEnded || isSubmittingBid || product.status === 'pending'}
+              <div className="flex flex-col gap-1 mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1 min-w-0">
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
+                    <input
+                      type="text"
+                      className="w-full pl-5 pr-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071E0] disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      placeholder={getMinBidPlaceholder()}
+                      value={myMaxBidInput}
+                      disabled={auctionEnded || isSubmittingBid || product.status === 'pending'}
+                      title={product.status === 'pending' ? 'Bid not yet started' : ''}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9.,]/g, "");
+                        setMyMaxBidInput(val);
+                      }}
+                    />
+                  </div>
+                  <button
+                    className={`py-2 px-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                      auctionEnded || isCurrentUserBidder || isSubmittingBid || product.status === 'pending'
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : product.isLeading
+                        ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer"
+                        : "bg-[#0071E0] hover:bg-blue-600 text-white cursor-pointer"
+                    }`}
+                    onClick={handleBidButtonClick}
+                    disabled={auctionEnded || isCurrentUserBidder || isSubmittingBid || product.status === 'pending'}
                     title={product.status === 'pending' ? 'Bid not yet started' : ''}
-                    onClick={(e) => e.stopPropagation()}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/[^0-9.,]/g, "");
-                      setMyMaxBidInput(val);
-                    }}
-                  />
+                  >
+                    {isSubmittingBid ? (
+                      <>
+                        <Spinner />
+                        <span className="ml-1">Placing…</span>
+                      </>
+                    ) : (
+                      <>
+                        <FontAwesomeIcon
+                          icon={auctionEnded || isCurrentUserBidder ? faClock : (product.isLeading ? faCrown : faGavel)}
+                          className="mr-2"
+                        />
+                        {auctionEnded ? "Ended" : isCurrentUserBidder ? "Leading" : (product.isLeading ? "Leading" : "Bid")}
+                      </>
+                    )}
+                  </button>
                 </div>
-                <button
-                  className={`py-2 px-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                    auctionEnded || isCurrentUserBidder || isSubmittingBid || product.status === 'pending'
-                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                      : product.isLeading
-                      ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer"
-                      : "bg-[#0071E0] hover:bg-blue-600 text-white cursor-pointer"
-                  }`}
-                  onClick={handleBidButtonClick}
-                  disabled={auctionEnded || isCurrentUserBidder || isSubmittingBid || product.status === 'pending'}
-                  title={product.status === 'pending' ? 'Bid not yet started' : ''}
-                >
-                  {isSubmittingBid ? (
-                    <>
-                      <Spinner />
-                      <span className="ml-1">Placing…</span>
-                    </>
-                  ) : (
-                    <>
-                      <FontAwesomeIcon
-                        icon={auctionEnded || isCurrentUserBidder ? faClock : (product.isLeading ? faCrown : faGavel)}
-                        className="mr-2"
-                      />
-                      {auctionEnded ? "Ended" : isCurrentUserBidder ? "Leading" : (product.isLeading ? "Leading" : "Bid")}
-                    </>
-                  )}
-                </button>
+                {product.maxBidPrice != null && product.maxBidPrice !== undefined && (
+                  <span className="text-xs text-red-600 pl-1">
+                    Your max bid: ${typeof product.maxBidPrice === 'number' ? product.maxBidPrice.toFixed(2) : product.maxBidPrice}
+                  </span>
+                )}
               </div>
             </>
           )}
@@ -506,20 +513,27 @@ const BiddingProductCard = ({
 
             {/* NEXT MIN BID INPUT */}
             <td className="hidden lg:table-cell px-4 py-2.5 align-middle border-r border-gray-100">
-              <div className="relative max-w-[120px]">
-                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-medium">$</span>
-                <input
-                  type="text"
-                  className="w-full pl-5 pr-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-50 disabled:cursor-not-allowed transition-all"
-                  placeholder={getMinBidPlaceholder()}
-                  value={myMaxBidInput}
-                  disabled={auctionEnded || isSubmittingBid}
-                  onClick={(e) => e.stopPropagation()}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/[^0-9.,]/g, "");
-                    setMyMaxBidInput(val);
-                  }}
-                />
+              <div className="flex flex-col gap-1">
+                <div className="relative max-w-[120px]">
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-medium">$</span>
+                  <input
+                    type="text"
+                    className="w-full pl-5 pr-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-50 disabled:cursor-not-allowed transition-all"
+                    placeholder={getMinBidPlaceholder()}
+                    value={myMaxBidInput}
+                    disabled={auctionEnded || isSubmittingBid}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9.,]/g, "");
+                      setMyMaxBidInput(val);
+                    }}
+                  />
+                </div>
+                {product.maxBidPrice != null && product.maxBidPrice !== undefined && (
+                  <span className="text-xs text-red-600">
+                    Your max bid: ${typeof product.maxBidPrice === 'number' ? product.maxBidPrice.toFixed(2) : product.maxBidPrice}
+                  </span>
+                )}
               </div>
             </td>
 
@@ -663,22 +677,23 @@ const BiddingProductCard = ({
           </div>
 
           {/* Input + Buttons in one row */}
-          <div className="flex mt-auto w-full gap-2 items-center">
-            <div className="relative flex-1 min-w-0">
-              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
-              <input
-                type="text"
-                className="w-full pl-5 pr-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071E0] disabled:bg-gray-100 disabled:cursor-not-allowed"
-                placeholder={getMinBidPlaceholder()}
-                value={myMaxBidInput}
-                disabled={auctionEnded || isSubmittingBid}
-                onClick={(e) => e.stopPropagation()}
-                onChange={(e) => {
-                  const val = e.target.value.replace(/[^0-9.,]/g, "");
-                  setMyMaxBidInput(val);
-                }}
-              />
-            </div>
+          <div className="flex flex-col mt-auto w-full gap-1">
+            <div className="flex w-full gap-2 items-center">
+              <div className="relative flex-1 min-w-0">
+                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
+                <input
+                  type="text"
+                  className="w-full pl-5 pr-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0071E0] disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  placeholder={getMinBidPlaceholder()}
+                  value={myMaxBidInput}
+                  disabled={auctionEnded || isSubmittingBid}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9.,]/g, "");
+                    setMyMaxBidInput(val);
+                  }}
+                />
+              </div>
             <button
               className={`border ${
                 auctionEnded || isCurrentUserBidder
@@ -720,6 +735,12 @@ const BiddingProductCard = ({
                 </>
               )}
             </button>
+            </div>
+            {product.maxBidPrice != null && product.maxBidPrice !== undefined && (
+              <span className="text-xs text-red-600 pl-1">
+                Your max bid: ${typeof product.maxBidPrice === 'number' ? product.maxBidPrice.toFixed(2) : product.maxBidPrice}
+              </span>
+            )}
           </div>
         </div>
       </div>

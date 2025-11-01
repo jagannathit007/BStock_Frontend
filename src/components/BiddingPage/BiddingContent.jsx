@@ -90,8 +90,10 @@ const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
 
     // ----- NEW: Use maxBidPrice as My Max Bid -----
     const myMaxBidRaw = p.maxBidPrice;
-    const myMaxBid = myMaxBidRaw && !myMaxBidRaw.includes("-")
-      ? `$${Number(myMaxBidRaw).toFixed(2)}`
+    // Convert to string if it's not already, then check for "-"
+    const myMaxBidStr = myMaxBidRaw != null ? String(myMaxBidRaw) : "";
+    const myMaxBid = myMaxBidStr && !myMaxBidStr.includes("-") && !isNaN(Number(myMaxBidStr))
+      ? `$${Number(myMaxBidStr).toFixed(2)}`
       : "-";
 
     return {
@@ -115,6 +117,7 @@ const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
       highestBidder: p.highestBidder,
       minNextBid: p.minNextBid,
       currentPrice: p.currentPrice,
+      maxBidPrice: p.maxBidPrice,    // <-- Customer's max bid price for this product
 
       // This is the field the card will read
       myMaxBid,                     // <-- NOW USING maxBidPrice
