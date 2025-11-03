@@ -27,6 +27,7 @@ import HomePage from "./pages/HomePage";
 import Order from "./components/Order";
 import { AuthService } from "./services/auth/auth.services";
 import FlashDeals from "./components/ReadyStockPage/FlashDeals";
+import WishlistPage from "./pages/WishlistPage";
 
 // Route guard: redirects unauthenticated users to login with returnTo
 const ProtectedRoute = ({ children, isLoggedIn }) => {
@@ -164,6 +165,14 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
               element={
                 <ProtectedRoute isLoggedIn={isLoggedIn}>
                   <Layout><Order /></Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/wishlist"
+              element={
+                <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <Layout><WishlistPage /></Layout>
                 </ProtectedRoute>
               }
             />

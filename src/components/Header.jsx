@@ -5,7 +5,6 @@ import CartService from "../services/cart/cart.services";
 import { WalletService } from "../services/wallet/wallet.services";
 import { env } from "../utils/env";
 import NegotiationModal from "./negotiation/NegotiationModal";
-import WatchlistModal from "./WishListPage/WatchlistModal";
 import WalletModal from "./WalletTransactionsPage/WalletTransactions";
 import { convertPrice } from "../utils/currencyUtils";
 import { PRIMARY_COLOR, PRIMARY_COLOR_LIGHT, PRIMARY_COLOR_DARK } from "../utils/colors";
@@ -17,7 +16,6 @@ const Header = ({ onLogout }) => {
   const [cartItemCount, setCartItemCount] = useState(0);
   const [walletBalance, setWalletBalance] = useState(0);
   const [isNegotiationModalOpen, setIsNegotiationModalOpen] = useState(false);
-  const [isWishlistModalOpen, setIsWishlistModalOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const dropdownRef = useRef(null);
   const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
@@ -128,11 +126,11 @@ const Header = ({ onLogout }) => {
       navigate(`/login?returnTo=${returnTo}`);
       return;
     }
-    setIsWishlistModalOpen(true);
+    navigate('/wishlist');
   };
 
   const handleWatchlistNavigation = () => {
-    navigate("/profile?tab=watchlist");
+    navigate("/wishlist");
     setIsDropdownOpen(false);
   };
 
@@ -284,9 +282,9 @@ const Header = ({ onLogout }) => {
       const { type } = JSON.parse(raw);
       if (type === 'wallet') setIsWalletModalOpen(true);
       if (type === 'wishlist') {
-        // Double-check token before opening wishlist
+        // Double-check token before navigating to wishlist
         if (token) {
-          setIsWishlistModalOpen(true);
+          navigate('/wishlist');
         }
       }
       if (type === 'negotiations') {
@@ -377,7 +375,7 @@ const Header = ({ onLogout }) => {
                   style={{ '--hover-text': PRIMARY_COLOR, '--hover-bg': PRIMARY_COLOR_LIGHT } || {}}
                   onMouseEnter={(e) => { e.target.style.color = PRIMARY_COLOR; e.target.style.backgroundColor = PRIMARY_COLOR_LIGHT; }}
                   onMouseLeave={(e) => { e.target.style.color = ''; e.target.style.backgroundColor = ''; }}
-                  onClick={handleNegotiationClick}
+                  onClick={(e) => { e.currentTarget.style.color = ''; e.currentTarget.style.backgroundColor = ''; handleNegotiationClick(); }}
                   title="My Negotiations"
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -392,7 +390,7 @@ const Header = ({ onLogout }) => {
                   style={{ '--hover-text': PRIMARY_COLOR, '--hover-bg': PRIMARY_COLOR_LIGHT } || {}}
                   onMouseEnter={(e) => { e.target.style.color = PRIMARY_COLOR; e.target.style.backgroundColor = PRIMARY_COLOR_LIGHT; }}
                   onMouseLeave={(e) => { e.target.style.color = ''; e.target.style.backgroundColor = ''; }}
-                  onClick={handleWishlistClick}
+                  onClick={(e) => { e.currentTarget.style.color = ''; e.currentTarget.style.backgroundColor = ''; handleWishlistClick(); }}
                   title="My Wishlist"
                 >
                   <svg
@@ -404,7 +402,7 @@ const Header = ({ onLogout }) => {
                   >
                     <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
                   </svg>
-                  <span className="hidden lg:inline-block text-sm font-medium">Wishlist</span>
+                  <span className="hidden lg:inline-block text-sm font-medium">Watchlist</span>
                 </button>
 
                 {/* Cart */}
@@ -413,7 +411,7 @@ const Header = ({ onLogout }) => {
                   style={{ '--hover-text': PRIMARY_COLOR, '--hover-bg': PRIMARY_COLOR_LIGHT } || {}}
                   onMouseEnter={(e) => { e.target.style.color = PRIMARY_COLOR; e.target.style.backgroundColor = PRIMARY_COLOR_LIGHT; }}
                   onMouseLeave={(e) => { e.target.style.color = ''; e.target.style.backgroundColor = ''; }}
-                  onClick={handleCartClick}
+                  onClick={(e) => { e.currentTarget.style.color = ''; e.currentTarget.style.backgroundColor = ''; handleCartClick(); }}
                   title="My Cart"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shopping-cart-icon lucide-shopping-cart"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
@@ -568,12 +566,6 @@ const Header = ({ onLogout }) => {
         isOpen={isNegotiationModalOpen}
         onClose={() => setIsNegotiationModalOpen(false)}
         userType="customer"
-      />
-
-      {/* Watchlist Modal */}
-      <WatchlistModal
-        isOpen={isWishlistModalOpen}
-        onClose={() => setIsWishlistModalOpen(false)}
       />
 
       {/* Wallet Modal */}

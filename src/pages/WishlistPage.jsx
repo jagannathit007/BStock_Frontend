@@ -5,7 +5,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChevronLeft,
   faChevronRight,
-  faHeart,
   faBell,
   faShoppingCart,
   faArrowLeft,
@@ -16,7 +15,7 @@ import iphoneImage from "../assets/iphone.png";
 import Swal from "sweetalert2";
 import { convertPrice } from "../utils/currencyUtils";
 
-const WatchlistPage = () => {
+const WishlistPage = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -73,12 +72,21 @@ const WatchlistPage = () => {
     };
   };
 
-  const fetchWatchlist = async (page) => {
+  const fetchWishlist = async (page) => {
+    // Check token before making API call
+    const token = localStorage.getItem('token');
+    if (!token) {
+      const hashPath = window.location.hash?.slice(1) || '/home';
+      const returnTo = encodeURIComponent(hashPath);
+      navigate(`/login?returnTo=${returnTo}`);
+      return;
+    }
+    
     setIsLoading(true);
     try {
       const data = await ProductService.getWishlist(page, itemsPerPage);
-      const watchlistDocs = data.docs || [];
-      const allProducts = watchlistDocs.flatMap((doc) => doc.productIds || []);
+      const wishlistDocs = data.docs || [];
+      const allProducts = wishlistDocs.flatMap((doc) => doc.productIds || []);
       const populatedProducts = await Promise.all(
         allProducts.map((p) => ProductService.getProductById(p._id))
       );
@@ -86,7 +94,7 @@ const WatchlistPage = () => {
       setProducts(mapped);
       setTotalProductsCount(data.totalDocs ? allProducts.length : 0);
     } catch (e) {
-      console.error("Fetch watchlist error:", e);
+      console.error("Fetch wishlist error:", e);
       setProducts([]);
       setTotalProductsCount(0);
     } finally {
@@ -95,38 +103,59 @@ const WatchlistPage = () => {
   };
 
   useEffect(() => {
+    // Check for token before making API calls
+    const token = localStorage.getItem('token');
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    
+    if (!token || !isLoggedIn) {
+      // Redirect to login
+      const hashPath = window.location.hash?.slice(1) || '/home';
+      const returnTo = encodeURIComponent(hashPath);
+      navigate(`/login?returnTo=${returnTo}`);
+      return;
+    }
+    
     setCurrentPage(1);
-    fetchWatchlist(1);
-  }, []);
+    fetchWishlist(1);
+  }, [navigate]);
 
   useEffect(() => {
     if (currentPage > 1) {
-      fetchWatchlist(currentPage);
+      fetchWishlist(currentPage);
     }
   }, [currentPage]);
 
-  // Listen for watchlist updates from other components
+  // Listen for wishlist updates from other components
   useEffect(() => {
-    const handleWatchlistUpdate = (event) => {
-      // If a product was removed from watchlist, remove it from the current view
+    const handleWishlistUpdate = (event) => {
+      // If a product was removed from wishlist, remove it from the current view
       if (event.detail && !event.detail.isWishlisted) {
         setProducts((prev) =>
           prev.filter((p) => p.id !== event.detail.productId)
         );
         setTotalProductsCount((prev) => Math.max(0, prev - 1));
       } else {
-        // If a product was added to watchlist, refresh the current page
-        fetchWatchlist(currentPage);
+        // If a product was added to wishlist, refresh the current page
+        fetchWishlist(currentPage);
       }
     };
 
-    window.addEventListener("wishlistUpdated", handleWatchlistUpdate);
+    window.addEventListener("wishlistUpdated", handleWishlistUpdate);
     return () => {
-      window.removeEventListener("wishlistUpdated", handleWatchlistUpdate);
+      window.removeEventListener("wishlistUpdated", handleWishlistUpdate);
     };
   }, [currentPage]);
 
-  const handleWatchlistChange = async (productId, newStatus) => {
+  const handleWishlistChange = async (productId, newStatus) => {
+    // Check token before making API call
+    const token = localStorage.getItem('token');
+    if (!token) {
+      const hashPath = window.location.hash?.slice(1) || '/home';
+      const returnTo = encodeURIComponent(hashPath);
+      navigate(`/login?returnTo=${returnTo}`);
+      return;
+    }
+    
     if (!newStatus) {
       try {
         // Optimistic update - remove from UI immediately
@@ -138,9 +167,9 @@ const WatchlistPage = () => {
           wishlist: false,
         });
       } catch (error) {
-        console.error("Failed to remove from watchlist:", error);
+        console.error("Failed to remove from wishlist:", error);
         // Revert optimistic update on error
-        fetchWatchlist(currentPage);
+        fetchWishlist(currentPage);
       }
     }
   };
@@ -166,6 +195,13 @@ const WatchlistPage = () => {
     if (product.isOutOfStock || product.isExpired) return;
 
     try {
+      // Redirect unauthenticated users to login before any business checks
+      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      if (!isLoggedIn) {
+        const hashPath = window.location.hash?.slice(1) || '/home';
+        const returnTo = encodeURIComponent(hashPath);
+        return navigate(`/login?returnTo=${returnTo}`);
+      }
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       const { businessProfile } = user;
 
@@ -201,7 +237,9 @@ const WatchlistPage = () => {
 
       const customerId = user._id || "";
       if (!customerId) {
-        return navigate("/signin");
+        const hashPath = window.location.hash?.slice(1) || "/home";
+        const returnTo = encodeURIComponent(hashPath);
+        return navigate(`/login?returnTo=${returnTo}`);
       }
       setSelectedProduct(product);
       setIsAddToCartPopupOpen(true);
@@ -230,20 +268,28 @@ const WatchlistPage = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50">
-        <div>
+      <div className="min-h-screen p-4">
+        <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="flex items-center gap-4 mb-8">
-            <button
+            {/* <button
               onClick={() => navigate(-1)}
               className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all duration-200"
             >
               <FontAwesomeIcon icon={faArrowLeft} className="w-4 h-4" />
               Back
-            </button>
+            </button> */}
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center shadow-lg">
-                <FontAwesomeIcon icon={faHeart} className="w-6 h-6 text-red-500" />
+                <svg
+                  className="w-6 h-6 text-red-500"
+                  fill="currentColor"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
+                </svg>
               </div>
               <div>
                 <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">My Watchlist</h1>
@@ -260,18 +306,23 @@ const WatchlistPage = () => {
               <div className="flex items-center justify-center py-20">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                  <p className="text-gray-600">Loading watchlist...</p>
+                  <p className="text-gray-600">Loading wishlist...</p>
                 </div>
               </div>
             ) : products.length === 0 ? (
               <div className="flex items-center justify-center py-20">
                 <div className="text-center">
-                  <FontAwesomeIcon
-                    icon={faHeart}
-                    className="text-4xl text-gray-300 mb-4"
-                  />
+                  <svg
+                    className="w-10 h-10 text-gray-300 mb-4 mx-auto"
+                    fill="currentColor"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
+                  </svg>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    Your watchlist is empty
+                    Your wishlist is empty
                   </h3>
                   <p className="text-gray-500 mb-6">
                     Start adding products to keep track of them!
@@ -286,12 +337,12 @@ const WatchlistPage = () => {
               </div>
             ) : (
               <>
-                <div className="p-6">
+                <div className="p-4 sm:p-6 lg:p-8">
                   <div className="space-y-4">
                     {products.map((product) => (
                       <div
                         key={product.id}
-                        className="bg-white rounded-xl border border-gray-100 p-6 hover:shadow-lg hover:border-gray-200 transition-all duration-300 group"
+                        className="bg-white rounded-xl border border-gray-100 p-4 sm:p-6 hover:shadow-lg hover:border-gray-200 transition-all duration-300 group"
                       >
                         {/* Mobile Layout */}
                         <div className="block sm:hidden">
@@ -323,15 +374,23 @@ const WatchlistPage = () => {
                                 {convertPrice(product.price)}
                               </div>
                             </div>
-                        <button
-                          onClick={() =>
-                            handleWatchlistChange(product.id, false)
-                          }
-                          className="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-colors flex items-center justify-center"
-                          title="Remove from watchlist"
-                        >
-                          <FontAwesomeIcon icon={faHeart} className="text-xs" />
-                        </button>
+                            <button
+                              onClick={() =>
+                                handleWishlistChange(product.id, false)
+                              }
+                              className="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-colors flex items-center justify-center"
+                              title="Remove from wishlist"
+                            >
+                              <svg
+                                className="w-3 h-3"
+                                fill="currentColor"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                viewBox="0 0 24 24"
+                              >
+                                <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
+                              </svg>
+                            </button>
                           </div>
                           <div className="flex flex-wrap items-center gap-2 mb-4">
                             <div className="flex items-center gap-1 text-xs text-gray-500">
@@ -452,12 +511,20 @@ const WatchlistPage = () => {
                                     )}
                                     <button
                                       onClick={() =>
-                                        handleWatchlistChange(product.id, false)
+                                        handleWishlistChange(product.id, false)
                                       }
                                       className="w-10 h-10 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-colors flex items-center justify-center group/remove"
-                                      title="Remove from watchlist"
+                                      title="Remove from wishlist"
                                     >
-                                      <FontAwesomeIcon icon={faHeart} className="text-sm group-hover/remove:scale-110 transition-transform" />
+                                      <svg
+                                        className="w-4 h-4 group-hover/remove:scale-110 transition-transform"
+                                        fill="currentColor"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
+                                      </svg>
                                     </button>
                                   </div>
                                 </div>
@@ -472,7 +539,7 @@ const WatchlistPage = () => {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="border-t border-gray-200 bg-gray-50 px-6 py-4 flex items-center justify-between">
+                  <div className="border-t border-gray-200 bg-gray-50 px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
                     <button
                       onClick={() => paginate(currentPage - 1)}
                       disabled={currentPage === 1}
@@ -517,4 +584,4 @@ const WatchlistPage = () => {
   );
 };
 
-export default WatchlistPage;
+export default WishlistPage;
