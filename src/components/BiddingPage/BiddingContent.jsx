@@ -606,12 +606,6 @@ const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
                 onFilterChange={handleFilterChange}
                 appliedFilters={filters}
               />
-              <button
-                className="w-full bg-[#0071E0] text-white py-3 px-4 text-sm font-medium lg:hidden sticky bottom-0 cursor-pointer hover:bg-blue-800"
-                onClick={() => setShowMobileFilters(false)}
-              >
-                Apply Filters
-              </button>
             </div>
           </div>
         )}

@@ -16,6 +16,11 @@ const CheckoutPage = () => {
   const [shippingAddress, setShippingAddress] = useState({ address: "", city: "", postalCode: "", country: "" });
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
   const [currentOrder, setCurrentOrder] = useState(null);
+  const [costSummary, setCostSummary] = useState({
+    totalCartValue: 0,
+    totalAmount: 0,
+    appliedCharges: []
+  });
 
   const handleImageError = (id) => setImageErrors((p) => ({ ...p, [id]: true }));
 
@@ -45,14 +50,24 @@ const CheckoutPage = () => {
     return { id, skuFamilyId, subSkuFamilyId, name, description, price, stockCount, moq, imageUrl, quantity: Number(item.quantity) || Math.max(moq, 1) };
   };
 
-  const fetchCart = useCallback(async () => {
+  const fetchCart = useCallback(async (shippingCountry = null) => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await CartService.list(1, 50);
+      const response = await CartService.list(1, 50, shippingCountry);
       if (response.status === 200) {
         const items = (response.data?.docs || []).map(mapCartItemToUi);
         setCartItems(items);
+        // Store cost summary from response
+        if (response.data?.costSummary) {
+          setCostSummary(response.data.costSummary);
+        } else {
+          setCostSummary({
+            totalCartValue: 0,
+            totalAmount: 0,
+            appliedCharges: []
+          });
+        }
       } else {
         setError(response.message || "Failed to fetch cart");
       }
@@ -64,6 +79,13 @@ const CheckoutPage = () => {
   }, []);
 
   useEffect(() => { fetchCart(); }, [fetchCart]);
+  
+  // Recalculate costs when shipping country changes
+  useEffect(() => {
+    if (shippingAddress.country) {
+      fetchCart(shippingAddress.country);
+    }
+  }, [shippingAddress.country, fetchCart]);
 
   const handleAddressChange = (type, field, value) => {
     if (type === "billing") setBillingAddress((prev) => ({ ...prev, [field]: value }));
@@ -71,6 +93,7 @@ const CheckoutPage = () => {
   };
 
   const totalPrice = useMemo(() => cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0), [cartItems]);
+  const finalTotal = costSummary.totalAmount > 0 ? costSummary.totalAmount : totalPrice;
 
   const validateAddresses = () => {
     const req = ["address", "city", "postalCode", "country"];
@@ -83,7 +106,7 @@ const CheckoutPage = () => {
     if (cartItems.length === 0) { setError("Cart is empty"); return; }
     setCurrentOrder({
       orderId: null,
-      totalAmount: totalPrice,
+      totalAmount: finalTotal,
       orderNumber: null,
       cartItems: cartItems.map((it) => ({ 
         productId: it.id, 
@@ -185,8 +208,26 @@ const CheckoutPage = () => {
               <h3 className="text-base font-semibold text-gray-900 mb-3">Totals</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between"><span className="text-gray-600">Subtotal</span><span className="font-medium text-gray-900">{convertPrice(totalPrice)}</span></div>
-                <div className="flex justify-between"><span className="text-gray-600">Shipping</span><span className="font-medium text-gray-900">Free</span></div>
-                <div className="pt-3 mt-1 border-t border-gray-100 flex justify-between text-base"><span className="font-semibold text-gray-900">Total</span><span className="font-bold text-gray-900">{convertPrice(totalPrice)}</span></div>
+                
+                {/* Display applied charges */}
+                {costSummary.appliedCharges && costSummary.appliedCharges.length > 0 && (
+                  <>
+                    {costSummary.appliedCharges.map((charge, index) => (
+                      <div key={index} className="flex justify-between items-start">
+                        <span className="text-gray-600 capitalize">
+                          {charge.type === 'ExtraDelivery' ? 'Extra Delivery' : charge.type}
+                          {charge.costType === 'Percentage' && ` (${charge.value}%)`}
+                        </span>
+                        <span className="font-medium text-gray-900">{convertPrice(charge.calculatedAmount)}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
+                
+                <div className="pt-3 mt-1 border-t border-gray-100 flex justify-between text-base">
+                  <span className="font-semibold text-gray-900">Total</span>
+                  <span className="font-bold text-gray-900">{convertPrice(finalTotal)}</span>
+                </div>
               </div>
             </div>
             </div>

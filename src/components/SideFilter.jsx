@@ -5,8 +5,8 @@ import { ProductService } from "../services/products/products.services"; // Adju
 import { convertPrice } from "../utils/currencyUtils";
 
 const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
-  const [minPrice, setMinPrice] = useState(currentFilters.minPrice || "");
-  const [maxPrice, setMaxPrice] = useState(currentFilters.maxPrice || "");
+  const [minPrice, setMinPrice] = useState(currentFilters.minPrice);
+  const [maxPrice, setMaxPrice] = useState(currentFilters.maxPrice);
   const [minMoq, setMinMoq] = useState(currentFilters.minMoq || "");
   const [maxMoq, setMaxMoq] = useState(currentFilters.maxMoq || "");
   const [minStock, setMinStock] = useState(currentFilters.minStock || "");
@@ -75,8 +75,8 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
     
     // Only update if the filter values have actually changed
     if (currentFiltersStr !== prevFiltersStrRef.current) {
-      setMinPrice(currentFilters.minPrice || "");
-      setMaxPrice(currentFilters.maxPrice || "");
+      setMinPrice(currentFilters.minPrice);
+      setMaxPrice(currentFilters.maxPrice);
       setMinMoq(currentFilters.minMoq || "");
       setMaxMoq(currentFilters.maxMoq || "");
       setMinStock(currentFilters.minStock || "");
@@ -120,12 +120,30 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
     fetchFilters();
   }, []);
 
-  // Use useCallback to prevent unnecessary re-renders
-  const handleFilterUpdate = useCallback(() => {
+  // Apply filters function - called when user clicks "Apply Filters" button
+  const handleApplyFilters = () => {
     if (onFilterChange) {
+      // Apply constraints before applying filters
+      let finalMinPrice = minPrice;
+      let finalMaxPrice = maxPrice;
+      
+      // Ensure min <= max
+      if (finalMinPrice !== undefined && finalMaxPrice !== undefined && finalMinPrice > finalMaxPrice) {
+        finalMinPrice = finalMaxPrice;
+        setMinPrice(finalMinPrice);
+      }
+      if (finalMinPrice !== undefined && finalMinPrice < priceRange.min) {
+        finalMinPrice = priceRange.min;
+        setMinPrice(finalMinPrice);
+      }
+      if (finalMaxPrice !== undefined && finalMaxPrice > priceRange.max) {
+        finalMaxPrice = priceRange.max;
+        setMaxPrice(finalMaxPrice);
+      }
+      
       const newFilters = {
-        minPrice: minPrice || undefined,
-        maxPrice: maxPrice || undefined,
+        minPrice: finalMinPrice,
+        maxPrice: finalMaxPrice,
         minMoq: minMoq || undefined,
         maxMoq: maxMoq || undefined,
         minStock: minStock || undefined,
@@ -142,30 +160,12 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
         specifications: selectedSpecifications.length > 0 ? selectedSpecifications : undefined,
       };
       onFilterChange(newFilters);
+      // Close mobile filter overlay if open
+      if (onClose) {
+        onClose();
+      }
     }
-  }, [
-    minPrice,
-    maxPrice,
-    minMoq,
-    maxMoq,
-    minStock,
-    maxStock,
-    selectedSimTypes,
-    selectedStorage,
-    selectedGrades,
-    selectedColors,
-    selectedRams,
-    selectedBrands,
-    selectedCategories,
-    selectedModels,
-    selectedVariants,
-    selectedSpecifications,
-    onFilterChange,
-  ]);
-
-  useEffect(() => {
-    handleFilterUpdate();
-  }, [handleFilterUpdate]);
+  };
 
   const handleSimTypeChange = (simType) => {
     setSelectedSimTypes((prev) =>
@@ -265,8 +265,8 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
   const stockRange = filtersData?.stock || { min: 0, max: 100 };
 
   const clearAllFilters = () => {
-    setMinPrice("");
-    setMaxPrice("");
+    setMinPrice(undefined);
+    setMaxPrice(undefined);
     setMinMoq("");
     setMaxMoq("");
     setMinStock("");
@@ -284,15 +284,30 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
     setSpecificationSearch("");
   };
 
-  // Helper to handle min/max constraints
+  // Check if any filters are applied
+  const hasActiveFilters = () => {
+    if (!filtersData) return false;
+    const defaultMin = filtersData?.price?.min;
+    const defaultMax = filtersData?.price?.max;
+    return (
+      (minPrice !== undefined && minPrice !== defaultMin) || (maxPrice !== undefined && maxPrice !== defaultMax) ||
+      minMoq || maxMoq || minStock || maxStock ||
+      selectedSimTypes.length > 0 || selectedStorage.length > 0 ||
+      selectedGrades.length > 0 || selectedColors.length > 0 ||
+      selectedRams.length > 0 || selectedBrands.length > 0 ||
+      selectedCategories.length > 0 || selectedModels.length > 0 ||
+      selectedVariants.length > 0 || selectedSpecifications.length > 0
+    );
+  };
+
+  // Helper to handle min/max constraints - smooth version like bidding
   const handlePriceChange = (type, value) => {
-    const parsedValue = parseInt(value);
+    const numValue = parseFloat(value);
+    // Directly set the value for smooth dragging - no constraints during drag
     if (type === "min") {
-      const max = maxPrice ? parseInt(maxPrice) : priceRange.max;
-      setMinPrice(parsedValue <= max ? parsedValue.toString() : max.toString());
+      setMinPrice(numValue);
     } else {
-      const min = minPrice ? parseInt(minPrice) : priceRange.min;
-      setMaxPrice(parsedValue >= min ? parsedValue.toString() : min.toString());
+      setMaxPrice(numValue);
     }
   };
 
@@ -410,7 +425,7 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
   };
 
   return (
-    <aside className="bg-white h-fit sticky top-24 w-full lg:w-72 border-r border-gray-100">
+    <aside className="bg-white h-fit sticky top-24 w-full lg:w-72 border-r border-gray-100 flex flex-col max-h-[calc(100vh-6rem)]">
         <style>
           {`
             input[type="range"] {
@@ -494,18 +509,12 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
             }
           `}
         </style>
-        <div className="px-4 py-3 bg-white border-r border-gray-100">
+        <div className="px-4 py-3 bg-white border-r border-gray-100 flex-1 overflow-y-auto">
           <div className="flex justify-between items-center mb-3 pb-2.5 border-b border-gray-200">
             <h3 className="text-sm font-semibold text-gray-900 tracking-tight uppercase">
               Filters
             </h3>
             <div className="flex items-center gap-2">
-              <button
-                onClick={clearAllFilters}
-                className="text-xs text-gray-500 hover:text-gray-700 font-medium transition-colors hidden lg:block"
-              >
-                Clear All
-              </button>
               {onClose && (
                 <button className="text-gray-400 hover:text-gray-600 lg:hidden transition-colors duration-200" onClick={onClose}>
                   <FontAwesomeIcon icon={faTimes} className="h-5 w-5" />
@@ -546,7 +555,7 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
                 type="range"
                 min={priceRange.min}
                 max={priceRange.max}
-                value={minPrice || priceRange.min}
+                value={minPrice ?? priceRange.min ?? 0}
                 onChange={(e) => handlePriceChange("min", e.target.value)}
                 className="min-range"
                 style={{ zIndex: 2 }}
@@ -556,7 +565,7 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
                 type="range"
                 min={priceRange.min}
                 max={priceRange.max}
-                value={maxPrice || priceRange.max}
+                value={maxPrice ?? priceRange.max ?? 0}
                 onChange={(e) => handlePriceChange("max", e.target.value)}
                 className="max-range"
                 style={{ zIndex: 1 }}
@@ -566,13 +575,10 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
                 className="absolute h-1 bg-blue-600 rounded-full"
                 style={{
                   left: `${
-                    ((minPrice || priceRange.min) / priceRange.max) * 100
+                    ((minPrice ?? priceRange.min ?? 0) / (priceRange.max || 1)) * 100
                   }%`,
                   width: `${
-                    (((maxPrice || priceRange.max) -
-                      (minPrice || priceRange.min)) /
-                      priceRange.max) *
-                    100
+                    (((maxPrice ?? priceRange.max ?? 0) - (minPrice ?? priceRange.min ?? 0)) / (priceRange.max || 1)) * 100
                   }%`,
                   zIndex: 0,
                 }}
@@ -580,11 +586,11 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
             </div>
             <div className="flex justify-between items-center mt-2">
               <div className="text-xs text-gray-600 font-medium">
-                {convertPrice(parseFloat(minPrice || priceRange.min))}
+                {convertPrice(minPrice ?? priceRange.min ?? 0)}
               </div>
               <div className="text-xs text-gray-400">-</div>
               <div className="text-xs text-gray-600 font-medium">
-                {convertPrice(parseFloat(maxPrice || priceRange.max))}
+                {convertPrice(maxPrice ?? priceRange.max ?? 0)}
               </div>
             </div>
           </FilterSection>
@@ -907,6 +913,29 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
           )}
             </>
           )}
+      </div>
+      
+      {/* Apply Filters Button - Desktop & Mobile */}
+      <div className="border-t border-gray-200 bg-white p-4 sticky bottom-0 shadow-[0_-2px_8px_rgba(0,0,0,0.05)] z-10">
+        <div className="flex gap-3">
+          <button
+            onClick={clearAllFilters}
+            className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200 active:scale-95"
+          >
+            Clear All
+          </button>
+          <button
+            onClick={handleApplyFilters}
+            className={`flex-1 px-4 py-2.5 text-sm font-medium text-white rounded-lg transition-all duration-200 active:scale-95 ${
+              hasActiveFilters()
+                ? "bg-[#0071E0] hover:bg-[#005bb5] cursor-pointer shadow-sm hover:shadow-md"
+                : "bg-gray-300 cursor-not-allowed"
+            }`}
+            disabled={!hasActiveFilters()}
+          >
+            Apply Filters
+          </button>
+        </div>
       </div>
     </aside>
   );

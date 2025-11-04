@@ -65,30 +65,45 @@ const BiddingSideFilter = ({ onFilterChange, onClose, appliedFilters }) => {
       const current = new Set(prev[key]);
       if (current.has(value)) current.delete(value);
       else current.add(value);
-      const next = { ...prev, [key]: Array.from(current) };
-      onFilterChange?.({
-        grade: next.grades,
-        models: next.models,
-        capacities: next.capacities,
-        carriers: next.carriers,
-        minPrice: next.minPrice,
-        maxPrice: next.maxPrice,
-      });
-      return next;
+      return { ...prev, [key]: Array.from(current) };
     });
   };
 
   const clearAll = () => {
     const next = { grades: [], models: [], capacities: [], carriers: [], minPrice: facets.priceRange?.min, maxPrice: facets.priceRange?.max };
     setSelected(next);
-    onFilterChange?.({
-      grade: [],
-      models: [],
-      capacities: [],
-      carriers: [],
-      minPrice: next.minPrice,
-      maxPrice: next.maxPrice,
-    });
+  };
+
+  // Apply filters function - called when user clicks "Apply Filters" button
+  const handleApplyFilters = () => {
+    if (onFilterChange) {
+      onFilterChange({
+        grade: selected.grades,
+        models: selected.models,
+        capacities: selected.capacities,
+        carriers: selected.carriers,
+        minPrice: selected.minPrice,
+        maxPrice: selected.maxPrice,
+      });
+      // Close mobile filter overlay if open
+      if (onClose) {
+        onClose();
+      }
+    }
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = () => {
+    const defaultMin = facets.priceRange?.min;
+    const defaultMax = facets.priceRange?.max;
+    return (
+      selected.grades.length > 0 ||
+      selected.models.length > 0 ||
+      selected.capacities.length > 0 ||
+      selected.carriers.length > 0 ||
+      (selected.minPrice !== undefined && selected.minPrice !== defaultMin) ||
+      (selected.maxPrice !== undefined && selected.maxPrice !== defaultMax)
+    );
   };
 
 
@@ -148,22 +163,11 @@ const BiddingSideFilter = ({ onFilterChange, onClose, appliedFilters }) => {
 
   const handlePriceSliderChange = (type, value) => {
     const numValue = parseFloat(value);
-    setSelected((prev) => {
-      const next = { ...prev, [type]: numValue };
-      onFilterChange?.({
-        grade: next.grades,
-        models: next.models,
-        capacities: next.capacities,
-        carriers: next.carriers,
-        minPrice: next.minPrice,
-        maxPrice: next.maxPrice,
-      });
-      return next;
-    });
+    setSelected((prev) => ({ ...prev, [type]: numValue }));
   };
 
   return (
-    <aside className="bg-white h-fit sticky top-24 w-full lg:w-72 border-r border-gray-100">
+    <aside className="bg-white h-fit sticky top-24 w-full lg:w-72 border-r border-gray-100 flex flex-col max-h-[calc(100vh-6rem)]">
       <style>{`
         input[type="range"] {
           -webkit-appearance: none;
@@ -245,18 +249,12 @@ const BiddingSideFilter = ({ onFilterChange, onClose, appliedFilters }) => {
           border-color: #0071e3;
         }
       `}</style>
-      <div className="px-4 py-3 bg-white border-r border-gray-100">
-        <div className="flex justify-between items-center mb-3 pb-2.5 border-b border-gray-200">
+      <div className="px-4 py-3 bg-white border-r border-gray-100 flex-1 overflow-y-auto">
+          <div className="flex justify-between items-center mb-3 pb-2.5 border-b border-gray-200">
           <h3 className="text-sm font-semibold text-gray-900 tracking-tight uppercase">
             Filters
           </h3>
           <div className="flex items-center gap-2">
-            <button
-              onClick={clearAll}
-              className="text-xs text-gray-500 hover:text-gray-700 font-medium transition-colors hidden lg:block"
-            >
-              Clear All
-            </button>
             {onClose && (
               <button className="text-gray-400 hover:text-gray-600 lg:hidden transition-colors duration-200" onClick={onClose}>
                 <FontAwesomeIcon icon={faTimes} className="h-5 w-5" />
@@ -380,6 +378,29 @@ const BiddingSideFilter = ({ onFilterChange, onClose, appliedFilters }) => {
             {renderGroup('Carrier', 'carriers', facets.carriers)}
           </>
         )}
+      </div>
+      
+      {/* Apply Filters Button - Desktop & Mobile */}
+      <div className="border-t border-gray-200 bg-white p-4 sticky bottom-0 shadow-[0_-2px_8px_rgba(0,0,0,0.05)] z-10">
+        <div className="flex gap-3">
+          <button
+            onClick={clearAll}
+            className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200 active:scale-95"
+          >
+            Clear All
+          </button>
+          <button
+            onClick={handleApplyFilters}
+            className={`flex-1 px-4 py-2.5 text-sm font-medium text-white rounded-lg transition-all duration-200 active:scale-95 ${
+              hasActiveFilters()
+                ? "bg-[#0071E0] hover:bg-[#005bb5] cursor-pointer shadow-sm hover:shadow-md"
+                : "bg-gray-300 cursor-not-allowed"
+            }`}
+            disabled={!hasActiveFilters()}
+          >
+            Apply Filters
+          </button>
+        </div>
       </div>
     </aside>
   );

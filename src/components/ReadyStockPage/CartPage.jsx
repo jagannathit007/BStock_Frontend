@@ -22,6 +22,11 @@ const CartPage = () => {
   const [showCheckoutForm, setShowCheckoutForm] = useState(false);
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
   const [currentOrder, setCurrentOrder] = useState(null);
+  const [costSummary, setCostSummary] = useState({
+    totalCartValue: 0,
+    totalAmount: 0,
+    appliedCharges: []
+  });
   const [billingAddress, setBillingAddress] = useState({
     address: "",
     city: "",
@@ -96,6 +101,16 @@ const CartPage = () => {
       if (response.status === 200) {
         const items = (response.data?.docs || []).map(mapCartItemToUi);
         setCartItems(items);
+        // Store cost summary from response
+        if (response.data?.costSummary) {
+          setCostSummary(response.data.costSummary);
+        } else {
+          setCostSummary({
+            totalCartValue: 0,
+            totalAmount: 0,
+            appliedCharges: []
+          });
+        }
       } else {
         setError(response.message || "Failed to fetch cart");
       }
@@ -327,9 +342,12 @@ const CartPage = () => {
     }
   };
 
-  // Calculate total price
+  // Calculate total price (subtotal)
   const totalPrice = cartItems
     .reduce((sum, item) => sum + item.price * item.quantity, 0);
+  
+  // Use cost summary total amount if available, otherwise use calculated totalPrice
+  const finalTotal = costSummary.totalAmount > 0 ? costSummary.totalAmount : totalPrice;
 
   return (
     <main className="min-h-screen">
@@ -488,8 +506,27 @@ const CartPage = () => {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between"><span className="text-gray-600">Subtotal</span><span className="font-medium text-gray-900">{convertPrice(totalPrice)}</span></div>
-                <div className="flex justify-between"><span className="text-gray-600">Shipping</span><span className="font-medium text-gray-900">Free</span></div>
-                <div className="pt-3 mt-1 border-t border-gray-100 flex justify-between text-base"><span className="font-semibold text-gray-900">Total</span><span className="font-bold text-gray-900">{convertPrice(totalPrice)}</span></div>
+                <hr></hr>
+                <div>Logistics fee</div>
+                {/* Display applied charges */}
+                {costSummary.appliedCharges && costSummary.appliedCharges.length > 0 && (
+                  <>
+                    {costSummary.appliedCharges.map((charge, index) => (
+                      <div key={index} className="flex justify-between items-start">
+                        <span className="text-gray-600 capitalize">
+                          {charge.type === 'ExtraDelivery' ? 'Extra Delivery' : charge.type}
+                          {charge.costType === 'Percentage' && ` (${charge.value}%)`}
+                        </span>
+                        <span className="font-medium text-gray-900">{convertPrice(charge.calculatedAmount)}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
+                
+                <div className="pt-3 mt-1 border-t border-gray-100 flex justify-between text-base">
+                  <span className="font-semibold text-gray-900">Total</span>
+                  <span className="font-bold text-gray-900">{convertPrice(finalTotal)}</span>
+                </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 mt-6">
                 <button

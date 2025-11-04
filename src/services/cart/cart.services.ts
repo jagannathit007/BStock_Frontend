@@ -43,9 +43,13 @@ export class CartService {
     }
   }
 
-  static async list(page = 1, limit = 10): Promise<CartListResponse> {
+  static async list(page = 1, limit = 10, shippingCountry?: string | null): Promise<CartListResponse> {
     try {
-      const res = await api.post('/api/customer/cart/get', { page, limit });
+      const requestBody: any = { page, limit };
+      if (shippingCountry) {
+        requestBody.shippingCountry = shippingCountry;
+      }
+      const res = await api.post('/api/customer/cart/get', requestBody);
       return res.data;
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Failed to fetch cart';
