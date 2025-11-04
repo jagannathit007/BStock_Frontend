@@ -65,46 +65,40 @@ const BiddingSideFilter = ({ onFilterChange, onClose, appliedFilters }) => {
       const current = new Set(prev[key]);
       if (current.has(value)) current.delete(value);
       else current.add(value);
-      return { ...prev, [key]: Array.from(current) };
+      const updated = { ...prev, [key]: Array.from(current) };
+      
+      // Apply filter immediately
+      if (onFilterChange) {
+        onFilterChange({
+          grade: updated.grades,
+          models: updated.models,
+          capacities: updated.capacities,
+          carriers: updated.carriers,
+          minPrice: updated.minPrice,
+          maxPrice: updated.maxPrice,
+        });
+      }
+      
+      return updated;
     });
   };
 
   const clearAll = () => {
     const next = { grades: [], models: [], capacities: [], carriers: [], minPrice: facets.priceRange?.min, maxPrice: facets.priceRange?.max };
     setSelected(next);
-  };
-
-  // Apply filters function - called when user clicks "Apply Filters" button
-  const handleApplyFilters = () => {
+    // Apply cleared filters immediately
     if (onFilterChange) {
       onFilterChange({
-        grade: selected.grades,
-        models: selected.models,
-        capacities: selected.capacities,
-        carriers: selected.carriers,
-        minPrice: selected.minPrice,
-        maxPrice: selected.maxPrice,
+        grade: [],
+        models: [],
+        capacities: [],
+        carriers: [],
+        minPrice: facets.priceRange?.min,
+        maxPrice: facets.priceRange?.max,
       });
-      // Close mobile filter overlay if open
-      if (onClose) {
-        onClose();
-      }
     }
   };
 
-  // Check if any filters are active
-  const hasActiveFilters = () => {
-    const defaultMin = facets.priceRange?.min;
-    const defaultMax = facets.priceRange?.max;
-    return (
-      selected.grades.length > 0 ||
-      selected.models.length > 0 ||
-      selected.capacities.length > 0 ||
-      selected.carriers.length > 0 ||
-      (selected.minPrice !== undefined && selected.minPrice !== defaultMin) ||
-      (selected.maxPrice !== undefined && selected.maxPrice !== defaultMax)
-    );
-  };
 
 
   const renderGroup = (title, key, items) => (
@@ -164,6 +158,20 @@ const BiddingSideFilter = ({ onFilterChange, onClose, appliedFilters }) => {
   const handlePriceSliderChange = (type, value) => {
     const numValue = parseFloat(value);
     setSelected((prev) => ({ ...prev, [type]: numValue }));
+  };
+
+  // Handle price slider release - only call API on release
+  const handlePriceRelease = () => {
+    if (onFilterChange) {
+      onFilterChange({
+        grade: selected.grades,
+        models: selected.models,
+        capacities: selected.capacities,
+        carriers: selected.carriers,
+        minPrice: selected.minPrice,
+        maxPrice: selected.maxPrice,
+      });
+    }
   };
 
   return (
@@ -329,6 +337,8 @@ const BiddingSideFilter = ({ onFilterChange, onClose, appliedFilters }) => {
                       max={facets.priceRange?.max || 0}
                       value={selected.minPrice ?? facets.priceRange?.min ?? 0}
                       onChange={(e) => handlePriceSliderChange('minPrice', e.target.value)}
+                      onMouseUp={handlePriceRelease}
+                      onTouchEnd={handlePriceRelease}
                       className="min-range"
                       style={{ zIndex: 2 }}
                       aria-label="Minimum price"
@@ -339,6 +349,8 @@ const BiddingSideFilter = ({ onFilterChange, onClose, appliedFilters }) => {
                       max={facets.priceRange?.max || 0}
                       value={selected.maxPrice ?? facets.priceRange?.max ?? 0}
                       onChange={(e) => handlePriceSliderChange('maxPrice', e.target.value)}
+                      onMouseUp={handlePriceRelease}
+                      onTouchEnd={handlePriceRelease}
                       className="max-range"
                       style={{ zIndex: 1 }}
                       aria-label="Maximum price"
@@ -378,29 +390,6 @@ const BiddingSideFilter = ({ onFilterChange, onClose, appliedFilters }) => {
             {renderGroup('Carrier', 'carriers', facets.carriers)}
           </>
         )}
-      </div>
-      
-      {/* Apply Filters Button - Desktop & Mobile */}
-      <div className="border-t border-gray-200 bg-white p-4 sticky bottom-0 shadow-[0_-2px_8px_rgba(0,0,0,0.05)] z-10">
-        <div className="flex gap-3">
-          <button
-            onClick={clearAll}
-            className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200 active:scale-95"
-          >
-            Clear All
-          </button>
-          <button
-            onClick={handleApplyFilters}
-            className={`flex-1 px-4 py-2.5 text-sm font-medium text-white rounded-lg transition-all duration-200 active:scale-95 ${
-              hasActiveFilters()
-                ? "bg-[#0071E0] hover:bg-[#005bb5] cursor-pointer shadow-sm hover:shadow-md"
-                : "bg-gray-300 cursor-not-allowed"
-            }`}
-            disabled={!hasActiveFilters()}
-          >
-            Apply Filters
-          </button>
-        </div>
       </div>
     </aside>
   );

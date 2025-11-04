@@ -132,6 +132,9 @@ const CheckoutPage = () => {
       };
       const res = await OrderService.createOrder(payload);
       if (res?.success || res?.status === 200) {
+        // Trigger cart count update event (cart is cleared after order creation)
+        window.dispatchEvent(new Event('cartUpdated'));
+        localStorage.setItem('cartUpdated', Date.now().toString());
         setShowPaymentPopup(false);
         navigate("/order", { state: { order: res.data } });
       } else {

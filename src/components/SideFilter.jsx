@@ -120,115 +120,125 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
     fetchFilters();
   }, []);
 
-  // Apply filters function - called when user clicks "Apply Filters" button
-  const handleApplyFilters = () => {
-    if (onFilterChange) {
-      // Apply constraints before applying filters
-      let finalMinPrice = minPrice;
-      let finalMaxPrice = maxPrice;
-      
-      // Ensure min <= max
-      if (finalMinPrice !== undefined && finalMaxPrice !== undefined && finalMinPrice > finalMaxPrice) {
-        finalMinPrice = finalMaxPrice;
-        setMinPrice(finalMinPrice);
-      }
-      if (finalMinPrice !== undefined && finalMinPrice < priceRange.min) {
-        finalMinPrice = priceRange.min;
-        setMinPrice(finalMinPrice);
-      }
-      if (finalMaxPrice !== undefined && finalMaxPrice > priceRange.max) {
-        finalMaxPrice = priceRange.max;
-        setMaxPrice(finalMaxPrice);
-      }
-      
-      const newFilters = {
-        minPrice: finalMinPrice,
-        maxPrice: finalMaxPrice,
-        minMoq: minMoq || undefined,
-        maxMoq: maxMoq || undefined,
-        minStock: minStock || undefined,
-        maxStock: maxStock || undefined,
-        simTypes: selectedSimTypes.length > 0 ? selectedSimTypes : undefined,
-        storage: selectedStorage.length > 0 ? selectedStorage : undefined,
-        grades: selectedGrades.length > 0 ? selectedGrades : undefined,
-        colors: selectedColors.length > 0 ? selectedColors : undefined,
-        rams: selectedRams.length > 0 ? selectedRams : undefined,
-        brands: selectedBrands.length > 0 ? selectedBrands : undefined,
-        categories: selectedCategories.length > 0 ? selectedCategories : undefined,
-        models: selectedModels.length > 0 ? selectedModels : undefined,
-        variants: selectedVariants.length > 0 ? selectedVariants : undefined,
-        specifications: selectedSpecifications.length > 0 ? selectedSpecifications : undefined,
-      };
-      onFilterChange(newFilters);
-      // Close mobile filter overlay if open
-      if (onClose) {
-        onClose();
-      }
-    }
-  };
 
   const handleSimTypeChange = (simType) => {
-    setSelectedSimTypes((prev) =>
-      prev.includes(simType)
-        ? prev.filter((s) => s !== simType)
-        : [...prev, simType]
-    );
+    const newSelected = selectedSimTypes.includes(simType)
+      ? selectedSimTypes.filter((s) => s !== simType)
+      : [...selectedSimTypes, simType];
+    setSelectedSimTypes(newSelected);
+    // Apply filter immediately
+    applyFilters({
+      ...getCurrentFilters(),
+      simTypes: newSelected.length > 0 ? newSelected : undefined,
+    });
   };
 
   const handleStorageChange = (storage) => {
-    setSelectedStorage((prev) =>
-      prev.includes(storage)
-        ? prev.filter((s) => s !== storage)
-        : [...prev, storage]
-    );
+    const newSelected = selectedStorage.includes(storage)
+      ? selectedStorage.filter((s) => s !== storage)
+      : [...selectedStorage, storage];
+    setSelectedStorage(newSelected);
+    // Apply filter immediately
+    applyFilters({
+      ...getCurrentFilters(),
+      storage: newSelected.length > 0 ? newSelected : undefined,
+    });
   };
 
   const handleGradeChange = (grade) => {
-    setSelectedGrades((prev) =>
-      prev.includes(grade) ? prev.filter((g) => g !== grade) : [...prev, grade]
-    );
+    const newSelected = selectedGrades.includes(grade)
+      ? selectedGrades.filter((g) => g !== grade)
+      : [...selectedGrades, grade];
+    setSelectedGrades(newSelected);
+    // Apply filter immediately
+    applyFilters({
+      ...getCurrentFilters(),
+      grades: newSelected.length > 0 ? newSelected : undefined,
+    });
   };
 
   const handleColorChange = (color) => {
-    setSelectedColors((prev) =>
-      prev.includes(color) ? prev.filter((c) => c !== color) : [...prev, color]
-    );
+    const newSelected = selectedColors.includes(color)
+      ? selectedColors.filter((c) => c !== color)
+      : [...selectedColors, color];
+    setSelectedColors(newSelected);
+    // Apply filter immediately
+    applyFilters({
+      ...getCurrentFilters(),
+      colors: newSelected.length > 0 ? newSelected : undefined,
+    });
   };
 
   const handleRamChange = (ram) => {
-    setSelectedRams((prev) =>
-      prev.includes(ram) ? prev.filter((r) => r !== ram) : [...prev, ram]
-    );
+    const newSelected = selectedRams.includes(ram)
+      ? selectedRams.filter((r) => r !== ram)
+      : [...selectedRams, ram];
+    setSelectedRams(newSelected);
+    // Apply filter immediately
+    applyFilters({
+      ...getCurrentFilters(),
+      rams: newSelected.length > 0 ? newSelected : undefined,
+    });
   };
 
   const handleBrandChange = (brand) => {
-    setSelectedBrands((prev) =>
-      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
-    );
+    const newSelected = selectedBrands.includes(brand)
+      ? selectedBrands.filter((b) => b !== brand)
+      : [...selectedBrands, brand];
+    setSelectedBrands(newSelected);
+    // Apply filter immediately
+    applyFilters({
+      ...getCurrentFilters(),
+      brands: newSelected.length > 0 ? newSelected : undefined,
+    });
   };
 
   const handleCategoryChange = (category) => {
-    setSelectedCategories((prev) =>
-      prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]
-    );
+    const newSelected = selectedCategories.includes(category)
+      ? selectedCategories.filter((c) => c !== category)
+      : [...selectedCategories, category];
+    setSelectedCategories(newSelected);
+    // Apply filter immediately
+    applyFilters({
+      ...getCurrentFilters(),
+      categories: newSelected.length > 0 ? newSelected : undefined,
+    });
   };
 
   const handleModelChange = (model) => {
-    setSelectedModels((prev) =>
-      prev.includes(model) ? prev.filter((m) => m !== model) : [...prev, model]
-    );
+    const newSelected = selectedModels.includes(model)
+      ? selectedModels.filter((m) => m !== model)
+      : [...selectedModels, model];
+    setSelectedModels(newSelected);
+    // Apply filter immediately
+    applyFilters({
+      ...getCurrentFilters(),
+      models: newSelected.length > 0 ? newSelected : undefined,
+    });
   };
 
   const handleVariantChange = (variant) => {
-    setSelectedVariants((prev) =>
-      prev.includes(variant) ? prev.filter((v) => v !== variant) : [...prev, variant]
-    );
+    const newSelected = selectedVariants.includes(variant)
+      ? selectedVariants.filter((v) => v !== variant)
+      : [...selectedVariants, variant];
+    setSelectedVariants(newSelected);
+    // Apply filter immediately
+    applyFilters({
+      ...getCurrentFilters(),
+      variants: newSelected.length > 0 ? newSelected : undefined,
+    });
   };
 
   const handleSpecificationChange = (spec) => {
-    setSelectedSpecifications((prev) =>
-      prev.includes(spec) ? prev.filter((s) => s !== spec) : [...prev, spec]
-    );
+    const newSelected = selectedSpecifications.includes(spec)
+      ? selectedSpecifications.filter((s) => s !== spec)
+      : [...selectedSpecifications, spec];
+    setSelectedSpecifications(newSelected);
+    // Apply filter immediately
+    applyFilters({
+      ...getCurrentFilters(),
+      specifications: newSelected.length > 0 ? newSelected : undefined,
+    });
   };
 
   const colorMap = {
@@ -264,40 +274,52 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
   const moqRange = filtersData?.moq || { min: 0, max: 100 };
   const stockRange = filtersData?.stock || { min: 0, max: 100 };
 
-  const clearAllFilters = () => {
-    setMinPrice(undefined);
-    setMaxPrice(undefined);
-    setMinMoq("");
-    setMaxMoq("");
-    setMinStock("");
-    setMaxStock("");
-    setSelectedSimTypes([]);
-    setSelectedStorage([]);
-    setSelectedGrades([]);
-    setSelectedColors([]);
-    setSelectedRams([]);
-    setSelectedBrands([]);
-    setSelectedCategories([]);
-    setSelectedModels([]);
-    setSelectedVariants([]);
-    setSelectedSpecifications([]);
-    setSpecificationSearch("");
+  // Helper function to get current filter state
+  const getCurrentFilters = () => {
+    return {
+      minPrice,
+      maxPrice,
+      minMoq: minMoq || undefined,
+      maxMoq: maxMoq || undefined,
+      minStock: minStock || undefined,
+      maxStock: maxStock || undefined,
+      simTypes: selectedSimTypes.length > 0 ? selectedSimTypes : undefined,
+      storage: selectedStorage.length > 0 ? selectedStorage : undefined,
+      grades: selectedGrades.length > 0 ? selectedGrades : undefined,
+      colors: selectedColors.length > 0 ? selectedColors : undefined,
+      rams: selectedRams.length > 0 ? selectedRams : undefined,
+      brands: selectedBrands.length > 0 ? selectedBrands : undefined,
+      categories: selectedCategories.length > 0 ? selectedCategories : undefined,
+      models: selectedModels.length > 0 ? selectedModels : undefined,
+      variants: selectedVariants.length > 0 ? selectedVariants : undefined,
+      specifications: selectedSpecifications.length > 0 ? selectedSpecifications : undefined,
+    };
   };
 
-  // Check if any filters are applied
-  const hasActiveFilters = () => {
-    if (!filtersData) return false;
-    const defaultMin = filtersData?.price?.min;
-    const defaultMax = filtersData?.price?.max;
-    return (
-      (minPrice !== undefined && minPrice !== defaultMin) || (maxPrice !== undefined && maxPrice !== defaultMax) ||
-      minMoq || maxMoq || minStock || maxStock ||
-      selectedSimTypes.length > 0 || selectedStorage.length > 0 ||
-      selectedGrades.length > 0 || selectedColors.length > 0 ||
-      selectedRams.length > 0 || selectedBrands.length > 0 ||
-      selectedCategories.length > 0 || selectedModels.length > 0 ||
-      selectedVariants.length > 0 || selectedSpecifications.length > 0
-    );
+  // Helper function to apply filters
+  const applyFilters = (filtersToApply) => {
+    if (onFilterChange) {
+      // Apply constraints before applying filters
+      let finalMinPrice = filtersToApply.minPrice;
+      let finalMaxPrice = filtersToApply.maxPrice;
+      
+      // Ensure min <= max
+      if (finalMinPrice !== undefined && finalMaxPrice !== undefined && finalMinPrice > finalMaxPrice) {
+        finalMinPrice = finalMaxPrice;
+      }
+      if (finalMinPrice !== undefined && finalMinPrice < priceRange.min) {
+        finalMinPrice = priceRange.min;
+      }
+      if (finalMaxPrice !== undefined && finalMaxPrice > priceRange.max) {
+        finalMaxPrice = priceRange.max;
+      }
+      
+      onFilterChange({
+        ...filtersToApply,
+        minPrice: finalMinPrice,
+        maxPrice: finalMaxPrice,
+      });
+    }
   };
 
   // Helper to handle min/max constraints - smooth version like bidding
@@ -311,26 +333,51 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
     }
   };
 
+  // Handle price slider release - only call API on release
+  const handlePriceRelease = () => {
+    applyFilters(getCurrentFilters());
+  };
+
   const handleMoqChange = (type, value) => {
     const parsedValue = parseInt(value);
+    let newMinMoq = minMoq;
+    let newMaxMoq = maxMoq;
     if (type === "min") {
       const max = maxMoq ? parseInt(maxMoq) : moqRange.max;
-      setMinMoq(parsedValue <= max ? parsedValue.toString() : max.toString());
+      newMinMoq = parsedValue <= max ? parsedValue.toString() : max.toString();
+      setMinMoq(newMinMoq);
     } else {
       const min = minMoq ? parseInt(minMoq) : moqRange.min;
-      setMaxMoq(parsedValue >= min ? parsedValue.toString() : min.toString());
+      newMaxMoq = parsedValue >= min ? parsedValue.toString() : min.toString();
+      setMaxMoq(newMaxMoq);
     }
+    // Apply filter immediately
+    applyFilters({
+      ...getCurrentFilters(),
+      minMoq: newMinMoq || undefined,
+      maxMoq: newMaxMoq || undefined,
+    });
   };
 
   const handleStockChange = (type, value) => {
     const parsedValue = parseInt(value);
+    let newMinStock = minStock;
+    let newMaxStock = maxStock;
     if (type === "min") {
       const max = maxStock ? parseInt(maxStock) : stockRange.max;
-      setMinStock(parsedValue <= max ? parsedValue.toString() : max.toString());
+      newMinStock = parsedValue <= max ? parsedValue.toString() : max.toString();
+      setMinStock(newMinStock);
     } else {
       const min = minStock ? parseInt(minStock) : stockRange.min;
-      setMaxStock(parsedValue >= min ? parsedValue.toString() : min.toString());
+      newMaxStock = parsedValue >= min ? parsedValue.toString() : min.toString();
+      setMaxStock(newMaxStock);
     }
+    // Apply filter immediately
+    applyFilters({
+      ...getCurrentFilters(),
+      minStock: newMinStock || undefined,
+      maxStock: newMaxStock || undefined,
+    });
   };
 
   // Helper component for collapsible filter section
@@ -557,6 +604,8 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
                 max={priceRange.max}
                 value={minPrice ?? priceRange.min ?? 0}
                 onChange={(e) => handlePriceChange("min", e.target.value)}
+                onMouseUp={handlePriceRelease}
+                onTouchEnd={handlePriceRelease}
                 className="min-range"
                 style={{ zIndex: 2 }}
                 aria-label="Minimum price"
@@ -567,6 +616,8 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
                 max={priceRange.max}
                 value={maxPrice ?? priceRange.max ?? 0}
                 onChange={(e) => handlePriceChange("max", e.target.value)}
+                onMouseUp={handlePriceRelease}
+                onTouchEnd={handlePriceRelease}
                 className="max-range"
                 style={{ zIndex: 1 }}
                 aria-label="Maximum price"
@@ -913,29 +964,6 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
           )}
             </>
           )}
-      </div>
-      
-      {/* Apply Filters Button - Desktop & Mobile */}
-      <div className="border-t border-gray-200 bg-white p-4 sticky bottom-0 shadow-[0_-2px_8px_rgba(0,0,0,0.05)] z-10">
-        <div className="flex gap-3">
-          <button
-            onClick={clearAllFilters}
-            className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200 active:scale-95"
-          >
-            Clear All
-          </button>
-          <button
-            onClick={handleApplyFilters}
-            className={`flex-1 px-4 py-2.5 text-sm font-medium text-white rounded-lg transition-all duration-200 active:scale-95 ${
-              hasActiveFilters()
-                ? "bg-[#0071E0] hover:bg-[#005bb5] cursor-pointer shadow-sm hover:shadow-md"
-                : "bg-gray-300 cursor-not-allowed"
-            }`}
-            disabled={!hasActiveFilters()}
-          >
-            Apply Filters
-          </button>
-        </div>
       </div>
     </aside>
   );

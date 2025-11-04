@@ -155,6 +155,9 @@ const CartPage = () => {
             item.id === id ? { ...item, quantity: clampedQty } : item
           )
         );
+        // Trigger cart count update event (quantity change doesn't change count, but refresh anyway)
+        window.dispatchEvent(new Event('cartUpdated'));
+        localStorage.setItem('cartUpdated', Date.now().toString());
       } else {
         setError(response?.message || "Failed to update quantity");
       }
@@ -175,6 +178,9 @@ const CartPage = () => {
       const response = await CartService.remove(id);
       if (response?.success || response?.status === 200) {
         setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
+        // Trigger cart count update event
+        window.dispatchEvent(new Event('cartUpdated'));
+        localStorage.setItem('cartUpdated', Date.now().toString());
       } else {
         setError(response?.message || "Failed to remove item");
       }
@@ -195,6 +201,9 @@ const CartPage = () => {
       const response = await CartService.clear();
       if (response?.success || response?.status === 200) {
         setCartItems([]);
+        // Trigger cart count update event
+        window.dispatchEvent(new Event('cartUpdated'));
+        localStorage.setItem('cartUpdated', Date.now().toString());
       } else {
         setError(response?.message || "Failed to clear cart");
       }
@@ -281,6 +290,9 @@ const CartPage = () => {
         setCartItems([]);
         setShowPaymentPopup(false);
         setCurrentOrder(null);
+        // Trigger cart count update event (cart is cleared after order creation)
+        window.dispatchEvent(new Event('cartUpdated'));
+        localStorage.setItem('cartUpdated', Date.now().toString());
         navigate("/order", { state: { order: response.data } });
       } else {
         setError(response?.message || "Failed to create order");
@@ -316,6 +328,9 @@ const CartPage = () => {
         setCartItems([]);
         setShowPaymentPopup(false);
         setCurrentOrder(null);
+        // Trigger cart count update event (cart is cleared after order creation)
+        window.dispatchEvent(new Event('cartUpdated'));
+        localStorage.setItem('cartUpdated', Date.now().toString());
         navigate("/order", { state: { order: response.data } });
       } else {
         setError(response?.message || "Failed to create order");

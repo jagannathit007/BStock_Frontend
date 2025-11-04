@@ -80,6 +80,9 @@ const AddToCartPopup = ({ product, onClose }) => {
       const res = await CartService.add(id, quantity, subSkuFamilyId);
       const ok = res?.success === true || res?.status === 200;
       if (ok) {
+        // Trigger cart count update event
+        window.dispatchEvent(new Event('cartUpdated'));
+        localStorage.setItem('cartUpdated', Date.now().toString());
         onClose();
       } else {
         setError(res?.message || "Failed to add to cart");
