@@ -13,12 +13,16 @@ import {
   faTag,
   faFileArrowDown,
   faEye,
+  faGavel,
 } from "@fortawesome/free-solid-svg-icons";
 import iphoneImage from "../../assets/iphone.png";
 import { convertPrice } from "../../utils/currencyUtils";
 import { BiddingService } from "../../services/bidding/bidding.services";
 import { useSocket } from "../../context/SocketContext";
 import { PRIMARY_COLOR, PRIMARY_COLOR_LIGHT, PRIMARY_COLOR_DARK } from "../../utils/colors";
+import axios from "axios";
+import Swal from "sweetalert2";
+import toastHelper from "../../utils/toastHelper";
 
 const BidProductDetails = () => {
   const { id } = useParams();
@@ -28,6 +32,8 @@ const BidProductDetails = () => {
   const [loading, setLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [imageError, setImageError] = useState(false);
+  const [myMaxBidInput, setMyMaxBidInput] = useState("");
+  const [isSubmittingBid, setIsSubmittingBid] = useState(false);
 
   useEffect(() => {
     const fetchBidProduct = async () => {
@@ -178,6 +184,179 @@ const BidProductDetails = () => {
   // Get total bids count
   const totalBids = product?.bids?.length || product?.bids || 0;
 
+  // Helper function to get min and max bid values
+  const getBidRange = () => {
+    const minBid = product?.minBid ? (typeof product.minBid === 'number' ? product.minBid : Number(product.minBid)) : null;
+    const maxBid = product?.maxBid ? (typeof product.maxBid === 'number' ? product.maxBid : Number(product.maxBid)) : null;
+    const maxBidPrice = product?.maxBidPrice ? (typeof product.maxBidPrice === 'number' ? product.maxBidPrice : Number(product.maxBidPrice)) : null;
+    const minNextBid = product?.minNextBid ? (typeof product.minNextBid === 'string' 
+      ? parseFloat(product.minNextBid.replace(/[$,]/g, '')) 
+      : product.minNextBid) : null;
+    
+    return {
+      minBid: minBid || minNextBid,
+      maxBid: maxBid || maxBidPrice
+    };
+  };
+
+  // Helper function to validate bid amount and get validation state
+  const getBidValidation = () => {
+    if (!myMaxBidInput || myMaxBidInput.trim() === '') {
+      return { isValid: null, message: '', showMaxWarning: false };
+    }
+    
+    const amountNum = Number(String(myMaxBidInput).replace(/[,]/g, ""));
+    if (isNaN(amountNum) || amountNum <= 0) {
+      return { isValid: false, message: 'Enter a valid amount', showMaxWarning: false };
+    }
+    
+    const { minBid, maxBid } = getBidRange();
+    
+    if (minBid !== null && !isNaN(minBid) && amountNum < minBid) {
+      return { isValid: false, message: `Minimum bid is $${minBid.toFixed(2)}`, showMaxWarning: false };
+    }
+    
+    // Show max warning if amount exceeds max (but still allow validation to be false)
+    if (maxBid !== null && !isNaN(maxBid) && amountNum > maxBid) {
+      return { isValid: false, message: '', showMaxWarning: true, maxBid: maxBid };
+    }
+    
+    return { isValid: true, message: '', showMaxWarning: false };
+  };
+
+  // Helper function to get min bid placeholder text
+  const getMinBidPlaceholder = () => {
+    const minBid = product?.minBid ? (typeof product.minBid === 'number' ? product.minBid : Number(product.minBid)) : null;
+    const minNextBid = product?.minNextBid ? (typeof product.minNextBid === 'string' 
+      ? parseFloat(product.minNextBid.replace(/[$,]/g, '')) 
+      : product.minNextBid) : null;
+    
+    const effectiveMinBid = minBid || minNextBid;
+    
+    if (effectiveMinBid !== null && !isNaN(effectiveMinBid) && effectiveMinBid > 0) {
+      return `Your next bid : $${effectiveMinBid.toFixed(2)}`;
+    }
+    
+    return "Enter bid amount";
+  };
+
+  const bidValidation = getBidValidation();
+
+  // Check if auction has ended
+  const isAuctionEnded = () => {
+    if (['ended', 'closed', 'expired'].includes(product?.status)) return true;
+    if (!product?.biddingEndsAt) return false;
+    return new Date() >= new Date(product.biddingEndsAt);
+  };
+
+  const auctionEnded = isAuctionEnded();
+
+  // Handle bid submission
+  const handleBidButtonClick = async (e) => {
+    e.stopPropagation();
+    if (auctionEnded || isSubmittingBid) return;
+
+    try {
+      const amountNum = Number(String(myMaxBidInput).replace(/[,]/g, ""));
+      if (!amountNum || isNaN(amountNum) || amountNum <= 0) {
+        return Swal.fire({ icon: "warning", title: "Enter a valid amount" });
+      }
+
+      // Validate bid amount is within minBid and maxBid range
+      const { minBid, maxBid } = getBidRange();
+
+      if (minBid !== null && !isNaN(minBid) && amountNum < minBid) {
+        return Swal.fire({
+          icon: "warning",
+          title: "Bid Too Low",
+          text: `Your bid must be at least $${minBid.toFixed(2)}. Minimum bid for this product is $${minBid.toFixed(2)}.`,
+        });
+      }
+
+      if (maxBid !== null && !isNaN(maxBid) && amountNum > maxBid) {
+        return Swal.fire({
+          icon: "warning",
+          title: "Bid Too High",
+          text: `Your bid cannot exceed $${maxBid.toFixed(2)}. Maximum bid for this product is $${maxBid.toFixed(2)}.`,
+        });
+      }
+
+      setIsSubmittingBid(true);
+      const baseUrl = import.meta.env.VITE_BASE_URL || "http://localhost:3200";
+      const token = localStorage.getItem("token");
+
+      const res = await axios.post(
+        `${baseUrl}/api/customer/bid/place`,
+        { productId: id, amount: amountNum },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token ? `Bearer ${token}` : "",
+          },
+        }
+      );
+
+      console.log('Bid response:', res);
+      const responseData = res?.data?.data;
+      const responseMessage = res?.data?.message || "Bid placed successfully";
+
+      if (responseData === null || responseData === undefined) {
+        Swal.fire({
+          icon: "warning",
+          title: "Warning",
+          text: responseMessage || "Unable to place bid. Please try again.",
+          showConfirmButton: true,
+          confirmButtonText: "OK",
+          confirmButtonColor: "#0071E0",
+        });
+      } else {
+        // Join bid room for this product to receive real-time updates
+        if (socketService && id) {
+          socketService.joinBid(id);
+        }
+        
+        // Show toast notification
+        toastHelper.showTost(responseMessage, "success");
+        
+        // Clear input
+        setMyMaxBidInput("");
+        
+        // Refresh product data
+        const data = await BiddingService.getBidProductById(id);
+        setProduct(data);
+      }
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.message || "Failed to place bid";
+      Swal.fire({ icon: "error", title: msg });
+    } finally {
+      setIsSubmittingBid(false);
+    }
+  };
+
+  // Reusable Spinner Component
+  const Spinner = () => (
+    <svg
+      className="animate-spin h-4 w-4 text-white"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8v8z"
+      />
+    </svg>
+  );
+
 
   if (loading || !product) {
     return (
@@ -293,26 +472,93 @@ const BidProductDetails = () => {
             )}
           </div>
 
-          {/* Bid Information Section */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Bid Information</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="bg-white rounded-lg p-3 border border-gray-200">
-                <span className="text-xs text-gray-500 block font-medium mb-1">Total Bids</span>
-                <span className="text-lg font-bold text-gray-900">{totalBids}</span>
+          {/* Bid Input Section */}
+          <div className="bg-gray-50 from-blue-50 to-indigo-50 rounded-lg p-4 border border-gray-200">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Place Your Bid</h3>
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    className={`w-full pl-3 pr-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                      bidValidation.isValid === false 
+                        ? 'border-red-300 focus:ring-red-500 bg-red-50' 
+                        : bidValidation.isValid === true 
+                        ? 'border-green-300 focus:ring-green-500 bg-green-50' 
+                        : 'border-gray-300 focus:ring-[#0071E0]'
+                    }`}
+                    placeholder={getMinBidPlaceholder()}
+                    value={myMaxBidInput}
+                    disabled={auctionEnded || isSubmittingBid || product?.status === 'pending' || product?.status === 'closed'}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9.,]/g, "");
+                      setMyMaxBidInput(val);
+                    }}
+                  />
+                  {bidValidation.showMaxWarning && bidValidation.maxBid && (
+                    <span className="text-xs text-red-600 mt-1 block">
+                      Max bid limit: ${bidValidation.maxBid.toFixed(2)}
+                    </span>
+                  )}
+                  {bidValidation.message && !bidValidation.showMaxWarning && (
+                    <span className={`text-xs mt-1 block ${bidValidation.isValid === false ? 'text-red-600' : 'text-green-600'}`}>
+                      {bidValidation.message}
+                    </span>
+                  )}
+                </div>
+                <button
+                  className={`py-2.5 px-6 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2 ${
+                    auctionEnded || isSubmittingBid || product?.status === 'pending' || product?.status === 'closed' || bidValidation.isValid === false || bidValidation.showMaxWarning
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : bidValidation.isValid === true
+                      ? "bg-[#0071E0] hover:bg-blue-600 text-white cursor-pointer"
+                      : "bg-[#0071E0] hover:bg-blue-600 text-white cursor-pointer opacity-75"
+                  }`}
+                  onClick={handleBidButtonClick}
+                  disabled={auctionEnded || isSubmittingBid || product?.status === 'pending' || product?.status === 'closed' || bidValidation.isValid === false || bidValidation.showMaxWarning}
+                  title={product?.status === 'pending' ? 'Bid not yet started' : product?.status === 'closed' ? 'Auction closed' : (bidValidation.showMaxWarning ? `Maximum bid is $${bidValidation.maxBid?.toFixed(2) || ''}` : (bidValidation.isValid === false ? bidValidation.message : ''))}
+                >
+                  {isSubmittingBid ? (
+                    <>
+                      <Spinner />
+                      <span>Placing…</span>
+                    </>
+                  ) : (
+                    <>
+                      <FontAwesomeIcon icon={faGavel} className="mr-1" />
+                      Add Bid
+                    </>
+                  )}
+                </button>
               </div>
-              <div className="bg-white rounded-lg p-3 border border-gray-200">
-                <span className="text-xs text-gray-500 block font-medium mb-1">Your Bid</span>
-                <span className="text-lg font-bold text-gray-900">{myMaxBid}</span>
-              </div>
-              <div className="bg-white rounded-lg p-3 border border-gray-200">
-                <span className="text-xs text-gray-500 block font-medium mb-1">Next Min Bid</span>
-                <span className="text-lg font-bold text-blue-600">{nextMinBid}</span>
-              </div>
-              <div className="bg-white rounded-lg p-3 border border-gray-200">
-                <span className="text-xs text-gray-500 block font-medium mb-1">Unit Price</span>
-                <span className="text-lg font-bold text-gray-900">{unitPrice}</span>
-              </div>
+              {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
+                <div className="bg-white rounded-lg p-3 border border-gray-200">
+                  <span className="text-xs text-gray-500 block font-medium mb-1">Total Bids</span>
+                  <span className="text-lg font-bold text-gray-900">{totalBids}</span>
+                </div>
+                <div className="bg-white rounded-lg p-3 border border-gray-200">
+                  <span className="text-xs text-gray-500 block font-medium mb-1">Your Bid</span>
+                  <span className="text-lg font-bold text-gray-900">{myMaxBid}</span>
+                </div>
+                <div className="bg-white rounded-lg p-3 border border-gray-200">
+                  <span className="text-xs text-gray-500 block font-medium mb-1">Next Min Bid</span>
+                  <span className="text-lg font-bold text-blue-600">{nextMinBid}</span>
+                </div>
+                <div className="bg-white rounded-lg p-3 border border-gray-200">
+                  <span className="text-xs text-gray-500 block font-medium mb-1">Unit Price</span>
+                  <span className="text-lg font-bold text-gray-900">{unitPrice}</span>
+                </div>
+              </div> */}
+              {(product?.maxBid != null && product.maxBid !== undefined) && (
+                <span className="text-xs text-gray-600 pl-1">
+                  Max bid limit: ${typeof product.maxBid === 'number' ? product.maxBid.toFixed(2) : product.maxBid}
+                </span>
+              )}
+              {(product?.minBid != null && product.minBid !== undefined) && (
+                <span className="text-xs text-gray-500 pl-1">
+                  Min bid: ${typeof product.minBid === 'number' ? product.minBid.toFixed(2) : product.minBid}
+                </span>
+              )}
             </div>
           </div>
 
