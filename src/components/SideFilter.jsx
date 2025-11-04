@@ -26,6 +26,10 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
   const [isLoadingFilters, setIsLoadingFilters] = useState(true);
   const [hasFiltersLoaded, setHasFiltersLoaded] = useState(false);
   const prevFiltersStrRef = React.useRef("");
+  const priceDebounceRef = React.useRef({ min: null, max: null });
+  const [isDragging, setIsDragging] = useState(null); // 'min', 'max', or null
+  const rangeBarRef = React.useRef(null);
+  const dragStartRef = React.useRef({ x: 0, minPrice: 0, maxPrice: 0 });
   
   // State for collapsible sections (all open by default)
   const [openSections, setOpenSections] = useState({
@@ -322,21 +326,216 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
     }
   };
 
-  // Helper to handle min/max constraints - smooth version like bidding
-  const handlePriceChange = (type, value) => {
-    const numValue = parseFloat(value);
-    // Directly set the value for smooth dragging - no constraints during drag
+  // Helper to handle price input changes with validation and debouncing
+  const handlePriceInputChange = (type, value) => {
+    // Ensure filtersData is loaded
+    if (!filtersData?.price) return;
+    
+    const priceRange = filtersData.price || { min: 0, max: 1000 };
+    
+    // Clear existing timeout for this type
+    if (priceDebounceRef.current[type]) {
+      clearTimeout(priceDebounceRef.current[type]);
+      priceDebounceRef.current[type] = null;
+    }
+
+    // Remove non-numeric characters except decimal point
+    let cleanedValue = value.replace(/[^0-9.]/g, '');
+    
+    // Handle multiple decimal points - keep only the first one
+    const parts = cleanedValue.split('.');
+    if (parts.length > 2) {
+      cleanedValue = parts[0] + '.' + parts.slice(1).join('');
+    }
+    
+    // Limit to 2 decimal places
+    if (parts.length === 2 && parts[1].length > 2) {
+      cleanedValue = parts[0] + '.' + parts[1].substring(0, 2);
+    }
+    
+    if (cleanedValue === '' || cleanedValue === '.') {
+      if (type === "min") {
+        setMinPrice(undefined);
+      } else {
+        setMaxPrice(undefined);
+      }
+      // Apply filter immediately with cleared value
+      priceDebounceRef.current[type] = setTimeout(() => {
+        applyFilters({
+          ...getCurrentFilters(),
+          [type === "min" ? "minPrice" : "maxPrice"]: undefined,
+        });
+        priceDebounceRef.current[type] = null;
+      }, 300);
+      return;
+    }
+
+    const numValue = parseFloat(cleanedValue);
+    
+    if (isNaN(numValue)) {
+      return;
+    }
+
+    // Constrain values to valid range
+    let finalValue = numValue;
+    if (finalValue < priceRange.min) {
+      finalValue = priceRange.min;
+    } else if (finalValue > priceRange.max) {
+      finalValue = priceRange.max;
+    }
+
+    // Ensure min <= max
     if (type === "min") {
-      setMinPrice(numValue);
+      if (maxPrice !== undefined && finalValue > maxPrice) {
+        finalValue = maxPrice;
+      }
+      setMinPrice(finalValue >= priceRange.min ? finalValue : undefined);
     } else {
-      setMaxPrice(numValue);
+      if (minPrice !== undefined && finalValue < minPrice) {
+        finalValue = minPrice;
+      }
+      setMaxPrice(finalValue <= priceRange.max ? finalValue : undefined);
+    }
+
+    // Apply filter with debounce
+    priceDebounceRef.current[type] = setTimeout(() => {
+      const currentFilters = getCurrentFilters();
+      applyFilters({
+        ...currentFilters,
+        [type === "min" ? "minPrice" : "maxPrice"]: type === "min" 
+          ? (finalValue >= priceRange.min ? finalValue : undefined)
+          : (finalValue <= priceRange.max ? finalValue : undefined),
+      });
+      priceDebounceRef.current[type] = null;
+    }, 500);
+  };
+
+  // Handle price input blur - apply filter immediately
+  const handlePriceInputBlur = (type) => {
+    // Clear debounce timeout and apply immediately
+    if (priceDebounceRef.current[type]) {
+      clearTimeout(priceDebounceRef.current[type]);
+      priceDebounceRef.current[type] = null;
+    }
+    applyFilters(getCurrentFilters());
+  };
+
+  // Handle price range drag functionality
+  const handleRangeBarMouseDown = (e, type) => {
+    if (!filtersData?.price) return;
+    e.preventDefault();
+    setIsDragging(type);
+    const rect = rangeBarRef.current?.getBoundingClientRect();
+    if (rect) {
+      dragStartRef.current = {
+        x: e.clientX - rect.left,
+        minPrice: minPrice !== undefined ? minPrice : filtersData.price.min,
+        maxPrice: maxPrice !== undefined ? maxPrice : filtersData.price.max,
+      };
     }
   };
 
-  // Handle price slider release - only call API on release
-  const handlePriceRelease = () => {
-    applyFilters(getCurrentFilters());
+  const handleRangeBarClick = (e) => {
+    if (!filtersData?.price || isDragging) return;
+    const rect = rangeBarRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const clickX = e.clientX - rect.left;
+    const percentage = Math.max(0, Math.min(100, (clickX / rect.width) * 100));
+    const priceRange = filtersData.price;
+    const clickedPrice = priceRange.min + (percentage / 100) * (priceRange.max - priceRange.min);
+
+    const currentMin = minPrice !== undefined ? minPrice : priceRange.min;
+    const currentMax = maxPrice !== undefined ? maxPrice : priceRange.max;
+    const minDistance = Math.abs(clickedPrice - currentMin);
+    const maxDistance = Math.abs(clickedPrice - currentMax);
+
+    // Determine which marker is closer or if clicking on the bar itself
+    if (minDistance < maxDistance && minDistance < (priceRange.max - priceRange.min) * 0.1) {
+      // Closer to min marker
+      const newMin = Math.max(priceRange.min, Math.min(clickedPrice, currentMax));
+      setMinPrice(newMin);
+      applyFilters({
+        ...getCurrentFilters(),
+        minPrice: newMin,
+      });
+    } else if (maxDistance < (priceRange.max - priceRange.min) * 0.1) {
+      // Closer to max marker
+      const newMax = Math.max(currentMin, Math.min(clickedPrice, priceRange.max));
+      setMaxPrice(newMax);
+      applyFilters({
+        ...getCurrentFilters(),
+        maxPrice: newMax,
+      });
+    } else {
+      // Clicking on the bar - move the range center to the clicked position
+      const rangeSize = currentMax - currentMin;
+      const newMin = Math.max(priceRange.min, clickedPrice - rangeSize / 2);
+      const newMax = Math.min(priceRange.max, clickedPrice + rangeSize / 2);
+      if (newMin >= priceRange.min && newMax <= priceRange.max) {
+        setMinPrice(newMin);
+        setMaxPrice(newMax);
+        applyFilters({
+          ...getCurrentFilters(),
+          minPrice: newMin,
+          maxPrice: newMax,
+        });
+      }
+    }
   };
+
+  useEffect(() => {
+    if (!isDragging || !filtersData?.price) return;
+
+    const handleMouseMove = (e) => {
+      const rect = rangeBarRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      const currentX = e.clientX - rect.left;
+      const percentage = Math.max(0, Math.min(100, (currentX / rect.width) * 100));
+      const priceRange = filtersData.price;
+      const newPrice = priceRange.min + (percentage / 100) * (priceRange.max - priceRange.min);
+
+      if (isDragging === 'min') {
+        const currentMax = maxPrice !== undefined ? maxPrice : priceRange.max;
+        const constrainedPrice = Math.max(priceRange.min, Math.min(newPrice, currentMax));
+        setMinPrice(constrainedPrice);
+      } else if (isDragging === 'max') {
+        const currentMin = minPrice !== undefined ? minPrice : priceRange.min;
+        const constrainedPrice = Math.max(currentMin, Math.min(newPrice, priceRange.max));
+        setMaxPrice(constrainedPrice);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(null);
+      applyFilters(getCurrentFilters());
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('touchmove', handleMouseMove);
+    document.addEventListener('touchend', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleMouseMove);
+      document.removeEventListener('touchend', handleMouseUp);
+    };
+  }, [isDragging, filtersData, minPrice, maxPrice]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (priceDebounceRef.current.min) {
+        clearTimeout(priceDebounceRef.current.min);
+      }
+      if (priceDebounceRef.current.max) {
+        clearTimeout(priceDebounceRef.current.max);
+      }
+    };
+  }, []);
 
   const handleMoqChange = (type, value) => {
     const parsedValue = parseInt(value);
@@ -421,7 +620,7 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
     </div>
   );
 
-  // Skeleton loader for range slider
+  // Skeleton loader for price range filter
   const RangeSliderSkeleton = () => (
     <div className="border-b border-gray-100 last:border-b-0">
       <div className="w-full flex items-center justify-between py-3 px-1">
@@ -429,7 +628,11 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
         <div className="h-3 w-3 bg-gray-200 rounded animate-pulse"></div>
       </div>
       <div className="pb-3 pt-1">
-        <div className="h-1 bg-gray-200 rounded-full animate-pulse mb-4"></div>
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+          <div className="h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+        </div>
+        <div className="h-2 bg-gray-200 rounded-full animate-pulse mb-2"></div>
         <div className="flex justify-between items-center">
           <div className="h-3 bg-gray-200 rounded w-16 animate-pulse"></div>
           <div className="h-3 bg-gray-200 rounded w-1 animate-pulse"></div>
@@ -590,59 +793,211 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
             </div>
           ) : (
             <>
-          {/* Price Range */}
+          {/* Price Range - Professional Design */}
           <FilterSection
             sectionKey="priceRange"
             title="Price Range"
             isOpen={openSections.priceRange}
             onToggle={toggleSection}
           >
-            <div className="range-container">
-              <input
-                type="range"
-                min={priceRange.min}
-                max={priceRange.max}
-                value={minPrice ?? priceRange.min ?? 0}
-                onChange={(e) => handlePriceChange("min", e.target.value)}
-                onMouseUp={handlePriceRelease}
-                onTouchEnd={handlePriceRelease}
-                className="min-range"
-                style={{ zIndex: 2 }}
-                aria-label="Minimum price"
-              />
-              <input
-                type="range"
-                min={priceRange.min}
-                max={priceRange.max}
-                value={maxPrice ?? priceRange.max ?? 0}
-                onChange={(e) => handlePriceChange("max", e.target.value)}
-                onMouseUp={handlePriceRelease}
-                onTouchEnd={handlePriceRelease}
-                className="max-range"
-                style={{ zIndex: 1 }}
-                aria-label="Maximum price"
-              />
-              <div
-                className="absolute h-1 bg-blue-600 rounded-full"
-                style={{
-                  left: `${
-                    ((minPrice ?? priceRange.min ?? 0) / (priceRange.max || 1)) * 100
-                  }%`,
-                  width: `${
-                    (((maxPrice ?? priceRange.max ?? 0) - (minPrice ?? priceRange.min ?? 0)) / (priceRange.max || 1)) * 100
-                  }%`,
-                  zIndex: 0,
-                }}
-              ></div>
-            </div>
-            <div className="flex justify-between items-center mt-2">
-              <div className="text-xs text-gray-600 font-medium">
-                {convertPrice(minPrice ?? priceRange.min ?? 0)}
+            <div className="space-y-4">
+              {/* Input Fields */}
+              {/* <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col">
+                  <label className="text-xs font-medium text-gray-700 mb-1.5">Min Price</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-xs font-medium text-gray-500">$</span>
+                    <input
+                      type="text"
+                      placeholder={priceRange.min?.toString() || "0"}
+                      value={minPrice !== undefined ? minPrice.toString() : ''}
+                      onChange={(e) => handlePriceInputChange("min", e.target.value)}
+                      onBlur={() => handlePriceInputBlur("min")}
+                      className="w-full pl-7 pr-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all shadow-sm hover:shadow-md"
+                      aria-label="Minimum price"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-xs font-medium text-gray-700 mb-1.5">Max Price</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-xs font-medium text-gray-500">$</span>
+                    <input
+                      type="text"
+                      placeholder={priceRange.max?.toString() || "0"}
+                      value={maxPrice !== undefined ? maxPrice.toString() : ''}
+                      onChange={(e) => handlePriceInputChange("max", e.target.value)}
+                      onBlur={() => handlePriceInputBlur("max")}
+                      className="w-full pl-7 pr-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all shadow-sm hover:shadow-md"
+                      aria-label="Maximum price"
+                    />
+                  </div>
+                </div>
+              </div> */}
+
+              {/* Visual Range Indicator */}
+              <div className="relative">
+                {/* <div className="flex items-center justify-between mb-2"> */}
+                  {/* <span className="text-xs text-gray-500 font-medium">Range</span> */}
+                  {/* <span className="text-xs text-gray-500 font-medium">
+                    {convertPrice(priceRange.min)} - {convertPrice(priceRange.max)}
+                  </span> */}
+                {/* </div> */}
+                <div 
+                  ref={rangeBarRef}
+                  className="relative h-2 bg-gray-200 rounded-full cursor-pointer select-none"
+                  onClick={(e) => {
+                    // Only handle click if not dragging
+                    if (!isDragging) {
+                      handleRangeBarClick(e);
+                    }
+                  }}
+                  onMouseDown={(e) => {
+                    const rect = rangeBarRef.current?.getBoundingClientRect();
+                    if (!rect) return;
+                    const clickX = e.clientX - rect.left;
+                    const percentage = (clickX / rect.width) * 100;
+                    const currentMinPercent = priceRange.max > 0 
+                      ? ((minPrice !== undefined ? minPrice : priceRange.min) / priceRange.max) * 100 
+                      : 0;
+                    const currentMaxPercent = priceRange.max > 0 
+                      ? ((maxPrice !== undefined ? maxPrice : priceRange.max) / priceRange.max) * 100 
+                      : 0;
+                    
+                    const minDistance = Math.abs(percentage - currentMinPercent);
+                    const maxDistance = Math.abs(percentage - currentMaxPercent);
+                    
+                    // Check if clicking near markers (within 5% threshold)
+                    if (minDistance < maxDistance && minDistance < 5) {
+                      handleRangeBarMouseDown(e, 'min');
+                    } else if (maxDistance < 5) {
+                      handleRangeBarMouseDown(e, 'max');
+                    }
+                    // If clicking far from markers, the click handler will move the range
+                  }}
+                >
+                  <div
+                    className="absolute h-2 bg-blue-600 rounded-full transition-all duration-100"
+                    style={{
+                      left: `${
+                        priceRange.max > 0 
+                          ? ((minPrice !== undefined ? minPrice : priceRange.min) / priceRange.max) * 100 
+                          : 0
+                      }%`,
+                      width: `${
+                        priceRange.max > 0
+                          ? (((maxPrice !== undefined ? maxPrice : priceRange.max) - (minPrice !== undefined ? minPrice : priceRange.min)) / priceRange.max) * 100
+                          : 0
+                      }%`,
+                    }}
+                  ></div>
+                  {/* Min marker */}
+                  <div
+                    className={`absolute w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-md transform -translate-x-1/2 -translate-y-1 transition-transform ${
+                      isDragging === 'min' ? 'scale-125 cursor-grabbing' : 'cursor-grab hover:scale-110'
+                    }`}
+                    style={{
+                      left: `${
+                        priceRange.max > 0 
+                          ? ((minPrice !== undefined ? minPrice : priceRange.min) / priceRange.max) * 100 
+                          : 0
+                      }%`,
+                      top: '50%',
+                      marginTop: '-8px',
+                    }}
+                    title={`Min: ${convertPrice(minPrice !== undefined ? minPrice : priceRange.min)}`}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      handleRangeBarMouseDown(e, 'min');
+                    }}
+                    onTouchStart={(e) => {
+                      e.stopPropagation();
+                      handleRangeBarMouseDown(e.touches[0], 'min');
+                    }}
+                  ></div>
+                  {/* Max marker */}
+                  <div
+                    className={`absolute w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-md transform -translate-x-1/2 -translate-y-1 transition-transform ${
+                      isDragging === 'max' ? 'scale-125 cursor-grabbing' : 'cursor-grab hover:scale-110'
+                    }`}
+                    style={{
+                      left: `${
+                        priceRange.max > 0 
+                          ? ((maxPrice !== undefined ? maxPrice : priceRange.max) / priceRange.max) * 100 
+                          : 0
+                      }%`,
+                      top: '50%',
+                      marginTop: '-8px',
+                    }}
+                    title={`Max: ${convertPrice(maxPrice !== undefined ? maxPrice : priceRange.max)}`}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      handleRangeBarMouseDown(e, 'max');
+                    }}
+                    onTouchStart={(e) => {
+                      e.stopPropagation();
+                      handleRangeBarMouseDown(e.touches[0], 'max');
+                    }}
+                  ></div>
+                </div>
+                <div className="flex justify-between items-center mt-2">
+                  <div className="text-xs font-semibold text-blue-600">
+                    {convertPrice(minPrice !== undefined ? minPrice : priceRange.min)}
+                  </div>
+                  <div className="text-xs text-gray-400">-</div>
+                  <div className="text-xs font-semibold text-blue-600">
+                    {convertPrice(maxPrice !== undefined ? maxPrice : priceRange.max)}
+                  </div>
+                </div>
               </div>
-              <div className="text-xs text-gray-400">-</div>
-              <div className="text-xs text-gray-600 font-medium">
-                {convertPrice(maxPrice ?? priceRange.max ?? 0)}
-              </div>
+
+              {/* Quick Filters */}
+              {/* <div className="flex flex-wrap gap-2 pt-1">
+                <button
+                  onClick={() => {
+                    setMinPrice(undefined);
+                    setMaxPrice(undefined);
+                    applyFilters({
+                      ...getCurrentFilters(),
+                      minPrice: undefined,
+                      maxPrice: undefined,
+                    });
+                  }}
+                  className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Clear
+                </button>
+                <button
+                  onClick={() => {
+                    const midPoint = (priceRange.min + priceRange.max) / 2;
+                    setMinPrice(priceRange.min);
+                    setMaxPrice(Math.round(midPoint));
+                    applyFilters({
+                      ...getCurrentFilters(),
+                      minPrice: priceRange.min,
+                      maxPrice: Math.round(midPoint),
+                    });
+                  }}
+                  className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Under {convertPrice(Math.round((priceRange.min + priceRange.max) / 2))}
+                </button>
+                <button
+                  onClick={() => {
+                    const midPoint = (priceRange.min + priceRange.max) / 2;
+                    setMinPrice(Math.round(midPoint));
+                    setMaxPrice(priceRange.max);
+                    applyFilters({
+                      ...getCurrentFilters(),
+                      minPrice: Math.round(midPoint),
+                      maxPrice: priceRange.max,
+                    });
+                  }}
+                  className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  Over {convertPrice(Math.round((priceRange.min + priceRange.max) / 2))}
+                </button>
+              </div> */}
             </div>
           </FilterSection>
 
