@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Handshake } from "lucide-react";
 import CartService from "../services/cart/cart.services";
 import { WalletService } from "../services/wallet/wallet.services";
+import { ProductService } from "../services/products/products.services";
 import { env } from "../utils/env";
 import NegotiationModal from "./negotiation/NegotiationModal";
 import WalletModal from "./WalletTransactionsPage/WalletTransactions";
@@ -14,6 +15,7 @@ const Header = ({ onLogout }) => {
   const location = useLocation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [cartItemCount, setCartItemCount] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
   const [walletBalance, setWalletBalance] = useState(0);
   const [isNegotiationModalOpen, setIsNegotiationModalOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
@@ -54,11 +56,38 @@ const Header = ({ onLogout }) => {
     }
   };
 
+  // Fetch wishlist count
+  const fetchWishlistCount = async () => {
+    try {
+      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      if (!isLoggedIn) {
+        setWishlistCount(0);
+        return;
+      }
+      // Fetch first page with a reasonable limit to get all products
+      // We'll fetch up to 1000 items to count all products
+      const data = await ProductService.getWishlist(1, 1000);
+      let totalCount = 0;
+      if (data.docs && Array.isArray(data.docs)) {
+        data.docs.forEach((doc) => {
+          if (doc.productIds && Array.isArray(doc.productIds)) {
+            totalCount += doc.productIds.length;
+          }
+        });
+      }
+      setWishlistCount(totalCount);
+    } catch (error) {
+      console.error("Fetch wishlist count error:", error);
+      setWishlistCount(0);
+    }
+  };
+
 
   useEffect(() => {
     const loadData = async () => {
       await fetchCartCount();
       await fetchWalletBalance();
+      await fetchWishlistCount();
     };
     loadData();
   }, []);
@@ -67,6 +96,7 @@ const Header = ({ onLogout }) => {
     const loadData = async () => {
       await fetchCartCount();
       await fetchWalletBalance();
+      await fetchWishlistCount();
     };
     loadData();
   }, [location.pathname]);
@@ -90,6 +120,29 @@ const Header = ({ onLogout }) => {
 
     return () => {
       window.removeEventListener('cartUpdated', handleCartUpdate);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
+  // Listen for wishlist count updates from other components
+  useEffect(() => {
+    const handleWishlistUpdate = () => {
+      fetchWishlistCount();
+    };
+
+    // Listen for custom wishlist update event
+    window.addEventListener('wishlistUpdated', handleWishlistUpdate);
+    
+    // Also listen for storage events (for cross-tab updates)
+    const handleStorageChange = (e) => {
+      if (e.key === 'wishlistUpdated') {
+        fetchWishlistCount();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('wishlistUpdated', handleWishlistUpdate);
       window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
@@ -425,6 +478,11 @@ const Header = ({ onLogout }) => {
                   >
                     <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
                   </svg>
+                  {isLoggedIn && wishlistCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-semibold shadow-sm">
+                      {wishlistCount > 99 ? '99+' : wishlistCount}
+                    </span>
+                  )}
                   <span className="hidden lg:inline-block text-sm font-medium">Watchlist</span>
                 </button>
 
