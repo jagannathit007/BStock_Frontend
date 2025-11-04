@@ -71,6 +71,29 @@ const Header = ({ onLogout }) => {
     loadData();
   }, [location.pathname]);
 
+  // Listen for cart count updates from other components
+  useEffect(() => {
+    const handleCartUpdate = () => {
+      fetchCartCount();
+    };
+
+    // Listen for custom cart update event
+    window.addEventListener('cartUpdated', handleCartUpdate);
+    
+    // Also listen for storage events (for cross-tab updates)
+    const handleStorageChange = (e) => {
+      if (e.key === 'cartUpdated') {
+        fetchCartCount();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
