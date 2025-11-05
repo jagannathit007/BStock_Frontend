@@ -11,6 +11,7 @@ import {
   faSpinner,
   faShieldHalved,
   faExclamationTriangle,
+  faCheckCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
@@ -43,6 +44,7 @@ const LoginForm = ({ onLogin }) => {
   const [error, setError] = useState("");
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const [showLoginForm, setShowLoginForm] = useState(true);
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
 
   const {
     register,
@@ -62,6 +64,19 @@ const LoginForm = ({ onLogin }) => {
 
   const watchedEmail = watch("email");
   const watchedPassword = watch("password");
+
+  // Check for verification success message
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('verified') === 'true') {
+      setVerificationSuccess(true);
+      // Clear the query parameter after showing the message
+      setTimeout(() => {
+        setVerificationSuccess(false);
+        window.history.replaceState({}, '', location.pathname);
+      }, 5000);
+    }
+  }, [location]);
 
 
   useEffect(() => {
@@ -375,18 +390,31 @@ const LoginForm = ({ onLogin }) => {
                 </p>
               </div>
 
-              {/* {error && (
-                <div className="p-4 bg-amber-50 text-amber-800 rounded-lg text-sm border border-amber-200 flex items-start space-x-3">
+              {verificationSuccess && (
+                <div className="p-4 bg-green-50 text-green-800 rounded-lg text-sm border border-green-200 flex items-start space-x-3">
                   <FontAwesomeIcon
-                    icon={faExclamationTriangle}
-                    className="text-amber-600 text-sm mt-0.5 flex-shrink-0"
+                    icon={faCheckCircle}
+                    className="text-green-600 text-sm mt-0.5 flex-shrink-0"
                   />
                   <div>
-                    <p className="font-medium">Login Warning</p>
+                    <p className="font-medium">Email Verified Successfully!</p>
+                    <p className="mt-1">Your email has been verified. You can now log in to your account.</p>
+                  </div>
+                </div>
+              )}
+
+              {error && (
+                <div className="p-4 bg-red-50 text-red-800 rounded-lg text-sm border border-red-200 flex items-start space-x-3">
+                  <FontAwesomeIcon
+                    icon={faExclamationTriangle}
+                    className="text-red-600 text-sm mt-0.5 flex-shrink-0"
+                  />
+                  <div>
+                    <p className="font-medium">Login Error</p>
                     <p className="mt-1">{error}</p>
                   </div>
                 </div>
-              )} */}
+              )}
 
               {/* Form Card */}
               <div className="bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl shadow-xl border border-white/20 p-3 sm:p-4 lg:p-5">

@@ -66,8 +66,8 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Hide header only on login and signup pages
-  const hideHeader = location.pathname === '/login' || location.pathname === '/signup';
+  // Hide header only on login, signup, and verify-email pages
+  const hideHeader = location.pathname === '/login' || location.pathname === '/signup' || location.pathname.startsWith('/verify-email');
 
   useEffect(() => {
     if (isLoggedIn && (location.pathname === "/login" || location.pathname === "/signup")) {
@@ -106,9 +106,7 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
             {/* Public Routes */}
             <Route path="/login" element={<LoginForm onLogin={handleLogin} />} />
             <Route path="/signup" element={<SignUpForm />} />{" "}
-            <Route path="/verify-email" element={<VerifyEmailPrompt />} />
-            <Route path="/api/customer/verify-email/:token" element={<VerifyEmail />} />
-            <Route path="/customer/:token" element={<VerifyEmail />} />
+            <Route path="/verify-email/:token" element={<VerifyEmail />} />
             {/* Public pages (browsable without login) */}
             <Route path="/home" element={<HomePage />} />
             <Route path="/ready-stock" element={<Layout><MainContent /></Layout>} />
