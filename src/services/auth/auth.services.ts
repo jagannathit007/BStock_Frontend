@@ -175,6 +175,11 @@ export class AuthService {
         this.saveUserToLocalStorage(res.data.data.customer);
       }
       
+      // Save currency rates from login response
+      if (res.data.data?.currencyRates) {
+        localStorage.setItem('currencyRates', JSON.stringify(res.data.data.currencyRates));
+      }
+      
       toastHelper.showTost(res.data.message || 'Login successful!', 'success');
       return res.data;
     } catch (err: any) {

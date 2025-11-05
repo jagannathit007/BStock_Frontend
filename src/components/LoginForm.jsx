@@ -139,6 +139,11 @@ const LoginForm = ({ onLogin }) => {
               localStorage.setItem("profileImageUrl", profileImage);
             }
           }
+          
+          // Save currency rates from login response
+          if (res.data.currencyRates) {
+            localStorage.setItem('currencyRates', JSON.stringify(res.data.currencyRates));
+          }
 
           if (rememberMe) {
             localStorage.setItem("rememberMe", "true");
@@ -196,6 +201,11 @@ const LoginForm = ({ onLogin }) => {
                   registerRes.data.customer.profileImage || registerRes.data.customer.avatar;
                 localStorage.setItem("profileImageUrl", profileImage);
               }
+            }
+            
+            // Save currency rates from register response
+            if (registerRes.data.currencyRates) {
+              localStorage.setItem('currencyRates', JSON.stringify(registerRes.data.currencyRates));
             }
 
             if (rememberMe) {

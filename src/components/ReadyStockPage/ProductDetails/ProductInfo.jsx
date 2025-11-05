@@ -35,10 +35,12 @@ import AddToCartPopup from "../AddToCartPopup";
 import BuyNowCheckoutModal from "../BuyNowCheckoutModal";
 import iphoneImage from "../../../assets/iphone.png";
 import Swal from "sweetalert2";
-import { convertPrice } from "../../../utils/currencyUtils";
+import { convertPrice, getCurrencyRates, formatPriceForCurrency } from "../../../utils/currencyUtils";
+import { useCurrency } from "../../../context/CurrencyContext";
 import { PRIMARY_COLOR, PRIMARY_COLOR_LIGHT, PRIMARY_COLOR_DARK } from "../../../utils/colors";
 
 const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
+  const { customerCountryCurrency } = useCurrency();
   const [currentProduct, setCurrentProduct] = useState(initialProduct);
   const [quantity, setQuantity] = useState(initialProduct.moq || 5);
   const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
@@ -61,6 +63,16 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     storages: [],
     simTypes: [],
   });
+  const [currencyUpdateKey, setCurrencyUpdateKey] = useState(0);
+
+  // Listen for currency changes to force re-render
+  useEffect(() => {
+    const handleCurrencyChange = () => {
+      setCurrencyUpdateKey(prev => prev + 1);
+    };
+    window.addEventListener('currencyChanged', handleCurrencyChange);
+    return () => window.removeEventListener('currencyChanged', handleCurrencyChange);
+  }, []);
 
   const handleImageError = () => {
     setImageError(true);
@@ -996,16 +1008,78 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
             </div>
               <div className="border-b border-gray-200 pb-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <span className="text-3xl font-semibold text-green-600">
-                  {convertPrice(processedProduct.price)}
-                </span>
-                {processedProduct.isNegotiable && (
-                  <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-lg border"
-                    style={{ color: PRIMARY_COLOR, backgroundColor: PRIMARY_COLOR_LIGHT, borderColor: `${PRIMARY_COLOR}40` }}>
-                    Negotiable
+              <div className="flex flex-col space-y-3">
+                {/* USD Price - Always shown */}
+                <div className="flex items-center space-x-3">
+                  <span className="text-3xl font-semibold text-green-600">
+                    ${parseFloat(processedProduct.price || 0).toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
                   </span>
-                )}
+                  {processedProduct.isNegotiable && (
+                    <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-lg border"
+                      style={{ color: PRIMARY_COLOR, backgroundColor: PRIMARY_COLOR_LIGHT, borderColor: `${PRIMARY_COLOR}40` }}>
+                      Negotiable
+                    </span>
+                  )}
+                </div>
+                
+                {/* Country Rate Section - Show AED and Customer Country Currency only if customer country is available */}
+                {(() => {
+                  const rates = getCurrencyRates();
+                  const priceInUSD = parseFloat(processedProduct.price || 0);
+                  
+                  // Only show Country Rate section if customer has a country set
+                  if (!customerCountryCurrency || !rates) return null;
+                  
+                  const currencies = [];
+                  
+                  // Always show AED
+                  if (rates.AED) {
+                    currencies.push({ code: 'AED', flag: '🇦🇪', label: 'AED' });
+                  }
+                  
+                  // Show customer country currency if available and not AED
+                  if (customerCountryCurrency !== 'AED' && rates[customerCountryCurrency]) {
+                    const flags = {
+                      'HKD': '🇭🇰',
+                      'SGD': '🇸🇬',
+                      'INR': '🇮🇳'
+                    };
+                    const labels = {
+                      'HKD': 'HK',
+                      'SGD': 'SGD',
+                      'INR': 'INR'
+                    };
+                    currencies.push({ 
+                      code: customerCountryCurrency, 
+                      flag: flags[customerCountryCurrency] || '🌍',
+                      label: labels[customerCountryCurrency] || customerCountryCurrency
+                    });
+                  }
+                  
+                  if (currencies.length === 0) return null;
+                  
+                  return (
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">Country Rate</label>
+                      <div className="flex items-center gap-4 text-sm">
+                        {currencies.map((currency) => {
+                          const formattedPrice = formatPriceForCurrency(priceInUSD, currency.code, rates);
+                          return (
+                            <div key={currency.code} className="flex items-center gap-1.5 text-gray-700">
+                              <span>{currency.flag}</span>
+                              <span className="font-medium">{currency.label}</span>
+                              <span className="text-gray-500">-</span>
+                              <span className="font-semibold">{formattedPrice}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
               {processedProduct.expiryTime && !processedProduct.isExpired && timeLeft && (
                 <div className="inline-flex items-center bg-gradient-to-r from-red-50 to-pink-50 text-red-700 px-4 py-2 rounded-xl text-sm font-semibold shadow-sm border border-red-200">
