@@ -16,7 +16,7 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
   USD: '$',
   SGD: 'S$',
   HKD: 'HK$',
-  AED: 'د.إ',
+  AED: 'AED ',
   INR: '₹',
 };
 
@@ -75,51 +75,90 @@ export const convertPrice = (priceInUSD: any): string => {
     return '$0.00';
   }
   
-  // If user is not logged in, always show USD pricing
+  // Check for selected currency from localStorage (set by toggle)
   try {
-    const isLoggedIn = typeof window !== 'undefined' && localStorage.getItem('isLoggedIn') === 'true';
-    if (!isLoggedIn) {
-      return `$${numericPrice.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`;
+    const selectedCurrency = localStorage.getItem('selectedCurrency');
+    if (selectedCurrency && selectedCurrency !== 'USD') {
+      const rates = getCurrencyRates();
+      if (rates) {
+        const currencyCode = selectedCurrency as 'AED' | 'SGD' | 'HKD';
+        if (rates[currencyCode]) {
+          return formatPriceForCurrency(numericPrice, currencyCode, rates);
+        }
+      }
     }
   } catch (_) {
-    // Fallback silently to USD formatting if localStorage is unavailable
-    return `$${numericPrice.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
+    // Fallback silently
   }
 
-  const userCurrency = getCurrency();
-  
-  if (!userCurrency || !userCurrency.rate) {
-    // Fallback to USD if no currency data
-    return `$${numericPrice.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  }
-  
-  const rate = parseFloat(userCurrency.rate);
-  if (isNaN(rate) || rate <= 0) {
-    // Fallback to USD if invalid rate
-    return `$${numericPrice.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  }
-  
-  const convertedPrice = numericPrice * rate;
-  const symbol = getCurrencySymbol(userCurrency.currencyCode);
-  
-  // Format the converted price with proper decimals
-  const formattedPrice = convertedPrice.toLocaleString('en-US', {
+  // Default to USD pricing (if no currency selected or no rates available)
+  return `$${numericPrice.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  });
-  
-  return `${symbol}${formattedPrice}`;
+  })}`;
+};
+
+/**
+ * Interface for currency rates from API
+ */
+export interface CurrencyRates {
+  AED: number;
+  SGD: number;
+  HKD: number;
+}
+
+/**
+ * Get currency rates from localStorage
+ * @returns Currency rates object or null
+ */
+export const getCurrencyRates = (): CurrencyRates | null => {
+  try {
+    const ratesData = localStorage.getItem('currencyRates');
+    if (!ratesData) return null;
+    return JSON.parse(ratesData);
+  } catch (error) {
+    console.error('Error getting currency rates from localStorage:', error);
+    return null;
+  }
+};
+
+/**
+ * Convert price from USD to a specific currency
+ * @param priceInUSD - Price in USD
+ * @param currencyCode - Currency code (AED, SGD, HKD)
+ * @param rates - Currency rates object
+ * @returns Converted price as number
+ */
+export const convertPriceToCurrency = (
+  priceInUSD: number,
+  currencyCode: 'AED' | 'SGD' | 'HKD',
+  rates: CurrencyRates | null
+): number => {
+  if (!rates || !rates[currencyCode]) {
+    return priceInUSD;
+  }
+  const numericPrice = typeof priceInUSD === 'string' ? parseFloat(priceInUSD) : Number(priceInUSD);
+  if (isNaN(numericPrice)) return 0;
+  return numericPrice * rates[currencyCode];
+};
+
+/**
+ * Format price for a specific currency
+ * @param priceInUSD - Price in USD
+ * @param currencyCode - Currency code (AED, SGD, HKD)
+ * @param rates - Currency rates object
+ * @returns Formatted price string
+ */
+export const formatPriceForCurrency = (
+  priceInUSD: number,
+  currencyCode: 'AED' | 'SGD' | 'HKD',
+  rates: CurrencyRates | null
+): string => {
+  const convertedPrice = convertPriceToCurrency(priceInUSD, currencyCode, rates);
+  const symbol = getCurrencySymbol(currencyCode);
+  return `${symbol}${convertedPrice.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 };
 

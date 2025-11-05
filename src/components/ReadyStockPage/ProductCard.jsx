@@ -40,6 +40,7 @@ const ProductCard = ({
 
   // === LIST VIEW: QUANTITY STATE ===
   const [quantity, setQuantity] = useState(1);
+  const [currencyUpdateKey, setCurrencyUpdateKey] = useState(0);
 
   useEffect(() => {
     setNotify(Boolean(product?.notify));
@@ -53,6 +54,15 @@ const ProductCard = ({
     setSelectedColor(product?.color || "");
     setSelectedPrice(product?.price || 0);
   }, [product]);
+
+  // Listen for currency changes to force re-render
+  useEffect(() => {
+    const handleCurrencyChange = () => {
+      setCurrencyUpdateKey(prev => prev + 1);
+    };
+    window.addEventListener('currencyChanged', handleCurrencyChange);
+    return () => window.removeEventListener('currencyChanged', handleCurrencyChange);
+  }, []);
 
   useEffect(() => {
     const handleWishlistUpdate = (event) => {
@@ -515,7 +525,7 @@ if (viewMode === "list") {
                     ].filter(Boolean).join(' • ') || '-'}
                   </div>
                 <div className="hidden sm:block w-px h-3 bg-gray-300" />
-
+                
                 {/* QUANTITY SELECTOR */}
                 <div className="flex items-center border border-gray-300 rounded-lg">
                   <button

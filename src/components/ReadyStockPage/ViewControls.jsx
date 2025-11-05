@@ -5,6 +5,7 @@ import {
   faList,
   faFilter,
 } from "@fortawesome/free-solid-svg-icons";
+import CurrencyToggle from "../CurrencyToggle";
 
 const ViewControls = ({
   viewMode,
@@ -92,6 +93,9 @@ const ViewControls = ({
             </button>
           </div>
 
+          {/* Currency Toggle Buttons */}
+          <CurrencyToggle />
+
           {/* Middle: Sort By */}
           <div className="flex-1 max-w-xs">
             <select 
@@ -121,7 +125,7 @@ const ViewControls = ({
 
       {/* Desktop View (>= lg) - Original Layout */}
       <div className="hidden lg:flex flex-row items-center justify-between gap-6">
-        {/* Left: View Buttons */}
+        {/* Left: View Buttons and Currency Toggle */}
         <div className="flex items-center space-x-4">
           <div className="flex bg-gray-100 rounded-2xl p-1.5">
             <button
@@ -155,6 +159,9 @@ const ViewControls = ({
               <span className="sm:hidden ml-2">List View</span>
             </button>
           </div>
+          
+          {/* Currency Toggle Buttons */}
+          <CurrencyToggle />
         </div>
 
         {/* Right: Search and Sort */}

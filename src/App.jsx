@@ -28,6 +28,7 @@ import Order from "./components/Order";
 import { AuthService } from "./services/auth/auth.services";
 import FlashDeals from "./components/ReadyStockPage/FlashDeals";
 import WishlistPage from "./pages/WishlistPage";
+import { CurrencyProvider } from "./context/CurrencyContext";
 
 // Route guard: redirects unauthenticated users to login with returnTo
 const ProtectedRoute = ({ children, isLoggedIn }) => {
@@ -208,11 +209,13 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
 
     return (
       <HashRouter>
-        <AppContent 
-          isLoggedIn={isLoggedIn} 
-          handleLogout={handleLogout} 
-          handleLogin={handleLogin}
-        />
+        <CurrencyProvider>
+          <AppContent 
+            isLoggedIn={isLoggedIn} 
+            handleLogout={handleLogout} 
+            handleLogin={handleLogin}
+          />
+        </CurrencyProvider>
       </HashRouter>
     );
   };
