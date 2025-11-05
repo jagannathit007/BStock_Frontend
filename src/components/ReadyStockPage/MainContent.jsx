@@ -19,7 +19,7 @@ const MainContent = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [viewMode, setViewMode] = useState("grid");
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(9);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
   const [fetchedProducts, setFetchedProducts] = useState([]);
   const [totalProductsCount, setTotalProductsCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -152,7 +152,7 @@ const MainContent = () => {
   }, [currentPage, itemsPerPage, filters, refreshTick, searchQuery, sortOption]);
 
   useEffect(() => {
-    setItemsPerPage(viewMode === "grid" ? 9 : 10);
+    setItemsPerPage(viewMode === "grid" ? 12 : 10);
     setCurrentPage(1);
   }, [viewMode]);
 

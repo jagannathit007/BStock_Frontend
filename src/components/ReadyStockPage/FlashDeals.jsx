@@ -19,7 +19,7 @@ const FlashDeals = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [viewMode, setViewMode] = useState("grid");
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(9);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
   const [fetchedProducts, setFetchedProducts] = useState([]);
   const [totalProductsCount, setTotalProductsCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -149,7 +149,7 @@ const FlashDeals = () => {
   }, [currentPage, itemsPerPage, filters, refreshTick, searchQuery, sortOption]);
 
   useEffect(() => {
-    const newItemsPerPage = viewMode === "grid" ? 9 : 10;
+    const newItemsPerPage = viewMode === "grid" ? 12 : 10;
     setItemsPerPage(newItemsPerPage);
     setCurrentPage(1);
   }, [viewMode]);
