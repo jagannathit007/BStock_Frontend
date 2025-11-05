@@ -286,6 +286,19 @@ const Header = ({ onLogout }) => {
     return "";
   });
 
+  const [userEmail, setUserEmail] = useState(() => {
+    try {
+      const raw = localStorage.getItem('user');
+      if (raw) {
+        const user = JSON.parse(raw);
+        return user?.email || "";
+      }
+    } catch (error) {
+      console.error('Error parsing user data for email:', error);
+    }
+    return "";
+  });
+
   useEffect(() => {
     const applyAvatar = () => {
       const storedDirect = localStorage.getItem("profileImageUrl");
@@ -321,13 +334,27 @@ const Header = ({ onLogout }) => {
       }
     };
 
+    const applyUserEmail = () => {
+      try {
+        const raw = localStorage.getItem('user');
+        if (raw) {
+          const user = JSON.parse(raw);
+          setUserEmail(user?.email || "");
+        }
+      } catch (error) {
+        console.error('Error parsing user data in applyUserEmail:', error);
+      }
+    };
+
     applyAvatar();
     applyUserName();
+    applyUserEmail();
 
     const onStorage = (e) => {
       if (e.key === "profileImageUrl" || e.key === "user") {
         applyAvatar();
         applyUserName();
+        applyUserEmail();
       }
       if (e.key === 'postLoginAction' || e.key === 'isLoggedIn') {
         processPostLoginAction();
@@ -337,6 +364,7 @@ const Header = ({ onLogout }) => {
     const onProfileUpdate = () => {
       applyAvatar();
       applyUserName();
+      applyUserEmail();
     };
 
     window.addEventListener('storage', onStorage);
@@ -573,7 +601,9 @@ const Header = ({ onLogout }) => {
                           )}
                           <div>
                             <p className="text-sm font-semibold text-gray-900">{userName || 'User'}</p>
-                            <p className="text-xs text-gray-500">Member since 2024</p>
+                            {isLoggedIn && userEmail && (
+                              <p className="text-xs text-gray-500">{userEmail}</p>
+                            )}
                           </div>
                         </div>
                       </div>
