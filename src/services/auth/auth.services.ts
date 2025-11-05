@@ -147,12 +147,19 @@ export class AuthService {
   // Verify email
   static verifyEmail = async (token: string): Promise<AuthResponse> => {
     const baseUrl = env.baseUrl;
-    const url = `${baseUrl}/api/customer/verify-email/${token}`; // Updated endpoint
+    console.log('AuthService.verifyEmail called with token:', token);
+    const url = `${baseUrl}/api/customer/verify-email/${token}`;
+    console.log('Verification URL:', url);
     try {
+      console.log('Making API call to:', url);
       const res = await api.get(url);
+      console.log('API response received:', res);
+      console.log('Response data:', res.data);
       toastHelper.showTost(res.data.message || 'Email verified successfully!', 'success');
       return res.data;
     } catch (err: any) {
+      console.error('API call error:', err);
+      console.error('Error response:', err.response);
       const errorMessage = err.response?.data?.message || 'Failed to verify email';
       toastHelper.showTost(errorMessage, 'error');
       throw new Error(errorMessage);
