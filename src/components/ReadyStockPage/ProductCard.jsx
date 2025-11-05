@@ -458,7 +458,7 @@ if (viewMode === "list") {
                 </div>
 
                 <div className="flex items-center space-x-1.5 ml-3">
-                  <button
+                  {/* <button
                     className="rounded-full transition-all duration-200 flex items-center justify-center"
                     title="Information"
                     style={{
@@ -473,7 +473,7 @@ if (viewMode === "list") {
                     }}
                   >
                     <FiAlertCircle className="w-3.5 h-3.5" style={{ color: "#1F2937" }} />
-                  </button>
+                  </button> */}
 
                   <button
                     className={`rounded-full transition-all duration-200 flex items-center justify-center ${
@@ -769,15 +769,20 @@ if (viewMode === "list") {
               {convertPrice(selectedPrice || price)}
             </span>
           </div>
-          <div className="flex items-center justify-center w-5 h-5 rounded-full bg-white shadow-md backdrop-blur-sm opacity-100">
+          {/* <div className="flex items-center justify-center w-5 h-5 rounded-full bg-white shadow-md backdrop-blur-sm opacity-100">
             <FiAlertCircle className="w-3 h-3 text-gray-600" />
+          </div> */}
+          <div>
+            {/* product color  */}
+            <div className="text-xs flex font-medium text-gray-900 bg-gray-100 px-1 py-0.5 rounded-md">
+              {product?.color}
+            </div>
           </div>
         </div>
 
         {/* Color Options and SKU */}
-        <div className="flex items-center justify-between">
+        {/* <div className="flex items-center justify-between">
             <div className="flex items-center space-x-1.5">
-            {/* Color Swatches */}
             <div className="flex space-x-1">
               {availableColors.length > 0 ? (
                 availableColors.map((color) => (
@@ -824,7 +829,7 @@ if (viewMode === "list") {
               )}
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Specifications Grid */}
         <div className="grid grid-cols-2 gap-2 w-full mb-2">

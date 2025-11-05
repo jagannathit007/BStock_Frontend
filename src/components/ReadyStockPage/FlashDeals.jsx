@@ -12,6 +12,7 @@ import {
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
+import { AuthService } from "../../services/auth/auth.services";
 // import HeroSlider from "./HeroSlider";
 
 const FlashDeals = () => {
@@ -152,6 +153,23 @@ const FlashDeals = () => {
     setItemsPerPage(newItemsPerPage);
     setCurrentPage(1);
   }, [viewMode]);
+
+  // Fetch currency rates on component mount (for non-logged-in users)
+  useEffect(() => {
+    const fetchCurrencyRates = async () => {
+      // Check if currency rates already exist in localStorage
+      const existingRates = localStorage.getItem('currencyRates');
+      if (!existingRates) {
+        // Fetch currency rates if not logged in or if rates don't exist
+        try {
+          await AuthService.getPublicCurrencyRates();
+        } catch (error) {
+          console.error('Failed to fetch currency rates:', error);
+        }
+      }
+    };
+    fetchCurrencyRates();
+  }, []);
 
   // Listen for wishlist updates from other components
   useEffect(() => {

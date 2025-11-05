@@ -370,6 +370,22 @@ const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
     setCurrentPage(pageNumber);
   };
 
+  // Calculate which page numbers to display (max 5 pages)
+  const getVisiblePages = () => {
+    const maxVisible = 5;
+    const halfVisible = Math.floor(maxVisible / 2);
+    
+    let startPage = Math.max(1, currentPage - halfVisible);
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+    
+    // Adjust start page if we're near the end
+    if (endPage - startPage < maxVisible - 1) {
+      startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+    
+    return Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
+  };
+
 
   const handleBackToList = () => {
     setSelectedProduct(null);
@@ -698,20 +714,18 @@ const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
                   </button>
 
                   <div className="hidden md:flex space-x-1">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                      (number) => (
-                        <button
-                          key={number}
-                          onClick={() => paginate(number)}
-                          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors font-apple ${currentPage === number
-                              ? "bg-[#0071E0] text-white"
-                              : "text-gray-700 hover:bg-gray-100"
-                            }`}
-                        >
-                          {number}
-                        </button>
-                      )
-                    )}
+                    {getVisiblePages().map((number) => (
+                      <button
+                        key={number}
+                        onClick={() => paginate(number)}
+                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors font-apple ${currentPage === number
+                            ? "bg-[#0071E0] text-white"
+                            : "text-gray-700 hover:bg-gray-100"
+                          }`}
+                      >
+                        {number}
+                      </button>
+                    ))}
                   </div>
 
                   <div className="md:hidden text-sm text-gray-700 font-apple">
@@ -879,20 +893,18 @@ const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
                   </button>
 
                   <div className="hidden md:flex space-x-1">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                      (number) => (
-                        <button
-                          key={number}
-                          onClick={() => paginate(number)}
-                          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors font-apple ${currentPage === number
-                              ? "bg-[#0071E0] text-white"
-                              : "text-gray-700 hover:bg-gray-100"
-                            }`}
-                        >
-                          {number}
-                        </button>
-                      )
-                    )}
+                    {getVisiblePages().map((number) => (
+                      <button
+                        key={number}
+                        onClick={() => paginate(number)}
+                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors font-apple ${currentPage === number
+                            ? "bg-[#0071E0] text-white"
+                            : "text-gray-700 hover:bg-gray-100"
+                          }`}
+                      >
+                        {number}
+                      </button>
+                    ))}
                   </div>
 
                   <div className="md:hidden text-sm text-gray-700 font-apple">

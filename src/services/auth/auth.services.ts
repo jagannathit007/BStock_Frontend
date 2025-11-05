@@ -316,4 +316,23 @@ export class AuthService {
       console.error('Failed to clear user data from localStorage:', error);
     }
   };
+
+  // Get public currency rates (no auth required)
+  static getPublicCurrencyRates = async (): Promise<{ AED: number; SGD: number; HKD: number } | null> => {
+    const baseUrl = env.baseUrl;
+    const url = `${baseUrl}/api/customer/currency-rates`;
+    
+    try {
+      const res = await api.get(url);
+      if (res.data && res.data.status === 200 && res.data.data) {
+        // Save currency rates to localStorage
+        localStorage.setItem('currencyRates', JSON.stringify(res.data.data));
+        return res.data.data;
+      }
+      return null;
+    } catch (err: any) {
+      console.error('Failed to fetch currency rates:', err);
+      return null;
+    }
+  };
 }
