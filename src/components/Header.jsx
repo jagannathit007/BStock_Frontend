@@ -7,7 +7,7 @@ import { ProductService } from "../services/products/products.services";
 import { env } from "../utils/env";
 import NegotiationModal from "./negotiation/NegotiationModal";
 import WalletModal from "./WalletTransactionsPage/WalletTransactions";
-import { convertPrice } from "../utils/currencyUtils";
+import { convertPrice, formatPriceUSD } from "../utils/currencyUtils";
 import { PRIMARY_COLOR, PRIMARY_COLOR_LIGHT, PRIMARY_COLOR_DARK } from "../utils/colors";
 
 const Header = ({ onLogout }) => {
@@ -569,7 +569,7 @@ const Header = ({ onLogout }) => {
                       <p className="text-sm font-medium text-gray-900">{userName || 'User'}</p>
                       <div className="flex items-center gap-1.5">
                         <p className="text-xs text-gray-500">Account</p>
-                        <span className="text-xs font-semibold" style={{ color: PRIMARY_COLOR }}>{convertPrice(walletBalance)}</span>
+                        <span className="text-xs font-semibold" style={{ color: PRIMARY_COLOR }}>{formatPriceUSD(walletBalance)}</span>
                       </div>
                     </div>
                     <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

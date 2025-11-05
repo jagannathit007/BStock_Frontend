@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import WalletService from "../../services/wallet/wallet.services";
-import { convertPrice } from "../../utils/currencyUtils";
+import { formatPriceUSD } from "../../utils/currencyUtils";
 
 const WalletModal = ({ isOpen, onClose }) => {
   const [wallet, setWallet] = useState(null);
@@ -107,7 +107,7 @@ const WalletModal = ({ isOpen, onClose }) => {
           <div className="mb-6 p-4 bg-[#0071E0] rounded-lg text-white">
             <h3 className="text-lg font-medium">Wallet Balance</h3>
             <p className="text-3xl font-bold">
-              {convertPrice(parseFloat(wallet ? wallet.balance : "0"))}
+              {formatPriceUSD(parseFloat(wallet ? wallet.balance : "0"))}
             </p>
           </div>
 
@@ -153,7 +153,7 @@ const WalletModal = ({ isOpen, onClose }) => {
                           }`}
                         >
                           {transaction.type === "credit" ? "+" : "-"}
-                          {convertPrice(parseFloat(transaction.amount))}
+                          {formatPriceUSD(parseFloat(transaction.amount))}
                         </p>
                       </div>
                     </div>

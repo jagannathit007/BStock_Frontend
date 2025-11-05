@@ -62,6 +62,28 @@ export const getCurrency = (): UserCurrency | null => {
 };
 
 /**
+ * Format price in USD without currency conversion
+ * Use this for wallet, transactions, and other areas where currency conversion should not apply
+ * @param priceInUSD - Price in USD (can be number, string, or other)
+ * @returns Formatted price string in USD
+ */
+export const formatPriceUSD = (priceInUSD: any): string => {
+  // Convert input to number and validate
+  const numericPrice = typeof priceInUSD === 'string' ? parseFloat(priceInUSD) : Number(priceInUSD);
+  
+  if (isNaN(numericPrice) || numericPrice < 0) {
+    // Return $0.00 for invalid prices
+    return '$0.00';
+  }
+
+  // Always format in USD without conversion
+  return `$${numericPrice.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
+
+/**
  * Convert price from USD to user's currency and format it
  * @param priceInUSD - Price in USD (can be number, string, or other)
  * @returns Formatted price string in user's currency
