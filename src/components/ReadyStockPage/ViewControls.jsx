@@ -59,7 +59,7 @@ const ViewControls = ({
           />
         </div>
 
-        {/* Bottom Row: View, Sort, Filter */}
+        {/* Middle Row: View, Sort, Filter */}
         <div className="flex items-center justify-between gap-3">
           {/* Left: View Buttons */}
           <div className="flex bg-gray-100 rounded-xl p-1.5">
@@ -93,9 +93,6 @@ const ViewControls = ({
             </button>
           </div>
 
-          {/* Currency Toggle Buttons */}
-          <CurrencyToggle />
-
           {/* Middle: Sort By */}
           <div className="flex-1 max-w-xs">
             <select 
@@ -120,6 +117,11 @@ const ViewControls = ({
               <FontAwesomeIcon icon={faFilter} className="w-5 h-5 text-gray-600" />
             </button>
           )}
+        </div>
+
+        {/* Bottom Row: Currency Toggle */}
+        <div className="flex items-center justify-start">
+          <CurrencyToggle />
         </div>
       </div>
 

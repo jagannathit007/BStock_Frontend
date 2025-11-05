@@ -38,6 +38,7 @@ import Swal from "sweetalert2";
 import { convertPrice, getCurrencyRates, formatPriceForCurrency } from "../../../utils/currencyUtils";
 import { useCurrency } from "../../../context/CurrencyContext";
 import { PRIMARY_COLOR, PRIMARY_COLOR_LIGHT, PRIMARY_COLOR_DARK } from "../../../utils/colors";
+import 'flag-icons/css/flag-icons.min.css';
 
 const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const { customerCountryCurrency } = useCurrency();
@@ -1033,20 +1034,26 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   // Only show Country Rate section if customer has a country set
                   if (!customerCountryCurrency || !rates) return null;
                   
+                  const getCurrencyFlagClass = (code) => {
+                    const flagClasses = {
+                      'USD': 'fi fi-us',
+                      'HKD': 'fi fi-hk',
+                      'AED': 'fi fi-ae',
+                      'SGD': 'fi fi-sg',
+                      'INR': 'fi fi-in'
+                    };
+                    return flagClasses[code] || '';
+                  };
+                  
                   const currencies = [];
                   
                   // Always show AED
                   if (rates.AED) {
-                    currencies.push({ code: 'AED', flag: '🇦🇪', label: 'AED' });
+                    currencies.push({ code: 'AED', flagClass: getCurrencyFlagClass('AED'), label: 'AED' });
                   }
                   
                   // Show customer country currency if available and not AED
                   if (customerCountryCurrency !== 'AED' && rates[customerCountryCurrency]) {
-                    const flags = {
-                      'HKD': '🇭🇰',
-                      'SGD': '🇸🇬',
-                      'INR': '🇮🇳'
-                    };
                     const labels = {
                       'HKD': 'HK',
                       'SGD': 'SGD',
@@ -1054,7 +1061,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                     };
                     currencies.push({ 
                       code: customerCountryCurrency, 
-                      flag: flags[customerCountryCurrency] || '🌍',
+                      flagClass: getCurrencyFlagClass(customerCountryCurrency),
                       label: labels[customerCountryCurrency] || customerCountryCurrency
                     });
                   }
@@ -1069,7 +1076,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                           const formattedPrice = formatPriceForCurrency(priceInUSD, currency.code, rates);
                           return (
                             <div key={currency.code} className="flex items-center gap-1.5 text-gray-700">
-                              <span>{currency.flag}</span>
+                              <span className={`${currency.flagClass} rounded-sm`} style={{ width: '16px', height: '12px' }}></span>
                               <span className="font-medium">{currency.label}</span>
                               <span className="text-gray-500">-</span>
                               <span className="font-semibold">{formattedPrice}</span>
