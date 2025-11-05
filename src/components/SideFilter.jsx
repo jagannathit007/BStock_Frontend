@@ -27,9 +27,13 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
   const [hasFiltersLoaded, setHasFiltersLoaded] = useState(false);
   const prevFiltersStrRef = React.useRef("");
   const priceDebounceRef = React.useRef({ min: null, max: null });
-  const [isDragging, setIsDragging] = useState(null); // 'min', 'max', or null
+  const [isDragging, setIsDragging] = useState(null); // 'min', 'max', 'stock-min', 'stock-max', 'moq-min', 'moq-max', or null
   const rangeBarRef = React.useRef(null);
+  const stockRangeBarRef = React.useRef(null);
+  const moqRangeBarRef = React.useRef(null);
   const dragStartRef = React.useRef({ x: 0, minPrice: 0, maxPrice: 0 });
+  const stockDragStartRef = React.useRef({ x: 0, minStock: 0, maxStock: 0 });
+  const moqDragStartRef = React.useRef({ x: 0, minMoq: 0, maxMoq: 0 });
   
   // State for collapsible sections (all open by default)
   const [openSections, setOpenSections] = useState({
@@ -485,45 +489,128 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
   };
 
   useEffect(() => {
-    if (!isDragging || !filtersData?.price) return;
+    if (!isDragging) return;
 
-    const handleMouseMove = (e) => {
-      const rect = rangeBarRef.current?.getBoundingClientRect();
-      if (!rect) return;
+    // Handle price range dragging
+    if ((isDragging === 'min' || isDragging === 'max') && filtersData?.price) {
+      const handleMouseMove = (e) => {
+        const rect = rangeBarRef.current?.getBoundingClientRect();
+        if (!rect) return;
 
-      const currentX = e.clientX - rect.left;
-      const percentage = Math.max(0, Math.min(100, (currentX / rect.width) * 100));
-      const priceRange = filtersData.price;
-      const newPrice = priceRange.min + (percentage / 100) * (priceRange.max - priceRange.min);
+        const currentX = e.clientX - rect.left;
+        const percentage = Math.max(0, Math.min(100, (currentX / rect.width) * 100));
+        const priceRange = filtersData.price;
+        const newPrice = priceRange.min + (percentage / 100) * (priceRange.max - priceRange.min);
 
-      if (isDragging === 'min') {
-        const currentMax = maxPrice !== undefined ? maxPrice : priceRange.max;
-        const constrainedPrice = Math.max(priceRange.min, Math.min(newPrice, currentMax));
-        setMinPrice(constrainedPrice);
-      } else if (isDragging === 'max') {
-        const currentMin = minPrice !== undefined ? minPrice : priceRange.min;
-        const constrainedPrice = Math.max(currentMin, Math.min(newPrice, priceRange.max));
-        setMaxPrice(constrainedPrice);
-      }
-    };
+        if (isDragging === 'min') {
+          const currentMax = maxPrice !== undefined ? maxPrice : priceRange.max;
+          const constrainedPrice = Math.max(priceRange.min, Math.min(newPrice, currentMax));
+          setMinPrice(constrainedPrice);
+        } else if (isDragging === 'max') {
+          const currentMin = minPrice !== undefined ? minPrice : priceRange.min;
+          const constrainedPrice = Math.max(currentMin, Math.min(newPrice, priceRange.max));
+          setMaxPrice(constrainedPrice);
+        }
+      };
 
-    const handleMouseUp = () => {
-      setIsDragging(null);
-      applyFilters(getCurrentFilters());
-    };
+      const handleMouseUp = () => {
+        setIsDragging(null);
+        applyFilters(getCurrentFilters());
+      };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    document.addEventListener('touchmove', handleMouseMove);
-    document.addEventListener('touchend', handleMouseUp);
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchmove', handleMouseMove);
+      document.addEventListener('touchend', handleMouseUp);
 
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.removeEventListener('touchmove', handleMouseMove);
-      document.removeEventListener('touchend', handleMouseUp);
-    };
-  }, [isDragging, filtersData, minPrice, maxPrice]);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('touchmove', handleMouseMove);
+        document.removeEventListener('touchend', handleMouseUp);
+      };
+    }
+
+    // Handle stock range dragging
+    if ((isDragging === 'stock-min' || isDragging === 'stock-max') && filtersData?.stock) {
+      const handleMouseMove = (e) => {
+        const rect = stockRangeBarRef.current?.getBoundingClientRect();
+        if (!rect) return;
+
+        const currentX = e.clientX - rect.left;
+        const percentage = Math.max(0, Math.min(100, (currentX / rect.width) * 100));
+        const stockRange = filtersData.stock;
+        const newStock = Math.round(stockRange.min + (percentage / 100) * (stockRange.max - stockRange.min));
+
+        if (isDragging === 'stock-min') {
+          const currentMax = maxStock ? parseInt(maxStock) : stockRange.max;
+          const constrainedStock = Math.max(stockRange.min, Math.min(newStock, currentMax));
+          setMinStock(constrainedStock.toString());
+        } else if (isDragging === 'stock-max') {
+          const currentMin = minStock ? parseInt(minStock) : stockRange.min;
+          const constrainedStock = Math.max(currentMin, Math.min(newStock, stockRange.max));
+          setMaxStock(constrainedStock.toString());
+        }
+      };
+
+      const handleMouseUp = () => {
+        setIsDragging(null);
+        applyFilters(getCurrentFilters());
+      };
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchmove', handleMouseMove);
+      document.addEventListener('touchend', handleMouseUp);
+
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('touchmove', handleMouseMove);
+        document.removeEventListener('touchend', handleMouseUp);
+      };
+    }
+
+    // Handle MOQ range dragging
+    if ((isDragging === 'moq-min' || isDragging === 'moq-max') && filtersData?.moq) {
+      const handleMouseMove = (e) => {
+        const rect = moqRangeBarRef.current?.getBoundingClientRect();
+        if (!rect) return;
+
+        const currentX = e.clientX - rect.left;
+        const percentage = Math.max(0, Math.min(100, (currentX / rect.width) * 100));
+        const moqRange = filtersData.moq;
+        const newMoq = Math.round(moqRange.min + (percentage / 100) * (moqRange.max - moqRange.min));
+
+        if (isDragging === 'moq-min') {
+          const currentMax = maxMoq ? parseInt(maxMoq) : moqRange.max;
+          const constrainedMoq = Math.max(moqRange.min, Math.min(newMoq, currentMax));
+          setMinMoq(constrainedMoq.toString());
+        } else if (isDragging === 'moq-max') {
+          const currentMin = minMoq ? parseInt(minMoq) : moqRange.min;
+          const constrainedMoq = Math.max(currentMin, Math.min(newMoq, moqRange.max));
+          setMaxMoq(constrainedMoq.toString());
+        }
+      };
+
+      const handleMouseUp = () => {
+        setIsDragging(null);
+        applyFilters(getCurrentFilters());
+      };
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchmove', handleMouseMove);
+      document.addEventListener('touchend', handleMouseUp);
+
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('touchmove', handleMouseMove);
+        document.removeEventListener('touchend', handleMouseUp);
+      };
+    }
+  }, [isDragging, filtersData, minPrice, maxPrice, minStock, maxStock, minMoq, maxMoq]);
 
   // Cleanup timeouts on unmount
   useEffect(() => {
@@ -536,6 +623,134 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
       }
     };
   }, []);
+
+  // Handle stock range drag functionality
+  const handleStockRangeBarMouseDown = (e, type) => {
+    if (!filtersData?.stock) return;
+    e.preventDefault();
+    setIsDragging(type === 'min' ? 'stock-min' : 'stock-max');
+    const rect = stockRangeBarRef.current?.getBoundingClientRect();
+    if (rect) {
+      stockDragStartRef.current = {
+        x: e.clientX - rect.left,
+        minStock: minStock ? parseInt(minStock) : stockRange.min,
+        maxStock: maxStock ? parseInt(maxStock) : stockRange.max,
+      };
+    }
+  };
+
+  const handleStockRangeBarClick = (e) => {
+    if (!filtersData?.stock || isDragging) return;
+    const rect = stockRangeBarRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const clickX = e.clientX - rect.left;
+    const percentage = Math.max(0, Math.min(100, (clickX / rect.width) * 100));
+    const stockRange = filtersData.stock;
+    const clickedStock = Math.round(stockRange.min + (percentage / 100) * (stockRange.max - stockRange.min));
+
+    const currentMin = minStock ? parseInt(minStock) : stockRange.min;
+    const currentMax = maxStock ? parseInt(maxStock) : stockRange.max;
+    const minDistance = Math.abs(clickedStock - currentMin);
+    const maxDistance = Math.abs(clickedStock - currentMax);
+
+    // Determine which marker is closer or if clicking on the bar itself
+    if (minDistance < maxDistance && minDistance < (stockRange.max - stockRange.min) * 0.1) {
+      // Closer to min marker
+      const newMin = Math.max(stockRange.min, Math.min(clickedStock, currentMax));
+      setMinStock(newMin.toString());
+      applyFilters({
+        ...getCurrentFilters(),
+        minStock: newMin.toString(),
+      });
+    } else if (maxDistance < (stockRange.max - stockRange.min) * 0.1) {
+      // Closer to max marker
+      const newMax = Math.max(currentMin, Math.min(clickedStock, stockRange.max));
+      setMaxStock(newMax.toString());
+      applyFilters({
+        ...getCurrentFilters(),
+        maxStock: newMax.toString(),
+      });
+    } else {
+      // Clicking on the bar - move the range center to the clicked position
+      const rangeSize = currentMax - currentMin;
+      const newMin = Math.max(stockRange.min, clickedStock - rangeSize / 2);
+      const newMax = Math.min(stockRange.max, clickedStock + rangeSize / 2);
+      if (newMin >= stockRange.min && newMax <= stockRange.max) {
+        setMinStock(newMin.toString());
+        setMaxStock(newMax.toString());
+        applyFilters({
+          ...getCurrentFilters(),
+          minStock: newMin.toString(),
+          maxStock: newMax.toString(),
+        });
+      }
+    }
+  };
+
+  // Handle MOQ range drag functionality
+  const handleMoqRangeBarMouseDown = (e, type) => {
+    if (!filtersData?.moq) return;
+    e.preventDefault();
+    setIsDragging(type === 'min' ? 'moq-min' : 'moq-max');
+    const rect = moqRangeBarRef.current?.getBoundingClientRect();
+    if (rect) {
+      moqDragStartRef.current = {
+        x: e.clientX - rect.left,
+        minMoq: minMoq ? parseInt(minMoq) : moqRange.min,
+        maxMoq: maxMoq ? parseInt(maxMoq) : moqRange.max,
+      };
+    }
+  };
+
+  const handleMoqRangeBarClick = (e) => {
+    if (!filtersData?.moq || isDragging) return;
+    const rect = moqRangeBarRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const clickX = e.clientX - rect.left;
+    const percentage = Math.max(0, Math.min(100, (clickX / rect.width) * 100));
+    const moqRange = filtersData.moq;
+    const clickedMoq = Math.round(moqRange.min + (percentage / 100) * (moqRange.max - moqRange.min));
+
+    const currentMin = minMoq ? parseInt(minMoq) : moqRange.min;
+    const currentMax = maxMoq ? parseInt(maxMoq) : moqRange.max;
+    const minDistance = Math.abs(clickedMoq - currentMin);
+    const maxDistance = Math.abs(clickedMoq - currentMax);
+
+    // Determine which marker is closer or if clicking on the bar itself
+    if (minDistance < maxDistance && minDistance < (moqRange.max - moqRange.min) * 0.1) {
+      // Closer to min marker
+      const newMin = Math.max(moqRange.min, Math.min(clickedMoq, currentMax));
+      setMinMoq(newMin.toString());
+      applyFilters({
+        ...getCurrentFilters(),
+        minMoq: newMin.toString(),
+      });
+    } else if (maxDistance < (moqRange.max - moqRange.min) * 0.1) {
+      // Closer to max marker
+      const newMax = Math.max(currentMin, Math.min(clickedMoq, moqRange.max));
+      setMaxMoq(newMax.toString());
+      applyFilters({
+        ...getCurrentFilters(),
+        maxMoq: newMax.toString(),
+      });
+    } else {
+      // Clicking on the bar - move the range center to the clicked position
+      const rangeSize = currentMax - currentMin;
+      const newMin = Math.max(moqRange.min, clickedMoq - rangeSize / 2);
+      const newMax = Math.min(moqRange.max, clickedMoq + rangeSize / 2);
+      if (newMin >= moqRange.min && newMax <= moqRange.max) {
+        setMinMoq(newMin.toString());
+        setMaxMoq(newMax.toString());
+        applyFilters({
+          ...getCurrentFilters(),
+          minMoq: newMin.toString(),
+          maxMoq: newMax.toString(),
+        });
+      }
+    }
+  };
 
   const handleMoqChange = (type, value) => {
     const parsedValue = parseInt(value);
@@ -845,7 +1060,7 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
                 {/* </div> */}
                 <div 
                   ref={rangeBarRef}
-                  className="relative h-2 bg-gray-200 rounded-full cursor-pointer select-none"
+                  className="relative h-1 bg-gray-200 rounded-full cursor-pointer select-none"
                   onClick={(e) => {
                     // Only handle click if not dragging
                     if (!isDragging) {
@@ -877,7 +1092,7 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
                   }}
                 >
                   <div
-                    className="absolute h-2 bg-blue-600 rounded-full transition-all duration-100"
+                    className="absolute h-1 bg-blue-600 rounded-full transition-all duration-100"
                     style={{
                       left: `${
                         priceRange.max > 0 
@@ -903,7 +1118,7 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
                           : 0
                       }%`,
                       top: '50%',
-                      marginTop: '-8px',
+                      marginTop: '-5px',
                     }}
                     title={`Min: ${convertPrice(minPrice !== undefined ? minPrice : priceRange.min)}`}
                     onMouseDown={(e) => {
@@ -927,7 +1142,7 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
                           : 0
                       }%`,
                       top: '50%',
-                      marginTop: '-8px',
+                      marginTop: '-5px',
                     }}
                     title={`Max: ${convertPrice(maxPrice !== undefined ? maxPrice : priceRange.max)}`}
                     onMouseDown={(e) => {
@@ -941,11 +1156,11 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
                   ></div>
                 </div>
                 <div className="flex justify-between items-center mt-2">
-                  <div className="text-xs font-semibold text-blue-600">
+                  <div className="text-xs font-semibold text-gray-600">
                     {convertPrice(minPrice !== undefined ? minPrice : priceRange.min)}
                   </div>
                   <div className="text-xs text-gray-400">-</div>
-                  <div className="text-xs font-semibold text-blue-600">
+                  <div className="text-xs font-semibold text-gray-600">
                     {convertPrice(maxPrice !== undefined ? maxPrice : priceRange.max)}
                   </div>
                 </div>
@@ -1180,50 +1395,118 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
             isOpen={openSections.stockAvailability}
             onToggle={toggleSection}
           >
-            <div className="range-container">
-              <input
-                type="range"
-                min={stockRange.min}
-                max={stockRange.max}
-                value={minStock || stockRange.min}
-                onChange={(e) => handleStockChange("min", e.target.value)}
-                className="min-range"
-                style={{ zIndex: 2 }}
-                aria-label="Minimum stock"
-              />
-              <input
-                type="range"
-                min={stockRange.min}
-                max={stockRange.max}
-                value={maxStock || stockRange.max}
-                onChange={(e) => handleStockChange("max", e.target.value)}
-                className="max-range"
-                style={{ zIndex: 1 }}
-                aria-label="Maximum stock"
-              />
-              <div
-                className="absolute h-1 bg-blue-600 rounded-full"
-                style={{
-                  left: `${
-                    ((minStock || stockRange.min) / stockRange.max) * 100
-                  }%`,
-                  width: `${
-                    (((maxStock || stockRange.max) -
-                      (minStock || stockRange.min)) /
-                      stockRange.max) *
-                    100
-                  }%`,
-                  zIndex: 0,
-                }}
-              ></div>
-            </div>
-            <div className="flex justify-between items-center mt-2">
-              <div className="text-xs text-gray-600 font-medium">
-                {minStock || stockRange.min}
-              </div>
-              <div className="text-xs text-gray-400">-</div>
-              <div className="text-xs text-gray-600 font-medium">
-                {maxStock || stockRange.max}
+            <div className="space-y-4">
+              {/* Visual Range Indicator */}
+              <div className="relative">
+                <div 
+                  ref={stockRangeBarRef}
+                  className="relative h-1 bg-gray-200 rounded-full cursor-pointer select-none"
+                  onClick={(e) => {
+                    // Only handle click if not dragging
+                    if (!isDragging || (isDragging !== 'stock-min' && isDragging !== 'stock-max')) {
+                      handleStockRangeBarClick(e);
+                    }
+                  }}
+                  onMouseDown={(e) => {
+                    const rect = stockRangeBarRef.current?.getBoundingClientRect();
+                    if (!rect) return;
+                    const clickX = e.clientX - rect.left;
+                    const percentage = (clickX / rect.width) * 100;
+                    const rangeSize = stockRange.max - stockRange.min;
+                    const currentMinValue = minStock ? parseInt(minStock) : stockRange.min;
+                    const currentMaxValue = maxStock ? parseInt(maxStock) : stockRange.max;
+                    const currentMinPercent = rangeSize > 0 
+                      ? ((currentMinValue - stockRange.min) / rangeSize) * 100 
+                      : 0;
+                    const currentMaxPercent = rangeSize > 0 
+                      ? ((currentMaxValue - stockRange.min) / rangeSize) * 100 
+                      : 0;
+                    
+                    const minDistance = Math.abs(percentage - currentMinPercent);
+                    const maxDistance = Math.abs(percentage - currentMaxPercent);
+                    
+                    // Check if clicking near markers (within 5% threshold)
+                    if (minDistance < maxDistance && minDistance < 5) {
+                      handleStockRangeBarMouseDown(e, 'min');
+                    } else if (maxDistance < 5) {
+                      handleStockRangeBarMouseDown(e, 'max');
+                    }
+                    // If clicking far from markers, the click handler will move the range
+                  }}
+                >
+                  <div
+                    className="absolute h-1 bg-blue-600 rounded-full transition-all duration-100"
+                    style={{
+                      left: `${
+                        (stockRange.max - stockRange.min) > 0 
+                          ? (((minStock ? parseInt(minStock) : stockRange.min) - stockRange.min) / (stockRange.max - stockRange.min)) * 100 
+                          : 0
+                      }%`,
+                      width: `${
+                        (stockRange.max - stockRange.min) > 0
+                          ? (((maxStock ? parseInt(maxStock) : stockRange.max) - (minStock ? parseInt(minStock) : stockRange.min)) / (stockRange.max - stockRange.min)) * 100
+                          : 0
+                      }%`,
+                    }}
+                  ></div>
+                  {/* Min marker */}
+                  <div
+                    className={`absolute w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-md transform -translate-x-1/2 -translate-y-1 transition-transform ${
+                      isDragging === 'stock-min' ? 'scale-125 cursor-grabbing' : 'cursor-grab hover:scale-110'
+                    }`}
+                    style={{
+                      left: `${
+                        (stockRange.max - stockRange.min) > 0 
+                          ? (((minStock ? parseInt(minStock) : stockRange.min) - stockRange.min) / (stockRange.max - stockRange.min)) * 100 
+                          : 0
+                      }%`,
+                      top: '50%',
+                      marginTop: '-5px',
+                    }}
+                    title={`Min: ${minStock || stockRange.min}`}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      handleStockRangeBarMouseDown(e, 'min');
+                    }}
+                    onTouchStart={(e) => {
+                      e.stopPropagation();
+                      handleStockRangeBarMouseDown(e.touches[0], 'min');
+                    }}
+                  ></div>
+                  {/* Max marker */}
+                  <div
+                    className={`absolute w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-md transform -translate-x-1/2 -translate-y-1 transition-transform ${
+                      isDragging === 'stock-max' ? 'scale-125 cursor-grabbing' : 'cursor-grab hover:scale-110'
+                    }`}
+                    style={{
+                      left: `${
+                        (stockRange.max - stockRange.min) > 0 
+                          ? (((maxStock ? parseInt(maxStock) : stockRange.max) - stockRange.min) / (stockRange.max - stockRange.min)) * 100 
+                          : 0
+                      }%`,
+                      top: '50%',
+                      marginTop: '-5px',
+                    }}
+                    title={`Max: ${maxStock || stockRange.max}`}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      handleStockRangeBarMouseDown(e, 'max');
+                    }}
+                    onTouchStart={(e) => {
+                      e.stopPropagation();
+                      handleStockRangeBarMouseDown(e.touches[0], 'max');
+                    }}
+                  ></div>
+                </div>
+                <div className="flex justify-between items-center mt-2">
+                  <div className="text-xs font-semibold text-gray-600">
+                    {minStock || stockRange.min}
+                  </div>
+                  <div className="text-xs text-gray-400">-</div>
+                  <div className="text-xs font-semibold text-gray-600">
+                    {maxStock || stockRange.max}
+                  </div>
+                </div>
               </div>
             </div>
           </FilterSection>
@@ -1235,47 +1518,118 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
             isOpen={openSections.moq}
             onToggle={toggleSection}
           >
-            <div className="range-container">
-              <input
-                type="range"
-                min={moqRange.min}
-                max={moqRange.max}
-                value={minMoq || moqRange.min}
-                onChange={(e) => handleMoqChange("min", e.target.value)}
-                className="min-range"
-                style={{ zIndex: 2 }}
-                aria-label="Minimum MOQ"
-              />
-              <input
-                type="range"
-                min={moqRange.min}
-                max={moqRange.max}
-                value={maxMoq || moqRange.max}
-                onChange={(e) => handleMoqChange("max", e.target.value)}
-                className="max-range"
-                style={{ zIndex: 1 }}
-                aria-label="Maximum MOQ"
-              />
-              <div
-                className="absolute h-1 bg-blue-600 rounded-full"
-                style={{
-                  left: `${((minMoq || moqRange.min) / moqRange.max) * 100}%`,
-                  width: `${
-                    (((maxMoq || moqRange.max) - (minMoq || moqRange.min)) /
-                      moqRange.max) *
-                    100
-                  }%`,
-                  zIndex: 0,
-                }}
-              ></div>
-            </div>
-            <div className="flex justify-between items-center mt-2">
-              <div className="text-xs text-gray-600 font-medium">
-                {minMoq || moqRange.min}
-              </div>
-              <div className="text-xs text-gray-400">-</div>
-              <div className="text-xs text-gray-600 font-medium">
-                {maxMoq || moqRange.max}
+            <div className="space-y-4">
+              {/* Visual Range Indicator */}
+              <div className="relative">
+                <div 
+                  ref={moqRangeBarRef}
+                  className="relative h-1 bg-gray-200 rounded-full cursor-pointer select-none"
+                  onClick={(e) => {
+                    // Only handle click if not dragging
+                    if (!isDragging || (isDragging !== 'moq-min' && isDragging !== 'moq-max')) {
+                      handleMoqRangeBarClick(e);
+                    }
+                  }}
+                  onMouseDown={(e) => {
+                    const rect = moqRangeBarRef.current?.getBoundingClientRect();
+                    if (!rect) return;
+                    const clickX = e.clientX - rect.left;
+                    const percentage = (clickX / rect.width) * 100;
+                    const rangeSize = moqRange.max - moqRange.min;
+                    const currentMinValue = minMoq ? parseInt(minMoq) : moqRange.min;
+                    const currentMaxValue = maxMoq ? parseInt(maxMoq) : moqRange.max;
+                    const currentMinPercent = rangeSize > 0 
+                      ? ((currentMinValue - moqRange.min) / rangeSize) * 100 
+                      : 0;
+                    const currentMaxPercent = rangeSize > 0 
+                      ? ((currentMaxValue - moqRange.min) / rangeSize) * 100 
+                      : 0;
+                    
+                    const minDistance = Math.abs(percentage - currentMinPercent);
+                    const maxDistance = Math.abs(percentage - currentMaxPercent);
+                    
+                    // Check if clicking near markers (within 5% threshold)
+                    if (minDistance < maxDistance && minDistance < 5) {
+                      handleMoqRangeBarMouseDown(e, 'min');
+                    } else if (maxDistance < 5) {
+                      handleMoqRangeBarMouseDown(e, 'max');
+                    }
+                    // If clicking far from markers, the click handler will move the range
+                  }}
+                >
+                  <div
+                    className="absolute h-1 bg-blue-600 rounded-full transition-all duration-100"
+                    style={{
+                      left: `${
+                        (moqRange.max - moqRange.min) > 0 
+                          ? (((minMoq ? parseInt(minMoq) : moqRange.min) - moqRange.min) / (moqRange.max - moqRange.min)) * 100 
+                          : 0
+                      }%`,
+                      width: `${
+                        (moqRange.max - moqRange.min) > 0
+                          ? (((maxMoq ? parseInt(maxMoq) : moqRange.max) - (minMoq ? parseInt(minMoq) : moqRange.min)) / (moqRange.max - moqRange.min)) * 100
+                          : 0
+                      }%`,
+                    }}
+                  ></div>
+                  {/* Min marker */}
+                  <div
+                    className={`absolute w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-md transform -translate-x-1/2 -translate-y-1 transition-transform ${
+                      isDragging === 'moq-min' ? 'scale-125 cursor-grabbing' : 'cursor-grab hover:scale-110'
+                    }`}
+                    style={{
+                      left: `${
+                        (moqRange.max - moqRange.min) > 0 
+                          ? (((minMoq ? parseInt(minMoq) : moqRange.min) - moqRange.min) / (moqRange.max - moqRange.min)) * 100 
+                          : 0
+                      }%`,
+                      top: '50%',
+                      marginTop: '-5px',
+                    }}
+                    title={`Min: ${minMoq || moqRange.min}`}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      handleMoqRangeBarMouseDown(e, 'min');
+                    }}
+                    onTouchStart={(e) => {
+                      e.stopPropagation();
+                      handleMoqRangeBarMouseDown(e.touches[0], 'min');
+                    }}
+                  ></div>
+                  {/* Max marker */}
+                  <div
+                    className={`absolute w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-md transform -translate-x-1/2 -translate-y-1 transition-transform ${
+                      isDragging === 'moq-max' ? 'scale-125 cursor-grabbing' : 'cursor-grab hover:scale-110'
+                    }`}
+                    style={{
+                      left: `${
+                        (moqRange.max - moqRange.min) > 0 
+                          ? (((maxMoq ? parseInt(maxMoq) : moqRange.max) - moqRange.min) / (moqRange.max - moqRange.min)) * 100 
+                          : 0
+                      }%`,
+                      top: '50%',
+                      marginTop: '-5px',
+                    }}
+                    title={`Max: ${maxMoq || moqRange.max}`}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      handleMoqRangeBarMouseDown(e, 'max');
+                    }}
+                    onTouchStart={(e) => {
+                      e.stopPropagation();
+                      handleMoqRangeBarMouseDown(e.touches[0], 'max');
+                    }}
+                  ></div>
+                </div>
+                <div className="flex justify-between items-center mt-2">
+                  <div className="text-xs font-semibold text-gray-600">
+                    {minMoq || moqRange.min}
+                  </div>
+                  <div className="text-xs text-gray-400">-</div>
+                  <div className="text-xs font-semibold text-gray-600">
+                    {maxMoq || moqRange.max}
+                  </div>
+                </div>
               </div>
             </div>
           </FilterSection>
