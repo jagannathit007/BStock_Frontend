@@ -437,6 +437,12 @@ const Header = ({ onLogout }) => {
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
       />
+      <style>{`
+        .nav-button-hover:hover {
+          color: ${PRIMARY_COLOR} !important;
+          background-color: ${PRIMARY_COLOR_LIGHT} !important;
+        }
+      `}</style>
 
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="w-full px-2 sm:px-4 md:px-6 xl:px-[80px]">
@@ -475,11 +481,8 @@ const Header = ({ onLogout }) => {
               <div className="flex items-center space-x-1">
                 {/* Negotiations */}
                 <button
-                  className={`${!isLoggedIn ? 'px-3 py-2' : 'p-2.5'} text-gray-500 rounded-lg relative cursor-pointer group flex items-center space-x-2 transition-colors`}
-                  style={{ '--hover-text': PRIMARY_COLOR, '--hover-bg': PRIMARY_COLOR_LIGHT } || {}}
-                  onMouseEnter={(e) => { e.target.style.color = PRIMARY_COLOR; e.target.style.backgroundColor = PRIMARY_COLOR_LIGHT; }}
-                  onMouseLeave={(e) => { e.target.style.color = ''; e.target.style.backgroundColor = ''; }}
-                  onClick={(e) => { e.currentTarget.style.color = ''; e.currentTarget.style.backgroundColor = ''; handleNegotiationClick(); }}
+                  className={`${!isLoggedIn ? 'px-3 py-2' : 'p-2.5'} text-gray-500 rounded-lg relative cursor-pointer group flex items-center space-x-2 transition-colors nav-button-hover`}
+                  onClick={handleNegotiationClick}
                   title="My Negotiations"
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -490,11 +493,8 @@ const Header = ({ onLogout }) => {
 
                     {/* Wishlist */}
                 <button
-                  className={`${!isLoggedIn ? 'px-3 py-2' : 'p-2.5'} text-gray-500 rounded-lg relative cursor-pointer group flex items-center space-x-2 transition-colors`}
-                  style={{ '--hover-text': PRIMARY_COLOR, '--hover-bg': PRIMARY_COLOR_LIGHT } || {}}
-                  onMouseEnter={(e) => { e.target.style.color = PRIMARY_COLOR; e.target.style.backgroundColor = PRIMARY_COLOR_LIGHT; }}
-                  onMouseLeave={(e) => { e.target.style.color = ''; e.target.style.backgroundColor = ''; }}
-                  onClick={(e) => { e.currentTarget.style.color = ''; e.currentTarget.style.backgroundColor = ''; handleWishlistClick(); }}
+                  className={`${!isLoggedIn ? 'px-3 py-2' : 'p-2.5'} text-gray-500 rounded-lg relative cursor-pointer group flex items-center space-x-2 transition-colors nav-button-hover`}
+                  onClick={handleWishlistClick}
                   title="My Wishlist"
                 >
                   <svg
@@ -516,11 +516,8 @@ const Header = ({ onLogout }) => {
 
                 {/* Cart */}
                 <button
-                  className={`${!isLoggedIn ? 'px-3 py-2' : 'p-2.5'} text-gray-500 rounded-lg relative cursor-pointer group flex items-center space-x-2 transition-colors`}
-                  style={{ '--hover-text': PRIMARY_COLOR, '--hover-bg': PRIMARY_COLOR_LIGHT } || {}}
-                  onMouseEnter={(e) => { e.target.style.color = PRIMARY_COLOR; e.target.style.backgroundColor = PRIMARY_COLOR_LIGHT; }}
-                  onMouseLeave={(e) => { e.target.style.color = ''; e.target.style.backgroundColor = ''; }}
-                  onClick={(e) => { e.currentTarget.style.color = ''; e.currentTarget.style.backgroundColor = ''; handleCartClick(); }}
+                  className={`${!isLoggedIn ? 'px-3 py-2' : 'p-2.5'} text-gray-500 rounded-lg relative cursor-pointer group flex items-center space-x-2 transition-colors nav-button-hover`}
+                  onClick={handleCartClick}
                   title="My Cart"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shopping-cart-icon lucide-shopping-cart"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>

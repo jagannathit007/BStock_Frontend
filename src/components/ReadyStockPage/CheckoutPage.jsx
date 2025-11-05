@@ -80,12 +80,6 @@ const CheckoutPage = () => {
 
   useEffect(() => { fetchCart(); }, [fetchCart]);
   
-  // Recalculate costs when shipping country changes
-  useEffect(() => {
-    if (shippingAddress.country) {
-      fetchCart(shippingAddress.country);
-    }
-  }, [shippingAddress.country, fetchCart]);
 
   const handleAddressChange = (type, field, value) => {
     if (type === "billing") setBillingAddress((prev) => ({ ...prev, [field]: value }));

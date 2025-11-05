@@ -328,48 +328,51 @@ const BiddingSideFilter = ({ onFilterChange, onClose, appliedFilters }) => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              {!collapsed.priceRange && (
-                <div className="pb-3 pt-1">
-                  <div className="range-container">
-                    <input
-                      type="range"
-                      min={facets.priceRange?.min || 0}
-                      max={facets.priceRange?.max || 0}
-                      value={selected.minPrice ?? facets.priceRange?.min ?? 0}
-                      onChange={(e) => handlePriceSliderChange('minPrice', e.target.value)}
-                      onMouseUp={handlePriceRelease}
-                      onTouchEnd={handlePriceRelease}
-                      className="min-range"
-                      style={{ zIndex: 2 }}
-                      aria-label="Minimum price"
-                    />
-                    <input
-                      type="range"
-                      min={facets.priceRange?.min || 0}
-                      max={facets.priceRange?.max || 0}
-                      value={selected.maxPrice ?? facets.priceRange?.max ?? 0}
-                      onChange={(e) => handlePriceSliderChange('maxPrice', e.target.value)}
-                      onMouseUp={handlePriceRelease}
-                      onTouchEnd={handlePriceRelease}
-                      className="max-range"
-                      style={{ zIndex: 1 }}
-                      aria-label="Maximum price"
-                    />
-                    <div
-                      className="absolute h-1 bg-blue-600 rounded-full"
-                      style={{
-                        left: `${
-                          ((selected.minPrice ?? facets.priceRange?.min ?? 0) / (facets.priceRange?.max || 1)) * 100
-                        }%`,
-                        width: `${
-                          (((selected.maxPrice ?? facets.priceRange?.max ?? 0) -
-                            (selected.minPrice ?? facets.priceRange?.min ?? 0)) /
-                            (facets.priceRange?.max || 1)) *
-                          100
-                        }%`,
-                        zIndex: 0,
-                      }}
-                    ></div>
+              {!collapsed.priceRange && (() => {
+                const rangeMin = facets.priceRange?.min ?? 0;
+                const rangeMax = facets.priceRange?.max ?? 0;
+                const rangeSize = rangeMax - rangeMin;
+                const minPrice = selected.minPrice ?? rangeMin;
+                const maxPrice = selected.maxPrice ?? rangeMax;
+                
+                const leftPercent = rangeSize > 0 ? ((minPrice - rangeMin) / rangeSize) * 100 : 0;
+                const widthPercent = rangeSize > 0 ? ((maxPrice - minPrice) / rangeSize) * 100 : 0;
+                
+                return (
+                  <div className="pb-3 pt-1">
+                    <div className="range-container">
+                      <input
+                        type="range"
+                        min={rangeMin}
+                        max={rangeMax}
+                        value={minPrice}
+                        onChange={(e) => handlePriceSliderChange('minPrice', e.target.value)}
+                        onMouseUp={handlePriceRelease}
+                        onTouchEnd={handlePriceRelease}
+                        className="min-range"
+                        style={{ zIndex: 2 }}
+                        aria-label="Minimum price"
+                      />
+                      <input
+                        type="range"
+                        min={rangeMin}
+                        max={rangeMax}
+                        value={maxPrice}
+                        onChange={(e) => handlePriceSliderChange('maxPrice', e.target.value)}
+                        onMouseUp={handlePriceRelease}
+                        onTouchEnd={handlePriceRelease}
+                        className="max-range"
+                        style={{ zIndex: 1 }}
+                        aria-label="Maximum price"
+                      />
+                      <div
+                        className="absolute h-1 bg-blue-600 rounded-full"
+                        style={{
+                          left: `${leftPercent}%`,
+                          width: `${widthPercent}%`,
+                          zIndex: 0,
+                        }}
+                      ></div>
                   </div>
                   <div className="flex justify-between items-center mt-2">
                     <div className="text-xs text-gray-600 font-medium">
@@ -381,7 +384,8 @@ const BiddingSideFilter = ({ onFilterChange, onClose, appliedFilters }) => {
                     </div>
                   </div>
                 </div>
-              )}
+                );
+              })()}
             </div>
 
             {renderGroup('Condition', 'grades', facets.grades)}
