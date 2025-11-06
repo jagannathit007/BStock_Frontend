@@ -321,7 +321,7 @@ const FlashDeals = () => {
   return (
     <div>
       {/* <HeroSlider/> */}
-      <div className="flex flex-col lg:flex-row gap-6">
+      <div className="flex flex-col lg:flex-row gap-6 max-w-[1800px] mx-auto">
         {showMobileFilters && (
           <div className="fixed inset-0 z-[99] lg:hidden">
             <div

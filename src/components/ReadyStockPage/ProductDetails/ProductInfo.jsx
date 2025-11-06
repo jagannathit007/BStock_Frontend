@@ -58,6 +58,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     storage: initialProduct?.storage || "",
     simType: initialProduct?.simType || "",
   });
+  const [isVariantChanging, setIsVariantChanging] = useState(false);
   const [variantOptions, setVariantOptions] = useState({
     colors: [],
     rams: [],
@@ -293,8 +294,9 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       productId: currentProduct._id || currentProduct.id,
     });
     setIsFavorite(wishlistStatus);
-    // Any change of the backing product should clear unavailable state
+    // Any change of the backing product should clear unavailable state and reset loading flag
     setUnavailableVariant(false);
+    setIsVariantChanging(false);
   }, [currentProduct]);
 
   // Build variant options (Color, RAM, Storage, SIM Type) from current product and related products
@@ -322,8 +324,12 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     }
 
     const uniq = (arr) => Array.from(new Set(arr.filter(Boolean)));
+    
+    // Colors: Only from current product, not from related products
+    const currentProductColor = currentProduct?.color ? [currentProduct.color.toString()] : [];
+    
     setVariantOptions({
-      colors: uniq(pool.map((p) => (p.color || "").toString())),
+      colors: uniq(currentProductColor),
       rams: uniq(pool.map((p) => (p.ram || "").toString())),
       storages: uniq(pool.map((p) => (p.storage || "").toString())),
       simTypes: uniq(pool.map((p) => (p.simType || "").toString())),
@@ -347,6 +353,8 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
         ram: currentProduct.ram,
         storage: currentProduct.storage,
         simType: currentProduct.simType,
+        stock: currentProduct.stock || 0,
+        expiryTime: currentProduct.expiryTime,
       });
     }
     if (Array.isArray(currentProduct?.relatedProducts)) {
@@ -357,6 +365,8 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
           ram: p.ram,
           storage: p.storage,
           simType: p.simType,
+          stock: p.stock || 0,
+          expiryTime: p.expiryTime,
         });
       });
     }
@@ -384,6 +394,10 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   };
 
   const handleVariantClick = async (key, value) => {
+    // Prevent multiple simultaneous calls
+    if (isVariantChanging) return;
+    
+    setIsVariantChanging(true);
     const next = { ...selectedVariant, [key]: value };
     setSelectedVariant(next);
     const match = findMatchingVariant(next);
@@ -395,21 +409,86 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       // If the match is a different product, navigate/fetch it
       if (match._id && match._id !== (currentProduct._id || currentProduct.id)) {
         try {
-          navigate(`/product/${match._id}`);
-        } catch {}
-        try {
           const fresh = await ProductService.getProductById(match._id);
           if (fresh && typeof fresh === "object") {
             setCurrentProduct(fresh);
             setSelectedImageIndex(0);
+            // Update URL after product is loaded
+            navigate(`/product/${match._id}`, { replace: true });
+            // Reset loading flag after a short delay to ensure state updates
+            setTimeout(() => setIsVariantChanging(false), 100);
+          } else {
+            setIsVariantChanging(false);
           }
         } catch (e) {
           console.error("Failed to fetch variant product", e);
+          setIsVariantChanging(false);
         }
+      } else {
+        setIsVariantChanging(false);
       }
     } else {
       // No matching variant exists for the selected combination
       setUnavailableVariant(true);
+      setIsVariantChanging(false);
+    }
+  };
+
+  // Handle size (RAM + Storage) selection - update both at once
+  const handleSizeClick = async (ram, storage) => {
+    // Prevent multiple simultaneous calls
+    if (isVariantChanging) return;
+    
+    setIsVariantChanging(true);
+    const next = { ...selectedVariant, ram, storage };
+    setSelectedVariant(next);
+    const match = findMatchingVariant(next);
+
+    if (match && match._id) {
+      // Valid combination found; clear any previous unavailable state
+      setUnavailableVariant(false);
+
+      // Always fetch fresh product data from API, even if it's the same product ID
+      // This ensures we get the latest stock status
+      try {
+        const fresh = await ProductService.getProductById(match._id);
+        if (fresh && typeof fresh === "object") {
+          // Check if the fetched product has stock
+          const stock = Number(fresh.stock || 0);
+          const isExpired = fresh.expiryTime ? new Date(fresh.expiryTime) < new Date() : false;
+          
+          if (stock <= 0 || isExpired) {
+            // Product is out of stock or expired, mark as unavailable
+            setUnavailableVariant(true);
+            setIsVariantChanging(false);
+            return;
+          }
+
+          // Product is available, update the current product
+          setCurrentProduct(fresh);
+          setSelectedImageIndex(0);
+          
+          // Update URL if it's a different product
+          if (match._id !== (currentProduct._id || currentProduct.id)) {
+            navigate(`/product/${match._id}`, { replace: true });
+          }
+          
+          // Reset loading flag after a short delay to ensure state updates
+          setTimeout(() => setIsVariantChanging(false), 100);
+        } else {
+          // Invalid response, mark as unavailable
+          setUnavailableVariant(true);
+          setIsVariantChanging(false);
+        }
+      } catch (e) {
+        console.error("Failed to fetch variant product", e);
+        setUnavailableVariant(true);
+        setIsVariantChanging(false);
+      }
+    } else {
+      // No matching variant exists for the selected combination
+      setUnavailableVariant(true);
+      setIsVariantChanging(false);
     }
   };
 
@@ -773,12 +852,31 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   };
 
   // Build RAM + Storage combinations for size selection (current + related products)
+  // Only show options that have available stock
   const getSizeOptions = () => {
     const combinations = [];
     const seen = new Set();
 
+    // Helper function to check if a variant is available
+    const isVariantAvailable = (ram, storage) => {
+      const next = { ...selectedVariant, ram, storage };
+      const match = findMatchingVariant(next);
+      
+      if (!match || !match._id) return false;
+      
+      // Check stock and expiry
+      const stock = Number(match.stock || 0);
+      const isExpired = match.expiryTime ? new Date(match.expiryTime) < new Date() : false;
+      
+      return stock > 0 && !isExpired;
+    };
+
     const pushCombo = (ram, storage) => {
       if (!ram || !storage) return;
+      
+      // Only add if variant is available (has stock and not expired)
+      if (!isVariantAvailable(ram, storage)) return;
+      
       const key = `${ram}__${storage}`;
       if (seen.has(key)) return;
       seen.add(key);
@@ -796,6 +894,28 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     if (Array.isArray(currentProduct?.relatedProducts)) {
       currentProduct.relatedProducts.forEach((p) => pushCombo(p.ram, p.storage));
     }
+
+    // Helper function to extract numeric value from RAM/Storage string (e.g., "6GB" -> 6)
+    const extractNumericValue = (str) => {
+      if (!str) return 0;
+      const match = String(str).match(/(\d+)/);
+      return match ? parseInt(match[1], 10) : 0;
+    };
+
+    // Sort by RAM first (ascending), then by Storage (ascending)
+    combinations.sort((a, b) => {
+      const ramA = extractNumericValue(a.ram);
+      const ramB = extractNumericValue(b.ram);
+      
+      if (ramA !== ramB) {
+        return ramA - ramB; // Sort by RAM first
+      }
+      
+      // If RAM is the same, sort by Storage
+      const storageA = extractNumericValue(a.storage);
+      const storageB = extractNumericValue(b.storage);
+      return storageA - storageB;
+    });
 
     return combinations.slice(0, 8);
   };
@@ -1140,15 +1260,23 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                 <div className="flex flex-wrap gap-2">
                   {getSizeOptions().map((size, idx) => {
                     const isSelected = String(selectedVariant.ram) === String(size.ram) && String(selectedVariant.storage) === String(size.storage);
+                    const isDisabled = isVariantChanging && !isSelected;
                     return (
                       <button
                         key={`${size.ram}-${size.storage}-${idx}`}
                         onClick={() => {
-                          if (selectedVariant.ram !== size.ram) handleVariantClick("ram", size.ram);
-                          if (selectedVariant.storage !== size.storage) handleVariantClick("storage", size.storage);
+                          // Only update if not already selected and not currently changing
+                          if (!isSelected && !isVariantChanging) {
+                            handleSizeClick(size.ram, size.storage);
+                          }
                         }}
+                        disabled={isDisabled}
                         className={`px-4 py-2 rounded-[10px] text-sm font-semibold border transition-colors ${
-                          isSelected ? "border-gray-200 text-gray-800 bg-white" : "border-gray-200 text-gray-800 bg-white"
+                          isSelected 
+                            ? "border-gray-200 text-gray-800 bg-white" 
+                            : isDisabled
+                            ? "border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed"
+                            : "border-gray-200 text-gray-800 bg-white hover:border-gray-300"
                         }`}
                         style={isSelected ? { borderColor: PRIMARY_COLOR, color: PRIMARY_COLOR, backgroundColor: PRIMARY_COLOR_LIGHT } : {}}
                       >
