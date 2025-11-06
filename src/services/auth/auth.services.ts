@@ -166,6 +166,36 @@ export class AuthService {
     }
   };
 
+  // Forgot password
+  static forgotPassword = async (email: string): Promise<AuthResponse> => {
+    const baseUrl = env.baseUrl;
+    const url = `${baseUrl}/api/customer/forgot-password`;
+    try {
+      const res = await api.post(url, { email });
+      toastHelper.showTost(res.data.message || 'Password reset link sent successfully!', 'success');
+      return res.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to send password reset link';
+      toastHelper.showTost(errorMessage, 'error');
+      throw new Error(errorMessage);
+    }
+  };
+
+  // Reset password
+  static resetPassword = async (token: string, newPassword: string): Promise<AuthResponse> => {
+    const baseUrl = env.baseUrl;
+    const url = `${baseUrl}/api/customer/reset-password/${token}`;
+    try {
+      const res = await api.post(url, { newPassword });
+      toastHelper.showTost(res.data.message || 'Password reset successfully!', 'success');
+      return res.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to reset password';
+      toastHelper.showTost(errorMessage, 'error');
+      throw new Error(errorMessage);
+    }
+  };
+
   // Login user
   static login = async (loginData: LoginRequest): Promise<AuthResponse> => {
     const baseUrl = env.baseUrl;

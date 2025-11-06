@@ -20,6 +20,7 @@ import LoginForm from "./components/LoginForm";
 import SignUpForm from "./components/SignUpForm";
 import VerifyEmailPrompt from "./components/VerifyEmailPrompt";
 import VerifyEmail from "./components/VerifyEmail";
+import ResetPassword from "./components/ResetPassword";
 import CartPage from "./components/ReadyStockPage/CartPage";
 import CheckoutPage from "./components/ReadyStockPage/CheckoutPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -66,8 +67,8 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Hide header only on login, signup, and verify-email pages
-  const hideHeader = location.pathname === '/login' || location.pathname === '/signup' || location.pathname.startsWith('/verify-email');
+  // Hide header only on login, signup, verify-email, and reset-password pages
+  const hideHeader = location.pathname === '/login' || location.pathname === '/signup' || location.pathname.startsWith('/verify-email') || location.pathname.startsWith('/reset-password');
 
   useEffect(() => {
     if (isLoggedIn && (location.pathname === "/login" || location.pathname === "/signup")) {
@@ -107,6 +108,7 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
             <Route path="/login" element={<LoginForm onLogin={handleLogin} />} />
             <Route path="/signup" element={<SignUpForm />} />{" "}
             <Route path="/verify-email/:token" element={<VerifyEmail />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
             {/* Public pages (browsable without login) */}
             <Route path="/home" element={<HomePage />} />
             <Route path="/ready-stock" element={<Layout><MainContent /></Layout>} />

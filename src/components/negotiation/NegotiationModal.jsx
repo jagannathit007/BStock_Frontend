@@ -105,8 +105,16 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
       console.log('Received negotiation notification:', data);
       setNotifications(prev => [...prev, data]);
       
-      // Show toast notification
-      toastHelper.showTost(data.message || 'New negotiation update', 'info');
+      // Determine toast type based on event type
+      let toastType = 'info';
+      if (data.type === 'bid_accepted' || data.type === 'offer_accepted') {
+        toastType = 'success';
+      } else if (data.type === 'bid_rejected') {
+        toastType = 'error';
+      }
+      
+      // Show toast notification with user-friendly message
+      toastHelper.showTost(data.message || '📬 New negotiation update', toastType);
       
       // Refresh negotiations if it's a relevant update
       if (data.type === 'new_bid' || data.type === 'counter_offer' || data.type === 'bid_accepted') {
@@ -120,8 +128,14 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
       console.log('Received negotiation broadcast:', data);
       setNotifications(prev => [...prev, data]);
       
-      // Show toast notification
-      toastHelper.showTost(data.message || 'New negotiation activity', 'info');
+      // Determine toast type based on event type
+      let toastType = 'info';
+      if (data.type === 'bid_accepted') {
+        toastType = 'success';
+      }
+      
+      // Show toast notification with user-friendly message
+      toastHelper.showTost(data.message || '📬 New negotiation activity', toastType);
       
       // Refresh negotiations
       fetchNegotiations();
@@ -132,6 +146,15 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
     socketService.onNegotiationUpdate((data) => {
       console.log('Received negotiation update:', data);
       setNotifications(prev => [...prev, data]);
+      
+      // Determine toast type based on event type
+      let toastType = 'info';
+      if (data.type === 'bid_accepted') {
+        toastType = 'success';
+      }
+      
+      // Show toast notification with user-friendly message
+      toastHelper.showTost(data.message || '📝 Negotiation updated', toastType);
       
       // Refresh negotiations
       fetchNegotiations();
@@ -160,6 +183,7 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
 
     socketService.onUserLeftNegotiation((data) => {
       console.log('User left negotiation:', data);
+      toastHelper.showTost(`${data.userType || 'User'} left the negotiation`, 'info');
     });
   };
 
@@ -339,7 +363,15 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
 
   const getProductImage = (productId) => {
     if (typeof productId === 'string') return '/images/iphone15.png';
-    return productId?.skuFamilyId?.images[0] ? `${imageBaseUrl}/${productId?.skuFamilyId?.images[0]}` : '/images/iphone15.png';
+    const images = productId?.skuFamilyId?.images;
+    if (images && Array.isArray(images) && images.length > 0) {
+      return `${imageBaseUrl}/${images[0]}`;
+    }
+    // Fallback to mainImage if available
+    if (productId?.mainImage) {
+      return `${imageBaseUrl}/${productId.mainImage}`;
+    }
+    return '/images/iphone15.png';
   };
 
   const getProductName = (productId) => {
