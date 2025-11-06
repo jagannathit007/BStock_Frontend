@@ -6,20 +6,30 @@ import {
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import { PRIMARY_COLOR, PRIMARY_COLOR_DARK, PRIMARY_COLOR_LIGHT } from "../utils/colors";
+import { AuthService } from "../services/auth/auth.services";
 
 const ForgotPasswordModal = ({ isOpen, onClose, onEmailSubmit }) => {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    
+    try {
+      await AuthService.forgotPassword(email);
       setIsSubmitted(true);
-      onEmailSubmit(email);
-    }, 1500);
+      if (onEmailSubmit) {
+        onEmailSubmit(email);
+      }
+    } catch (err) {
+      setError(err.message || "Failed to send password reset link. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -58,6 +68,12 @@ const ForgotPasswordModal = ({ isOpen, onClose, onEmailSubmit }) => {
                 ? "We've sent a password reset link to your email. Please check your inbox."
                 : "Enter your email address and we'll send you a link to reset your password."}
             </p>
+
+            {error && (
+              <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm border border-red-200">
+                <p className="font-medium">{error}</p>
+              </div>
+            )}
 
             {!isSubmitted ? (
               <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 lg:space-y-5">

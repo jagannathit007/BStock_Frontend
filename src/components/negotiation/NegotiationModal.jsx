@@ -339,7 +339,15 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
 
   const getProductImage = (productId) => {
     if (typeof productId === 'string') return '/images/iphone15.png';
-    return productId?.skuFamilyId?.images[0] ? `${imageBaseUrl}/${productId?.skuFamilyId?.images[0]}` : '/images/iphone15.png';
+    const images = productId?.skuFamilyId?.images;
+    if (images && Array.isArray(images) && images.length > 0) {
+      return `${imageBaseUrl}/${images[0]}`;
+    }
+    // Fallback to mainImage if available
+    if (productId?.mainImage) {
+      return `${imageBaseUrl}/${productId.mainImage}`;
+    }
+    return '/images/iphone15.png';
   };
 
   const getProductName = (productId) => {

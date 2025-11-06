@@ -402,7 +402,7 @@ const CartPage = () => {
             <p className="text-gray-600 mb-6">Add some items to get started</p>
             <button
               className="bg-[#0071E0] cursor-pointer text-white py-3 px-6 sm:px-8 rounded-lg font-medium hover:bg-[#005bb5] transition-all duration-200 shadow-sm hover:shadow-md"
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/ready-stock")}
             >
               Continue Shopping
             </button>

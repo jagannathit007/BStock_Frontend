@@ -37,7 +37,6 @@ const loginSchema = yup.object({
 const LoginForm = ({ onLogin }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -160,13 +159,6 @@ const LoginForm = ({ onLogin }) => {
             localStorage.setItem('currencyRates', JSON.stringify(res.data.currencyRates));
           }
 
-          if (rememberMe) {
-            localStorage.setItem("rememberMe", "true");
-            localStorage.setItem("email", userData.email);
-          } else {
-            localStorage.removeItem("rememberMe");
-            localStorage.removeItem("email");
-          }
           localStorage.setItem("isLoggedIn", "true");
           if (onLogin) onLogin();
           
@@ -223,13 +215,6 @@ const LoginForm = ({ onLogin }) => {
               localStorage.setItem('currencyRates', JSON.stringify(registerRes.data.currencyRates));
             }
 
-            if (rememberMe) {
-              localStorage.setItem("rememberMe", "true");
-              localStorage.setItem("email", userData.email);
-            } else {
-              localStorage.removeItem("rememberMe");
-              localStorage.removeItem("email");
-            }
             localStorage.setItem("isLoggedIn", "true");
             if (onLogin) onLogin();
             
@@ -275,13 +260,6 @@ const LoginForm = ({ onLogin }) => {
           }
         }
 
-        if (rememberMe) {
-          localStorage.setItem("rememberMe", "true");
-          localStorage.setItem("email", data.email);
-        } else {
-          localStorage.removeItem("rememberMe");
-          localStorage.removeItem("email");
-        }
         localStorage.setItem("isLoggedIn", "true");
         if (onLogin) onLogin();
         
@@ -514,21 +492,7 @@ const LoginForm = ({ onLogin }) => {
                   )}
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center group">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="h-4 w-4 border-2 border-gray-300 rounded-lg transition-all duration-200 cursor-pointer"
-                      style={{ accentColor: PRIMARY_COLOR }}
-                      onFocus={(e) => { e.target.style.boxShadow = `0 0 0 4px ${PRIMARY_COLOR}33`; }}
-                      onBlur={(e) => { e.target.style.boxShadow = ''; }}
-                    />
-                    <label className="ml-3 block text-[14px] font-medium text-gray-700 cursor-pointer group-hover:text-gray-900 transition-colors">
-                      Remember me
-                    </label>
-                  </div>
+                <div className="flex items-center justify-end">
                   <button
                     type="button"
                     onClick={handleForgotPassword}
@@ -650,7 +614,7 @@ const LoginForm = ({ onLogin }) => {
           onClose={handleCloseModal}
           onEmailSubmit={(email) => {
             console.log("Password reset requested for:", email);
-            handleCloseModal();
+            // Modal will close automatically after successful submission
           }}
         />
       </div>
