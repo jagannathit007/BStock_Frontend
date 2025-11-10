@@ -4,9 +4,9 @@ import { faTimes, faCreditCard, faFileUpload, faCheck } from '@fortawesome/free-
 import PaymentService from '../services/payment/payment.services';
 import { convertPrice } from '../utils/currencyUtils';
 
-const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess }) => {
+const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaymentMethod }) => {
   const [paymentConfig, setPaymentConfig] = useState(null);
-  const [selectedModule, setSelectedModule] = useState('');
+  const [selectedModule, setSelectedModule] = useState(adminSelectedPaymentMethod || '');
   const [selectedCurrency, setSelectedCurrency] = useState('');
   const [formData, setFormData] = useState({});
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -14,12 +14,17 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [files, setFiles] = useState({});
+  const [billingAddress, setBillingAddress] = useState({ address: "", city: "", postalCode: "", country: "" });
+  const [shippingAddress, setShippingAddress] = useState({ address: "", city: "", postalCode: "", country: "" });
 
   useEffect(() => {
     if (isOpen) {
+      if (adminSelectedPaymentMethod) {
+        setSelectedModule(adminSelectedPaymentMethod);
+      }
       fetchPaymentConfig();
     }
-  }, [isOpen]);
+  }, [isOpen, adminSelectedPaymentMethod]);
 
   const fetchPaymentConfig = async () => {
     try {
@@ -67,6 +72,19 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess }) => {
   };
 
   const validateForm = () => {
+    // Validate addresses
+    const addressFields = ["address", "city", "postalCode", "country"];
+    for (const field of addressFields) {
+      if (!billingAddress[field]) {
+        setError(`Please fill in billing ${field}`);
+        return false;
+      }
+      if (!shippingAddress[field]) {
+        setError(`Please fill in shipping ${field}`);
+        return false;
+      }
+    }
+
     if (!selectedModule) {
       setError('Please select a payment method');
       return false;
@@ -158,6 +176,8 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess }) => {
         // Store payment details in the order data for later use
         const updatedOrderData = {
           ...orderData,
+          billingAddress,
+          shippingAddress,
           paymentDetails: {
             module: selectedModule,
             acceptedTerms,
@@ -171,6 +191,27 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess }) => {
         
         // Call success with updated order data
         onSuccess && onSuccess(updatedOrderData);
+        onClose();
+        return;
+      }
+
+      // If order exists and adminSelectedPaymentMethod is provided, use submitPayment endpoint
+      if (orderData.orderId && adminSelectedPaymentMethod) {
+        const fileList = Object.values(files).filter(Boolean);
+        const paymentDetails = {
+          module: selectedModule,
+          acceptedTerms,
+          fields: fieldsData,
+          currency: selectedCurrency || 'USD',
+          transactionRef: formData.transactionRef || formData.referenceNumber || '',
+        };
+        
+        onSuccess && onSuccess({
+          billingAddress,
+          shippingAddress,
+          paymentDetails,
+          files: fileList
+        });
         onClose();
         return;
       }
@@ -383,35 +424,175 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess }) => {
                 </div>
               </div>
 
+              {/* Billing Address */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Billing Address</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Address <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={billingAddress.address}
+                      onChange={(e) => setBillingAddress(prev => ({ ...prev, address: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter billing address"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      City <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={billingAddress.city}
+                      onChange={(e) => setBillingAddress(prev => ({ ...prev, city: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter city"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Postal Code <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={billingAddress.postalCode}
+                      onChange={(e) => setBillingAddress(prev => ({ ...prev, postalCode: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter postal code"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Country <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={billingAddress.country}
+                      onChange={(e) => setBillingAddress(prev => ({ ...prev, country: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">Select Country</option>
+                      <option value="Hongkong">Hongkong</option>
+                      <option value="Dubai">Dubai</option>
+                      <option value="Singapore">Singapore</option>
+                      <option value="India">India</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Shipping Address */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Shipping Address</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Address <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={shippingAddress.address}
+                      onChange={(e) => setShippingAddress(prev => ({ ...prev, address: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter shipping address"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      City <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={shippingAddress.city}
+                      onChange={(e) => setShippingAddress(prev => ({ ...prev, city: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter city"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Postal Code <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={shippingAddress.postalCode}
+                      onChange={(e) => setShippingAddress(prev => ({ ...prev, postalCode: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter postal code"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Country <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={shippingAddress.country}
+                      onChange={(e) => setShippingAddress(prev => ({ ...prev, country: e.target.value }))}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">Select Country</option>
+                      <option value="Hongkong">Hongkong</option>
+                      <option value="Dubai">Dubai</option>
+                      <option value="Singapore">Singapore</option>
+                      <option value="India">India</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
               {/* Payment Method Selection */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Payment Method</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {paymentConfig?.modules?.filter(module => module.enabled).map((module) => (
-                    <div
-                      key={module.name}
-                      className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                        selectedModule === module.name
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      onClick={() => handleModuleChange(module.name)}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-4 h-4 rounded-full border-2 ${
-                          selectedModule === module.name
-                            ? 'border-blue-500 bg-blue-500'
-                            : 'border-gray-300'
-                        }`}>
-                          {selectedModule === module.name && (
-                            <div className="w-full h-full rounded-full bg-white scale-50"></div>
-                          )}
-                        </div>
-                        <span className="font-medium text-gray-900">{module.name}</span>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  {adminSelectedPaymentMethod ? 'Payment Method' : 'Select Payment Method'}
+                  {adminSelectedPaymentMethod && <span className="text-sm font-normal text-gray-600 ml-2">(Selected by Admin)</span>}
+                </h3>
+                {adminSelectedPaymentMethod ? (
+                  <div className="border-2 border-blue-500 bg-blue-50 rounded-lg p-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-4 h-4 rounded-full border-2 border-blue-500 bg-blue-500">
+                        <div className="w-full h-full rounded-full bg-white scale-50"></div>
                       </div>
+                      <span className="font-medium text-gray-900">{adminSelectedPaymentMethod}</span>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {paymentConfig?.modules?.filter(module => module.enabled).map((module) => (
+                      <div
+                        key={module.name}
+                        className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                          selectedModule === module.name
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        onClick={() => handleModuleChange(module.name)}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-4 h-4 rounded-full border-2 ${
+                            selectedModule === module.name
+                              ? 'border-blue-500 bg-blue-500'
+                              : 'border-gray-300'
+                          }`}>
+                            {selectedModule === module.name && (
+                              <div className="w-full h-full rounded-full bg-white scale-50"></div>
+                            )}
+                          </div>
+                          <span className="font-medium text-gray-900">{module.name}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Currency Selection */}
@@ -522,7 +703,7 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess }) => {
                   ) : (
                     <>
                       <FontAwesomeIcon icon={faCheck} />
-                      <span>Place Order</span>
+                      <span>{adminSelectedPaymentMethod ? 'Submit Payment' : 'Place Order'}</span>
                     </>
                   )}
                 </button>

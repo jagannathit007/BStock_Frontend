@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import CartService from "../../services/cart/cart.services";
 import OrderService from "../../services/order/order.services";
-import PaymentPopup from "../PaymentPopup";
 import iphoneImage from "../../assets/iphone.png";
 import { convertPrice } from "../../utils/currencyUtils";
 
@@ -12,10 +11,6 @@ const CheckoutPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [imageErrors, setImageErrors] = useState({});
-  const [billingAddress, setBillingAddress] = useState({ address: "", city: "", postalCode: "", country: "" });
-  const [shippingAddress, setShippingAddress] = useState({ address: "", city: "", postalCode: "", country: "" });
-  const [showPaymentPopup, setShowPaymentPopup] = useState(false);
-  const [currentOrder, setCurrentOrder] = useState(null);
   const [costSummary, setCostSummary] = useState({
     totalCartValue: 0,
     totalAmount: 0,
@@ -81,55 +76,36 @@ const CheckoutPage = () => {
   useEffect(() => { fetchCart(); }, [fetchCart]);
   
 
-  const handleAddressChange = (type, field, value) => {
-    if (type === "billing") setBillingAddress((prev) => ({ ...prev, [field]: value }));
-    else setShippingAddress((prev) => ({ ...prev, [field]: value }));
-  };
-
   const totalPrice = useMemo(() => cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0), [cartItems]);
   const finalTotal = costSummary.totalAmount > 0 ? costSummary.totalAmount : totalPrice;
 
-  const validateAddresses = () => {
-    const req = ["address", "city", "postalCode", "country"];
-    return req.every((f) => billingAddress[f] && shippingAddress[f]);
-  };
-
-  const handlePay = (e) => {
+  const handlePlaceOrder = async (e) => {
     e.preventDefault();
-    if (!validateAddresses()) { setError("Please fill in all address fields"); return; }
-    if (cartItems.length === 0) { setError("Cart is empty"); return; }
-    setCurrentOrder({
-      orderId: null,
-      totalAmount: finalTotal,
-      orderNumber: null,
-      cartItems: cartItems.map((it) => ({ 
-        productId: it.id, 
-        skuFamilyId: it.skuFamilyId || null,
-        subSkuFamilyId: it.subSkuFamilyId || null,
-        quantity: Number(it.quantity), 
-        price: Number(it.price) 
-      })),
-      billingAddress,
-      shippingAddress,
-    });
-    setShowPaymentPopup(true);
-  };
-
-  const handlePaymentSuccess = async (orderWithPayment) => {
+    if (cartItems.length === 0) { 
+      setError("Cart is empty"); 
+      return; 
+    }
+    
     try {
       setIsLoading(true);
+      setError(null);
+      
+      // Create order with just cartItems - no billing/shipping/payment
       const payload = {
-        cartItems: orderWithPayment.cartItems,
-        billingAddress: orderWithPayment.billingAddress,
-        shippingAddress: orderWithPayment.shippingAddress,
-        paymentDetails: orderWithPayment.paymentDetails,
+        cartItems: cartItems.map((it) => ({ 
+          productId: it.id, 
+          skuFamilyId: it.skuFamilyId || null,
+          subSkuFamilyId: it.subSkuFamilyId || null,
+          quantity: Number(it.quantity), 
+          price: Number(it.price) 
+        })),
       };
+      
       const res = await OrderService.createOrder(payload);
       if (res?.success || res?.status === 200) {
         // Trigger cart count update event (cart is cleared after order creation)
         window.dispatchEvent(new Event('cartUpdated'));
         localStorage.setItem('cartUpdated', Date.now().toString());
-        setShowPaymentPopup(false);
         navigate("/order", { state: { order: res.data } });
       } else {
         setError(res?.message || "Failed to create order");
@@ -232,60 +208,19 @@ const CheckoutPage = () => {
 
 
             <div>
-              <form onSubmit={handlePay} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-1 gap-4 sm:gap-6">
-                  <div>
-                    <h3 className="text-base font-semibold text-gray-900 mb-3">Billing Address</h3>
-                    <div className="space-y-3">
-                      <input className="w-full p-2 rounded-lg border border-gray-200 focus:outline-none focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20" placeholder="Address" value={billingAddress.address} onChange={(e)=>handleAddressChange('billing','address',e.target.value)} required />
-                      <input className="w-full p-2 rounded-lg border border-gray-200 focus:outline-none focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20" placeholder="City" value={billingAddress.city} onChange={(e)=>handleAddressChange('billing','city',e.target.value)} required />
-                      <div className="flex gap-2">
-                      <input className="w-full p-2 rounded-lg border border-gray-200 focus:outline-none focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20" placeholder="Postal Code" value={billingAddress.postalCode} onChange={(e)=>handleAddressChange('billing','postalCode',e.target.value)} required />
-                      <select className="w-full p-2 rounded-lg border border-gray-200 focus:outline-none focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20" value={billingAddress.country} onChange={(e)=>handleAddressChange('billing','country',e.target.value)} required>
-                        <option value="">Select Country</option>
-                        <option value="Hongkong">Hongkong</option>
-                        <option value="Dubai">Dubai</option>
-                        <option value="Singapore">Singapore</option>
-                        <option value="India">India</option>
-                      </select>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-base font-semibold text-gray-900 mb-3">Shipping Address</h3>
-                    <div className="space-y-3">
-                      <input className="w-full p-2 rounded-lg border border-gray-200 focus:outline-none focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20" placeholder="Address" value={shippingAddress.address} onChange={(e)=>handleAddressChange('shipping','address',e.target.value)} required />
-                      <input className="w-full p-2 rounded-lg border border-gray-200 focus:outline-none focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20" placeholder="City" value={shippingAddress.city} onChange={(e)=>handleAddressChange('shipping','city',e.target.value)} required />
-                      <div className="flex gap-2">
-                      <input className="w-full p-2 rounded-lg border border-gray-200 focus:outline-none focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20" placeholder="Postal Code" value={shippingAddress.postalCode} onChange={(e)=>handleAddressChange('shipping','postalCode',e.target.value)} required />
-                      <select className="w-full p-2 rounded-lg border border-gray-200 focus:outline-none focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20" value={shippingAddress.country} onChange={(e)=>handleAddressChange('shipping','country',e.target.value)} required>
-                        <option value="">Select Country</option>
-                        <option value="Hongkong">Hongkong</option>
-                        <option value="Dubai">Dubai</option>
-                        <option value="Singapore">Singapore</option>
-                        <option value="India">India</option>
-                      </select>
-                      </div>
-                    </div>
-                  </div>
+              <form onSubmit={handlePlaceOrder} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-6">
+                <div className="text-sm text-gray-600 mb-4">
+                  <p className="mb-2">Review your order and place it. You'll be able to add payment and shipping details after admin approval.</p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 justify-end">
                   <button type="button" className="w-full px-5 py-3 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50" onClick={()=>navigate('/cart')}>Back to Cart</button>
-                  <button type="submit" disabled={isLoading} className="w-full px-6 py-3 rounded-lg bg-[#0071E0] text-white hover:bg-[#005bb5] disabled:opacity-50">{isLoading? 'Processing...' : 'Add Payment'}</button>
+                  <button type="submit" disabled={isLoading} className="w-full px-6 py-3 rounded-lg bg-[#0071E0] text-white hover:bg-[#005bb5] disabled:opacity-50">{isLoading? 'Processing...' : 'Place Order'}</button>
                 </div>
               </form>
             </div>
           </div>
         )}
 
-        {showPaymentPopup && currentOrder && (
-          <PaymentPopup
-            isOpen={showPaymentPopup}
-            onClose={() => setShowPaymentPopup(false)}
-            orderData={currentOrder}
-            onSuccess={handlePaymentSuccess}
-          />
-        )}
       </div>
     </div>
   );

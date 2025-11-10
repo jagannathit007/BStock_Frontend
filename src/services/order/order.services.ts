@@ -173,6 +173,41 @@ export class OrderService {
       throw err;
     }
   }
+
+  static async submitPayment(orderId: string, billingAddress: any, shippingAddress: any, paymentDetails: any, files?: File[]): Promise<CreateOrderResponse> {
+    try {
+      let res;
+      if (files && files.length > 0) {
+        const formData = new FormData();
+        formData.append('orderId', orderId);
+        formData.append('billingAddress', JSON.stringify(billingAddress));
+        formData.append('shippingAddress', JSON.stringify(shippingAddress));
+        formData.append('paymentDetails', JSON.stringify(paymentDetails));
+        files.forEach((file) => {
+          formData.append('images', file);
+        });
+        res = await api.post('/api/customer/order/submit-payment', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+      } else {
+        res = await api.post('/api/customer/order/submit-payment', {
+          orderId,
+          billingAddress,
+          shippingAddress,
+          paymentDetails,
+        });
+      }
+      const ok = res.data?.success === true || res.data?.status === 200;
+      toastHelper.showTost(res.data?.message || (ok ? 'Payment submitted successfully' : 'Failed to submit payment'), ok ? 'success' : 'error');
+      return res.data;
+    } catch (err: any) {
+      const msg = err.response?.data?.errors?.map((e: any) => e.message).join(', ') || err.response?.data?.message || 'Failed to submit payment';
+      toastHelper.showTost(msg, 'error');
+      throw err;
+    }
+  }
 }
 
 export default OrderService;

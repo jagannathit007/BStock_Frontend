@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faShoppingBag, faTimes, faSearch } from "@fortawesome/free-solid-svg-icons";
+import { faShoppingBag, faTimes, faSearch, faCreditCard } from "@fortawesome/free-solid-svg-icons";
 import OrderService from "../services/order/order.services";
 import { convertPrice } from "../utils/currencyUtils";
+import PaymentPopup from "./PaymentPopup";
 
 const Order = () => {
   const [orders, setOrders] = useState([]);
@@ -13,6 +14,8 @@ const Order = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
+  const [showPaymentPopup, setShowPaymentPopup] = useState(false);
+  const [selectedOrderForPayment, setSelectedOrderForPayment] = useState(null);
   const itemsPerPage = 10;
 
   // Fetch orders
@@ -123,11 +126,13 @@ const Order = () => {
                 className="pl-4 pr-8 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm shadow-sm"
               >
                 <option value="">All Orders</option>
-                <option value="request">Pending</option>
+                <option value="requested">Requested</option>
+                <option value="approved">Approved</option>
                 <option value="accepted">Accepted</option>
-                <option value="shipped">Shipped</option>
+                <option value="ready_to_pickup">Ready to Pickup</option>
+                <option value="out_for_delivery">Out for Delivery</option>
                 <option value="delivered">Delivered</option>
-                <option value="cancel">Cancelled</option>
+                <option value="cancelled">Cancelled</option>
               </select>
             </div>
           </div>
@@ -230,36 +235,55 @@ const Order = () => {
                         className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide ${
                           order.status === 'delivered'
                             ? 'bg-green-100 text-green-800 border border-green-200'
-                            : order.status === 'cancel' || order.status === 'cancelled'
+                            : order.status === 'cancelled'
                             ? 'bg-red-100 text-red-800 border border-red-200'
-                            : order.status === 'shipped'
-                            ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                            : order.status === 'out_for_delivery'
+                            ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                            : order.status === 'ready_to_pickup'
+                            ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
                             : order.status === 'accepted'
                             ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                            : order.status === 'approved'
+                            ? 'bg-blue-100 text-blue-800 border border-blue-200'
                             : 'bg-gray-100 text-gray-800 border border-gray-200'
                         }`}
                       >
-                        {order.status}
+                        {order.status?.replace(/_/g, ' ')}
                       </span>
                     </td>
                     <td className="px-6 py-5 text-sm text-center">
-                      {['request', 'accepted'].includes(order.status) && (
-                        <button
-                          onClick={() => handleCancelOrder(order._id)}
-                          disabled={cancellingOrderId === order._id}
-                          className={`inline-flex items-center gap-2 px-4 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium ${
-                            cancellingOrderId === order._id ? 'animate-pulse' : ''
-                          }`}
-                          title="Cancel Order"
-                        >
-                          {cancellingOrderId === order._id ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-red-600"></div>
-                          ) : (
-                            <FontAwesomeIcon icon={faTimes} className="w-4 h-4" />
-                          )}
-                          Cancel
-                        </button>
-                      )}
+                      <div className="flex items-center justify-center gap-2">
+                        {order.status === 'accepted' && order.adminSelectedPaymentMethod && !order.paymentDetails && (
+                          <button
+                            onClick={() => {
+                              setSelectedOrderForPayment(order);
+                              setShowPaymentPopup(true);
+                            }}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-all duration-200 font-medium"
+                            title="Submit Payment"
+                          >
+                            <FontAwesomeIcon icon={faCreditCard} className="w-4 h-4" />
+                            Payment
+                          </button>
+                        )}
+                        {['requested', 'accepted'].includes(order.status) && (
+                          <button
+                            onClick={() => handleCancelOrder(order._id)}
+                            disabled={cancellingOrderId === order._id}
+                            className={`inline-flex items-center gap-2 px-4 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium ${
+                              cancellingOrderId === order._id ? 'animate-pulse' : ''
+                            }`}
+                            title="Cancel Order"
+                          >
+                            {cancellingOrderId === order._id ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-red-600"></div>
+                            ) : (
+                              <FontAwesomeIcon icon={faTimes} className="w-4 h-4" />
+                            )}
+                            Cancel
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -315,6 +339,40 @@ const Order = () => {
           </div>
         )}
       </div>
+
+      {/* Payment Popup */}
+      {showPaymentPopup && selectedOrderForPayment && (
+        <PaymentPopup
+          isOpen={showPaymentPopup}
+          onClose={() => {
+            setShowPaymentPopup(false);
+            setSelectedOrderForPayment(null);
+          }}
+          orderData={{
+            orderId: selectedOrderForPayment._id,
+            totalAmount: selectedOrderForPayment.totalAmount,
+            adminSelectedPaymentMethod: selectedOrderForPayment.adminSelectedPaymentMethod,
+            cartItems: selectedOrderForPayment.cartItems,
+          }}
+          onSuccess={async (paymentData) => {
+            try {
+              await OrderService.submitPayment(
+                selectedOrderForPayment._id,
+                paymentData.billingAddress,
+                paymentData.shippingAddress,
+                paymentData.paymentDetails,
+                paymentData.files
+              );
+              setShowPaymentPopup(false);
+              setSelectedOrderForPayment(null);
+              await fetchOrders();
+            } catch (error) {
+              console.error('Payment submission error:', error);
+            }
+          }}
+          adminSelectedPaymentMethod={selectedOrderForPayment.adminSelectedPaymentMethod}
+        />
+      )}
     </div>
   );
 };
