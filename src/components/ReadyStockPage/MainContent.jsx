@@ -13,6 +13,7 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { AuthService } from "../../services/auth/auth.services";
+import { useCurrency } from "../../context/CurrencyContext";
 // import HeroSlider from "./HeroSlider";
 
 const MainContent = () => {
@@ -31,6 +32,7 @@ const MainContent = () => {
   const [selectedProduct, setSelectedProduct] = useState(null); // Track selected product for bidding
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('');
+  const { selectedCurrency } = useCurrency();
 
   const navigate = useNavigate();
   const mapApiProductToUi = (p) => {
@@ -413,6 +415,12 @@ const MainContent = () => {
 
           {viewMode === "grid" ? (
             <>
+              {/* Currency Reference Message - Small */}
+              {(selectedCurrency === 'AED' || selectedCurrency === 'HKD') && (
+                <div className="mb-3 px-3 py-2 bg-blue-50 border-l-4 border-blue-400 rounded text-xs text-blue-700">
+                  <span className="font-medium">Note:</span> Prices shown are for view reference only. Actual transactions are processed in USD only.
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-4 gap-4 sm:gap-4 md:gap-6">
                 {isLoading ? (
                   <>
@@ -519,6 +527,12 @@ const MainContent = () => {
             </>
           ) : (
             <>
+              {/* Currency Reference Message - Small */}
+              {(selectedCurrency === 'AED' || selectedCurrency === 'HKD') && (
+                <div className="mb-3 px-3 py-2 bg-blue-50 border-l-4 border-blue-400 rounded text-xs text-blue-700">
+                  <span className="font-medium">Note:</span> Prices shown are for view reference only. Actual transactions are processed in USD only.
+                </div>
+              )}
               <div className="flex flex-col gap-4">
                 {isLoading ? (
                   <>
