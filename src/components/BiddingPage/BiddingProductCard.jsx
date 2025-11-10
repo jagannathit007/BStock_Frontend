@@ -15,6 +15,7 @@ import {
 import iphoneImage from "../../assets/iphone.png";
 import Countdown from "react-countdown";
 import Swal from "sweetalert2";
+import { AuthService } from "../../services/auth/auth.services";
 import { useSocket } from "../../context/SocketContext";
 import toastHelper from "../../utils/toastHelper";
 import { PRIMARY_COLOR, PRIMARY_COLOR_DARK } from "../../utils/colors";
@@ -152,6 +153,21 @@ const BiddingProductCard = ({
   const handleBidButtonClick = async (e) => {
     e.stopPropagation();
     if (auctionEnded || isSubmittingBid) return;
+
+    // Check if profile is complete
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        const isProfileComplete = AuthService.isProfileComplete(userData);
+        if (!isProfileComplete) {
+          navigate('/profile', { replace: true });
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking profile completion:', error);
+      }
+    }
 
     try {
       const amountNum = Number(String(myMaxBidInput).replace(/[,]/g, ""));

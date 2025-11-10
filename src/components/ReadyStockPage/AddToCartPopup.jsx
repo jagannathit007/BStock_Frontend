@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCartShopping,
@@ -10,10 +11,12 @@ import {
   faDollarSign,
 } from "@fortawesome/free-solid-svg-icons";
 import CartService from "../../services/cart/cart.services";
+import { AuthService } from "../../services/auth/auth.services";
 import iphoneImage from "../../assets/iphone.png";
 import { convertPrice } from "../../utils/currencyUtils";
 
 const AddToCartPopup = ({ product, onClose }) => {
+  const navigate = useNavigate();
   const { id, name, price, imageUrl, moq, stockCount, description } = product;
   const purchaseType = (product?.purchaseType || '').toLowerCase();
   const isFullPurchase = purchaseType === 'full';
@@ -75,6 +78,23 @@ const AddToCartPopup = ({ product, onClose }) => {
   const handleConfirm = async () => {
     try {
       setError(null);
+      
+      // Check if profile is complete
+      const user = localStorage.getItem('user');
+      if (user) {
+        try {
+          const userData = JSON.parse(user);
+          const isProfileComplete = AuthService.isProfileComplete(userData);
+          if (!isProfileComplete) {
+            onClose();
+            navigate('/profile', { replace: true });
+            return;
+          }
+        } catch (error) {
+          console.error('Error checking profile completion:', error);
+        }
+      }
+      
       // Extract subSkuFamilyId from product (could be an object with _id or just the string ID)
       const subSkuFamilyId = product?.subSkuFamilyId?._id || product?.subSkuFamilyId || null;
       const res = await CartService.add(id, quantity, subSkuFamilyId);

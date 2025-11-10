@@ -13,6 +13,8 @@ import {
   BellRing,
 } from "lucide-react";
 import NegotiationService from "../../services/negotiation/negotiation.services";
+import { AuthService } from "../../services/auth/auth.services";
+import { useNavigate } from "react-router-dom";
 import iphoneImage from "../../assets/iphone.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHandshake } from "@fortawesome/free-solid-svg-icons";
@@ -21,6 +23,7 @@ import { useSocket } from "../../context/SocketContext";
 import toastHelper from "../../utils/toastHelper";
 
 const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
+  const navigate = useNavigate();
   const { socketService } = useSocket();
   const [activeTab, setActiveTab] = useState("history");
   const [formData, setFormData] = useState({
@@ -47,6 +50,21 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
 
   useEffect(() => {
     if (isOpen && product?.id) {
+      // Check if profile is complete when form opens
+      const user = localStorage.getItem('user');
+      if (user) {
+        try {
+          const userData = JSON.parse(user);
+          const isProfileComplete = AuthService.isProfileComplete(userData);
+          if (!isProfileComplete) {
+            onClose();
+            navigate('/profile', { replace: true });
+            return;
+          }
+        } catch (error) {
+          console.error('Error checking profile completion:', error);
+        }
+      }
       fetchProductBids();
       setupSocketListeners();
     }
@@ -196,6 +214,22 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Check if profile is complete
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        const isProfileComplete = AuthService.isProfileComplete(userData);
+        if (!isProfileComplete) {
+          onClose();
+          navigate('/profile', { replace: true });
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking profile completion:', error);
+      }
+    }
 
     if (!formData.offerPrice || parseFloat(formData.offerPrice) <= 0) {
       alert("Please enter a valid offer price");

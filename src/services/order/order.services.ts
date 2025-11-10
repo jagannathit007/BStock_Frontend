@@ -41,8 +41,10 @@ export interface Order {
     quantity: number;
     price: number;
   }>;
-  billingAddress: Address;
-  shippingAddress: Address;
+  billingAddress?: Address;
+  shippingAddress?: Address;
+  paymentDetails?: PaymentDetails;
+  adminSelectedPaymentMethod?: string;
   status: string;
   totalAmount: number;
   createdAt: string;
@@ -127,9 +129,9 @@ export class OrderService {
     }
   }
 
-  static async listOrders(page: number = 1, limit: number = 10, status?: string): Promise<OrderListResponse> {
+  static async listOrders(page: number = 1, limit: number = 10, status?: string, searchQuery?: string): Promise<OrderListResponse> {
     try {
-      const res = await api.post('/api/customer/order/list', { page, limit, status });
+      const res = await api.post('/api/customer/order/list', { page, limit, status, searchQuery });
       const ok = res.data?.success === true || res.data?.status === 200;
       if (!ok) {
         toastHelper.showTost(res.data?.message || 'Failed to fetch orders', 'error');

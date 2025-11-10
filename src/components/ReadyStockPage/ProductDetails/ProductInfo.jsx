@@ -29,10 +29,11 @@ import {
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
 import { ProductService } from "../../../services/products/products.services";
+import { AuthService } from "../../../services/auth/auth.services";
+import OrderService from "../../../services/order/order.services";
 import NotifyMePopup from "../NotifyMePopup";
 import BiddingForm from "../../negotiation/BiddingForm";
 import AddToCartPopup from "../AddToCartPopup";
-import BuyNowCheckoutModal from "../BuyNowCheckoutModal";
 import iphoneImage from "../../../assets/iphone.png";
 import Swal from "sweetalert2";
 import { convertPrice, getCurrencyRates, formatPriceForCurrency } from "../../../utils/currencyUtils";
@@ -45,7 +46,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [currentProduct, setCurrentProduct] = useState(initialProduct);
   const [quantity, setQuantity] = useState(initialProduct.moq || 5);
   const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
-  const [isBuyNowCheckoutOpen, setIsBuyNowCheckoutOpen] = useState(false);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [thumbErrors, setThumbErrors] = useState({});
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -620,9 +621,24 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       return navigate(`/login?returnTo=${returnTo}`);
     }
 
+    // Check if profile is complete
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        const isProfileComplete = AuthService.isProfileComplete(userData);
+        if (!isProfileComplete) {
+          navigate('/profile', { replace: true });
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking profile completion:', error);
+      }
+    }
+
     const productId = processedProduct._id || processedProduct.id;
     const newWishlistStatus = !isFavorite;
-    setIsFavorite(newWishlistStatus);
+    setIsFavorite(!newWishlistStatus);
 
     try {
       await ProductService.toggleWishlist({
@@ -645,8 +661,23 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       return navigate(`/login?returnTo=${returnTo}`);
     }
 
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    const { businessProfile } = user;
+    // Check if profile is complete
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        const isProfileComplete = AuthService.isProfileComplete(userData);
+        if (!isProfileComplete) {
+          navigate('/profile', { replace: true });
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking profile completion:', error);
+      }
+    }
+
+    const userData = JSON.parse(localStorage.getItem("user") || "{}");
+    const { businessProfile } = userData;
 
     if (
       !businessProfile?.businessName ||
@@ -693,23 +724,99 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       const returnTo = encodeURIComponent(hashPath);
       return navigate(`/login?returnTo=${returnTo}`);
     }
+
+    // Check if profile is complete
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        const isProfileComplete = AuthService.isProfileComplete(userData);
+        if (!isProfileComplete) {
+          navigate('/profile', { replace: true });
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking profile completion:', error);
+      }
+    }
+
     setIsAddToCartPopupOpen(true);
   };
 
-  const handleBuyNowClick = (e) => {
+  const handlePlaceOrder = async (e) => {
     e.stopPropagation();
     if (processedProduct.isOutOfStock || processedProduct.isExpired) return;
+    
     const customerId = localStorage.getItem("userId") || "";
     if (!customerId) {
       const hashPath = window.location.hash?.slice(1) || "/home";
       const returnTo = encodeURIComponent(hashPath);
       return navigate(`/login?returnTo=${returnTo}`);
     }
-    setIsBuyNowCheckoutOpen(true);
-  };
 
-  const handleBuyNowSuccess = () => {
-    console.log("Order placed successfully!");
+    // Check if profile is complete
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        const isProfileComplete = AuthService.isProfileComplete(userData);
+        if (!isProfileComplete) {
+          navigate('/profile', { replace: true });
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking profile completion:', error);
+      }
+    }
+
+    setIsPlacingOrder(true);
+    try {
+      const orderData = {
+        cartItems: [
+          {
+            productId: processedProduct._id || processedProduct.id,
+            skuFamilyId: processedProduct.skuFamilyId?._id || processedProduct.skuFamilyId || null,
+            subSkuFamilyId: processedProduct.subSkuFamilyId?._id || processedProduct.subSkuFamilyId || null,
+            quantity: quantity,
+            price: parseFloat(processedProduct.price.toString().replace(/,/g, "")),
+          },
+        ],
+        billingAddress: {
+          address: "",
+          city: "",
+          postalCode: "",
+          country: "",
+        },
+        shippingAddress: {
+          address: "",
+          city: "",
+          postalCode: "",
+          country: "",
+        },
+      };
+
+      const response = await OrderService.createOrder(orderData);
+      
+      if (response?.success || response?.status === 200) {
+        await Swal.fire({
+          icon: "success",
+          title: "Order Placed Successfully!",
+          text: `Your order has been placed. Order ID: ${response?.data?.orderNumber || response?.data?.orderId || 'N/A'}`,
+          confirmButtonText: "OK",
+          confirmButtonColor: PRIMARY_COLOR,
+        });
+        
+        // Refresh product data if onRefresh is available
+        if (typeof onRefresh === "function") {
+          onRefresh();
+        }
+      }
+    } catch (error) {
+      console.error("Failed to place order:", error);
+      // Error is already handled by OrderService with toast
+    } finally {
+      setIsPlacingOrder(false);
+    }
   };
 
   const popupProduct = {
@@ -1735,11 +1842,24 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
               ) : (
                 <>
                   <button
-                    onClick={handleBuyNowClick}
-                    className="flex-1 cursor-pointer text-black py-3 rounded-lg text-sm font-semibold border border-gray-200 hover:bg-gray-50 hover:border-gray-300 shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center"
+                    onClick={handlePlaceOrder}
+                    disabled={isPlacingOrder || processedProduct.isOutOfStock || processedProduct.isExpired}
+                    className="flex-1 cursor-pointer text-black py-3 rounded-lg text-sm font-semibold border border-gray-200 hover:bg-gray-50 hover:border-gray-300 shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <FontAwesomeIcon icon={faBolt} className="mr-2" />
-                    Buy Now
+                    {isPlacingOrder ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Placing Order...
+                      </>
+                    ) : (
+                      <>
+                        <FontAwesomeIcon icon={faBolt} className="mr-2" />
+                        Place Order
+                      </>
+                    )}
                   </button>
                   <button
                     onClick={handleAddToCartClick}
@@ -1862,15 +1982,28 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                     </span>
                   </button>
                   <button
-                    onClick={handleBuyNowClick}
-                    className="flex-1 cursor-pointer text-white py-3 rounded-lg text-sm font-semibold"
+                    onClick={handlePlaceOrder}
+                    disabled={isPlacingOrder || processedProduct.isOutOfStock || processedProduct.isExpired}
+                    className="flex-1 cursor-pointer text-white py-3 rounded-lg text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ backgroundColor: PRIMARY_COLOR }}
-                    onMouseEnter={(e) => e.target.style.backgroundColor = PRIMARY_COLOR_DARK}
-                    onMouseLeave={(e) => e.target.style.backgroundColor = PRIMARY_COLOR}
+                    onMouseEnter={(e) => !isPlacingOrder && (e.target.style.backgroundColor = PRIMARY_COLOR_DARK)}
+                    onMouseLeave={(e) => !isPlacingOrder && (e.target.style.backgroundColor = PRIMARY_COLOR)}
                   >
                     <span className="inline-flex items-center justify-center gap-2">
-                      <FontAwesomeIcon icon={faBolt} />
-                      Buy Now
+                      {isPlacingOrder ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Placing Order...
+                        </>
+                      ) : (
+                        <>
+                          <FontAwesomeIcon icon={faBolt} />
+                          Place Order
+                        </>
+                      )}
                     </span>
                   </button>
                 </div>
@@ -2047,15 +2180,6 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
         />
       )}
 
-      {isBuyNowCheckoutOpen && (
-        <BuyNowCheckoutModal
-          isOpen={isBuyNowCheckoutOpen}
-          onClose={() => setIsBuyNowCheckoutOpen(false)}
-          product={popupProduct}
-          quantity={quantity}
-          onSuccess={handleBuyNowSuccess}
-        />
-      )}
     </div>
   );
 };

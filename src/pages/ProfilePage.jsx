@@ -1159,14 +1159,8 @@ const ProfilePage = () => {
   const activeTab = searchParams.get("tab") || "profile";
 
 
-  // Set default tab in URL if no tab parameter is present
-  useEffect(() => {
-    if (!searchParams.get("tab")) {
-      const newSearchParams = new URLSearchParams(searchParams);
-      newSearchParams.set("tab", "profile");
-      navigate({ search: newSearchParams.toString() }, { replace: true });
-    }
-  }, [searchParams, navigate]);
+  // Note: Tab defaults to "profile" if not in URL, but we don't force it in the URL
+  // This allows clean URLs like /profile without query parameters
 
   const [profileImage, setProfileImage] = useState(null);
   const [profileFormData, setProfileFormData] = useState({
@@ -1247,8 +1241,14 @@ const ProfilePage = () => {
   }, [profileImage]);
 
 
+  // Ref to prevent multiple simultaneous API calls
+  const isLoadingProfileRef = useRef(false);
+  
   // Load profile on mount
   useEffect(() => {
+    // Prevent multiple simultaneous calls
+    if (isLoadingProfileRef.current) return;
+    
     const toAbsoluteUrl = (p) => {
       if (!p || typeof p !== "string") return null;
       const normalized = p.replace(/\\/g, "/");
@@ -1302,6 +1302,8 @@ const ProfilePage = () => {
       };
     };
     const loadProfile = async () => {
+      if (isLoadingProfileRef.current) return;
+      isLoadingProfileRef.current = true;
       try {
         const res = await AuthService.getProfile();
         const normalized = normalize(res);
@@ -1346,6 +1348,8 @@ const ProfilePage = () => {
         }
       } catch (e) {
         // Already toasted in service
+      } finally {
+        isLoadingProfileRef.current = false;
       }
     };
     loadProfile();

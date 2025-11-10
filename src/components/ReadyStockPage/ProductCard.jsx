@@ -15,6 +15,7 @@ import { FiAlertCircle } from "react-icons/fi";
 import AddToCartPopup from "./AddToCartPopup";
 import CartService from "../../services/cart/cart.services";
 import { ProductService } from "../../services/products/products.services";
+import { AuthService } from "../../services/auth/auth.services";
 import iphoneImage from "../../assets/iphone.png";
 import Swal from "sweetalert2";
 import Countdown from "react-countdown";
@@ -188,8 +189,23 @@ const ProductCard = ({
         return navigate(`/login?returnTo=${returnTo}`);
       }
 
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-      const { businessProfile } = user;
+      // Check if profile is complete
+      const user = localStorage.getItem('user');
+      if (user) {
+        try {
+          const userData = JSON.parse(user);
+          const isProfileComplete = AuthService.isProfileComplete(userData);
+          if (!isProfileComplete) {
+            navigate('/profile', { replace: true });
+            return;
+          }
+        } catch (error) {
+          console.error('Error checking profile completion:', error);
+        }
+      }
+
+      const userData = JSON.parse(localStorage.getItem("user") || "{}");
+      const { businessProfile } = userData;
 
       if (!businessProfile?.businessName?.trim()) {
         const confirm = await Swal.fire({
@@ -265,8 +281,23 @@ const ProductCard = ({
         return navigate(`/login?returnTo=${returnTo}`);
       }
 
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-      const { businessProfile } = user;
+      // Check if profile is complete
+      const user = localStorage.getItem('user');
+      if (user) {
+        try {
+          const userData = JSON.parse(user);
+          const isProfileComplete = AuthService.isProfileComplete(userData);
+          if (!isProfileComplete) {
+            navigate('/profile', { replace: true });
+            return;
+          }
+        } catch (error) {
+          console.error('Error checking profile completion:', error);
+        }
+      }
+
+      const userData = JSON.parse(localStorage.getItem("user") || "{}");
+      const { businessProfile } = userData;
 
       if (!businessProfile?.businessName?.trim()) {
         const confirm = await Swal.fire({
@@ -359,6 +390,21 @@ const ProductCard = ({
       const hashPath = window.location.hash?.slice(1) || '/home';
       const returnTo = encodeURIComponent(hashPath);
       return navigate(`/login?returnTo=${returnTo}`);
+    }
+    
+    // Check if profile is complete
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        const isProfileComplete = AuthService.isProfileComplete(userData);
+        if (!isProfileComplete) {
+          navigate('/profile', { replace: true });
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking profile completion:', error);
+      }
     }
     
     const productId = id || product._id;

@@ -261,9 +261,9 @@ const SignUpForm = () => {
       name: data.fullName.trim(),
       email: data.email.trim().toLowerCase(),
       password: data.password,
-      mobileNumber: `${data.phoneCode}${data.mobileNumber}`,
+      mobileNumber: data.mobileNumber,
       mobileCountryCode: data.phoneCode,
-      whatsappNumber: data.whatsapp ? `${data.whatsappCode}${data.whatsapp}` : "",
+      whatsappNumber: data.whatsapp ? data.whatsapp : "",
       whatsappCountryCode: data.whatsapp ? data.whatsappCode : "",
     };
 

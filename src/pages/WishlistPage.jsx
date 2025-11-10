@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ProductService } from "../services/products/products.services";
+import { AuthService } from "../services/auth/auth.services";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChevronLeft,
@@ -80,6 +81,21 @@ const WishlistPage = () => {
       const returnTo = encodeURIComponent(hashPath);
       navigate(`/login?returnTo=${returnTo}`);
       return;
+    }
+    
+    // Check if profile is complete
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        const isProfileComplete = AuthService.isProfileComplete(userData);
+        if (!isProfileComplete) {
+          navigate('/profile', { replace: true });
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking profile completion:', error);
+      }
     }
     
     setIsLoading(true);

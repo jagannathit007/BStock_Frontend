@@ -13,6 +13,7 @@ import BiddingProductCard from "./BiddingProductCard";
 import ViewControls from "./ViewControls";
 import Loader from "../Loader"; // Import Loader
 import { convertPrice } from "../../utils/currencyUtils";
+import { AuthService } from "../../services/auth/auth.services";
 import { useSocket } from "../../context/SocketContext";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
@@ -399,8 +400,23 @@ const BiddingContent = ({ isLoggedIn: isLoggedInProp }) => {
   // Handler for opening bidding form from BiddingProductCard
   const handleOpenBiddingForm = async (product) => {
     try {
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-      const { businessProfile } = user;
+      // Check if profile is complete
+      const user = localStorage.getItem('user');
+      if (user) {
+        try {
+          const userData = JSON.parse(user);
+          const isProfileComplete = AuthService.isProfileComplete(userData);
+          if (!isProfileComplete) {
+            navigate('/profile', { replace: true });
+            return;
+          }
+        } catch (error) {
+          console.error('Error checking profile completion:', error);
+        }
+      }
+
+      const userData = JSON.parse(localStorage.getItem("user") || "{}");
+      const { businessProfile } = userData;
 
       if (!businessProfile?.businessName || businessProfile.businessName.trim() === "") {
         setShowBusinessPopup(true);

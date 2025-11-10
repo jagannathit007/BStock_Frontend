@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faShoppingBag, faTimes, faSearch, faCreditCard } from "@fortawesome/free-solid-svg-icons";
+import { faShoppingBag, faTimes, faSearch, faCreditCard, faEye, faMapMarkerAlt, faFileAlt, faDownload } from "@fortawesome/free-solid-svg-icons";
 import OrderService from "../services/order/order.services";
 import { convertPrice } from "../utils/currencyUtils";
 import PaymentPopup from "./PaymentPopup";
@@ -16,6 +16,9 @@ const Order = () => {
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
   const [selectedOrderForPayment, setSelectedOrderForPayment] = useState(null);
+  const [showOrderDetailsModal, setShowOrderDetailsModal] = useState(false);
+  const [selectedOrderDetails, setSelectedOrderDetails] = useState(null);
+  const [loadingOrderDetails, setLoadingOrderDetails] = useState(false);
   const itemsPerPage = 10;
 
   // Fetch orders
@@ -79,6 +82,35 @@ const Order = () => {
     setSearchQuery(value);
     setPage(1); // Reset to first page when search changes
     setIsLoading(true);
+  };
+
+  // Handle view order details
+  const handleViewOrderDetails = async (order) => {
+    try {
+      setLoadingOrderDetails(true);
+      setSelectedOrderDetails(order);
+      setShowOrderDetailsModal(true);
+      
+      // Fetch payment details if available
+      try {
+        const paymentResponse = await OrderService.getOrderWithPaymentDetails(order._id);
+        if (paymentResponse?.data) {
+          setSelectedOrderDetails(prev => ({
+            ...prev,
+            paymentDetails: paymentResponse.data.paymentDetails,
+            billingAddress: paymentResponse.data.billingAddress || prev.billingAddress,
+            shippingAddress: paymentResponse.data.shippingAddress || prev.shippingAddress,
+          }));
+        }
+      } catch (paymentError) {
+        console.log("Payment details not available or error fetching:", paymentError);
+        // Continue showing order details even if payment details fail
+      }
+    } catch (error) {
+      console.error("Error fetching order details:", error);
+    } finally {
+      setLoadingOrderDetails(false);
+    }
   };
 
   return (
@@ -170,6 +202,9 @@ const Order = () => {
                   Status
                 </th>
                 <th className="px-6 py-5 text-center text-sm font-bold text-gray-800 border-b-2 border-gray-200 align-middle tracking-wide">
+                  View Details
+                </th>
+                <th className="px-6 py-5 text-end pe-10 text-sm font-bold text-gray-800 border-b-2 border-gray-200 align-middle tracking-wide">
                   Actions
                 </th>
               </tr>
@@ -212,7 +247,7 @@ const Order = () => {
                         day: 'numeric'
                       })}
                     </td>
-                    <td className="px-6 py-5 text-sm text-gray-600">
+                    {/* <td className="px-6 py-5 text-sm text-gray-600">
                       <div className="space-y-1">
                         {order.cartItems.map((item, index) => (
                           <div key={item.productId?._id || item._id || index} className="flex items-center gap-2">
@@ -226,6 +261,9 @@ const Order = () => {
                           </div>
                         ))}
                       </div>
+                    </td> */}
+                    <td className="px-6 py-5 text-sm font-medium text-gray-900">
+                      <span>{order.cartItems?.length}</span>
                     </td>
                     <td className="px-6 py-5 text-sm font-bold text-gray-900">
                       <span className="text-lg">{convertPrice(order.totalAmount)}</span>
@@ -251,8 +289,18 @@ const Order = () => {
                         {order.status?.replace(/_/g, ' ')}
                       </span>
                     </td>
+                    <td className="px-6 py-5 text-center">
+                                                <button
+                          onClick={() => handleViewOrderDetails(order)}
+                          className="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg transition-all duration-200 font-medium"
+                          title="View Order Details"
+                        >
+                          <FontAwesomeIcon icon={faEye} className="w-4 h-4" />
+                          View
+                        </button>
+                      </td>
                     <td className="px-6 py-5 text-sm text-center">
-                      <div className="flex items-center justify-center gap-2">
+                      <div className="flex items-center justify-end gap-2">
                         {order.status === 'accepted' && order.adminSelectedPaymentMethod && !order.paymentDetails && (
                           <button
                             onClick={() => {
@@ -283,6 +331,7 @@ const Order = () => {
                             Cancel
                           </button>
                         )}
+
                       </div>
                     </td>
                   </tr>
@@ -372,6 +421,224 @@ const Order = () => {
           }}
           adminSelectedPaymentMethod={selectedOrderForPayment.adminSelectedPaymentMethod}
         />
+      )}
+
+      {/* Order Details Modal */}
+      {showOrderDetailsModal && selectedOrderDetails && (
+        <div className="fixed inset-0 bg-black/40 bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowOrderDetailsModal(false)}>
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4 rounded-t-xl flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold">Order Details</h2>
+                <p className="text-blue-100 text-sm mt-1">Order ID: {selectedOrderDetails._id}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowOrderDetailsModal(false);
+                  setSelectedOrderDetails(null);
+                }}
+                className="text-white hover:text-gray-200 transition-colors p-2 hover:bg-blue-800 rounded-lg"
+              >
+                <FontAwesomeIcon icon={faTimes} className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6">
+              {loadingOrderDetails ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading order details...</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Order Status & Date */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <p className="text-xs text-gray-500 font-medium mb-1">Order Status</p>
+                      <span
+                        className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide ${
+                          selectedOrderDetails.status === 'delivered'
+                            ? 'bg-green-100 text-green-800 border border-green-200'
+                            : selectedOrderDetails.status === 'cancelled'
+                            ? 'bg-red-100 text-red-800 border border-red-200'
+                            : selectedOrderDetails.status === 'out_for_delivery'
+                            ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                            : selectedOrderDetails.status === 'ready_to_pickup'
+                            ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
+                            : selectedOrderDetails.status === 'accepted'
+                            ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                            : selectedOrderDetails.status === 'approved'
+                            ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                            : 'bg-gray-100 text-gray-800 border border-gray-200'
+                        }`}
+                      >
+                        {selectedOrderDetails.status?.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <p className="text-xs text-gray-500 font-medium mb-1">Order Date</p>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {new Date(selectedOrderDetails.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Order Items */}
+                  <div className="bg-white rounded-lg border border-gray-200 p-5">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <FontAwesomeIcon icon={faShoppingBag} className="text-blue-600" />
+                      Order Items ({selectedOrderDetails.cartItems?.length || 0})
+                    </h3>
+                    <div className="space-y-3">
+                      {selectedOrderDetails.cartItems?.map((item, index) => (
+                        <div key={item.productId?._id || item._id || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                          <div className="flex items-center gap-3 flex-1">
+                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <span className="text-sm font-bold text-blue-600">{index + 1}</span>
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-semibold text-gray-900">
+                                {item.skuFamilyId?.name || item.productId?.name || 'Unknown Product'}
+                              </p>
+                              <p className="text-xs text-gray-500">Quantity: {item.quantity} × {convertPrice(item.price || item.productId?.price || 0)}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-bold text-gray-900">
+                              {convertPrice((item.price || item.productId?.price || 0) * item.quantity)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
+                      <span className="text-lg font-semibold text-gray-900">Total Amount</span>
+                      <span className="text-2xl font-bold text-blue-600">{convertPrice(selectedOrderDetails.totalAmount)}</span>
+                    </div>
+                  </div>
+
+                  {/* Billing Address */}
+                  {selectedOrderDetails.billingAddress && (
+                    <div className="bg-white rounded-lg border border-gray-200 p-5">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <FontAwesomeIcon icon={faMapMarkerAlt} className="text-blue-600" />
+                        Billing Address
+                      </h3>
+                      <div className="space-y-2 text-sm text-gray-700">
+                        <p><span className="font-medium">Address:</span> {selectedOrderDetails.billingAddress.address}</p>
+                        <p><span className="font-medium">City:</span> {selectedOrderDetails.billingAddress.city}</p>
+                        <p><span className="font-medium">Postal Code:</span> {selectedOrderDetails.billingAddress.postalCode}</p>
+                        <p><span className="font-medium">Country:</span> {selectedOrderDetails.billingAddress.country}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Shipping Address */}
+                  {selectedOrderDetails.shippingAddress && (
+                    <div className="bg-white rounded-lg border border-gray-200 p-5">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <FontAwesomeIcon icon={faMapMarkerAlt} className="text-green-600" />
+                        Shipping Address
+                      </h3>
+                      <div className="space-y-2 text-sm text-gray-700">
+                        <p><span className="font-medium">Address:</span> {selectedOrderDetails.shippingAddress.address}</p>
+                        <p><span className="font-medium">City:</span> {selectedOrderDetails.shippingAddress.city}</p>
+                        <p><span className="font-medium">Postal Code:</span> {selectedOrderDetails.shippingAddress.postalCode}</p>
+                        <p><span className="font-medium">Country:</span> {selectedOrderDetails.shippingAddress.country}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Payment Details */}
+                  {selectedOrderDetails.paymentDetails && (
+                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200 p-5">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <FontAwesomeIcon icon={faCreditCard} className="text-green-600" />
+                        Payment Details
+                      </h3>
+                      <div className="space-y-3">
+                        {selectedOrderDetails.paymentDetails.module && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-700">Payment Method:</span>
+                            <span className="text-sm font-semibold text-gray-900 capitalize">{selectedOrderDetails.paymentDetails.module}</span>
+                          </div>
+                        )}
+                        {selectedOrderDetails.paymentDetails.currency && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-700">Currency:</span>
+                            <span className="text-sm font-semibold text-gray-900">{selectedOrderDetails.paymentDetails.currency}</span>
+                          </div>
+                        )}
+                        {selectedOrderDetails.paymentDetails.transactionRef && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-700">Transaction Reference:</span>
+                            <span className="text-sm font-mono font-semibold text-gray-900">{selectedOrderDetails.paymentDetails.transactionRef}</span>
+                          </div>
+                        )}
+                        {selectedOrderDetails.paymentDetails.fields && Object.keys(selectedOrderDetails.paymentDetails.fields).length > 0 && (
+                          <div className="mt-4 pt-4 border-t border-green-200">
+                            <p className="text-sm font-medium text-gray-700 mb-2">Additional Payment Information:</p>
+                            <div className="space-y-2">
+                              {Object.entries(selectedOrderDetails.paymentDetails.fields).map(([key, value]) => (
+                                <div key={key} className="flex justify-between items-center text-sm">
+                                  <span className="text-gray-600 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
+                                  <span className="font-medium text-gray-900">{String(value)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {selectedOrderDetails.paymentDetails.uploadedFiles && selectedOrderDetails.paymentDetails.uploadedFiles.length > 0 && (
+                          <div className="mt-4 pt-4 border-t border-green-200">
+                            <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                              <FontAwesomeIcon icon={faFileAlt} />
+                              Payment Documents:
+                            </p>
+                            <div className="space-y-2">
+                              {selectedOrderDetails.paymentDetails.uploadedFiles.map((file, index) => {
+                                const baseUrl = import.meta.env.VITE_BASE_URL || '';
+                                const fileUrl = file.startsWith('http') ? file : `${baseUrl}/${file.replace(/^\/+/, '')}`;
+                                return (
+                                  <a
+                                    key={index}
+                                    href={fileUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                                  >
+                                    <FontAwesomeIcon icon={faDownload} className="w-4 h-4" />
+                                    <span>Document {index + 1}</span>
+                                  </a>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {!selectedOrderDetails.paymentDetails && (
+                    <div className="bg-yellow-50 rounded-lg border border-yellow-200 p-4">
+                      <p className="text-sm text-yellow-800">
+                        <FontAwesomeIcon icon={faFileAlt} className="mr-2" />
+                        Payment details not available for this order.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

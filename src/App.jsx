@@ -39,8 +39,8 @@ const ProtectedRoute = ({ children, isLoggedIn }) => {
     return <Navigate to={`/login?returnTo=${returnTo}`} replace />;
   }
 
-  // Check profile completion for Google users on protected routes (except profile page)
-  const currentPath = window.location.hash.replace('#', '');
+  // Check profile completion for all users on protected routes (except profile page)
+  const currentPath = window.location.hash.replace('#', '').split('?')[0]; // Get path without query params
   if (currentPath !== '/profile') {
     const user = localStorage.getItem('user');
     if (user) {
@@ -51,7 +51,7 @@ const ProtectedRoute = ({ children, isLoggedIn }) => {
         console.error('Error parsing user data:', error);
         return children;
       }
-      if (userData && userData.platformName === 'google') {
+      if (userData) {
         const isProfileComplete = AuthService.isProfileComplete(userData);
         if (!isProfileComplete) {
           return <Navigate to="/profile" replace />;

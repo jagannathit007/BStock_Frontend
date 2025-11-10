@@ -18,6 +18,7 @@ import {
 import iphoneImage from "../../assets/iphone.png";
 import { convertPrice } from "../../utils/currencyUtils";
 import { BiddingService } from "../../services/bidding/bidding.services";
+import { AuthService } from "../../services/auth/auth.services";
 import { useSocket } from "../../context/SocketContext";
 import { PRIMARY_COLOR, PRIMARY_COLOR_LIGHT, PRIMARY_COLOR_DARK } from "../../utils/colors";
 import axios from "axios";
@@ -255,6 +256,21 @@ const BidProductDetails = () => {
   const handleBidButtonClick = async (e) => {
     e.stopPropagation();
     if (auctionEnded || isSubmittingBid) return;
+
+    // Check if profile is complete
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        const isProfileComplete = AuthService.isProfileComplete(userData);
+        if (!isProfileComplete) {
+          navigate('/profile', { replace: true });
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking profile completion:', error);
+      }
+    }
 
     try {
       const amountNum = Number(String(myMaxBidInput).replace(/[,]/g, ""));
