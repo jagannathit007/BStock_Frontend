@@ -7,6 +7,7 @@ import { ProductService } from "../services/products/products.services";
 import { env } from "../utils/env";
 import NegotiationModal from "./negotiation/NegotiationModal";
 import WalletModal from "./WalletTransactionsPage/WalletTransactions";
+import CurrencyDropdown from "./CurrencyDropdown";
 import { convertPrice, formatPriceUSD } from "../utils/currencyUtils";
 import { PRIMARY_COLOR, PRIMARY_COLOR_LIGHT, PRIMARY_COLOR_DARK } from "../utils/colors";
 
@@ -479,6 +480,9 @@ const Header = ({ onLogout }) => {
 
               {/* Navigation Buttons */}
               <div className="flex items-center space-x-1">
+                {/* Currency Dropdown */}
+                <CurrencyDropdown />
+
                 {/* Negotiations */}
                 <button
                   className={`${!isLoggedIn ? 'px-3 py-2' : 'p-2.5'} text-gray-500 rounded-lg relative cursor-pointer group flex items-center space-x-2 transition-colors nav-button-hover`}

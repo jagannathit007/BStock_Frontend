@@ -1374,7 +1374,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                           </div>
                         )}
                       </div>
-                      <p className="text-xs text-gray-500 italic">
+                      <p className="text-xs text-red-500 italic">
                         Prices shown are for view reference only. Actual transactions are processed in USD only.
                       </p>
                     </div>
