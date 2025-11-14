@@ -176,51 +176,47 @@ const CheckoutPage = () => {
                   ))}
                 </div>
               </div>
-
-                          <div className="h-max bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-              <h3 className="text-base font-semibold text-gray-900 mb-3">Totals</h3>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between"><span className="text-gray-600">Subtotal</span><span className="font-medium text-gray-900">{convertPrice(totalPrice)}</span></div>
-                
-                {/* Display applied charges */}
-                {costSummary.appliedCharges && costSummary.appliedCharges.length > 0 && (
-                  <>
-                    {costSummary.appliedCharges.map((charge, index) => (
-                      <div key={index} className="flex justify-between items-start">
-                        <span className="text-gray-600 capitalize">
-                          {charge.type === 'ExtraDelivery' ? 'Extra Delivery' : charge.type}
-                          {charge.costType === 'Percentage' && ` (${charge.value}%)`}
-                        </span>
-                        <span className="font-medium text-gray-900">{convertPrice(charge.calculatedAmount)}</span>
-                      </div>
-                    ))}
-                  </>
-                )}
-                
-                <div className="pt-3 mt-1 border-t border-gray-100 flex justify-between text-base">
-                  <span className="font-semibold text-gray-900">Total</span>
-                  <span className="font-bold text-gray-900">{convertPrice(finalTotal)}</span>
-                </div>
-              </div>
             </div>
-            </div>
-
-
 
             <div>
-              <form onSubmit={handlePlaceOrder} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-6">
-                <div className="text-sm text-gray-600 mb-4">
-                  <p className="mb-2">Review your order and place it. You'll be able to add payment and shipping details after admin approval.</p>
+              <div className="h-max bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <h3 className="text-base font-semibold text-gray-900 mb-3">Totals</h3>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between"><span className="text-gray-600">Subtotal</span><span className="font-medium text-gray-900">{convertPrice(totalPrice)}</span></div>
+                  
+                  {/* Display applied charges */}
+                  {costSummary.appliedCharges && costSummary.appliedCharges.length > 0 && (
+                    <>
+                      {costSummary.appliedCharges.map((charge, index) => (
+                        <div key={index} className="flex justify-between items-start">
+                          <span className="text-gray-600 capitalize">
+                            {charge.type === 'ExtraDelivery' ? 'Extra Delivery' : charge.type}
+                            {charge.costType === 'Percentage' && ` (${charge.value}%)`}
+                          </span>
+                          <span className="font-medium text-gray-900">{convertPrice(charge.calculatedAmount)}</span>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                  
+                  <div className="pt-3 mt-1 border-t border-gray-100 flex justify-between text-base">
+                    <span className="font-semibold text-gray-900">Total</span>
+                    <span className="font-bold text-gray-900">{convertPrice(finalTotal)}</span>
+                  </div>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-3 justify-end">
-                  <button type="button" className="w-full px-5 py-3 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50" onClick={()=>navigate('/cart')}>Back to Cart</button>
-                  <button type="submit" disabled={isLoading} className="w-full px-6 py-3 rounded-lg bg-[#0071E0] text-white hover:bg-[#005bb5] disabled:opacity-50">{isLoading? 'Processing...' : 'Place Order'}</button>
-                </div>
-              </form>
+                <form onSubmit={handlePlaceOrder} className="mt-4 rounded-xl  space-y-6">
+                  <div className="text-sm text-gray-600 mb-4">
+                    <p className="mb-2">Review your order and place it. You'll be able to add payment and shipping details after admin approval.</p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-end">
+                    <button type="button" className="w-full px-5 py-3 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50" onClick={()=>navigate('/cart')}>Back to Cart</button>
+                    <button type="submit" disabled={isLoading} className="w-full px-6 py-3 rounded-lg bg-[#0071E0] text-white hover:bg-[#005bb5] disabled:opacity-50">{isLoading? 'Processing...' : 'Place Order'}</button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         )}
-
       </div>
     </div>
   );

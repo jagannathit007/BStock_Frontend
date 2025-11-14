@@ -1072,11 +1072,14 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
                     if (!rect) return;
                     const clickX = e.clientX - rect.left;
                     const percentage = (clickX / rect.width) * 100;
-                    const currentMinPercent = priceRange.max > 0 
-                      ? ((minPrice !== undefined ? minPrice : priceRange.min) / priceRange.max) * 100 
+                    const rangeSize = priceRange.max - priceRange.min;
+                    const currentMinValue = minPrice !== undefined ? minPrice : priceRange.min;
+                    const currentMaxValue = maxPrice !== undefined ? maxPrice : priceRange.max;
+                    const currentMinPercent = rangeSize > 0 
+                      ? ((currentMinValue - priceRange.min) / rangeSize) * 100 
                       : 0;
-                    const currentMaxPercent = priceRange.max > 0 
-                      ? ((maxPrice !== undefined ? maxPrice : priceRange.max) / priceRange.max) * 100 
+                    const currentMaxPercent = rangeSize > 0 
+                      ? ((currentMaxValue - priceRange.min) / rangeSize) * 100 
                       : 0;
                     
                     const minDistance = Math.abs(percentage - currentMinPercent);
@@ -1095,13 +1098,13 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
                     className="absolute h-1 bg-blue-600 rounded-full transition-all duration-100"
                     style={{
                       left: `${
-                        priceRange.max > 0 
-                          ? ((minPrice !== undefined ? minPrice : priceRange.min) / priceRange.max) * 100 
+                        (priceRange.max - priceRange.min) > 0 
+                          ? (((minPrice !== undefined ? minPrice : priceRange.min) - priceRange.min) / (priceRange.max - priceRange.min)) * 100 
                           : 0
                       }%`,
                       width: `${
-                        priceRange.max > 0
-                          ? (((maxPrice !== undefined ? maxPrice : priceRange.max) - (minPrice !== undefined ? minPrice : priceRange.min)) / priceRange.max) * 100
+                        (priceRange.max - priceRange.min) > 0
+                          ? (((maxPrice !== undefined ? maxPrice : priceRange.max) - (minPrice !== undefined ? minPrice : priceRange.min)) / (priceRange.max - priceRange.min)) * 100
                           : 0
                       }%`,
                     }}
@@ -1113,8 +1116,8 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
                     }`}
                     style={{
                       left: `${
-                        priceRange.max > 0 
-                          ? ((minPrice !== undefined ? minPrice : priceRange.min) / priceRange.max) * 100 
+                        (priceRange.max - priceRange.min) > 0 
+                          ? (((minPrice !== undefined ? minPrice : priceRange.min) - priceRange.min) / (priceRange.max - priceRange.min)) * 100 
                           : 0
                       }%`,
                       top: '50%',
@@ -1137,8 +1140,8 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
                     }`}
                     style={{
                       left: `${
-                        priceRange.max > 0 
-                          ? ((maxPrice !== undefined ? maxPrice : priceRange.max) / priceRange.max) * 100 
+                        (priceRange.max - priceRange.min) > 0 
+                          ? (((maxPrice !== undefined ? maxPrice : priceRange.max) - priceRange.min) / (priceRange.max - priceRange.min)) * 100 
                           : 0
                       }%`,
                       top: '50%',
