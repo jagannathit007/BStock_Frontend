@@ -11,6 +11,7 @@ const CheckoutPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [imageErrors, setImageErrors] = useState({});
+  const [shippingCountry, setShippingCountry] = useState("");
   const [costSummary, setCostSummary] = useState({
     totalCartValue: 0,
     totalAmount: 0,
@@ -86,11 +87,16 @@ const CheckoutPage = () => {
       return; 
     }
     
+    if (!shippingCountry) {
+      setError("Please select a shipping country");
+      return;
+    }
+    
     try {
       setIsLoading(true);
       setError(null);
       
-      // Create order with just cartItems - no billing/shipping/payment
+      // Create order with cartItems and shipping country
       const payload = {
         cartItems: cartItems.map((it) => ({ 
           productId: it.id, 
@@ -99,6 +105,10 @@ const CheckoutPage = () => {
           quantity: Number(it.quantity), 
           price: Number(it.price) 
         })),
+        billingAddress: null,
+        shippingAddress: {
+          country: shippingCountry
+        }
       };
       
       const res = await OrderService.createOrder(payload);
@@ -208,6 +218,24 @@ const CheckoutPage = () => {
                   <div className="text-sm text-gray-600 mb-4">
                     <p className="mb-2">Review your order and place it. You'll be able to add payment and shipping details after admin approval.</p>
                   </div>
+                  
+                  <div className="mb-4">
+                    <label htmlFor="shippingCountry" className="block text-sm font-medium text-gray-700 mb-2">
+                      Shipping Country <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="shippingCountry"
+                      value={shippingCountry}
+                      onChange={(e) => setShippingCountry(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#0071E0] focus:border-[#0071E0] outline-none text-sm"
+                      required
+                    >
+                      <option value="">Select Shipping Country</option>
+                      <option value="hongkong">Hong Kong</option>
+                      <option value="dubai">Dubai</option>
+                    </select>
+                  </div>
+                  
                   <div className="flex flex-col sm:flex-row gap-3 justify-end">
                     <button type="button" className="w-full px-5 py-3 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50" onClick={()=>navigate('/cart')}>Back to Cart</button>
                     <button type="submit" disabled={isLoading} className="w-full px-6 py-3 rounded-lg bg-[#0071E0] text-white hover:bg-[#005bb5] disabled:opacity-50">{isLoading? 'Processing...' : 'Place Order'}</button>
