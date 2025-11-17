@@ -374,7 +374,7 @@ const WatchlistContent = () => {
                           onClick={(e) => handleAddToCart(e, product)}
                         >
                           <FontAwesomeIcon icon={faShoppingCart} className="text-xs" />
-                          Add to Cart
+                          Order Now
                         </button>
                       )}
                       {product.notify && (
@@ -452,7 +452,7 @@ const WatchlistContent = () => {
                                   onClick={(e) => handleAddToCart(e, product)}
                                 >
                                   <FontAwesomeIcon icon={faShoppingCart} className="text-xs" />
-                                  Add to Cart
+                                  Order Now
                                 </button>
                               )}
                               {product.notify && (

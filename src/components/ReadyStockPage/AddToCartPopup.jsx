@@ -130,7 +130,7 @@ const AddToCartPopup = ({ product, onClose }) => {
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-gray-100">
           <h2 className="text-xl font-bold text-gray-900">
-            Add to Cart
+            Order Now
           </h2>
           <button
             className="w-10 h-10 flex items-center cursor-pointer justify-center rounded-lg hover:bg-gray-100 transition-all duration-200 hover:scale-110"
@@ -256,7 +256,7 @@ const AddToCartPopup = ({ product, onClose }) => {
             onClick={handleConfirm}
           >
             <FontAwesomeIcon icon={faCartShopping} className="w-5 h-5" />
-            Add to Cart
+            Order Now
           </button>
 
           <button

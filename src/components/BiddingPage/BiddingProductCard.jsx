@@ -851,7 +851,6 @@ const BiddingProductCard = ({
               disabled={auctionEnded || isCurrentUserBidder}
               onClick={(e) => {
                 e.stopPropagation();
-                // Handle add to cart
               }}
             >
               <FontAwesomeIcon icon={faShoppingCart} className="mr-1" />

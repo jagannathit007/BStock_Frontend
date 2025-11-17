@@ -484,6 +484,225 @@ const ProductCard = ({
     }
   };
 
+if (viewMode === "table") {
+    return (
+      <tr 
+        className="bg-white border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
+        onClick={handleProductClick}
+      >
+        {/* Image */}
+        <td className="px-4 py-3">
+          <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-50 flex-shrink-0">
+            <img
+              className="w-full h-full object-contain"
+              src={
+                imageError
+                  ? iphoneImage
+                  : `${import.meta.env.VITE_BASE_URL}/${imageUrl}`
+              }
+              alt={name}
+              onError={handleImageError}
+            />
+          </div>
+        </td>
+
+        {/* Product Name & Description */}
+        <td className="px-4 py-3 max-w-[280px]">
+          <div className="flex flex-col">
+            <h3 className="font-semibold text-sm text-gray-900 hover:text-[#0071e3] transition-colors">
+              {name}
+            </h3>
+            <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+              {[product?.storage, product?.ram, product?.color, product?.simType, product?.countryName].filter(Boolean).join(' • ') || '-'}
+            </p>
+            <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+              {description}
+            </p>
+          </div>
+        </td>
+
+        {/* Price */}
+        <td className="px-4 py-3">
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold text-green-600">
+              {convertPrice(price)}
+            </span>
+            {!isExpired && !isOutOfStock && isFlashDeal && (
+              <div className="mt-1">
+                <div className="inline-flex items-center bg-gradient-to-r from-red-50 to-pink-50 text-red-700 px-2 py-0.5 rounded text-[9px] font-semibold border border-red-200">
+                  <FontAwesomeIcon icon={faClock} className="w-2 h-2 mr-1" />
+                  <Countdown
+                    date={product.expiryTime}
+                    renderer={({ days, hours, minutes, seconds, completed }) => {
+                      if (completed) return <span>Ended</span>;
+                      return (
+                        <span>
+                          {days > 0 ? `${days}d ` : ""}
+                          {String(hours).padStart(2, "0")}:
+                          {String(minutes).padStart(2, "0")}:
+                          {String(seconds).padStart(2, "0")}
+                        </span>
+                      );
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </td>
+
+        {/* Stock Status */}
+        <td className="px-4 py-3">
+          <span className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] font-semibold ${getStatusBadgeClass()}`}>
+            {isExpired ? (
+              <FontAwesomeIcon icon={faCalendarXmark} className="w-2.5 h-2.5 mr-0.5" />
+            ) : (
+              <svg className="w-2.5 h-2.5 mr-0.5" viewBox="0 0 512 512" fill="currentColor">
+                <path d="M256 512a256 256 0 1 1 0-512 256 256 0 1 1 0 512zM374 145.7c-10.7-7.8-25.7-5.4-33.5 5.3L221.1 315.2 169 263.1c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l72 72c5 5 11.8 7.5 18.8 7s13.4-4.1 17.5-9.8L379.3 179.2c7.8-10.7 5.4-25.7-5.3-33.5z" />
+              </svg>
+            )}
+            {getDisplayStatus()}
+          </span>
+        </td>
+
+        {/* MOQ / Stock */}
+        <td className="px-4 py-3">
+          <div className="text-sm text-gray-900">
+            <div className="font-medium">{moq} / {stockCount}</div>
+          </div>
+        </td>
+
+        {/* Condition */}
+        <td className="px-4 py-3">
+          <span className="text-sm text-gray-900">{product?.condition || "-"}</span>
+        </td>
+
+        {/* Warehouse */}
+        {/* <td className="px-4 py-3">
+          <div className="flex items-center text-sm text-gray-900">
+            <span className="w-2 h-2 bg-red-500 rounded-sm mr-1"></span>
+            {product?.countryName || product?.country || '—'}
+          </div>
+        </td> */}
+
+        {/* Quantity & Actions */}
+        <td className="px-4 py-3">
+          <div className="flex flex-col gap-2">
+            {/* Quantity Selector */}
+            {!isExpired && !isOutOfStock && (
+              <div className="flex items-center border border-gray-300 rounded-lg w-fit">
+                <button
+                  onClick={(e) => { e.stopPropagation(); decQty(); }}
+                  className="px-2 py-1 text-xs text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                  disabled={isFullPurchase || quantity <= validMoq}
+                >
+                  -
+                </button>
+                <input
+                  type="text"
+                  value={quantity}
+                  onChange={onQtyInput}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-10 px-1 py-1 text-center text-xs font-medium bg-transparent outline-none"
+                  readOnly={isFullPurchase}
+                />
+                <button
+                  onClick={(e) => { e.stopPropagation(); incQty(); }}
+                  className="px-2 py-1 text-xs text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                  disabled={isFullPurchase || quantity >= validStock}
+                >
+                  +
+                </button>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-1.5">
+              {/* Wishlist */}
+              <button
+                className={`p-1.5 rounded transition-all ${
+                  isFavorite ? "text-[#FB2C36]" : "text-gray-400 hover:text-[#FB2C36]"
+                }`}
+                onClick={handleToggleWishlist}
+                title={isFavorite ? "Remove from wishlist" : "Add to wishlist"}
+              >
+                <svg className="w-4 h-4" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z" />
+                </svg>
+              </button>
+
+              {/* Order Now / Notify / Make Offer */}
+              {isExpired ? (
+                <button 
+                  className="px-2 py-1 bg-gray-300 text-gray-500 rounded text-[10px] font-semibold cursor-not-allowed"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <FontAwesomeIcon icon={faCalendarXmark} className="w-3 h-3" />
+                </button>
+              ) : isOutOfStock ? (
+                canNotify ? (
+                  notify ? (
+                    <button
+                      className="px-2 py-1 border border-red-300 text-red-700 bg-white rounded text-[10px] font-semibold hover:bg-red-50 transition-all"
+                      onClick={(ev) => handleNotifyToggle(ev, false)}
+                      title="Turn off notifications"
+                    >
+                      <FontAwesomeIcon icon={faBellSlash} className="w-3 h-3" />
+                    </button>
+                  ) : (
+                    <button
+                      className="px-2 py-1 border border-[#0071E3] text-[#0071E3] bg-white rounded text-[10px] font-semibold hover:bg-blue-50 transition-all"
+                      onClick={(ev) => handleNotifyToggle(ev, true)}
+                      title="Notify me when back in stock"
+                    >
+                      <FontAwesomeIcon icon={faBell} className="w-3 h-3" />
+                    </button>
+                  )
+                ) : (
+                  <button 
+                    className="px-2 py-1 bg-gray-300 text-gray-500 rounded text-[10px] font-semibold cursor-not-allowed"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <FontAwesomeIcon icon={faXmark} className="w-3 h-3" />
+                  </button>
+                )
+              ) : (
+                <>
+                  <button
+                    className="px-2 py-1 border border-gray-200 text-gray-700 bg-white rounded text-[10px] font-semibold hover:bg-gray-50 transition-all"
+                    onClick={handleDirectAddToCart}
+                    title="Order Now"
+                  >
+                    <FontAwesomeIcon icon={faCartShopping} className="w-3 h-3" />
+                  </button>
+                  <button
+                    className="px-2 py-1 text-white rounded text-[10px] font-semibold bg-[#0071E3] hover:bg-[#005bb5] transition-all"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+                      if (!isLoggedIn) {
+                        localStorage.setItem(
+                          "postLoginAction",
+                          JSON.stringify({ type: "make_offer", productId: id || product?._id })
+                        );
+                        const returnTo = encodeURIComponent(window.location.hash?.slice(1) || "/home");
+                        return navigate(`/login?returnTo=${returnTo}`);
+                      }
+                      onOpenBiddingForm(product);
+                    }}
+                    title="Make offer"
+                  >
+                    <FontAwesomeIcon icon={faHandshake} className="w-3 h-3" />
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </td>
+      </tr>
+    );
+  }
+
 if (viewMode === "list") {
     return (
       <>
@@ -708,7 +927,7 @@ if (viewMode === "list") {
                       onClick={handleDirectAddToCart}
                     >
                       <FontAwesomeIcon icon={faCartShopping} className="w-3 h-3 mr-1.5" />
-                      Add to Cart
+                      Order Now
                     </button>
                     <button
                       className="w-full sm:flex-1 text-white py-2 px-3 rounded-lg text-[11px] sm:text-xs font-semibold cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md bg-[#0071E3] hover:bg-[#005bb5] flex items-center justify-center"
@@ -981,7 +1200,7 @@ if (viewMode === "list") {
               onClick={handleAddToCart}
             >
               <FontAwesomeIcon icon={faCartShopping} className="w-3 h-3 mr-1" />
-              Add to Cart
+              Order Now
             </button>
             <button
               className="flex-1 text-white py-1.5 px-2 rounded-lg text-[11px] font-semibold cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md bg-[#0071E3] hover:bg-[#005bb5] flex items-center justify-center"

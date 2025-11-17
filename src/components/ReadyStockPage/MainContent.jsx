@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import ProductCard from "./ProductCard";
 import ProductCardSkeleton from "./ProductCardSkeleton";
 import SideFilter from "../SideFilter";
@@ -18,9 +18,22 @@ import { useCurrency } from "../../context/CurrencyContext";
 
 const MainContent = () => {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [viewMode, setViewMode] = useState("grid");
+  // Initialize viewMode from localStorage if available
+  const [viewMode, setViewMode] = useState(() => {
+    const savedViewMode = localStorage.getItem("preferredViewMode");
+    return savedViewMode === "grid" || savedViewMode === "list" || savedViewMode === "table" 
+      ? savedViewMode 
+      : "grid";
+  });
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(12);
+  
+  // Calculate itemsPerPage based on viewMode using useMemo to prevent unnecessary re-renders
+  const itemsPerPage = useMemo(() => {
+    if (viewMode === "grid") return 12;
+    if (viewMode === "list") return 10;
+    if (viewMode === "table") return 15;
+    return 12;
+  }, [viewMode]);
   const [fetchedProducts, setFetchedProducts] = useState([]);
   const [totalProductsCount, setTotalProductsCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,6 +46,20 @@ const MainContent = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('');
   const { selectedCurrency } = useCurrency();
+  const previousViewModeRef = useRef(viewMode);
+  const previousItemsPerPageRef = useRef(itemsPerPage);
+  const isViewModeChangingRef = useRef(false);
+  const isInitialMountRef = useRef(true);
+  
+  // Initialize refs on mount
+  useEffect(() => {
+    previousViewModeRef.current = viewMode;
+    previousItemsPerPageRef.current = itemsPerPage;
+    // Mark initial mount as complete after first render
+    setTimeout(() => {
+      isInitialMountRef.current = false;
+    }, 0);
+  }, []); // Only run on mount
 
   const navigate = useNavigate();
   const mapApiProductToUi = (p) => {
@@ -96,6 +123,33 @@ const MainContent = () => {
   useEffect(() => {
     const controller = new AbortController();
     const fetchData = async () => {
+      // Don't skip fetch on initial mount
+      if (isInitialMountRef.current) {
+        // Update refs for initial mount
+        previousViewModeRef.current = viewMode;
+        previousItemsPerPageRef.current = itemsPerPage;
+        // Proceed with fetch
+      } else {
+        // Check if this fetch is triggered by a viewMode change (after initial mount)
+        const viewModeChanged = previousViewModeRef.current !== viewMode;
+        const itemsPerPageChanged = previousItemsPerPageRef.current !== itemsPerPage;
+        
+        // If viewMode changed and itemsPerPage also changed, this is the first fetch from viewMode change
+        // Skip it and let the viewMode useEffect handle the fetch
+        if (viewModeChanged && itemsPerPageChanged) {
+          // Update refs to prevent this check from passing again
+          previousViewModeRef.current = viewMode;
+          previousItemsPerPageRef.current = itemsPerPage;
+          isViewModeChangingRef.current = true;
+          return;
+        }
+        
+        // Update refs for normal operation
+        previousViewModeRef.current = viewMode;
+        previousItemsPerPageRef.current = itemsPerPage;
+        isViewModeChangingRef.current = false;
+      }
+
       setIsLoading(true);
       setErrorMessage(null);
       setFetchedProducts([]); // Clear products while loading
@@ -153,10 +207,26 @@ const MainContent = () => {
     return () => controller.abort();
   }, [currentPage, itemsPerPage, filters, refreshTick, searchQuery, sortOption]);
 
+  // Reset to page 1 when view mode changes and trigger fetch
   useEffect(() => {
-    setItemsPerPage(viewMode === "grid" ? 12 : 10);
-    setCurrentPage(1);
-  }, [viewMode]);
+    if (previousViewModeRef.current !== viewMode) {
+      // Mark that we're changing view mode
+      isViewModeChangingRef.current = true;
+      
+      if (currentPage !== 1) {
+        // Setting currentPage to 1 will trigger the fetch
+        // The fetch useEffect will handle it properly
+        setCurrentPage(1);
+      } else {
+        // If already on page 1, trigger fetch via refreshTick
+        // Use a small delay to ensure the skipped fetch has been processed
+        setTimeout(() => {
+          isViewModeChangingRef.current = false;
+          setRefreshTick(prev => !prev);
+        }, 10);
+      }
+    }
+  }, [viewMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch currency rates on component mount (for non-logged-in users)
   useEffect(() => {
@@ -413,7 +483,120 @@ const MainContent = () => {
             onFilterClick={() => setShowMobileFilters(true)}
           />
 
-          {viewMode === "grid" ? (
+          {viewMode === "table" ? (
+            <>
+              {/* Currency Reference Message - Small */}
+              {(selectedCurrency === 'AED' || selectedCurrency === 'HKD') && (
+                <div className="mb-3 px-3 py-2 bg-blue-50 border-l-4 border-blue-400 rounded text-xs text-blue-700">
+                  <span className="font-medium">Note:</span> Prices shown are for view reference only. Actual transactions are processed in USD only.
+                </div>
+              )}
+              <div className="overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-200">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Image</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Product</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Price</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">MOQ / Stock</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Condition</th>
+                      {/* <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Warehouse</th> */}
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {isLoading ? (
+                      <>
+                        {Array.from({ length: itemsPerPage }).map((_, index) => (
+                          <ProductCardSkeleton key={`skeleton-${index}`} viewMode="table" delay={index * 25} />
+                        ))}
+                      </>
+                    ) : !isLoading && hasInitiallyLoaded && currentProducts.length === 0 ? (
+                      <tr>
+                        <td colSpan="8" className="px-4 py-16 text-center">
+                          <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                            </svg>
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">No products found</h3>
+                          <p className="text-sm text-gray-500">Try adjusting your filters or search query</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      currentProducts.map((product, index) => (
+                        <ProductCard
+                          key={product.id}
+                          product={product}
+                          viewMode="table"
+                          onRefresh={handleRefresh}
+                          onWishlistChange={handleWishlistChange}
+                          onOpenBiddingForm={handleOpenBiddingForm}
+                        />
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {totalPages > 1 && (
+                <div className="text-sm text-gray-600 mt-4 mb-2">
+                  Showing {showingProducts} of {totalProductsCount} products
+                </div>
+              )}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between border-t border-gray-200 pt-6 mt-6">
+                  <button
+                    onClick={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg ${
+                      currentPage === 1
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    <FontAwesomeIcon icon={faChevronLeft} className="mr-2" />
+                    Previous
+                  </button>
+
+                  <div className="hidden md:flex space-x-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (number) => (
+                        <button
+                          key={number}
+                          onClick={() => paginate(number)}
+                          className={`px-4 py-2 text-sm font-medium rounded-lg ${
+                            currentPage === number
+                              ? "bg-[#0071E0] text-white"
+                              : "text-gray-700 hover:bg-gray-100"
+                          }`}
+                        >
+                          {number}
+                        </button>
+                      )
+                    )}
+                  </div>
+
+                  <div className="md:hidden text-sm text-gray-700">
+                    Page {currentPage} of {totalPages}
+                  </div>
+
+                  <button
+                    onClick={() => paginate(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg ${
+                      currentPage === totalPages
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    Next
+                    <FontAwesomeIcon icon={faChevronRight} className="ml-2" />
+                  </button>
+                </div>
+              )}
+            </>
+          ) : viewMode === "grid" ? (
             <>
               {/* Currency Reference Message - Small */}
               {(selectedCurrency === 'AED' || selectedCurrency === 'HKD') && (
@@ -428,8 +611,11 @@ const MainContent = () => {
                       <div 
                         key={`skeleton-${index}`}
                         style={{
+                          animationName: "fadeInUp",
+                          animationDuration: "0.5s",
+                          animationTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+                          animationFillMode: "forwards",
                           animationDelay: `${index * 40}ms`,
-                          animation: "fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards",
                           opacity: 0,
                         }}
                       >
@@ -452,8 +638,11 @@ const MainContent = () => {
                     <div 
                       key={product.id}
                       style={{
+                        animationName: "productFadeIn",
+                        animationDuration: "0.6s",
+                        animationTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+                        animationFillMode: "forwards",
                         animationDelay: `${index * 40}ms`,
-                        animation: "productFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
                         opacity: 0,
                       }}
                     >
@@ -540,8 +729,11 @@ const MainContent = () => {
                       <div
                         key={`skeleton-${index}`}
                         style={{
+                          animationName: "fadeInUp",
+                          animationDuration: "0.5s",
+                          animationTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+                          animationFillMode: "forwards",
                           animationDelay: `${index * 40}ms`,
-                          animation: "fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards",
                           opacity: 0,
                         }}
                       >
@@ -564,8 +756,11 @@ const MainContent = () => {
                     <div 
                       key={product.id}
                       style={{
+                        animationName: "productFadeIn",
+                        animationDuration: "0.6s",
+                        animationTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+                        animationFillMode: "forwards",
                         animationDelay: `${index * 35}ms`,
-                        animation: "productFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
                         opacity: 0,
                       }}
                     >

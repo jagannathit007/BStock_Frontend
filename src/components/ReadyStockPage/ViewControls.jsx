@@ -4,6 +4,7 @@ import {
   faTableCellsLarge,
   faList,
   faFilter,
+  faTable,
 } from "@fortawesome/free-solid-svg-icons";
 
 const ViewControls = ({
@@ -16,12 +17,17 @@ const ViewControls = ({
   setCurrentPage,
   onFilterClick,
 }) => {
+  // Note: viewMode is now initialized from localStorage in parent components
+  // This useEffect is kept for backward compatibility but shouldn't be needed
   useEffect(() => {
     const savedViewMode = localStorage.getItem("preferredViewMode");
-    if (savedViewMode === "grid" || savedViewMode === "list") {
-      setViewMode(savedViewMode);
+    if (savedViewMode === "grid" || savedViewMode === "list" || savedViewMode === "table") {
+      // Only update if it's different from current to avoid unnecessary re-renders
+      if (viewMode !== savedViewMode) {
+        setViewMode(savedViewMode);
+      }
     }
-  }, [setViewMode]);
+  }, []); // Only run once on mount
   
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
@@ -63,7 +69,7 @@ const ViewControls = ({
           {/* Left: View Buttons */}
           <div className="flex bg-gray-100 rounded-xl p-1.5">
             <button
-              className={`px-4 py-2 cursor-pointer text-sm font-medium rounded-lg transition-all duration-200 ${
+              className={`px-3 py-2 cursor-pointer text-sm font-medium rounded-lg transition-all duration-200 ${
                 viewMode === "grid"
                   ? "bg-white text-primary shadow-sm"
                   : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
@@ -73,11 +79,11 @@ const ViewControls = ({
                 localStorage.setItem("preferredViewMode", "grid");
               }}
             >
-              <FontAwesomeIcon icon={faTableCellsLarge} className="mr-2" />
-              <span>Grid</span>
+              <FontAwesomeIcon icon={faTableCellsLarge} className="mr-1" />
+              <span className="hidden sm:inline">Grid</span>
             </button>
             <button
-              className={`px-4 py-2 text-sm cursor-pointer font-medium rounded-lg transition-all duration-200 ${
+              className={`px-3 py-2 text-sm cursor-pointer font-medium rounded-lg transition-all duration-200 ${
                 viewMode === "list"
                   ? "bg-white text-primary shadow-sm"
                   : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
@@ -87,8 +93,22 @@ const ViewControls = ({
                 localStorage.setItem("preferredViewMode", "list");
               }}
             >
-              <FontAwesomeIcon icon={faList} className="mr-2" />
-              <span>List</span>
+              <FontAwesomeIcon icon={faList} className="mr-1" />
+              <span className="hidden sm:inline">List</span>
+            </button>
+            <button
+              className={`px-3 py-2 text-sm cursor-pointer font-medium rounded-lg transition-all duration-200 ${
+                viewMode === "table"
+                  ? "bg-white text-primary shadow-sm"
+                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+              }`}
+              onClick={() => {
+                setViewMode("table");
+                localStorage.setItem("preferredViewMode", "table");
+              }}
+            >
+              <FontAwesomeIcon icon={faTable} className="mr-1" />
+              <span className="hidden sm:inline">Table</span>
             </button>
           </div>
 
@@ -155,7 +175,7 @@ const ViewControls = ({
             <option value="price_desc">Sort by: Price High to Low</option>
             <option value="newest">Sort by: Newest</option>
           </select>
-          {/* Grid and List Buttons */}
+          {/* Grid, List, and Table Buttons */}
           <div className="flex bg-gray-100 rounded-2xl p-1.5">
             <button
               className={`px-4 py-2 cursor-pointer text-sm font-medium rounded-xl transition-all duration-200 font-apple ${
@@ -170,7 +190,7 @@ const ViewControls = ({
             >
               <FontAwesomeIcon icon={faTableCellsLarge} className="" />
               <span className="hidden sm:inline md:hidden xl:inline ml-2">Grid</span>
-              <span className="sm:hidden ml-2">Grid View</span>
+              <span className="sm:hidden ml-2">Grid</span>
             </button>
             <button
               className={`px-4 py-2 text-sm cursor-pointer font-medium rounded-xl transition-all duration-200 font-apple ${
@@ -185,7 +205,22 @@ const ViewControls = ({
             >
               <FontAwesomeIcon icon={faList} className="" />
               <span className="hidden sm:inline md:hidden xl:inline ml-2">List</span>
-              <span className="sm:hidden ml-2">List View</span>
+              <span className="sm:hidden ml-2">List</span>
+            </button>
+            <button
+              className={`px-4 py-2 text-sm cursor-pointer font-medium rounded-xl transition-all duration-200 font-apple ${
+                viewMode === "table"
+                  ? "bg-white text-primary shadow-sm"
+                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+              }`}
+              onClick={() => {
+                setViewMode("table");
+                localStorage.setItem("preferredViewMode", "table");
+              }}
+            >
+              <FontAwesomeIcon icon={faTable} className="" />
+              <span className="hidden sm:inline md:hidden xl:inline ml-2">Table</span>
+              <span className="sm:hidden ml-2">Table</span>
             </button>
           </div>
           

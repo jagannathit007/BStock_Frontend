@@ -1866,7 +1866,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                     className="flex-1 cursor-pointer text-black py-3 rounded-lg text-sm font-semibold border border-gray-200 hover:bg-gray-50 hover:border-gray-300 shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center"
                   >
                     <FontAwesomeIcon icon={faCartShopping} className="mr-2" />
-                    Add to Cart
+                    Order Now
                   </button>
                   {processedProduct.isNegotiable && (
                     <button
@@ -1978,7 +1978,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   >
                     <span className="inline-flex items-center justify-center gap-2">
                       <FontAwesomeIcon icon={faCartShopping} />
-                      Add to Cart
+                      Order Now
                     </span>
                   </button>
                   <button
