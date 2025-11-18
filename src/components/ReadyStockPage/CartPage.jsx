@@ -9,8 +9,6 @@ import {
 import { useNavigate } from "react-router-dom";
 import CartService from "../../services/cart/cart.services";
 import OrderService from "../../services/order/order.services";
-import PaymentService from "../../services/payment/payment.services";
-import PaymentPopup from "../PaymentPopup";
 import iphoneImage from "../../assets/iphone.png";
 import { convertPrice } from "../../utils/currencyUtils";
 
@@ -19,27 +17,10 @@ const CartPage = () => {
   const [cartItems, setCartItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [showCheckoutForm, setShowCheckoutForm] = useState(false);
-  const [showPaymentPopup, setShowPaymentPopup] = useState(false);
-  const [currentOrder, setCurrentOrder] = useState(null);
-  const [costSummary, setCostSummary] = useState({
-    totalCartValue: 0,
-    totalAmount: 0,
-    appliedCharges: []
-  });
-  const [billingAddress, setBillingAddress] = useState({
-    address: "",
-    city: "",
-    postalCode: "",
-    country: "",
-  });
-  const [shippingAddress, setShippingAddress] = useState({
-    address: "",
-    city: "",
-    postalCode: "",
-    country: "",
-  });
   const [imageErrors, setImageErrors] = useState({});
+  const [itemCountries, setItemCountries] = useState({}); // Track country selection per item
+  const [itemLoading, setItemLoading] = useState({}); // Track loading state per item
+  const [successMessage, setSuccessMessage] = useState(null); // Track success messages
 
   const handleImageError = (itemId) => {
     setImageErrors((prev) => ({ ...prev, [itemId]: true }));
@@ -101,16 +82,6 @@ const CartPage = () => {
       if (response.status === 200) {
         const items = (response.data?.docs || []).map(mapCartItemToUi);
         setCartItems(items);
-        // Store cost summary from response
-        if (response.data?.costSummary) {
-          setCostSummary(response.data.costSummary);
-        } else {
-          setCostSummary({
-            totalCartValue: 0,
-            totalAmount: 0,
-            appliedCharges: []
-          });
-        }
       } else {
         setError(response.message || "Failed to fetch cart");
       }
@@ -217,83 +188,64 @@ const CartPage = () => {
     }
   };
 
-  // Handle address input changes
-  const handleAddressChange = (type, field, value) => {
-    if (type === "billing") {
-      setBillingAddress((prev) => ({ ...prev, [field]: value }));
-    } else {
-      setShippingAddress((prev) => ({ ...prev, [field]: value }));
-    }
+  // Handle country change for a specific item
+  const handleCountryChange = (itemId, country) => {
+    setItemCountries((prev) => ({ ...prev, [itemId]: country }));
   };
 
-  // Validate addresses
-  const validateAddresses = () => {
-    const requiredFields = ["address", "city", "postalCode", "country"];
-    for (const field of requiredFields) {
-      if (!billingAddress[field] || !shippingAddress[field]) {
-        return false;
-      }
-    }
-    return true;
-  };
-
-  // Handle address validation and show payment popup
-  const handleAddPayment = (e) => {
-    e.preventDefault();
-    if (!validateAddresses()) {
-      setError("Please fill in all address fields");
-      return;
-    }
-    if (cartItems.length === 0) {
-      setError("Cannot place an order with an empty cart");
-      return;
-    }
-
-    // Prepare order data for payment popup (without creating order yet)
-    setCurrentOrder({
-      orderId: null, // Will be created after payment
-      totalAmount: totalPrice,
-      orderNumber: null,
-      cartItems: cartItems.map((item) => ({
-        productId: item.id,
-        skuFamilyId: item.skuFamilyId || null,
-        subSkuFamilyId: item.subSkuFamilyId || null,
-        quantity: Number(item.quantity),
-        price: Number(item.price),
-      })),
-      billingAddress,
-      shippingAddress,
-    });
+  // Handle place order for a single product
+  const handlePlaceOrderForItem = async (item) => {
+    const country = itemCountries[item.id];
     
-    // Close checkout form and show payment popup
-    setShowCheckoutForm(false);
-    setShowPaymentPopup(true);
-  };
+    if (!country) {
+      setError("Please select a billing country for this product");
+      return;
+    }
 
-  // Handle final order creation after payment
-  const handleFinalOrderCreation = async () => {
     try {
       setError(null);
-      setIsLoading(true);
+      setItemLoading((prev) => ({ ...prev, [item.id]: true }));
 
-      // Create order with payment details included
+      // Create order with only this single product
       const orderData = {
-        cartItems: currentOrder.cartItems,
-        billingAddress: currentOrder.billingAddress,
-        shippingAddress: currentOrder.shippingAddress,
-        paymentDetails: currentOrder.paymentDetails,
+        cartItems: [{
+          productId: item.id,
+          skuFamilyId: item.skuFamilyId || null,
+          subSkuFamilyId: item.subSkuFamilyId || null,
+          quantity: Number(item.quantity),
+          price: Number(item.price),
+        }],
+        billingAddress: {
+          country: country
+        },
+        shippingAddress: null,
       };
 
       const response = await OrderService.createOrder(orderData);
 
       if (response?.success || response?.status === 200) {
-        setCartItems([]);
-        setShowPaymentPopup(false);
-        setCurrentOrder(null);
-        // Trigger cart count update event (cart is cleared after order creation)
+        // Remove this item from cart
+        await CartService.remove(item.id);
+        // Check if this was the last item before removing from state
+        const remainingItems = cartItems.filter((cartItem) => cartItem.id !== item.id);
+        // Remove from local state
+        setCartItems((prevItems) => prevItems.filter((cartItem) => cartItem.id !== item.id));
+        // Clear country selection for this item
+        setItemCountries((prev) => {
+          const updated = { ...prev };
+          delete updated[item.id];
+          return updated;
+        });
+        // Trigger cart count update event
         window.dispatchEvent(new Event('cartUpdated'));
         localStorage.setItem('cartUpdated', Date.now().toString());
-        navigate("/order", { state: { order: response.data } });
+        // Show success message
+        setSuccessMessage(`Order placed successfully for ${item.name}!`);
+        setTimeout(() => setSuccessMessage(null), 5000);
+        // If cart is now empty, navigate to order page
+        if (remainingItems.length === 0) {
+          navigate("/order", { state: { order: response.data } });
+        }
       } else {
         setError(response?.message || "Failed to create order");
       }
@@ -304,118 +256,82 @@ const CartPage = () => {
         "An error occurred while creating order";
       setError(errorMessage);
     } finally {
-      setIsLoading(false);
+      setItemLoading((prev) => ({ ...prev, [item.id]: false }));
     }
   };
-
-  // Handle final order creation with data directly (to avoid state timing issues)
-  const handleFinalOrderCreationWithData = async (orderDataWithPayment) => {
-    try {
-      setError(null);
-      setIsLoading(true);
-
-      // Create order with payment details included
-      const orderData = {
-        cartItems: orderDataWithPayment.cartItems,
-        billingAddress: orderDataWithPayment.billingAddress,
-        shippingAddress: orderDataWithPayment.shippingAddress,
-        paymentDetails: orderDataWithPayment.paymentDetails,
-      };
-
-      const response = await OrderService.createOrder(orderData);
-
-      if (response?.success || response?.status === 200) {
-        setCartItems([]);
-        setShowPaymentPopup(false);
-        setCurrentOrder(null);
-        // Trigger cart count update event (cart is cleared after order creation)
-        window.dispatchEvent(new Event('cartUpdated'));
-        localStorage.setItem('cartUpdated', Date.now().toString());
-        navigate("/order", { state: { order: response.data } });
-      } else {
-        setError(response?.message || "Failed to create order");
-      }
-    } catch (error) {
-      const errorMessage =
-        error.response?.data?.errors?.map((e) => e.message).join(", ") ||
-        error.response?.data?.message ||
-        "An error occurred while creating order";
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Handle payment success - now creates the actual order
-  const handlePaymentSuccess = (updatedOrderData) => {
-    if (updatedOrderData) {
-      // Update current order with payment details
-      setCurrentOrder(updatedOrderData);
-      
-      // Call final order creation with the updated data directly
-      handleFinalOrderCreationWithData(updatedOrderData);
-    }
-  };
-
-  // Calculate total price (subtotal)
-  const totalPrice = cartItems
-    .reduce((sum, item) => sum + item.price * item.quantity, 0);
-  
-  // Use cost summary total amount if available, otherwise use calculated totalPrice
-  const finalTotal = costSummary.totalAmount > 0 ? costSummary.totalAmount : totalPrice;
 
   return (
     <main className="min-h-screen">
-      <div className="max-w-6xl mx-auto px-4 py-4">
-        <div className="mb-6 sm:mb-8">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <span className="font-medium text-gray-900">Cart</span>
-            <span>›</span>
-            <span>Checkout</span>
-            <span>›</span>
-            <span>Payment</span>
-          </div>
-          <h1 className="mt-3 text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">Shopping Cart</h1>
-          <p className="text-gray-600 mt-1">Review your items and proceed to checkout</p>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {/* Header Section */}
+        <div className="mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">Shopping Cart</h1>
+          <p className="text-sm text-gray-600">Review your items and place orders</p>
         </div>
 
+        {/* Alert Messages */}
         {error && (
-          <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm">
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
             {error}
           </div>
         )}
 
+        {successMessage && (
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm">
+            {successMessage}
+          </div>
+        )}
+
         {isLoading ? (
-          <div className="text-center py-20">
-            <div className="inline-flex items-center gap-3 text-gray-600">
-              <div className="w-6 h-6 border-2 border-gray-300 border-t-[#0071E0] rounded-full animate-spin"></div>
-              <span className="text-base sm:text-lg font-medium">Loading cart...</span>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+            <div className="inline-flex flex-col items-center gap-3">
+              <div className="w-8 h-8 border-3 border-gray-200 border-t-blue-600 rounded-full animate-spin"></div>
+              <p className="text-base font-medium text-gray-700">Loading cart...</p>
             </div>
           </div>
         ) : cartItems.length === 0 ? (
-          <div className="text-center py-24">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
             <FontAwesomeIcon
               icon={faCartShopping}
-              className="w-16 h-16 sm:w-20 sm:h-20 text-gray-300 mb-6"
+              className="w-20 h-20 text-gray-300 mb-4 mx-auto"
             />
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Your cart is empty</h2>
-            <p className="text-gray-600 mb-6">Add some items to get started</p>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Your cart is empty</h2>
+            <p className="text-sm text-gray-600 mb-6">Add items to your cart to get started</p>
             <button
-              className="bg-[#0071E0] cursor-pointer text-white py-3 px-6 sm:px-8 rounded-lg font-medium hover:bg-[#005bb5] transition-all duration-200 shadow-sm hover:shadow-md"
+              className="bg-blue-600 text-white py-2.5 px-6 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors duration-200 shadow-sm"
               onClick={() => navigate("/ready-stock")}
             >
               Continue Shopping
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-            <div className="lg:col-span-2 space-y-4">
-              {cartItems.map((item) => (
-                <div key={item.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div className="lg:flex justify-between gap-6">
+            {cartItems.map((item) => (
+              <div key={item.id} className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 lg:w-[50%] mb-4 lg:mb-0">
+                <div className="p-4 sm:p-5">
                   <div className="flex gap-4">
+                    {/* Product Image */}
+                    {/* <div className="flex-shrink-0">
+                      <img
+                        className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-lg border border-gray-200"
+                        src={
+                          imageErrors[item.id]
+                            ? iphoneImage
+                            : item.imageUrl
+                        }
+                        alt={item.name}
+                        onError={() => handleImageError(item.id)}
+                      />
+                    </div> */}
+
+                    {/* Product Details */}
+                    <div className="flex-1 min-w-0">
+                      {/* Product Name and Remove */}
+                      <div className="flex">
+                                            {/* Product Image */}
                     <div className="flex-shrink-0">
                       <img
-                        className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-lg"
+                        className="w-20 h-20 sm:w-32 sm:h-32 object-cover rounded-lg border border-gray-200"
                         src={
                           imageErrors[item.id]
                             ? iphoneImage
@@ -425,151 +341,164 @@ const CartPage = () => {
                         onError={() => handleImageError(item.id)}
                       />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start">
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
-                          {item.name}
-                        </h3>
-                        <button
-                          onClick={() => handleRemoveItem(item.id)}
-                          className="text-gray-400 hover:text-red-600 p-1 rounded-md hover:bg-red-50 transition-all duration-200"
-                        >
-                          <FontAwesomeIcon
-                            icon={faTrash}
-                            className="w-4 h-4"
-                          />
-                        </button>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-1 line-clamp-2">
-                        {item.description}
-                      </p>
-                      <div className="cartpageMedia flex items-center justify-between">
-                        <div>
-                          <div className="text-base sm:text-lg font-semibold text-gray-900">
-                            {convertPrice(item.price)}
+                      <div className="w-[100%] ps-3">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex-1 min-w-0 pr-2">
+                            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">
+                              {item.name}
+                            </h3>
+                            <p className="text-sm text-gray-600 line-clamp-1">
+                              {item.description}
+                            </p>
                           </div>
-                          <div className="text-xs text-gray-500">Stock: {item.stockCount}</div>
+                          <button
+                            onClick={() => handleRemoveItem(item.id)}
+                            className="text-gray-400 hover:text-red-600 p-1.5 rounded-md hover:bg-red-50 transition-colors duration-200 flex-shrink-0"
+                            title="Remove item"
+                          >
+                            <FontAwesomeIcon
+                              icon={faTrash}
+                              className="w-4 h-4"
+                            />
+                          </button>
                         </div>
-                        <div className="flex items-center gap-2 sm:gap-3">
-                          <button
-                            onClick={() =>
-                              handleQuantityChange(item.id, item.quantity - 1)
-                            }
-                            disabled={item.quantity <= item.moq}
-                            className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-200 hover:border-[#0071E0] hover:bg-[#0071E0]/5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <FontAwesomeIcon
-                              icon={faMinus}
-                              className="w-3 h-3 text-gray-600"
-                            />
-                          </button>
-                          <input
-                            type="text"
-                            value={item.quantity}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              if (!/^\d*$/.test(value)) return;
-                              if (value === "") {
-                                handleQuantityChange(item.id, "");
-                                return;
+
+                        {/* Price, Stock, Quantity and Total */}
+                        <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-1">
+                          <div>
+                            <div className="text-base flex items-center font-semibold text-gray-900">
+                              {convertPrice(item.price)}
+                            <div className="text-xs text-gray-500 ms-2">Stock: {item.stockCount}</div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-1">
+                                                  <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() =>
+                                handleQuantityChange(item.id, item.quantity - 1)
                               }
-                              let num = parseInt(value, 10);
-                              if (isNaN(num) || num < item.moq) {
-                                num = item.moq;
-                              } else if (num > item.stockCount) {
-                                num = item.stockCount;
-                              }
-                              handleQuantityChange(item.id, num);
-                            }}
-                            onBlur={(e) => {
-                              let num = parseInt(e.target.value, 10);
-                              if (isNaN(num) || num < item.moq) num = item.moq;
-                              if (num > item.stockCount) num = item.stockCount;
-                              handleQuantityChange(item.id, num);
-                            }}
-                            className="w-16 text-center text-sm sm:text-base font-semibold py-2 px-2 border border-gray-200 rounded-md focus:outline-none focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20"
-                          />
-                          <button
-                            onClick={() =>
-                              handleQuantityChange(item.id, item.quantity + 1)
-                            }
-                            disabled={item.quantity >= item.stockCount}
-                            className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-200 hover:border-[#0071E0] hover:bg-[#0071E0]/5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <FontAwesomeIcon
-                              icon={faPlus}
-                              className="w-3 h-3 text-gray-600"
+                              disabled={item.quantity <= item.moq}
+                              className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-md hover:border-blue-600 hover:bg-blue-50 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                              title="Decrease"
+                            >
+                              <FontAwesomeIcon
+                                icon={faMinus}
+                                className="w-3 h-3 text-gray-700"
+                              />
+                            </button>
+                            <input
+                              type="text"
+                              value={item.quantity}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (!/^\d*$/.test(value)) return;
+                                if (value === "") {
+                                  handleQuantityChange(item.id, "");
+                                  return;
+                                }
+                                let num = parseInt(value, 10);
+                                if (isNaN(num) || num < item.moq) {
+                                  num = item.moq;
+                                } else if (num > item.stockCount) {
+                                  num = item.stockCount;
+                                }
+                                handleQuantityChange(item.id, num);
+                              }}
+                              onBlur={(e) => {
+                                let num = parseInt(e.target.value, 10);
+                                if (isNaN(num) || num < item.moq) num = item.moq;
+                                if (num > item.stockCount) num = item.stockCount;
+                                handleQuantityChange(item.id, num);
+                              }}
+                              className="w-14 text-center text-sm font-semibold py-1.5 px-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             />
-                          </button>
+                            <button
+                              onClick={() =>
+                                handleQuantityChange(item.id, item.quantity + 1)
+                              }
+                              disabled={item.quantity >= item.stockCount}
+                              className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-md hover:border-blue-600 hover:bg-blue-50 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                              title="Increase"
+                            >
+                              <FontAwesomeIcon
+                                icon={faPlus}
+                                className="w-3 h-3 text-gray-700"
+                              />
+                            </button>
+                          </div>
+
+                          <div className="ml-auto text-right">
+                            <div className="text-xs text-gray-500 mb-0.5">Total</div>
+                            <div className="text-lg font-bold text-gray-900">
+                              {convertPrice(item.price * item.quantity)}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <div className="mt-2 pt-2 border-t border-gray-100">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-gray-600">Line total</span>
-                          <span className="text-lg sm:text-xl font-bold text-gray-900">
-                            {convertPrice(item.price * item.quantity)}
-                          </span>
+                      </div>
+
+                      {/* Country Selection and Place Order */}
+                      <div className="pt-3 border-t border-gray-200">
+                        <div className="flex flex-col sm:flex-row gap-3">
+                          <div className="flex-1">
+                            <label 
+                              htmlFor={`billingCountry-${item.id}`} 
+                              className="block text-sm font-medium text-gray-700 mb-1.5"
+                            >
+                              Billing Country <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                              id={`billingCountry-${item.id}`}
+                              value={itemCountries[item.id] || ""}
+                              onChange={(e) => handleCountryChange(item.id, e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                              required
+                            >
+                              <option value="">Select country</option>
+                              <option value="hongkong">Hong Kong</option>
+                              <option value="dubai">Dubai</option>
+                            </select>
+                          </div>
+                          <div className="flex items-end w-full sm:w-[50%]">
+                            <button
+                              type="button"
+                              onClick={() => handlePlaceOrderForItem(item)}
+                              disabled={!itemCountries[item.id] || itemLoading[item.id]}
+                              className="w-full sm:min-w-[140px] px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors duration-200 shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600"
+                            >
+                              {itemLoading[item.id] ? (
+                                <span className="flex items-center justify-center gap-2">
+                                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                  Processing...
+                                </span>
+                              ) : (
+                                'Place Order'
+                              )}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
+            
 
-            <div className="h-max bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between"><span className="text-gray-600">Subtotal</span><span className="font-medium text-gray-900">{convertPrice(totalPrice)}</span></div>
-                <hr></hr>
-                <div>Logistics fee</div>
-                {/* Display applied charges */}
-                {costSummary.appliedCharges && costSummary.appliedCharges.length > 0 && (
-                  <>
-                    {costSummary.appliedCharges.map((charge, index) => (
-                      <div key={index} className="flex justify-between items-start">
-                        <span className="text-gray-600 capitalize">
-                          {charge.type === 'ExtraDelivery' ? 'Extra Delivery' : charge.type}
-                          {charge.costType === 'Percentage' && ` (${charge.value}%)`}
-                        </span>
-                        <span className="font-medium text-gray-900">{convertPrice(charge.calculatedAmount)}</span>
-                      </div>
-                    ))}
-                  </>
-                )}
-                
-                <div className="pt-3 mt-1 border-t border-gray-100 flex justify-between text-base">
-                  <span className="font-semibold text-gray-900">Total</span>
-                  <span className="font-bold text-gray-900">{convertPrice(finalTotal)}</span>
-                </div>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3 mt-6">
-                <button
-                  className="flex-1 px-4 max-w-full sm:max-w-[110px] py-3 text-gray-700 border border-gray-200 rounded-lg font-medium hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
-                  onClick={handleClearCart}
-                >
-                  Clear Cart
-                </button>
-                <button
-                  className="flex-1 px-4 py-3 bg-[#0071E0] text-white rounded-lg font-medium hover:bg-[#0056B3] transition-all duration-200 shadow-sm hover:shadow-md"
-                  onClick={() => navigate('/checkout')}
-                >
-                  Proceed to Checkout
-                </button>
-              </div>
-            </div>
           </div>
         )}
-
-        {/* Payment Popup */}
-        {showPaymentPopup && currentOrder && (
-          <PaymentPopup
-            isOpen={showPaymentPopup}
-            onClose={() => setShowPaymentPopup(false)}
-            orderData={currentOrder}
-            onSuccess={handlePaymentSuccess}
-          />
-        )}
+            {/* Clear Cart Button */}
+            {cartItems.length > 0 && (
+              <div className="flex justify-end pt-2 mt-2">
+                <button
+                  className="px-5 py-2.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors duration-200"
+                  onClick={handleClearCart}
+                >
+                  Clear All Cart
+                </button>
+              </div>
+            )}
         </div>
     </main>
   );

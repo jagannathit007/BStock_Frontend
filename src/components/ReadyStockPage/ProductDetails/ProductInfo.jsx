@@ -1841,7 +1841,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                 </>
               ) : (
                 <>
-                  <button
+                  {/* <button
                     onClick={handlePlaceOrder}
                     disabled={isPlacingOrder || processedProduct.isOutOfStock || processedProduct.isExpired}
                     className="flex-1 cursor-pointer text-black py-3 rounded-lg text-sm font-semibold border border-gray-200 hover:bg-gray-50 hover:border-gray-300 shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1860,7 +1860,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                         Place Order
                       </>
                     )}
-                  </button>
+                  </button> */}
                   <button
                     onClick={handleAddToCartClick}
                     className="flex-1 cursor-pointer text-black py-3 rounded-lg text-sm font-semibold border border-gray-200 hover:bg-gray-50 hover:border-gray-300 shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center"
@@ -1981,7 +1981,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                       Order Now
                     </span>
                   </button>
-                  <button
+                  {/* <button
                     onClick={handlePlaceOrder}
                     disabled={isPlacingOrder || processedProduct.isOutOfStock || processedProduct.isExpired}
                     className="flex-1 cursor-pointer text-white py-3 rounded-lg text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
@@ -2005,7 +2005,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                         </>
                       )}
                     </span>
-                  </button>
+                  </button> */}
                 </div>
               )}
             </div>
