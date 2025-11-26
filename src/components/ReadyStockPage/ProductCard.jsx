@@ -106,7 +106,16 @@ const ProductCard = ({
     typeof isOutOfStock === "boolean"
       ? isOutOfStock
       : Number(product?.stockCount ?? product?.stock ?? 0) <= 0;
-  const canNotify = derivedOutOfStock && !isExpired;
+  const statusOutOfStock =
+    typeof stockStatus === "string" &&
+    stockStatus.toLowerCase() === "out of stock";
+  const effectiveOutOfStock =
+    !isExpired && (derivedOutOfStock || statusOutOfStock);
+  const isCardOutOfStock = effectiveOutOfStock;
+  const outOfStockVisualStyle = effectiveOutOfStock
+    ? { filter: "grayscale(1)", opacity: 0.55 }
+    : undefined;
+  const canNotify = effectiveOutOfStock && !isExpired;
 
   const getStatusBadgeClass = () => {
     if (isExpired) return "bg-gray-100 text-gray-800";
@@ -135,6 +144,7 @@ const ProductCard = ({
 
   const handleProductClick = (e) => {
     if (e.target.tagName === "BUTTON" || e.target.closest("button")) return;
+    if (isCardOutOfStock) return;
     navigate(`/product/${id}`);
   };
 
@@ -173,7 +183,7 @@ const ProductCard = ({
   // === DIRECT ADD TO CART (LIST VIEW) ===
   const handleDirectAddToCart = async (e) => {
     e.stopPropagation();
-    if (isOutOfStock || isExpired) return;
+    if (effectiveOutOfStock || isExpired) return;
 
     try {
       const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
@@ -265,7 +275,7 @@ const ProductCard = ({
   // === ORIGINAL ADD TO CART (GRID VIEW) ===
   const handleAddToCart = async (e) => {
     e.stopPropagation();
-    if (isOutOfStock || isExpired) return;
+    if (effectiveOutOfStock || isExpired) return;
 
     try {
       const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
@@ -487,8 +497,9 @@ const ProductCard = ({
 if (viewMode === "table") {
     return (
       <tr 
-        className="bg-white border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
-        onClick={handleProductClick}
+        className={`bg-white border-b border-gray-200 transition-colors ${isCardOutOfStock ? "cursor-default" : "hover:bg-gray-50 cursor-pointer"}`}
+        onClick={!isCardOutOfStock ? handleProductClick : undefined}
+        style={outOfStockVisualStyle}
       >
         {/* Image */}
         <td className="px-4 py-3">
@@ -527,7 +538,7 @@ if (viewMode === "table") {
             <span className="text-sm font-semibold text-green-600">
               {convertPrice(price)}
             </span>
-            {!isExpired && !isOutOfStock && isFlashDeal && (
+            {!isExpired && !effectiveOutOfStock && isFlashDeal && (
               <div className="mt-1">
                 <div className="inline-flex items-center bg-gradient-to-r from-red-50 to-pink-50 text-red-700 px-2 py-0.5 rounded text-[9px] font-semibold border border-red-200">
                   <FontAwesomeIcon icon={faClock} className="w-2 h-2 mr-1" />
@@ -589,7 +600,7 @@ if (viewMode === "table") {
         <td className="px-4 py-3">
           <div className="flex flex-col gap-2">
             {/* Quantity Selector */}
-            {!isExpired && !isOutOfStock && (
+            {!isExpired && !effectiveOutOfStock && (
               <div className="flex items-center border border-gray-300 rounded-lg w-fit">
                 <button
                   onClick={(e) => { e.stopPropagation(); decQty(); }}
@@ -639,7 +650,7 @@ if (viewMode === "table") {
                 >
                   <FontAwesomeIcon icon={faCalendarXmark} className="w-3 h-3" />
                 </button>
-              ) : isOutOfStock ? (
+              ) : effectiveOutOfStock ? (
                 canNotify ? (
                   notify ? (
                     <button
@@ -709,11 +720,12 @@ if (viewMode === "list") {
         <div
           className="w-full rounded-lg p-0 sm:p-3 bg-[#FBFBFB] border-gray-200"
         >
-          <div
-            className="w-full bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group border border-gray-100 overflow-hidden"
-            onClick={!isInModal ? handleProductClick : undefined}
-          >
+        <div
+          className={`w-full bg-white rounded-lg shadow-sm transition-all duration-300 group border border-gray-100 overflow-hidden ${!isCardOutOfStock && !isInModal ? "cursor-pointer hover:shadow-md" : "cursor-default"}`}
+          onClick={!isInModal && !isCardOutOfStock ? handleProductClick : undefined}
+        >
             <div className="p-3 sm:p-4 flex flex-col gap-2 sm:gap-3">
+              <div style={outOfStockVisualStyle} className="flex flex-col gap-2 sm:gap-3">
               {/* Header */}
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
@@ -862,7 +874,7 @@ if (viewMode === "list") {
                 <button className="px-2 py-0.5 bg-gray-100 rounded-md text-[10px] font-medium">Stock: {stockCount}</button>
               </div>
 
-              {!isExpired && !isOutOfStock && isFlashDeal && (
+              {!isExpired && !effectiveOutOfStock && isFlashDeal && (
                 <div className="mb-2 flex justify-center">
                   <div className="inline-flex items-center bg-gradient-to-r from-red-50 to-pink-50 text-red-700 px-3 py-1.5 rounded-full text-[10px] font-semibold shadow-sm border border-red-200 w-full justify-center">
                     <FontAwesomeIcon icon={faClock} className="w-2.5 h-2.5 mr-1.5" />
@@ -888,6 +900,7 @@ if (viewMode === "list") {
                 </div>
               )}
 
+              </div>
               {/* Action Buttons */}
               <div className="flex flex-row gap-2 sm:gap-3 sm:mt-3 mt-2">
                 {isExpired ? (
@@ -895,7 +908,7 @@ if (viewMode === "list") {
                     <FontAwesomeIcon icon={faCalendarXmark} className="w-3 h-3 mr-1.5" />
                     Expired
                   </button>
-                ) : isOutOfStock ? (
+                ) : effectiveOutOfStock ? (
                   canNotify ? (
                     notify ? (
                       <button
@@ -959,91 +972,92 @@ if (viewMode === "list") {
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group overflow-hidden flex flex-col w-full h-full p-3 pb-3 box-border ${getCardBackgroundClass()}`}
-      onClick={!isInModal ? handleProductClick : undefined}
+      className={`bg-white rounded-xl shadow-sm transition-all duration-300 group overflow-hidden flex flex-col w-full h-full p-3 pb-3 box-border ${getCardBackgroundClass()} ${!isCardOutOfStock && !isInModal ? "cursor-pointer hover:shadow-md" : "cursor-not-allowed"}`}
+      onClick={!isInModal && !isCardOutOfStock ? handleProductClick : undefined}
     >
-      {/* Image Container */}
-      <div className="relative overflow-hidden mb-3 flex-shrink-0 w-full h-[200px] rounded-lg bg-gray-50">
-        <img
-          className="w-full h-full object-contain"
-          src={
-            imageError
-              ? iphoneImage
-              : `${import.meta.env.VITE_BASE_URL}/${imageUrl}`
-          }
-          alt={name}
-          onError={handleImageError}
-        />
-        
-        {/* In Stock Badge */}
-        <div className="flex absolute top-2 left-2">
-          <span
-            className={`inline-flex items-center px-1.5 py-1 rounded-full text-[10px] font-semibold ${getStatusBadgeClass()}`}
-          >
-            {isExpired ? (
-              <FontAwesomeIcon
-                icon={faCalendarXmark}
-                className="w-2.5 h-2.5 mr-0.5"
-              />
-            ) : (
-              <svg
-                data-prefix="fas"
-                data-icon="circle-check"
-                className="w-2.5 h-2.5 mr-1.5"
-                role="img"
-                viewBox="0 0 512 512"
-                aria-hidden="true"
-              >
-                <path
-                  fill="currentColor"
-                  d="M256 512a256 256 0 1 1 0-512 256 256 0 1 1 0 512zM374 145.7c-10.7-7.8-25.7-5.4-33.5 5.3L221.1 315.2 169 263.1c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l72 72c5 5 11.8 7.5 18.8 7s13.4-4.1 17.5-9.8L379.3 179.2c7.8-10.7 5.4-25.7-5.3-33.5z"
-                ></path>
-              </svg>
-            )}
-            {getDisplayStatus()}
-          </span>
-        </div>
-        
-        {/* Bookmark/Wishlist Icon */}
-        <div className="absolute top-2 right-2">
-          <button
-            className={`p-1.5 bg-white rounded-full cursor-pointer shadow-md hover:shadow-lg transition-all duration-200 ${
-              isFavorite ? "text-[#FB2C36]" : "text-gray-400 hover:text-[#FB2C36]"
-            } w-[32px] h-[32px] flex items-center justify-center border border-gray-200`}
-            onClick={handleToggleWishlist}
-          >
-            <svg className="w-4 h-4" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      {/* Content Section */}
-      <div className="flex flex-col flex-1 w-full gap-2 min-h-0">
-        {/* Product Title */}
-        <h3 className="font-semibold text-sm leading-tight tracking-normal text-[#364153] line-clamp-2">
-          {name} <span className="text-xs font-normal text-gray-500"> - {description}</span>
-        </h3>
-
-        {/* Price Section */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <span className="text-[10px] text-gray-500 mr-1">From</span>
-            <span className="text-base font-semibold text-gray-900">
-              {convertPrice(selectedPrice || price)}
+      <div style={outOfStockVisualStyle} className="flex flex-col flex-1 w-full h-full">
+        {/* Image Container */}
+        <div className="relative overflow-hidden mb-3 flex-shrink-0 w-full h-[200px] rounded-lg bg-gray-50">
+          <img
+            className="w-full h-full object-contain"
+            src={
+              imageError
+                ? iphoneImage
+                : `${import.meta.env.VITE_BASE_URL}/${imageUrl}`
+            }
+            alt={name}
+            onError={handleImageError}
+          />
+          
+          {/* In Stock Badge */}
+          <div className="flex absolute top-2 left-2">
+            <span
+              className={`inline-flex items-center px-1.5 py-1 rounded-full text-[10px] font-semibold ${getStatusBadgeClass()}`}
+            >
+              {isExpired ? (
+                <FontAwesomeIcon
+                  icon={faCalendarXmark}
+                  className="w-2.5 h-2.5 mr-0.5"
+                />
+              ) : (
+                <svg
+                  data-prefix="fas"
+                  data-icon="circle-check"
+                  className="w-2.5 h-2.5 mr-1.5"
+                  role="img"
+                  viewBox="0 0 512 512"
+                  aria-hidden="true"
+                >
+                  <path
+                    fill="currentColor"
+                    d="M256 512a256 256 0 1 1 0-512 256 256 0 1 1 0 512zM374 145.7c-10.7-7.8-25.7-5.4-33.5 5.3L221.1 315.2 169 263.1c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l72 72c5 5 11.8 7.5 18.8 7s13.4-4.1 17.5-9.8L379.3 179.2c7.8-10.7 5.4-25.7-5.3-33.5z"
+                  ></path>
+                </svg>
+              )}
+              {getDisplayStatus()}
             </span>
           </div>
-          {/* <div className="flex items-center justify-center w-5 h-5 rounded-full bg-white shadow-md backdrop-blur-sm opacity-100">
-            <FiAlertCircle className="w-3 h-3 text-gray-600" />
-          </div> */}
-          <div>
-            {/* product color  */}
-            <div className="text-xs flex font-medium text-gray-900 bg-gray-100 px-1 py-0.5 rounded-md">
-              {product?.color}
-            </div>
+          
+          {/* Bookmark/Wishlist Icon */}
+          <div className="absolute top-2 right-2">
+            <button
+              className={`p-1.5 bg-white rounded-full cursor-pointer shadow-md hover:shadow-lg transition-all duration-200 ${
+                isFavorite ? "text-[#FB2C36]" : "text-gray-400 hover:text-[#FB2C36]"
+              } w-[32px] h-[32px] flex items-center justify-center border border-gray-200`}
+              onClick={handleToggleWishlist}
+            >
+              <svg className="w-4 h-4" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
+              </svg>
+            </button>
           </div>
         </div>
+
+        {/* Content Section */}
+        <div className="flex flex-col flex-1 w-full gap-2 min-h-0">
+          {/* Product Title */}
+          <h3 className="font-semibold text-sm leading-tight tracking-normal text-[#364153] line-clamp-2">
+            {name} <span className="text-xs font-normal text-gray-500"> - {description}</span>
+          </h3>
+
+          {/* Price Section */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <span className="text-[10px] text-gray-500 mr-1">From</span>
+              <span className="text-base font-semibold text-gray-900">
+                {convertPrice(selectedPrice || price)}
+              </span>
+            </div>
+            {/* <div className="flex items-center justify-center w-5 h-5 rounded-full bg-white shadow-md backdrop-blur-sm opacity-100">
+              <FiAlertCircle className="w-3 h-3 text-gray-600" />
+            </div> */}
+            <div>
+              {/* product color  */}
+              <div className="text-xs flex font-medium text-gray-900 bg-gray-100 px-1 py-0.5 rounded-md">
+                {product?.color}
+              </div>
+            </div>
+          </div>
 
         {/* Color Options and SKU */}
         {/* <div className="flex items-center justify-between">
@@ -1096,67 +1110,68 @@ if (viewMode === "list") {
           </div>
         </div> */}
 
-        {/* Specifications Grid */}
-        <div className="grid grid-cols-2 gap-2 w-full mb-2">
-          <div className="w-full h-[42px] rounded border border-gray-100 bg-white py-0.5 px-1.5 flex flex-col justify-center items-center box-border">
-            <div className="text-[10px] text-gray-600 font-normal leading-tight tracking-normal text-center">
-              MOQ
+          {/* Specifications Grid */}
+          <div className="grid grid-cols-2 gap-2 w-full mb-2">
+            <div className="w-full h-[42px] rounded border border-gray-100 bg-white py-0.5 px-1.5 flex flex-col justify-center items-center box-border">
+              <div className="text-[10px] text-gray-600 font-normal leading-tight tracking-normal text-center">
+                MOQ
+              </div>
+              <div className="text-xs text-gray-900 font-semibold leading-tight tracking-normal text-center mt-0.5">
+                {moq}
+              </div>
             </div>
-            <div className="text-xs text-gray-900 font-semibold leading-tight tracking-normal text-center mt-0.5">
-              {moq}
+            <div className="w-full h-[42px] rounded border border-gray-100 bg-white py-0.5 px-1.5 flex flex-col justify-center items-center box-border">
+              <div className="text-[10px] text-gray-600 font-normal leading-tight tracking-normal text-center">
+                Stock
+              </div>
+              <div className="text-xs text-gray-900 font-semibold leading-tight tracking-normal text-center mt-0.5">
+                {stockCount || '0'}
+              </div>
+            </div>
+            <div className="w-full h-[42px] rounded border border-gray-100 bg-white py-0.5 px-1.5 flex flex-col justify-center items-center box-border">
+              <div className="text-[10px] text-gray-600 font-normal leading-tight tracking-normal text-center">
+                Delivery
+              </div>
+              <div className="text-xs text-gray-900 font-semibold leading-tight tracking-normal text-center mt-0.5">
+                3-5 Days
+              </div>
+            </div>
+            <div className="w-full h-[42px] rounded border border-gray-100 bg-white py-0.5 px-1.5 flex flex-col justify-center items-center box-border">
+              <div className="text-[10px] text-gray-600 font-normal leading-tight tracking-normal text-center">
+                SIM Type
+              </div>
+              <div className="text-xs text-gray-900 font-semibold leading-tight tracking-normal text-center mt-0.5">
+                {product?.simType || 'E-SIM'}
+              </div>
             </div>
           </div>
-          <div className="w-full h-[42px] rounded border border-gray-100 bg-white py-0.5 px-1.5 flex flex-col justify-center items-center box-border">
-            <div className="text-[10px] text-gray-600 font-normal leading-tight tracking-normal text-center">
-              Stock
-            </div>
-            <div className="text-xs text-gray-900 font-semibold leading-tight tracking-normal text-center mt-0.5">
-              {stockCount || '0'}
-            </div>
-          </div>
-          <div className="w-full h-[42px] rounded border border-gray-100 bg-white py-0.5 px-1.5 flex flex-col justify-center items-center box-border">
-            <div className="text-[10px] text-gray-600 font-normal leading-tight tracking-normal text-center">
-              Delivery
-            </div>
-            <div className="text-xs text-gray-900 font-semibold leading-tight tracking-normal text-center mt-0.5">
-              3-5 Days
-            </div>
-          </div>
-          <div className="w-full h-[42px] rounded border border-gray-100 bg-white py-0.5 px-1.5 flex flex-col justify-center items-center box-border">
-            <div className="text-[10px] text-gray-600 font-normal leading-tight tracking-normal text-center">
-              SIM Type
-            </div>
-            <div className="text-xs text-gray-900 font-semibold leading-tight tracking-normal text-center mt-0.5">
-              {product?.simType || 'E-SIM'}
-            </div>
-          </div>
-        </div>
 
-        {!isExpired && !isOutOfStock && isFlashDeal && (
-          <div className="mb-2 flex justify-center">
-            <div className="inline-flex items-center bg-gradient-to-r from-red-50 to-pink-50 text-red-700 px-3 py-1.5 rounded-full text-[10px] font-semibold shadow-sm border border-red-200 w-full justify-center">
-              <FontAwesomeIcon icon={faClock} className="w-2.5 h-2.5 mr-1.5" />
-              <Countdown
-                date={product.expiryTime}
-                renderer={({ days, hours, minutes, seconds, completed }) => {
-                  if (completed) {
+          {!isExpired && !effectiveOutOfStock && isFlashDeal && (
+            <div className="mb-2 flex justify-center">
+              <div className="inline-flex items-center bg-gradient-to-r from-red-50 to-pink-50 text-red-700 px-3 py-1.5 rounded-full text-[10px] font-semibold shadow-sm border border-red-200 w-full justify-center">
+                <FontAwesomeIcon icon={faClock} className="w-2.5 h-2.5 mr-1.5" />
+                <Countdown
+                  date={product.expiryTime}
+                  renderer={({ days, hours, minutes, seconds, completed }) => {
+                    if (completed) {
+                      return (
+                        <span className="font-semibold">Flash Deal Ended</span>
+                      );
+                    }
                     return (
-                      <span className="font-semibold">Flash Deal Ended</span>
+                      <span className="font-semibold">
+                        {days > 0 ? `${days}d ` : ""}
+                        {String(hours).padStart(2, "0")}:
+                        {String(minutes).padStart(2, "0")}:
+                        {String(seconds).padStart(2, "0")}
+                      </span>
                     );
-                  }
-                  return (
-                    <span className="font-semibold">
-                      {days > 0 ? `${days}d ` : ""}
-                      {String(hours).padStart(2, "0")}:
-                      {String(minutes).padStart(2, "0")}:
-                      {String(seconds).padStart(2, "0")}
-                    </span>
-                  );
-                }}
-              />
+                  }}
+                />
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Button Container */}
@@ -1171,7 +1186,7 @@ if (viewMode === "list") {
               Expired
             </button>
           </>
-        ) : isOutOfStock ? (
+        ) : effectiveOutOfStock ? (
           <>
             {notify ? (
               <button

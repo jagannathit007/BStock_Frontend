@@ -522,7 +522,7 @@ const Header = ({ onLogout }) => {
                 <button
                   className={`${!isLoggedIn ? 'px-3 py-2' : 'p-2.5'} text-gray-500 rounded-lg relative cursor-pointer group flex items-center space-x-2 transition-colors nav-button-hover`}
                   onClick={handleCartClick}
-                  title="My Cart"
+                  title="Order Details"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shopping-cart-icon lucide-shopping-cart"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
                   {isLoggedIn && cartItemCount > 0 && (
@@ -530,7 +530,7 @@ const Header = ({ onLogout }) => {
                       {cartItemCount > 99 ? '99+' : cartItemCount}
                     </span>
                   )}
-                  <span className="hidden lg:inline-block text-sm font-medium">Cart</span>
+                  <span className="hidden lg:inline-block text-sm font-medium">Orders</span>
                 </button>
 
               {/* Login button when not authenticated */}
