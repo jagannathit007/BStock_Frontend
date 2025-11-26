@@ -538,6 +538,11 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       // Update current time
       setCurrentTime(new Date());
 
+      if (!processedProduct.isShowTimer) {
+        setTimeLeft(null);
+        return;
+      }
+
       // Update countdown timer for expiry
       if (processedProduct.expiryTime && !processedProduct.isExpired) {
         const expiryDate = new Date(processedProduct.expiryTime);
@@ -564,7 +569,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     const timer = setInterval(updateTimers, 1000);
 
     return () => clearInterval(timer);
-  }, [processedProduct.expiryTime, processedProduct.isExpired]);
+  }, [processedProduct.expiryTime, processedProduct.isExpired, processedProduct.isShowTimer]);
 
   const handleQuantityChange = (amount) => {
     const newQuantity = quantity + amount;
@@ -1381,7 +1386,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   );
                 })()}
               </div>
-              {processedProduct.expiryTime && !processedProduct.isExpired && timeLeft && (
+              {processedProduct.isShowTimer && processedProduct.expiryTime && !processedProduct.isExpired && timeLeft && (
                 <div className="inline-flex items-center bg-gradient-to-r from-red-50 to-pink-50 text-red-700 px-4 py-2 rounded-xl text-sm font-semibold shadow-sm border border-red-200">
                   <FontAwesomeIcon icon={faClock} className="w-4 h-4 mr-2" />
                   <span className="font-bold">

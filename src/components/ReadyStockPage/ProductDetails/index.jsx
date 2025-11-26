@@ -98,6 +98,7 @@ const ProductDetails = () => {
         updatedAt: p.updatedAt || "",
         status: p.status || "",
         isApproved: Boolean(p.isApproved),
+        isShowTimer: Boolean(p.isShowTimer),
         verifiedBy: p.verifiedBy || "",
         approvedBy: p.approvedBy || "",
       };

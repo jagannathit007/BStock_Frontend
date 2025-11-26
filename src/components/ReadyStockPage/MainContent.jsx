@@ -107,6 +107,7 @@ const MainContent = () => {
       isOutOfStock: stock <= 0,
       isExpired,
       expiryTime,
+      isShowTimer: Boolean(p.isShowTimer),
       notify: Boolean(p.notify),
       purchaseType: p.purchaseType || null,
       // Include related products data for variant selection

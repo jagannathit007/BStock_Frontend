@@ -106,6 +106,7 @@ const FlashDeals = () => {
       isOutOfStock: stock <= 0,
       isExpired,
       expiryTime,
+      isShowTimer: Boolean(p.isShowTimer),
       notify: Boolean(p.notify),
       purchaseType: p.purchaseType || null,
       sku: p.subSkuFamilyId?.code || p.skuFamilyId?.code || p.sku || "",
@@ -162,9 +163,10 @@ const FlashDeals = () => {
             limit: itemsPerPage,
             search: searchQuery,
             sort: getSortObject(sortOption),
-            isFlashDeal:true,
             custId: custId,
             ...filters,
+            isFlashDeal: true,
+            isShowTimer: true,
           },
           {
             headers: {
