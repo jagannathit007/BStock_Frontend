@@ -976,9 +976,9 @@ if (viewMode === "list") {
         />
         
         {/* In Stock Badge */}
-        <div className="absolute top-2 left-2">
+        <div className="flex absolute top-2 left-2">
           <span
-            className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${getStatusBadgeClass()}`}
+            className={`inline-flex items-center px-1.5 py-1 rounded-full text-[10px] font-semibold ${getStatusBadgeClass()}`}
           >
             {isExpired ? (
               <FontAwesomeIcon
@@ -989,7 +989,7 @@ if (viewMode === "list") {
               <svg
                 data-prefix="fas"
                 data-icon="circle-check"
-                className="w-2.5 h-2.5 mr-0.5"
+                className="w-2.5 h-2.5 mr-1.5"
                 role="img"
                 viewBox="0 0 512 512"
                 aria-hidden="true"
