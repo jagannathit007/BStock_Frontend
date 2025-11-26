@@ -384,7 +384,6 @@ const ProductCard = ({
         notify: nextValue,
       });
       setNotify(nextValue);
-      onRefresh?.();
     } catch (err) {
       console.error("Notification toggle error:", err);
     }
