@@ -480,8 +480,7 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
                       <option value="">Select Country</option>
                       <option value="Hongkong">Hongkong</option>
                       <option value="Dubai">Dubai</option>
-                      <option value="Singapore">Singapore</option>
-                      <option value="India">India</option>
+        
                     </select>
                   </div>
                 </div>
@@ -543,8 +542,7 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
                       <option value="">Select Country</option>
                       <option value="Hongkong">Hongkong</option>
                       <option value="Dubai">Dubai</option>
-                      <option value="Singapore">Singapore</option>
-                      <option value="India">India</option>
+          
                     </select>
                   </div>
                 </div>

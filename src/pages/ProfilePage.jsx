@@ -559,8 +559,6 @@ const BusinessProfile = ({
   const countryToCurrency = {
     Hongkong: "HKD",
     Dubai: "AED",
-    Singapore: "SGD",
-    India: "INR",
   };
 
   // Auto-set currency when country changes
@@ -631,7 +629,7 @@ const BusinessProfile = ({
     setCertificateImageError(false);
   }, [formData.certificate]);
 
-  const countries = ["Hongkong", "Dubai", "Singapore", "India"];
+  const countries = ["Hongkong", "Dubai"];
   const currencies = ["HKD", "AED", "SGD", "INR"];
   const logoFileName = formData.businessLogo
     ? typeof formData.businessLogo === "string"

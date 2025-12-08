@@ -153,7 +153,6 @@ The system supports the following currencies with proper symbols:
 - EUR - Euro (€)
 - GBP - British Pound (£)
 - JPY - Japanese Yen (¥)
-- SGD - Singapore Dollar (S$)
 - HKD - Hong Kong Dollar (HK$)
 - AED - UAE Dirham (د.إ)
 - INR - Indian Rupee (₹)
