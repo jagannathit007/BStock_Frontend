@@ -14,6 +14,7 @@ import CartService from "../../services/cart/cart.services";
 import { AuthService } from "../../services/auth/auth.services";
 import iphoneImage from "../../assets/iphone.png";
 import { convertPrice } from "../../utils/currencyUtils";
+import { getSubSkuFamilyId } from "../../utils/productUtils";
 
 const AddToCartPopup = ({ product, onClose }) => {
   const navigate = useNavigate();
@@ -95,8 +96,9 @@ const AddToCartPopup = ({ product, onClose }) => {
         }
       }
       
-      // Extract subSkuFamilyId from product (could be an object with _id or just the string ID)
-      const subSkuFamilyId = product?.subSkuFamilyId?._id || product?.subSkuFamilyId || null;
+      // Extract subSkuFamilyId from product using utility function
+      const rawProduct = product?._product || product;
+      const subSkuFamilyId = getSubSkuFamilyId(rawProduct) || product?.subSkuFamilyId || null;
       const res = await CartService.add(id, quantity, subSkuFamilyId);
       const ok = res?.success === true || res?.status === 200;
       if (ok) {

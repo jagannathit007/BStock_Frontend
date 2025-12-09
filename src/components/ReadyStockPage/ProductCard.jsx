@@ -243,7 +243,9 @@ const ProductCard = ({
 
       const productId = id || product?._id;
       // Extract subSkuFamilyId from product (could be an object with _id or just the string ID)
-      const subSkuFamilyId = product?.subSkuFamilyId?._id || product?.subSkuFamilyId || null;
+      // Use the utility function to get subSkuFamilyId, or fallback to direct access
+      const rawProduct = product?._product || product;
+      const subSkuFamilyId = rawProduct?.subSkuFamilyId?._id || rawProduct?.subSkuFamilyId || product?.subSkuFamilyId || null;
       const res = await CartService.add(productId, quantity, subSkuFamilyId);
       const ok = res?.success === true || res?.status === 200;
 

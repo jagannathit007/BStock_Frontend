@@ -39,6 +39,7 @@ import Swal from "sweetalert2";
 import { convertPrice, getCurrencyRates, formatPriceForCurrency } from "../../../utils/currencyUtils";
 import { useCurrency } from "../../../context/CurrencyContext";
 import { PRIMARY_COLOR, PRIMARY_COLOR_LIGHT, PRIMARY_COLOR_DARK } from "../../../utils/colors";
+import { getSubSkuFamily, getProductName, getProductCode, getProductImages, getSubSkuFamilyId } from "../../../utils/productUtils";
 import 'flag-icons/css/flag-icons.min.css';
 
 const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
@@ -109,25 +110,12 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       if (abs) images.push(abs);
     }
 
-    if (
-      currentProduct.skuFamilyId?.images &&
-      Array.isArray(currentProduct.skuFamilyId.images)
-    ) {
-      currentProduct.skuFamilyId.images.forEach((img) => {
-        const abs = toAbsolute(img);
-        if (abs && !images.includes(abs)) images.push(abs);
-      });
-    }
-
-    if (
-      currentProduct.subSkuFamilyId?.images &&
-      Array.isArray(currentProduct.subSkuFamilyId.images)
-    ) {
-      currentProduct.subSkuFamilyId.images.forEach((img) => {
-        const abs = toAbsolute(img);
-        if (abs && !images.includes(abs)) images.push(abs);
-      });
-    }
+    // Use utility function to get images from embedded subSkuFamily or skuFamily
+    const productImages = getProductImages(currentProduct);
+    productImages.forEach((img) => {
+      const abs = toAbsolute(img);
+      if (abs && !images.includes(abs)) images.push(abs);
+    });
 
     // If no valid images, return one dummy image
     if (images.length === 0) return [iphoneImage];
@@ -150,16 +138,15 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     setImageError(false);
   }, [selectedImageIndex]);
 
+  const subSkuFamily = getSubSkuFamily(currentProduct);
+  const skuFamily = currentProduct.skuFamilyId && typeof currentProduct.skuFamilyId === 'object' ? currentProduct.skuFamilyId : null;
+  
   const processedProduct = {
     ...currentProduct,
-    name:
-      currentProduct.subSkuFamilyId?.name ||
-      currentProduct.skuFamilyId?.name ||
-      currentProduct.name,
-    brand: currentProduct.skuFamilyId?.name || currentProduct.brand,
-    code: currentProduct.skuFamilyId?.code || currentProduct.code,
-    description:
-      currentProduct.skuFamilyId?.description || currentProduct.description,
+    name: getProductName(currentProduct),
+    brand: skuFamily?.name || currentProduct.brand,
+    code: getProductCode(currentProduct) || currentProduct.code,
+    description: skuFamily?.description || currentProduct.description,
     colorVariant: Array.isArray(currentProduct.skuFamilyId?.colorVariant)
       ? currentProduct.skuFamilyId.colorVariant.join(", ")
       : currentProduct.skuFamilyId?.colorVariant ||
@@ -780,8 +767,8 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
         cartItems: [
           {
             productId: processedProduct._id || processedProduct.id,
-            skuFamilyId: processedProduct.skuFamilyId?._id || processedProduct.skuFamilyId || null,
-            subSkuFamilyId: processedProduct.subSkuFamilyId?._id || processedProduct.subSkuFamilyId || null,
+            skuFamilyId: skuFamily?._id || processedProduct.skuFamilyId || null,
+            subSkuFamilyId: getSubSkuFamilyId(currentProduct),
             quantity: quantity,
             price: parseFloat(processedProduct.price.toString().replace(/,/g, "")),
           },
@@ -834,8 +821,8 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     description: processedProduct.description || "",
     notify: processedProduct.notify,
     purchaseType: processedProduct.purchaseType,
-    skuFamilyId: processedProduct.skuFamilyId?._id || processedProduct.skuFamilyId || null,
-    subSkuFamilyId: processedProduct.subSkuFamilyId?._id || processedProduct.subSkuFamilyId || null,
+    skuFamilyId: skuFamily?._id || processedProduct.skuFamilyId || null,
+    subSkuFamilyId: getSubSkuFamilyId(currentProduct),
   };
 
   const totalAmount =

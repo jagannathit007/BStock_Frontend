@@ -6,6 +6,7 @@ import { faBolt } from '@fortawesome/free-solid-svg-icons';
 import NegotiationService from '../../services/negotiation/negotiation.services';
 import { useSocket } from '../../context/SocketContext';
 import toastHelper from '../../utils/toastHelper';
+import { getProductImages, getProductName } from "../../utils/productUtils";
 
 const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
   const navigate = useNavigate();
@@ -363,8 +364,8 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
 
   const getProductImage = (productId) => {
     if (typeof productId === 'string') return '/images/iphone15.png';
-    const images = productId?.skuFamilyId?.images;
-    if (images && Array.isArray(images) && images.length > 0) {
+    const images = getProductImages(productId);
+    if (images && images.length > 0) {
       return `${imageBaseUrl}/${images[0]}`;
     }
     // Fallback to mainImage if available
@@ -374,9 +375,9 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
     return '/images/iphone15.png';
   };
 
-  const getProductName = (productId) => {
+  const getProductNameSafe = (productId) => {
     if (typeof productId === 'string') return 'Product';
-    return productId?.name || productId?.skuFamilyId?.name || 'Product';
+    return getProductName(productId);
   };
 
   const getUserName = (userId) => {
@@ -521,7 +522,7 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
                           <div className="flex items-center space-x-3">
                             <img
                               src={getProductImage(negotiationGroup.productId)}
-                              alt={getProductName(negotiationGroup.productId)}
+                              alt={getProductNameSafe(negotiationGroup.productId)}
                               onError={(e) => {
                                 e.target.src = '/images/iphone15.png';
                               }}
@@ -529,7 +530,7 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
                             />
                             <div>
                               <h3 className="font-semibold text-gray-900 text-sm">
-                                {getProductName(negotiationGroup.productId)}
+                                {getProductNameSafe(negotiationGroup.productId)}
                               </h3>
                               <div className="flex items-center space-x-3 mt-1">
                                 <span className="text-xs font-semibold text-gray-700">
@@ -679,7 +680,7 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
                           <div className="flex items-center space-x-3">
                             <img
                               src={getProductImage(individualNegotiation.productId)}
-                              alt={getProductName(individualNegotiation.productId)}
+                              alt={getProductNameSafe(individualNegotiation.productId)}
                               onError={(e) => {
                                 e.target.src = '/images/iphone15.png';
                               }}
@@ -687,7 +688,7 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
                             />
                             <div>
                               <h3 className="font-semibold text-gray-900 text-sm">
-                                {getProductName(individualNegotiation.productId)}
+                                {getProductNameSafe(individualNegotiation.productId)}
                               </h3>
                               <div className="flex items-center space-x-3 mt-1">
                                 <span className="text-xs text-gray-500">

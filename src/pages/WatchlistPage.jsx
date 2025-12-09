@@ -16,6 +16,7 @@ import CartService from "../services/cart/cart.services";
 import iphoneImage from "../assets/iphone.png";
 import Swal from "sweetalert2";
 import { convertPrice } from "../utils/currencyUtils";
+import { getProductName, getProductImages } from "../utils/productUtils";
 
 const WatchlistPage = () => {
   const navigate = useNavigate();
@@ -35,10 +36,9 @@ const WatchlistPage = () => {
 
   const mapApiProductToUi = (p) => {
     const id = p._id || p.id || "";
-    const name = p.skuFamilyId?.name || p.specification || "Product";
-    const imageUrl =
-      p.skuFamilyId?.images?.[0] ||
-      "https://via.placeholder.com/400x300.png?text=Product";
+    const name = getProductName(p);
+    const productImages = getProductImages(p);
+    const imageUrl = productImages[0] || "https://via.placeholder.com/400x300.png?text=Product";
     const storage = p.storage || "";
     const color = p.color || "";
     const ram = p.ram || "";

@@ -4,6 +4,7 @@ import { faShoppingBag, faTimes, faSearch, faCreditCard, faEye, faMapMarkerAlt, 
 import OrderService from "../services/order/order.services";
 import { convertPrice } from "../utils/currencyUtils";
 import PaymentPopup from "./PaymentPopup";
+import { getProductName } from "../utils/productUtils";
 
 const Order = () => {
   const [orders, setOrders] = useState([]);
@@ -255,7 +256,7 @@ const Order = () => {
                               {index + 1}
                             </span>
                             <span className="font-medium">
-                              {item.skuFamilyId?.name || item.productId?.name || 'Unknown Product'}
+                              {getProductName(item) || item.productId?.name || 'Unknown Product'}
                             </span>
                             <span className="text-gray-500">(x{item.quantity})</span>
                           </div>
@@ -506,7 +507,7 @@ const Order = () => {
                             </div>
                             <div className="flex-1">
                               <p className="text-sm font-semibold text-gray-900">
-                                {item.skuFamilyId?.name || item.productId?.name || 'Unknown Product'}
+                                {getProductName(item) || item.productId?.name || 'Unknown Product'}
                               </p>
                               <p className="text-xs text-gray-500">Quantity: {item.quantity} × {convertPrice(item.price || item.productId?.price || 0)}</p>
                             </div>

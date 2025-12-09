@@ -21,6 +21,7 @@ import { faHandshake } from "@fortawesome/free-solid-svg-icons";
 import { convertPrice } from "../../utils/currencyUtils";
 import { useSocket } from "../../context/SocketContext";
 import toastHelper from "../../utils/toastHelper";
+import { getProductImages, getProductName } from "../../utils/productUtils";
 
 const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
   const navigate = useNavigate();
@@ -353,15 +354,10 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
 
   const getProductImage = (productId) => {
     if (typeof productId === "string") return "/images/placeholder.jpg";
-    return productId?.skuFamilyId?.images?.[0]
-      ? `${import.meta.env.VITE_BASE_URL}/${productId?.skuFamilyId?.images[0]}`
-      : "";
+    const images = getProductImages(productId);
+    return images[0] ? `${import.meta.env.VITE_BASE_URL}/${images[0]}` : "";
   };
 
-  const getProductName = (productId) => {
-    if (typeof productId === "string") return "Product";
-    return productId?.name || productId?.skuFamilyId?.name || "Product";
-  };
 
   const getUserName = (userId) => {
     if (typeof userId === "string") return "User";

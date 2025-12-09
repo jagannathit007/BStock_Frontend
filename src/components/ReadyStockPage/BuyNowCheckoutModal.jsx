@@ -6,6 +6,7 @@ import PaymentService from "../../services/payment/payment.services";
 import PaymentPopup from "../PaymentPopup";
 import iphoneImage from "../../assets/iphone.png";
 import { convertPrice } from "../../utils/currencyUtils";
+import { getSubSkuFamilyId } from "../../utils/productUtils";
 
 const BuyNowCheckoutModal = ({
   isOpen,
@@ -72,8 +73,8 @@ const BuyNowCheckoutModal = ({
       cartItems: [
         {
           productId: product.id,
-          skuFamilyId: product.skuFamilyId || null,
-          subSkuFamilyId: product.subSkuFamilyId || null,
+          skuFamilyId: (product._product?.skuFamilyId && typeof product._product.skuFamilyId === 'object' ? product._product.skuFamilyId._id : product._product?.skuFamilyId) || product.skuFamilyId || null,
+          subSkuFamilyId: getSubSkuFamilyId(product._product || product) || product.subSkuFamilyId || null,
           quantity: Number(quantity),
           price: Number(product.price),
         },

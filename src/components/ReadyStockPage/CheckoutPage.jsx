@@ -4,6 +4,7 @@ import CartService from "../../services/cart/cart.services";
 import OrderService from "../../services/order/order.services";
 import iphoneImage from "../../assets/iphone.png";
 import { convertPrice } from "../../utils/currencyUtils";
+import { getSubSkuFamily, getProductName, getProductImages, getSubSkuFamilyId } from "../../utils/productUtils";
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
@@ -22,17 +23,17 @@ const CheckoutPage = () => {
 
   const mapCartItemToUi = (item) => {
     const id = item.productId;
-    const skuFamilyId = item.skuFamilyId?._id || item.skuFamilyId || null;
-    const subSkuFamilyId = item.subSkuFamilyId?._id || item.subSkuFamilyId || null;
-    const name = item.subSkuFamilyId?.name || item.skuFamilyId?.name || "Product";
+    const skuFamily = item.skuFamilyId && typeof item.skuFamilyId === 'object' ? item.skuFamilyId : null;
+    const skuFamilyId = skuFamily?._id || item.skuFamilyId || null;
+    const subSkuFamilyId = getSubSkuFamilyId(item);
+    const name = getProductName(item);
     const baseUrl = import.meta.env.VITE_BASE_URL || "http://localhost:3200";
     
-    // Prioritize subSkuFamilyId image, then skuFamilyId image, then dummy image
+    // Use utility function to get images
+    const productImages = getProductImages(item);
     let imageUrl = null;
-    if (item.subSkuFamilyId?.images?.[0]) {
-      imageUrl = `${baseUrl}/${item.subSkuFamilyId.images[0]}`;
-    } else if (item.skuFamilyId?.images?.[0]) {
-      imageUrl = `${baseUrl}/${item.skuFamilyId.images[0]}`;
+    if (productImages.length > 0) {
+      imageUrl = `${baseUrl}/${productImages[0]}`;
     } else {
       imageUrl = iphoneImage; // Use dummy image if no image available
     }

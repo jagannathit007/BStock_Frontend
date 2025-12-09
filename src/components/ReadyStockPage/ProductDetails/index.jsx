@@ -9,6 +9,7 @@ import {
   faShieldHalved,
   faTruckFast,
 } from "@fortawesome/free-solid-svg-icons";
+import { getProductImages, getProductName } from "../../../utils/productUtils";
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -29,20 +30,21 @@ const ProductDetails = () => {
             ) + "%"
           : "0%";
 
-      const images =
-        typeof p.skuFamilyId === "object" && Array.isArray(p.skuFamilyId?.images)
-          ? p.skuFamilyId.images
-          : [];
+      // Use utility function to get images from embedded subSkuFamily or skuFamily
+      const productImages = getProductImages(p);
+      const images = productImages.length > 0 ? productImages : [];
 
       const stock = Number(p.stock) || 0;
       const stockStatus =
         stock <= 0 ? "Out of Stock" : stock <= 10 ? "Low Stock" : "In Stock";
 
+      const skuFamily = p.skuFamilyId && typeof p.skuFamilyId === 'object' ? p.skuFamilyId : null;
+      
       return {
         id: p._id || p.id,
-        name: p.skuFamilyId?.name || "Product",
+        name: getProductName(p),
         description:
-          p.skuFamilyId?.description ||
+          skuFamily?.description ||
           [p.storage, p.color].filter(Boolean).join(" • ") ||
           "",
         price: String(priceNumber),

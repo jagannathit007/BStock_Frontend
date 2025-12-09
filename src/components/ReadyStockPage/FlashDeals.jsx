@@ -14,6 +14,7 @@ import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { AuthService } from "../../services/auth/auth.services";
 import { useCurrency } from "../../context/CurrencyContext";
+import { getSubSkuFamily, getProductName, getProductCode, getProductImages, getSubSkuFamilyId } from "../../utils/productUtils";
 // import HeroSlider from "./HeroSlider";
 
 const FlashDeals = () => {
@@ -64,11 +65,12 @@ const FlashDeals = () => {
   const navigate = useNavigate();
   const mapApiProductToUi = (p) => {
     const id = p._id || p.id || "";
-    const name = p.skuFamilyId?.name || p.specification || "Product";
-    const imageUrl =
-      p.subSkuFamilyId?.images?.[0] ||
-      p.skuFamilyId?.images?.[0] ||
-      "https://via.placeholder.com/400x300.png?text=Product";
+    const subSkuFamily = getSubSkuFamily(p);
+    const skuFamily = p.skuFamilyId && typeof p.skuFamilyId === 'object' ? p.skuFamilyId : null;
+    
+    const productImages = getProductImages(p);
+    const imageUrl = productImages[0] || "https://via.placeholder.com/400x300.png?text=Product";
+    
     const storage = p.storage || "";
     const color = p.color || "";
     const ram = p.ram || "";
@@ -88,8 +90,8 @@ const FlashDeals = () => {
 
     return {
       id,
-      name:p.subSkuFamilyId?.name || p.skuFamilyId?.name || name,
-      description:p.subSkuFamilyId?.description || p.skuFamilyId?.description || description,
+      name: getProductName(p),
+      description: subSkuFamily?.subName || skuFamily?.description || description,
       storage,
       color,
       ram,
@@ -109,11 +111,13 @@ const FlashDeals = () => {
       isShowTimer: Boolean(p.isShowTimer),
       notify: Boolean(p.notify),
       purchaseType: p.purchaseType || null,
-      sku: p.subSkuFamilyId?.code || p.skuFamilyId?.code || p.sku || "",
-      modelCode: p.subSkuFamilyId?.name || p.skuFamilyId?.name || "",
-      countryName: p.country || p.subSkuFamilyId?.country || (Array.isArray(p.skuFamilyId?.country) ? p.skuFamilyId.country[0] : ""),
-      // Preserve subSkuFamilyId for cart operations
-      subSkuFamilyId: p.subSkuFamilyId || null,
+      sku: getProductCode(p) || p.sku || "",
+      modelCode: getProductName(p),
+      countryName: p.country || subSkuFamily?.country || (Array.isArray(skuFamily?.country) ? skuFamily.country[0] : ""),
+      // Preserve subSkuFamilyId for cart operations (as string ID)
+      subSkuFamilyId: getSubSkuFamilyId(p),
+      // Preserve full product object for reference
+      _product: p,
     };
   };
 
