@@ -32,8 +32,6 @@ export const CurrencyProvider = ({ children }) => {
         const countryToCurrency = {
           'Hongkong': 'HKD',
           'Dubai': 'AED',
-          'Singapore': 'SGD',
-          'India': 'INR'
         };
         
         if (country && countryToCurrency[country]) {
