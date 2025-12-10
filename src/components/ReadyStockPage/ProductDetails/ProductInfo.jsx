@@ -95,7 +95,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     setImageError(true);
   };
 
-  const getProductImages = () => {
+  const getAllProductImages = () => {
     const images = [];
     const toAbsolute = (path) => {
       if (!path) return "";
@@ -124,7 +124,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     return images;
   };
 
-  const productImages = getProductImages();
+  const productImages = getAllProductImages();
 
   useEffect(() => {
     const timer = setInterval(() => {

@@ -97,8 +97,9 @@ const AddToCartPopup = ({ product, onClose }) => {
       }
       
       // Extract subSkuFamilyId from product using utility function
+      // This handles the new structure where subSkuFamily is inside skuFamily.subSkuFamilies array
       const rawProduct = product?._product || product;
-      const subSkuFamilyId = getSubSkuFamilyId(rawProduct) || product?.subSkuFamilyId || null;
+      const subSkuFamilyId = getSubSkuFamilyId(rawProduct);
       const res = await CartService.add(id, quantity, subSkuFamilyId);
       const ok = res?.success === true || res?.status === 200;
       if (ok) {

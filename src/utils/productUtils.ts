@@ -34,7 +34,7 @@ export interface Product {
 
 /**
  * Extracts subSkuFamily from skuFamily.subSkuFamilies array based on subSkuFamilyId
- * @param product - Product object with skuFamilyId and subSkuFamilyId
+ * @param product - Product object with skuFamilyId and optionally subSkuFamilyId
  * @returns The matching subSkuFamily object or null
  */
 export function getSubSkuFamily(product: Product): SubSkuFamily | null {
@@ -43,12 +43,6 @@ export function getSubSkuFamily(product: Product): SubSkuFamily | null {
   // If subSkuFamilyId is already an object, return it
   if (product.subSkuFamilyId && typeof product.subSkuFamilyId === 'object') {
     return product.subSkuFamilyId as SubSkuFamily;
-  }
-
-  // If subSkuFamilyId is a string ID, try to find it in skuFamily.subSkuFamilies
-  const subSkuFamilyId = product.subSkuFamilyId;
-  if (!subSkuFamilyId || typeof subSkuFamilyId !== 'string') {
-    return null;
   }
 
   const skuFamily = product.skuFamilyId;
@@ -61,12 +55,19 @@ export function getSubSkuFamily(product: Product): SubSkuFamily | null {
     return null;
   }
 
-  // Find the matching subSkuFamily by _id
-  const found = subSkuFamilies.find(
-    (sub) => sub._id?.toString() === subSkuFamilyId.toString()
-  );
+  // If subSkuFamilyId is a string ID, try to find it in skuFamily.subSkuFamilies
+  const subSkuFamilyId = product.subSkuFamilyId;
+  if (subSkuFamilyId) {
+    // Find the matching subSkuFamily by _id
+    const found = subSkuFamilies.find(
+      (sub) => sub._id?.toString() === subSkuFamilyId.toString()
+    );
+    if (found) return found;
+  }
 
-  return found || null;
+  // If no subSkuFamilyId provided or not found, return null
+  // (In the future, could match by product attributes like color, ram, storage)
+  return null;
 }
 
 /**
@@ -123,11 +124,13 @@ export function getProductImages(product: Product): string[] {
 
 /**
  * Gets the subSkuFamilyId as a string (for API calls)
+ * Since subSkuFamily is now inside skuFamily.subSkuFamilies array,
+ * this function extracts the ID from the product or finds it in the array
  */
 export function getSubSkuFamilyId(product: Product): string | null {
   if (!product) return null;
 
-  // If it's already a string, return it
+  // If it's already a string, return it (this is the ID reference)
   if (typeof product.subSkuFamilyId === 'string') {
     return product.subSkuFamilyId;
   }
@@ -137,8 +140,20 @@ export function getSubSkuFamilyId(product: Product): string | null {
     return (product.subSkuFamilyId as SubSkuFamily)._id || null;
   }
 
-  // Try to extract from embedded array
+  // Try to extract from embedded array in skuFamily
+  // This handles the case where subSkuFamilyId is stored as a reference ID
+  // and we need to find the matching subSkuFamily in skuFamily.subSkuFamilies
   const subSkuFamily = getSubSkuFamily(product);
-  return subSkuFamily?._id || null;
+  if (subSkuFamily?._id) {
+    return subSkuFamily._id;
+  }
+
+  // If product has subSkuFamilyId as a string but not found in array, return it anyway
+  // (for backward compatibility and API calls)
+  if (product.subSkuFamilyId && typeof product.subSkuFamilyId === 'string') {
+    return product.subSkuFamilyId;
+  }
+
+  return null;
 }
 

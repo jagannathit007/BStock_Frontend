@@ -20,6 +20,7 @@ import iphoneImage from "../../assets/iphone.png";
 import Swal from "sweetalert2";
 import Countdown from "react-countdown";
 import { convertPrice } from "../../utils/currencyUtils";
+import { getSubSkuFamilyId } from "../../utils/productUtils";
 
 const ProductCard = ({
   product,
@@ -242,10 +243,10 @@ const ProductCard = ({
       }
 
       const productId = id || product?._id;
-      // Extract subSkuFamilyId from product (could be an object with _id or just the string ID)
-      // Use the utility function to get subSkuFamilyId, or fallback to direct access
+      // Extract subSkuFamilyId from product using utility function
+      // This handles the new structure where subSkuFamily is inside skuFamily.subSkuFamilies array
       const rawProduct = product?._product || product;
-      const subSkuFamilyId = rawProduct?.subSkuFamilyId?._id || rawProduct?.subSkuFamilyId || product?.subSkuFamilyId || null;
+      const subSkuFamilyId = getSubSkuFamilyId(rawProduct);
       const res = await CartService.add(productId, quantity, subSkuFamilyId);
       const ok = res?.success === true || res?.status === 200;
 

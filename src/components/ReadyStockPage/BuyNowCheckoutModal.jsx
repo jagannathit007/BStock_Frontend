@@ -74,7 +74,7 @@ const BuyNowCheckoutModal = ({
         {
           productId: product.id,
           skuFamilyId: (product._product?.skuFamilyId && typeof product._product.skuFamilyId === 'object' ? product._product.skuFamilyId._id : product._product?.skuFamilyId) || product.skuFamilyId || null,
-          subSkuFamilyId: getSubSkuFamilyId(product._product || product) || product.subSkuFamilyId || null,
+          subSkuFamilyId: getSubSkuFamilyId(product._product || product),
           quantity: Number(quantity),
           price: Number(product.price),
         },
