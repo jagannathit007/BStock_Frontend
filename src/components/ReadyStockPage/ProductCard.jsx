@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -11,7 +11,6 @@ import {
   faBellSlash,
   faClock,
 } from "@fortawesome/free-solid-svg-icons";
-import { FiAlertCircle } from "react-icons/fi";
 import AddToCartPopup from "./AddToCartPopup";
 import CartService from "../../services/cart/cart.services";
 import { ProductService } from "../../services/products/products.services";
@@ -39,10 +38,60 @@ const ProductCard = ({
   const [imageError, setImageError] = useState(false);
   const [selectedColor, setSelectedColor] = useState(product?.color || "");
   const [selectedPrice, setSelectedPrice] = useState(product?.price || 0);
+  const [selectedCountry, setSelectedCountry] = useState("Hongkong");
+  const [selectedCurrency, setSelectedCurrency] = useState("USD");
 
   // === LIST VIEW: QUANTITY STATE ===
   const [quantity, setQuantity] = useState(1);
   const [currencyUpdateKey, setCurrencyUpdateKey] = useState(0);
+
+  const deliverables = useMemo(() => {
+    const direct = product?.countryDeliverables;
+    const nested = product?._product?.countryDeliverables;
+    if (Array.isArray(direct) && direct.length) return direct;
+    if (Array.isArray(nested) && nested.length) return nested;
+    return [];
+  }, [product]);
+  const countryOptions = ["Hongkong", "Dubai"];
+  const currencyOptionsByCountry = {
+    Hongkong: ["USD", "HKD"],
+    Dubai: ["USD", "AED"],
+  };
+
+  useEffect(() => {
+    // Reset selection when product changes
+    const firstDeliverable = deliverables[0];
+    if (firstDeliverable) {
+      setSelectedCountry(firstDeliverable.country || "Hongkong");
+      setSelectedCurrency(firstDeliverable.currency || "USD");
+    } else {
+      setSelectedCountry("Hongkong");
+      setSelectedCurrency("USD");
+    }
+  }, [product, deliverables]);
+
+  useEffect(() => {
+    // Ensure currency stays valid for the chosen country
+    const validCurrencies = currencyOptionsByCountry[selectedCountry] || [];
+    if (!validCurrencies.includes(selectedCurrency) && validCurrencies.length) {
+      setSelectedCurrency(validCurrencies[0]);
+    }
+  }, [selectedCountry, selectedCurrency]);
+
+  const normalize = (val) => (typeof val === "string" ? val.trim().toLowerCase() : "");
+  const selectedDeliverable = deliverables.find(
+    (d) =>
+      normalize(d.country) === normalize(selectedCountry) &&
+      normalize(d.currency) === normalize(selectedCurrency)
+  );
+  const derivedPrice =
+    selectedDeliverable?.calculatedPrice ??
+    selectedDeliverable?.basePrice ??
+    null;
+  const displayPriceText =
+    derivedPrice != null
+      ? `${selectedCurrency} ${Number(derivedPrice).toLocaleString()}`
+      : "Price unavailable";
 
   useEffect(() => {
     setNotify(Boolean(product?.notify));
@@ -1043,17 +1092,54 @@ if (viewMode === "list") {
             {name} <span className="text-xs font-normal text-gray-500"> - {description}</span>
           </h3>
 
+          {/* Country Selector */}
+          <div className="flex items-center gap-2">
+            {countryOptions.map((country) => (
+              <button
+                key={country}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedCountry(country);
+                }}
+                className={`px-3 py-2 w-[50%] rounded-md text-[11px] font-semibold border transition ${
+                  selectedCountry === country
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-gray-100 text-gray-700 border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                {country}
+              </button>
+            ))}
+          </div>
+
+          {/* Currency Selector (depends on country) */}
+          <div className="flex items-center gap-2">
+            {(currencyOptionsByCountry[selectedCountry] || []).map((currency) => (
+              <button
+                key={currency}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedCurrency(currency);
+                }}
+                className={`px-3 py-2 w-[50%] rounded-md text-[11px] font-semibold border transition ${
+                  selectedCurrency === currency
+                    ? "bg-emerald-600 text-white border-emerald-600"
+                    : "bg-gray-100 text-gray-700 border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                {currency}
+              </button>
+            ))}
+          </div>
+
           {/* Price Section */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <span className="text-[10px] text-gray-500 mr-1">From</span>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex flex-col">
+              <span className="text-[10px] text-gray-500">Price</span>
               <span className="text-base font-semibold text-gray-900">
-                {convertPrice(selectedPrice || price)}
+                {displayPriceText}
               </span>
             </div>
-            {/* <div className="flex items-center justify-center w-5 h-5 rounded-full bg-white shadow-md backdrop-blur-sm opacity-100">
-              <FiAlertCircle className="w-3 h-3 text-gray-600" />
-            </div> */}
             <div>
               {/* product color  */}
               <div className="text-xs flex font-medium text-gray-900 bg-gray-100 px-1 py-0.5 rounded-md">
@@ -1112,42 +1198,6 @@ if (viewMode === "list") {
             </div>
           </div>
         </div> */}
-
-          {/* Specifications Grid */}
-          <div className="grid grid-cols-2 gap-2 w-full mb-2">
-            <div className="w-full h-[42px] rounded border border-gray-100 bg-white py-0.5 px-1.5 flex flex-col justify-center items-center box-border">
-              <div className="text-[10px] text-gray-600 font-normal leading-tight tracking-normal text-center">
-                MOQ
-              </div>
-              <div className="text-xs text-gray-900 font-semibold leading-tight tracking-normal text-center mt-0.5">
-                {moq}
-              </div>
-            </div>
-            <div className="w-full h-[42px] rounded border border-gray-100 bg-white py-0.5 px-1.5 flex flex-col justify-center items-center box-border">
-              <div className="text-[10px] text-gray-600 font-normal leading-tight tracking-normal text-center">
-                Stock
-              </div>
-              <div className="text-xs text-gray-900 font-semibold leading-tight tracking-normal text-center mt-0.5">
-                {stockCount || '0'}
-              </div>
-            </div>
-            <div className="w-full h-[42px] rounded border border-gray-100 bg-white py-0.5 px-1.5 flex flex-col justify-center items-center box-border">
-              <div className="text-[10px] text-gray-600 font-normal leading-tight tracking-normal text-center">
-                Delivery
-              </div>
-              <div className="text-xs text-gray-900 font-semibold leading-tight tracking-normal text-center mt-0.5">
-                3-5 Days
-              </div>
-            </div>
-            <div className="w-full h-[42px] rounded border border-gray-100 bg-white py-0.5 px-1.5 flex flex-col justify-center items-center box-border">
-              <div className="text-[10px] text-gray-600 font-normal leading-tight tracking-normal text-center">
-                SIM Type
-              </div>
-              <div className="text-xs text-gray-900 font-semibold leading-tight tracking-normal text-center mt-0.5">
-                {product?.simType || 'E-SIM'}
-              </div>
-            </div>
-          </div>
 
           {!isExpired && !effectiveOutOfStock && isFlashDeal && shouldShowTimer && (
             <div className="mb-2 flex justify-center">

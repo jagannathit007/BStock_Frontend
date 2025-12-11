@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCartShopping,
@@ -70,6 +70,8 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [currencyUpdateKey, setCurrencyUpdateKey] = useState(0);
   const [selectedCountryRate, setSelectedCountryRate] = useState('AED');
   const [isCountryRateDropdownOpen, setIsCountryRateDropdownOpen] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState("Hongkong");
+  const [selectedCurrency, setSelectedCurrency] = useState("USD");
 
   // Listen for currency changes to force re-render
   useEffect(() => {
@@ -175,6 +177,84 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       return "In Stock";
     })(),
   };
+
+  // Country/Currency derived from countryDeliverables (supports nested raw product)
+  const deliverables = useMemo(() => {
+    const direct = currentProduct?.countryDeliverables;
+    const nested = currentProduct?._product?.countryDeliverables;
+    if (Array.isArray(direct) && direct.length) return direct;
+    if (Array.isArray(nested) && nested.length) return nested;
+    return [];
+  }, [currentProduct]);
+
+  const normalize = (val) =>
+    typeof val === "string" ? val.trim().toLowerCase() : "";
+
+  const countryOptions = useMemo(() => {
+    const seen = new Map();
+    deliverables.forEach((d) => {
+      if (d?.country) {
+        const key = normalize(d.country);
+        if (!seen.has(key)) seen.set(key, d.country);
+      }
+    });
+    const list = Array.from(seen.values());
+    return list.length ? list : ["Hongkong", "Dubai"];
+  }, [deliverables]);
+
+  const currencyOptionsForCountry = useMemo(() => {
+    const options = [];
+    deliverables.forEach((d) => {
+      if (normalize(d.country) === normalize(selectedCountry) && d?.currency) {
+        const key = normalize(d.currency);
+        if (!options.find((c) => normalize(c) === key)) {
+          options.push(d.currency);
+        }
+      }
+    });
+    if (options.length) return options;
+    // Fallback buttons to mirror listing behavior
+    return selectedCountry.toLowerCase().includes("dubai")
+      ? ["USD", "AED"]
+      : ["USD", "HKD"];
+  }, [deliverables, selectedCountry]);
+
+  useEffect(() => {
+    // Reset selection when product/deliverables change
+    const first = deliverables[0];
+    if (first) {
+      setSelectedCountry(first.country || "Hongkong");
+      setSelectedCurrency(first.currency || "USD");
+    } else {
+      setSelectedCountry("Hongkong");
+      setSelectedCurrency("USD");
+    }
+  }, [deliverables, currentProduct]);
+
+  useEffect(() => {
+    // Keep currency valid for selected country
+    const valid = currencyOptionsForCountry;
+    if (!valid.includes(selectedCurrency) && valid.length) {
+      setSelectedCurrency(valid[0]);
+    }
+  }, [currencyOptionsForCountry, selectedCurrency]);
+
+  const selectedDeliverable = deliverables.find(
+    (d) =>
+      normalize(d?.country) === normalize(selectedCountry) &&
+      normalize(d?.currency) === normalize(selectedCurrency)
+  );
+
+  const derivedPrice =
+    selectedDeliverable?.calculatedPrice ??
+    selectedDeliverable?.basePrice ??
+    processedProduct.price ??
+    0;
+
+  const displayPriceText =
+    derivedPrice != null
+      ? `${selectedCurrency} ${Number(derivedPrice).toLocaleString()}`
+      : "Price unavailable";
 
   // Effective stock view combining real stock and unavailable variant selection
   const effectiveIsOutOfStock = processedProduct.isOutOfStock || unavailableVariant;
@@ -763,6 +843,13 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
 
     setIsPlacingOrder(true);
     try {
+      const numericPrice =
+        Number(
+          (derivedPrice ?? processedProduct?.price ?? 0)
+            .toString()
+            .replace(/,/g, "")
+        ) || 0;
+
       const orderData = {
         cartItems: [
           {
@@ -770,7 +857,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
             skuFamilyId: skuFamily?._id || processedProduct.skuFamilyId || null,
             subSkuFamilyId: getSubSkuFamilyId(currentProduct),
             quantity: quantity,
-            price: parseFloat(processedProduct.price.toString().replace(/,/g, "")),
+            price: numericPrice,
           },
         ],
         billingAddress: {
@@ -825,8 +912,14 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     subSkuFamilyId: getSubSkuFamilyId(currentProduct),
   };
 
-  const totalAmount =
-    parseInt(processedProduct.price.toString().replace(/,/g, "")) * quantity;
+  const numericPrice =
+    Number(
+      (derivedPrice ?? processedProduct?.price ?? 0)
+        .toString()
+        .replace(/,/g, "")
+    ) || 0;
+
+  const totalAmount = numericPrice * quantity;
 
   const handleThumbnailClick = (index) => {
     setSelectedImageIndex(index);
@@ -1239,149 +1332,73 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                 by {processedProduct.brand}
               </p>
             </div>
-              <div className="border-b border-gray-200 pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col space-y-3">
-                {/* USD Price - Always shown */}
-                <div className="flex items-center space-x-3">
-                  <span className="text-3xl font-semibold text-green-600">
-                    ${parseFloat(processedProduct.price || 0).toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </span>
-                  {processedProduct.isNegotiable && (
-                    <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-lg border"
-                      style={{ color: PRIMARY_COLOR, backgroundColor: PRIMARY_COLOR_LIGHT, borderColor: `${PRIMARY_COLOR}40` }}>
-                      Negotiable
-                    </span>
-                  )}
-                </div>
-                
-                {/* Country Rate Section - Dropdown for viewing different currency rates */}
-                {(() => {
-                  const rates = getCurrencyRates();
-                  const priceInUSD = parseFloat(processedProduct.price || 0);
-                  
-                  // Only show Country Rate section if customer has a country set
-                  if (!customerCountryCurrency || !rates) return null;
-                  
-                  const getCurrencyFlagClass = (code) => {
-                    const flagClasses = {
-                      'USD': 'fi fi-us',
-                      'HKD': 'fi fi-hk',
-                      'AED': 'fi fi-ae',
-                      'SGD': 'fi fi-sg',
-                      'INR': 'fi fi-in'
-                    };
-                    return flagClasses[code] || '';
-                  };
-                  
-                  const currencies = [];
-                  
-                  // Always show AED
-                  if (rates.AED) {
-                    currencies.push({ code: 'AED', flagClass: getCurrencyFlagClass('AED'), label: 'AED' });
-                  }
-                  
-                  // Show customer country currency if available and not AED
-                  if (customerCountryCurrency !== 'AED' && rates[customerCountryCurrency]) {
-                    const labels = {
-                      'HKD': 'HK',
-                      'SGD': 'SGD',
-                      'INR': 'INR'
-                    };
-                    currencies.push({ 
-                      code: customerCountryCurrency, 
-                      flagClass: getCurrencyFlagClass(customerCountryCurrency),
-                      label: labels[customerCountryCurrency] || customerCountryCurrency
-                    });
-                  }
-                  
-                  if (currencies.length === 0) return null;
-                  
-                  // Ensure selected currency is valid, default to first available
-                  const validSelectedCurrency = currencies.find(c => c.code === selectedCountryRate) 
-                    ? selectedCountryRate 
-                    : currencies[0]?.code || 'AED';
-                  
-                  const selectedCurrencyData = currencies.find(c => c.code === validSelectedCurrency) || currencies[0];
-                  const selectedFormattedPrice = formatPriceForCurrency(priceInUSD, selectedCurrencyData.code, rates);
-                  
-                  return (
-                    <div className="space-y-2">
-                      {/* <label className="block text-sm font-medium text-gray-700">Country Rate</label> */}
-                      <div className="relative country-rate-dropdown">
-                        <button
-                          type="button"
-                          onClick={() => setIsCountryRateDropdownOpen(!isCountryRateDropdownOpen)}
-                          className="w-full md:w-auto px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between gap-2 min-w-[200px]"
-                        >
-                          <div className="flex items-center gap-1.5">
-                            <span className={`${selectedCurrencyData.flagClass} rounded-sm`} style={{ width: '16px', height: '12px' }}></span>
-                            <span className="font-medium">{selectedCurrencyData.label}</span>
-                            <span className="text-gray-500">-</span>
-                            <span className="font-semibold">{selectedFormattedPrice}</span>
-                          </div>
-                          <svg
-                            className={`w-4 h-4 text-gray-500 transition-transform ${isCountryRateDropdownOpen ? 'rotate-180' : ''}`}
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </button>
-                        {isCountryRateDropdownOpen && (
-                          <div className="absolute z-10 mt-1 w-full md:w-auto min-w-[200px] bg-white border border-gray-300 rounded-lg shadow-lg">
-                            {currencies.map((currency) => {
-                              const formattedPrice = formatPriceForCurrency(priceInUSD, currency.code, rates);
-                              const isSelected = currency.code === validSelectedCurrency;
-                              return (
-                                <button
-                                  key={currency.code}
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedCountryRate(currency.code);
-                                    setIsCountryRateDropdownOpen(false);
-                                  }}
-                                  className={`w-full px-3 py-2 text-sm text-left flex items-center gap-1.5 hover:bg-gray-50 transition-colors ${
-                                    isSelected ? 'bg-blue-50' : ''
-                                  } ${currency.code === currencies[0]?.code ? 'rounded-t-lg' : ''} ${
-                                    currency.code === currencies[currencies.length - 1]?.code ? 'rounded-b-lg' : ''
-                                  }`}
-                                >
-                                  <span className={`${currency.flagClass} rounded-sm`} style={{ width: '16px', height: '12px' }}></span>
-                                  <span className="font-medium">{currency.label}</span>
-                                  <span className="text-gray-500">-</span>
-                                  <span className="font-semibold">{formattedPrice}</span>
-                                  {isSelected && (
-                                    <svg className="w-4 h-4 text-blue-600 ml-auto" fill="currentColor" viewBox="0 0 20 20">
-                                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                    </svg>
-                                  )}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-xs text-red-500 italic">
-                        Prices shown are for view reference only. Actual transactions are processed in USD only.
-                      </p>
-                    </div>
-                  );
-                })()}
+            <div className="border-b border-gray-200 pb-3 space-y-3">
+              {/* Country Buttons */}
+              <div className="flex items-center gap-2">
+                {countryOptions.map((country) => (
+                  <button
+                    key={country}
+                    onClick={() => setSelectedCountry(country)}
+                    className={`px-3 py-1 rounded-md text-sm font-semibold border transition ${
+                      normalize(selectedCountry) === normalize(country)
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-gray-100 text-gray-700 border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    {country}
+                  </button>
+                ))}
               </div>
-              {processedProduct.isShowTimer && processedProduct.expiryTime && !processedProduct.isExpired && timeLeft && (
-                <div className="inline-flex items-center bg-gradient-to-r from-red-50 to-pink-50 text-red-700 px-4 py-2 rounded-xl text-sm font-semibold shadow-sm border border-red-200">
-                  <FontAwesomeIcon icon={faClock} className="w-4 h-4 mr-2" />
-                  <span className="font-bold">
-                    {timeLeft.days}d {timeLeft.hours}:{timeLeft.minutes.toString().padStart(2, '0')}:{timeLeft.seconds.toString().padStart(2, '0')}
+
+              {/* Currency Buttons */}
+              <div className="flex items-center gap-2">
+                {currencyOptionsForCountry.map((currency) => (
+                  <button
+                    key={currency}
+                    onClick={() => setSelectedCurrency(currency)}
+                    className={`px-3 py-1 rounded-md text-sm font-semibold border transition ${
+                      normalize(selectedCurrency) === normalize(currency)
+                        ? "bg-emerald-600 text-white border-emerald-600"
+                        : "bg-gray-100 text-gray-700 border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    {currency}
+                  </button>
+                ))}
+              </div>
+
+              {/* Price Display */}
+              <div className="flex items-center space-x-3">
+                <span className="text-3xl font-semibold text-green-600">
+                  {displayPriceText}
+                </span>
+                {processedProduct.isNegotiable && (
+                  <span
+                    className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-lg border"
+                    style={{
+                      color: PRIMARY_COLOR,
+                      backgroundColor: PRIMARY_COLOR_LIGHT,
+                      borderColor: `${PRIMARY_COLOR}40`,
+                    }}
+                  >
+                    Negotiable
                   </span>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+
+              {processedProduct.isShowTimer &&
+                processedProduct.expiryTime &&
+                !processedProduct.isExpired &&
+                timeLeft && (
+                  <div className="inline-flex items-center bg-gradient-to-r from-red-50 to-pink-50 text-red-700 px-4 py-2 rounded-xl text-sm font-semibold shadow-sm border border-red-200">
+                    <FontAwesomeIcon icon={faClock} className="w-4 h-4 mr-2" />
+                    <span className="font-bold">
+                      {timeLeft.days}d {timeLeft.hours}:
+                      {timeLeft.minutes.toString().padStart(2, "0")}:
+                      {timeLeft.seconds.toString().padStart(2, "0")}
+                    </span>
+                  </div>
+                )}
             </div>
             
             {/* Mobile Colour Selection - Above Key Features */}
