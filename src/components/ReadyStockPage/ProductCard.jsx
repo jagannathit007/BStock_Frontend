@@ -87,6 +87,7 @@ const ProductCard = ({
   const derivedPrice =
     selectedDeliverable?.calculatedPrice ??
     selectedDeliverable?.basePrice ??
+    product?.price ??
     null;
   const displayPriceText =
     derivedPrice != null
@@ -296,7 +297,13 @@ const ProductCard = ({
       // This handles the new structure where subSkuFamily is inside skuFamily.subSkuFamilies array
       const rawProduct = product?._product || product;
       const subSkuFamilyId = getSubSkuFamilyId(rawProduct);
-      const res = await CartService.add(productId, quantity, subSkuFamilyId);
+      
+      // Get the calculated price based on selected country and currency
+      const priceToSend = (derivedPrice != null && derivedPrice > 0) ? derivedPrice : (product?.price ?? null);
+      const countryToSend = selectedCountry || null;
+      const currencyToSend = selectedCurrency || null;
+      
+      const res = await CartService.add(productId, quantity, subSkuFamilyId, priceToSend, countryToSend, currencyToSend);
       const ok = res?.success === true || res?.status === 200;
 
       if (ok) {
@@ -1290,7 +1297,16 @@ if (viewMode === "list") {
         )}
       </div>
       {isAddToCartPopupOpen && (
-        <AddToCartPopup product={product} onClose={handlePopupClose} />
+        <AddToCartPopup 
+          product={{
+            ...product,
+            price: (derivedPrice != null && derivedPrice > 0) ? derivedPrice : (product?.price ?? 0),
+            selectedCountry,
+            selectedCurrency,
+            countryDeliverables: deliverables, // Pass deliverables for fallback price calculation
+          }} 
+          onClose={handlePopupClose} 
+        />
       )}
     </div>
   );

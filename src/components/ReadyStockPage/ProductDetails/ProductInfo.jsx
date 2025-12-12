@@ -901,7 +901,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const popupProduct = {
     id: processedProduct.id || processedProduct._id,
     name: processedProduct.name,
-    price: processedProduct.price,
+    price: (derivedPrice != null && derivedPrice > 0) ? derivedPrice : (processedProduct.price ?? 0), // Use derived price based on country/currency
     imageUrl: processedProduct.imageUrl || processedProduct.mainImage || "",
     moq: processedProduct.moq,
     stockCount: processedProduct.stockCount,
@@ -910,6 +910,9 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     purchaseType: processedProduct.purchaseType,
     skuFamilyId: skuFamily?._id || processedProduct.skuFamilyId || null,
     subSkuFamilyId: getSubSkuFamilyId(currentProduct),
+    countryDeliverables: deliverables, // Pass deliverables for fallback price calculation
+    selectedCountry: selectedCountry,
+    selectedCurrency: selectedCurrency,
   };
 
   const numericPrice =

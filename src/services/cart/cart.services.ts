@@ -26,11 +26,27 @@ export interface GenericResponse {
 }
 
 export class CartService {
-  static async add(productId: string, quantity: number, subSkuFamilyId?: string | null): Promise<GenericResponse> {
+  static async add(
+    productId: string, 
+    quantity: number, 
+    subSkuFamilyId?: string | null,
+    price?: number | null,
+    country?: string | null,
+    currency?: string | null
+  ): Promise<GenericResponse> {
     try {
       const requestBody: any = { productId, quantity };
       if (subSkuFamilyId) {
         requestBody.subSkuFamilyId = subSkuFamilyId;
+      }
+      if (price != null && price > 0) {
+        requestBody.price = price;
+      }
+      if (country) {
+        requestBody.country = country;
+      }
+      if (currency) {
+        requestBody.currency = currency;
       }
       const res = await api.post('/api/customer/cart/add', requestBody);
       const ok = res.data?.success === true || res.data?.status === 200;
@@ -58,10 +74,25 @@ export class CartService {
     }
   }
 
-  static async updateQuantity(productId: string, quantity: number): Promise<GenericResponse> {
+  static async updateQuantity(
+    productId: string, 
+    quantity: number,
+    price?: number | null,
+    country?: string | null,
+    currency?: string | null
+  ): Promise<GenericResponse> {
     try {
-      // Standardize to customer/cart path
-      const res = await api.post('/api/customer/cart/update-quantity', { productId, quantity });
+      const requestBody: any = { productId, quantity };
+      if (price != null && price > 0) {
+        requestBody.price = price;
+      }
+      if (country) {
+        requestBody.country = country;
+      }
+      if (currency) {
+        requestBody.currency = currency;
+      }
+      const res = await api.post('/api/customer/cart/update-quantity', requestBody);
       const ok = res.data?.success === true || res.data?.status === 200;
       toastHelper.showTost(res.data?.message || (ok ? 'Quantity updated' : 'Failed to update quantity'), ok ? 'success' : 'error');
       return res.data;

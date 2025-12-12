@@ -18,7 +18,7 @@ import { getSubSkuFamilyId } from "../../utils/productUtils";
 
 const AddToCartPopup = ({ product, onClose }) => {
   const navigate = useNavigate();
-  const { id, name, price, imageUrl, moq, stockCount, description } = product;
+  const { id, name, price, imageUrl, moq, stockCount, description, selectedCountry, selectedCurrency } = product;
   const purchaseType = (product?.purchaseType || '').toLowerCase();
   const isFullPurchase = purchaseType === 'full';
 
@@ -46,8 +46,36 @@ const AddToCartPopup = ({ product, onClose }) => {
     setImageError(true);
   };
 
-  // Ensure price is a valid number, default to 0 if invalid
-  const validPrice = isNaN(parseFloat(price)) ? 0 : parseFloat(price);
+  // Get price from product - use the passed price (which should be country/currency-specific)
+  // If price is not available, try to get it from countryDeliverables
+  let validPrice = 0;
+  
+  // First, try to use the passed price (should be derived price from parent component)
+  if (price != null && !isNaN(parseFloat(price)) && parseFloat(price) > 0) {
+    validPrice = parseFloat(price);
+  }
+  // If price is 0 or not available, try to get from countryDeliverables
+  else if (product?.countryDeliverables && selectedCountry && selectedCurrency) {
+    const normalize = (val) => (typeof val === "string" ? val.trim().toLowerCase() : "");
+    const deliverables = Array.isArray(product.countryDeliverables) ? product.countryDeliverables : [];
+    const selectedDeliverable = deliverables.find(
+      (d) =>
+        normalize(d.country) === normalize(selectedCountry) &&
+        normalize(d.currency) === normalize(selectedCurrency)
+    );
+    const derivedPrice = selectedDeliverable?.calculatedPrice ?? selectedDeliverable?.basePrice ?? null;
+    if (derivedPrice != null && !isNaN(parseFloat(derivedPrice)) && parseFloat(derivedPrice) > 0) {
+      validPrice = parseFloat(derivedPrice);
+    }
+  }
+  
+  // Final fallback to product base price if still 0
+  if (validPrice === 0 && product?.price && !isNaN(parseFloat(product.price)) && parseFloat(product.price) > 0) {
+    validPrice = parseFloat(product.price);
+  }
+  
+  // Ensure validPrice is a number
+  validPrice = isNaN(validPrice) ? 0 : validPrice;
 
   const handleQuantityChange = (value) => {
     if (isFullPurchase) {
@@ -100,7 +128,19 @@ const AddToCartPopup = ({ product, onClose }) => {
       // This handles the new structure where subSkuFamily is inside skuFamily.subSkuFamilies array
       const rawProduct = product?._product || product;
       const subSkuFamilyId = getSubSkuFamilyId(rawProduct);
-      const res = await CartService.add(id, quantity, subSkuFamilyId);
+      
+      // Validate price before sending
+      if (!validPrice || validPrice <= 0) {
+        setError("Product price is not available. Please select a valid country and currency.");
+        return;
+      }
+      
+      // Get the calculated price (should be set from parent component)
+      const priceToSend = validPrice;
+      const countryToSend = product?.selectedCountry || null;
+      const currencyToSend = product?.selectedCurrency || null;
+      
+      const res = await CartService.add(id, quantity, subSkuFamilyId, priceToSend, countryToSend, currencyToSend);
       const ok = res?.success === true || res?.status === 200;
       if (ok) {
         // Trigger cart count update event
