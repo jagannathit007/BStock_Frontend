@@ -5,9 +5,11 @@ import OrderService from "../../services/order/order.services";
 import iphoneImage from "../../assets/iphone.png";
 import { convertPrice } from "../../utils/currencyUtils";
 import { getSubSkuFamily, getProductName, getProductImages, getSubSkuFamilyId } from "../../utils/productUtils";
+import { useCurrency } from "../../context/CurrencyContext";
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
+  const { selectedCurrency } = useCurrency();
   const [cartItems, setCartItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -97,6 +99,20 @@ const CheckoutPage = () => {
       setIsLoading(true);
       setError(null);
       
+      // Normalize country to location code
+      const normalizeCountry = (countryStr) => {
+        if (!countryStr) return 'HK'; // Default to HK
+        const upper = countryStr.toUpperCase();
+        if (upper === 'HONG KONG' || upper === 'HONGKONG' || upper === 'HK') return 'HK';
+        if (upper === 'DUBAI' || upper === 'DBI' || upper === 'D') return 'D';
+        return 'HK'; // Default
+      };
+
+      // Get current location (default to HK, can be from product or user profile)
+      const currentLocation = 'HK'; // Default, can be enhanced to get from product
+      const deliveryLocation = normalizeCountry(shippingCountry);
+      const currency = selectedCurrency || 'USD'; // Get from currency context
+
       // Create order with cartItems and shipping country
       const payload = {
         cartItems: cartItems.map((it) => ({ 
@@ -106,10 +122,12 @@ const CheckoutPage = () => {
           quantity: Number(it.quantity), 
           price: Number(it.price) 
         })),
-        billingAddress: null,
         shippingAddress: {
           country: shippingCountry
-        }
+        },
+        currentLocation: currentLocation,
+        deliveryLocation: deliveryLocation,
+        currency: currency,
       };
       
       const res = await OrderService.createOrder(payload);

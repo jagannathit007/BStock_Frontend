@@ -160,10 +160,14 @@ const Order = () => {
               >
                 <option value="">All Orders</option>
                 <option value="requested">Requested</option>
-                <option value="approved">Approved</option>
-                <option value="accepted">Accepted</option>
-                <option value="ready_to_pickup">Ready to Pickup</option>
-                <option value="out_for_delivery">Out for Delivery</option>
+                <option value="rejected">Rejected</option>
+                <option value="confirm">Confirm</option>
+                <option value="waiting_for_payment">Waiting for Payment</option>
+                <option value="payment_received">Payment Received</option>
+                <option value="packing">Packing</option>
+                <option value="ready_to_ship">Ready to Ship</option>
+                <option value="on_the_way">On the Way</option>
+                <option value="ready_to_pick">Ready to Pick</option>
                 <option value="delivered">Delivered</option>
                 <option value="cancelled">Cancelled</option>
               </select>
@@ -270,25 +274,43 @@ const Order = () => {
                       <span className="text-lg">{convertPrice(order.totalAmount)}</span>
                     </td>
                     <td className="px-6 py-5 text-sm">
-                      <span
-                        className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide ${
-                          order.status === 'delivered'
-                            ? 'bg-green-100 text-green-800 border border-green-200'
-                            : order.status === 'cancelled'
-                            ? 'bg-red-100 text-red-800 border border-red-200'
-                            : order.status === 'out_for_delivery'
-                            ? 'bg-purple-100 text-purple-800 border border-purple-200'
-                            : order.status === 'ready_to_pickup'
-                            ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
-                            : order.status === 'accepted'
-                            ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
-                            : order.status === 'approved'
-                            ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                            : 'bg-gray-100 text-gray-800 border border-gray-200'
-                        }`}
-                      >
-                        {order.status?.replace(/_/g, ' ')}
-                      </span>
+                      {(() => {
+                        // Filter out internal stages that shouldn't be shown to customers
+                        const internalStages = ['verify', 'approved'];
+                        const displayStatus = internalStages.includes(order.status?.toLowerCase()) 
+                          ? (order.status === 'verify' ? 'requested' : 'confirm')
+                          : order.status;
+                        
+                        return (
+                          <span
+                            className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide ${
+                              displayStatus === 'delivered'
+                                ? 'bg-green-100 text-green-800 border border-green-200'
+                                : displayStatus === 'cancelled'
+                                ? 'bg-red-100 text-red-800 border border-red-200'
+                                : displayStatus === 'on_the_way'
+                                ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                                : displayStatus === 'ready_to_pick'
+                                ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
+                                : displayStatus === 'confirm'
+                                ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                                : displayStatus === 'waiting_for_payment'
+                                ? 'bg-orange-100 text-orange-800 border border-orange-200'
+                                : displayStatus === 'payment_received'
+                                ? 'bg-green-100 text-green-800 border border-green-200'
+                                : displayStatus === 'packing'
+                                ? 'bg-cyan-100 text-cyan-800 border border-cyan-200'
+                                : displayStatus === 'ready_to_ship'
+                                ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                                : displayStatus === 'rejected'
+                                ? 'bg-red-100 text-red-800 border border-red-200'
+                                : 'bg-gray-100 text-gray-800 border border-gray-200'
+                            }`}
+                          >
+                            {displayStatus?.replace(/_/g, ' ')}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-6 py-5 text-center">
                                                 <button
@@ -302,7 +324,7 @@ const Order = () => {
                       </td>
                     <td className="px-6 py-5 text-sm text-center">
                       <div className="flex items-center justify-end gap-2">
-                        {order.status === 'accepted' && order.adminSelectedPaymentMethod && !order.paymentDetails && (
+                        {(order.status === 'confirm' || order.status === 'accepted') && order.adminSelectedPaymentMethod && !order.paymentDetails && (
                           <button
                             onClick={() => {
                               setSelectedOrderForPayment(order);
@@ -315,7 +337,7 @@ const Order = () => {
                             Payment
                           </button>
                         )}
-                        {['requested', 'accepted'].includes(order.status) && (
+                        {['requested', 'confirm', 'accepted'].includes(order.status) && (
                           <button
                             onClick={() => handleCancelOrder(order._id)}
                             disabled={cancellingOrderId === order._id}
@@ -458,25 +480,43 @@ const Order = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                       <p className="text-xs text-gray-500 font-medium mb-1">Order Status</p>
-                      <span
-                        className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide ${
-                          selectedOrderDetails.status === 'delivered'
-                            ? 'bg-green-100 text-green-800 border border-green-200'
-                            : selectedOrderDetails.status === 'cancelled'
-                            ? 'bg-red-100 text-red-800 border border-red-200'
-                            : selectedOrderDetails.status === 'out_for_delivery'
-                            ? 'bg-purple-100 text-purple-800 border border-purple-200'
-                            : selectedOrderDetails.status === 'ready_to_pickup'
-                            ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
-                            : selectedOrderDetails.status === 'accepted'
-                            ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
-                            : selectedOrderDetails.status === 'approved'
-                            ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                            : 'bg-gray-100 text-gray-800 border border-gray-200'
-                        }`}
-                      >
-                        {selectedOrderDetails.status?.replace(/_/g, ' ')}
-                      </span>
+                      {(() => {
+                        // Filter out internal stages for customer view
+                        const internalStages = ['verify', 'approved'];
+                        const displayStatus = internalStages.includes(selectedOrderDetails.status?.toLowerCase()) 
+                          ? (selectedOrderDetails.status === 'verify' ? 'requested' : 'confirm')
+                          : selectedOrderDetails.status;
+                        
+                        return (
+                          <span
+                            className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide ${
+                              displayStatus === 'delivered'
+                                ? 'bg-green-100 text-green-800 border border-green-200'
+                                : displayStatus === 'cancelled'
+                                ? 'bg-red-100 text-red-800 border border-red-200'
+                                : displayStatus === 'on_the_way'
+                                ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                                : displayStatus === 'ready_to_pick'
+                                ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
+                                : displayStatus === 'confirm'
+                                ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                                : displayStatus === 'waiting_for_payment'
+                                ? 'bg-orange-100 text-orange-800 border border-orange-200'
+                                : displayStatus === 'payment_received'
+                                ? 'bg-green-100 text-green-800 border border-green-200'
+                                : displayStatus === 'packing'
+                                ? 'bg-cyan-100 text-cyan-800 border border-cyan-200'
+                                : displayStatus === 'ready_to_ship'
+                                ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                                : displayStatus === 'rejected'
+                                ? 'bg-red-100 text-red-800 border border-red-200'
+                                : 'bg-gray-100 text-gray-800 border border-gray-200'
+                            }`}
+                          >
+                            {displayStatus?.replace(/_/g, ' ')}
+                          </span>
+                        );
+                      })()}
                     </div>
                     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                       <p className="text-xs text-gray-500 font-medium mb-1">Order Date</p>
@@ -520,9 +560,17 @@ const Order = () => {
                         </div>
                       ))}
                     </div>
-                    <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
-                      <span className="text-lg font-semibold text-gray-900">Total Amount</span>
-                      <span className="text-2xl font-bold text-blue-600">{convertPrice(selectedOrderDetails.totalAmount)}</span>
+                    <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
+                      {selectedOrderDetails.otherCharges && selectedOrderDetails.otherCharges > 0 && (
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-gray-600">Other Charges:</span>
+                          <span className="font-semibold text-gray-900">{convertPrice(selectedOrderDetails.otherCharges)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center">
+                        <span className="text-lg font-semibold text-gray-900">Total Amount</span>
+                        <span className="text-2xl font-bold text-blue-600">{convertPrice(selectedOrderDetails.totalAmount)}</span>
+                      </div>
                     </div>
                   </div>
 

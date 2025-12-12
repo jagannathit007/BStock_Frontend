@@ -12,9 +12,11 @@ import OrderService from "../../services/order/order.services";
 import iphoneImage from "../../assets/iphone.png";
 import { convertPrice } from "../../utils/currencyUtils";
 import { getSubSkuFamily, getProductName, getProductImages, getSubSkuFamilyId } from "../../utils/productUtils";
+import { useCurrency } from "../../context/CurrencyContext";
 
 const CartPage = () => {
   const navigate = useNavigate();
+  const { selectedCurrency } = useCurrency();
   const [cartItems, setCartItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -207,6 +209,20 @@ const CartPage = () => {
       setError(null);
       setItemLoading((prev) => ({ ...prev, [item.id]: true }));
 
+      // Normalize country to location code
+      const normalizeCountry = (countryStr) => {
+        if (!countryStr) return 'HK'; // Default to HK
+        const upper = countryStr.toUpperCase();
+        if (upper === 'HONG KONG' || upper === 'HONGKONG' || upper === 'HK') return 'HK';
+        if (upper === 'DUBAI' || upper === 'DBI' || upper === 'D') return 'D';
+        return 'HK'; // Default
+      };
+
+      // Get current location (default to HK, can be from product or user profile)
+      const currentLocation = 'HK'; // Default, can be enhanced to get from product
+      const deliveryLocation = normalizeCountry(country);
+      const currency = selectedCurrency || 'USD'; // Get from currency context
+
       // Create order with only this single product
       const orderData = {
         cartItems: [{
@@ -216,10 +232,12 @@ const CartPage = () => {
           quantity: Number(item.quantity),
           price: Number(item.price),
         }],
-        billingAddress: {
+        shippingAddress: {
           country: country
         },
-        shippingAddress: null,
+        currentLocation: currentLocation,
+        deliveryLocation: deliveryLocation,
+        currency: currency,
       };
 
       const response = await OrderService.createOrder(orderData);

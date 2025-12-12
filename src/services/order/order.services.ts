@@ -27,8 +27,12 @@ export interface PaymentDetails {
 
 export interface CreateOrderRequest {
   cartItems: OrderItem[];
-  billingAddress: Address;
-  shippingAddress: Address;
+  billingAddress?: Address;
+  shippingAddress?: Address;
+  currentLocation?: string;
+  deliveryLocation?: string;
+  currency?: string;
+  otherCharges?: number | null;
   paymentDetails?: PaymentDetails;
 }
 
@@ -43,10 +47,14 @@ export interface Order {
   }>;
   billingAddress?: Address;
   shippingAddress?: Address;
+  currentLocation?: string;
+  deliveryLocation?: string;
+  currency?: string;
   paymentDetails?: PaymentDetails;
   adminSelectedPaymentMethod?: string;
   status: string;
   totalAmount: number;
+  otherCharges?: number | null;
   createdAt: string;
 }
 
