@@ -850,6 +850,19 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
             .replace(/,/g, "")
         ) || 0;
 
+      // Normalize country to location code
+      const normalizeCountry = (countryStr) => {
+        if (!countryStr) return 'HK';
+        const upper = countryStr.toUpperCase();
+        if (upper === 'HONG KONG' || upper === 'HONGKONG' || upper === 'HK') return 'HK';
+        if (upper === 'DUBAI' || upper === 'DBI' || upper === 'D') return 'D';
+        return 'HK';
+      };
+
+      const currentLocation = 'HK'; // Default, can be enhanced to get from product
+      const deliveryLocation = normalizeCountry(customerCountryCurrency?.country || 'HK');
+      const currency = selectedCurrency || 'USD';
+
       const orderData = {
         cartItems: [
           {
@@ -870,8 +883,11 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
           address: "",
           city: "",
           postalCode: "",
-          country: "",
+          country: customerCountryCurrency?.country || "",
         },
+        currentLocation: currentLocation,
+        deliveryLocation: deliveryLocation,
+        currency: currency,
       };
 
       const response = await OrderService.createOrder(orderData);

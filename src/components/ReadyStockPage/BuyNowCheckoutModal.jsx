@@ -7,6 +7,7 @@ import PaymentPopup from "../PaymentPopup";
 import iphoneImage from "../../assets/iphone.png";
 import { convertPrice } from "../../utils/currencyUtils";
 import { getSubSkuFamilyId } from "../../utils/productUtils";
+import { useCurrency } from "../../context/CurrencyContext";
 
 const BuyNowCheckoutModal = ({
   isOpen,
@@ -15,6 +16,7 @@ const BuyNowCheckoutModal = ({
   quantity,
   onSuccess,
 }) => {
+  const { selectedCurrency } = useCurrency();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [imageError, setImageError] = useState(false);
@@ -94,12 +96,28 @@ const BuyNowCheckoutModal = ({
       setError(null);
       setIsLoading(true);
 
+      // Normalize country to location code
+      const normalizeCountry = (countryStr) => {
+        if (!countryStr) return 'HK';
+        const upper = countryStr.toUpperCase();
+        if (upper === 'HONG KONG' || upper === 'HONGKONG' || upper === 'HK') return 'HK';
+        if (upper === 'DUBAI' || upper === 'DBI' || upper === 'D') return 'D';
+        return 'HK';
+      };
+
+      const currentLocation = 'HK'; // Default, can be enhanced
+      const deliveryLocation = normalizeCountry(currentOrder.shippingAddress?.country);
+      const currency = selectedCurrency || 'USD';
+
       // Create order with payment details included
       const orderData = {
         cartItems: currentOrder.cartItems,
         billingAddress: currentOrder.billingAddress,
         shippingAddress: currentOrder.shippingAddress,
         paymentDetails: currentOrder.paymentDetails,
+        currentLocation: currentLocation,
+        deliveryLocation: deliveryLocation,
+        currency: currency,
       };
 
       const response = await OrderService.createOrder(orderData);
@@ -128,12 +146,28 @@ const BuyNowCheckoutModal = ({
       setError(null);
       setIsLoading(true);
 
+      // Normalize country to location code
+      const normalizeCountry = (countryStr) => {
+        if (!countryStr) return 'HK';
+        const upper = countryStr.toUpperCase();
+        if (upper === 'HONG KONG' || upper === 'HONGKONG' || upper === 'HK') return 'HK';
+        if (upper === 'DUBAI' || upper === 'DBI' || upper === 'D') return 'D';
+        return 'HK';
+      };
+
+      const currentLocation = 'HK'; // Default, can be enhanced
+      const deliveryLocation = normalizeCountry(orderDataWithPayment.shippingAddress?.country);
+      const currency = selectedCurrency || 'USD';
+
       // Create order with payment details included
       const orderData = {
         cartItems: orderDataWithPayment.cartItems,
         billingAddress: orderDataWithPayment.billingAddress,
         shippingAddress: orderDataWithPayment.shippingAddress,
         paymentDetails: orderDataWithPayment.paymentDetails,
+        currentLocation: currentLocation,
+        deliveryLocation: deliveryLocation,
+        currency: currency,
       };
 
       const response = await OrderService.createOrder(orderData);

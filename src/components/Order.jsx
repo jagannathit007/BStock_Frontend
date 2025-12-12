@@ -324,7 +324,7 @@ const Order = () => {
                       </td>
                     <td className="px-6 py-5 text-sm text-center">
                       <div className="flex items-center justify-end gap-2">
-                        {(order.status === 'confirm' || order.status === 'accepted') && order.adminSelectedPaymentMethod && !order.paymentDetails && (
+                        {(order.status === 'confirm') && order.adminSelectedPaymentMethod && !order.paymentDetails && (
                           <button
                             onClick={() => {
                               setSelectedOrderForPayment(order);
@@ -337,7 +337,7 @@ const Order = () => {
                             Payment
                           </button>
                         )}
-                        {['requested', 'confirm', 'accepted'].includes(order.status) && (
+                        {['requested', 'confirm'].includes(order.status) && (
                           <button
                             onClick={() => handleCancelOrder(order._id)}
                             disabled={cancellingOrderId === order._id}
@@ -531,6 +531,40 @@ const Order = () => {
                       </p>
                     </div>
                   </div>
+
+                  {/* Location & Currency */}
+                  {(selectedOrderDetails.currentLocation || selectedOrderDetails.deliveryLocation || selectedOrderDetails.currency) && (
+                    <div className="bg-white rounded-lg border border-gray-200 p-5">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <FontAwesomeIcon icon={faMapMarkerAlt} className="text-blue-600" />
+                        Location & Currency
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {selectedOrderDetails.currentLocation && (
+                          <div>
+                            <p className="text-xs text-gray-500 font-medium mb-1">Current Location</p>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {selectedOrderDetails.currentLocation === 'HK' ? 'Hong Kong' : 'Dubai'}
+                            </p>
+                          </div>
+                        )}
+                        {selectedOrderDetails.deliveryLocation && (
+                          <div>
+                            <p className="text-xs text-gray-500 font-medium mb-1">Delivery Location</p>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {selectedOrderDetails.deliveryLocation === 'HK' ? 'Hong Kong' : 'Dubai'}
+                            </p>
+                          </div>
+                        )}
+                        {selectedOrderDetails.currency && (
+                          <div>
+                            <p className="text-xs text-gray-500 font-medium mb-1">Currency</p>
+                            <p className="text-sm font-semibold text-gray-900">{selectedOrderDetails.currency}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Order Items */}
                   <div className="bg-white rounded-lg border border-gray-200 p-5">
