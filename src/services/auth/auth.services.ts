@@ -119,6 +119,15 @@ export class AuthService {
         localStorage.setItem("userCurrency", JSON.stringify(currencyData));
       }
 
+      // Save customer category details separately for easy access
+      const customerCategory = userData.customerCategory;
+      if (customerCategory) {
+        localStorage.setItem("customerCategory", JSON.stringify(customerCategory));
+      } else {
+        // Clear category if not present
+        localStorage.removeItem("customerCategory");
+      }
+
       // Dispatch custom event to notify components about the update
       window.dispatchEvent(new CustomEvent('profileUpdated', { 
         detail: userData 

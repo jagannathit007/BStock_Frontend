@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { X } from "lucide-react";
 import WalletService from "../../services/wallet/wallet.services";
 import { formatPriceUSD } from "../../utils/currencyUtils";
@@ -11,6 +11,49 @@ const WalletModal = ({ isOpen, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const limit = 10;
 
+  // Get customer category from localStorage
+  const customerCategory = useMemo(() => {
+    try {
+      const categoryStr = localStorage.getItem("customerCategory");
+      return categoryStr ? JSON.parse(categoryStr) : null;
+    } catch (error) {
+      console.error("Error parsing customer category:", error);
+      return null;
+    }
+  }, []);
+
+  // Calculate leverage amounts
+  const leverageAmounts = useMemo(() => {
+    const walletBalance = parseFloat(wallet?.balance || 0);
+    const blockedAmount = parseFloat(wallet?.blockedAmount || 0);
+    const readyStockAllowance = customerCategory?.readyStockAllowancePer || 0;
+    const bidWalletAllowance = customerCategory?.bidWalletAllowancePer || 0;
+
+    // Multiply directly: if wallet is 1000 and allowance is 10, max order = 10,000
+    const readyStockLeverage = readyStockAllowance > 0 
+      ? walletBalance * readyStockAllowance 
+      : 0;
+    
+    const bidLeverage = bidWalletAllowance > 0 
+      ? walletBalance * bidWalletAllowance 
+      : 0;
+
+    // Calculate available leverage (total leverage minus blocked amount)
+    const availableReadyStockLeverage = Math.max(0, readyStockLeverage - blockedAmount);
+    const availableBidLeverage = Math.max(0, bidLeverage - blockedAmount);
+
+    return {
+      readyStockLeverage,
+      bidLeverage,
+      availableReadyStockLeverage,
+      availableBidLeverage,
+      blockedAmount,
+      readyStockAllowance,
+      bidWalletAllowance,
+      isSame: readyStockAllowance === bidWalletAllowance
+    };
+  }, [wallet, customerCategory]);
+
   // Fetch wallet and transaction data
   const fetchWalletData = async () => {
     setIsLoading(true);
@@ -18,6 +61,7 @@ const WalletModal = ({ isOpen, onClose }) => {
       // Fetch wallet balance
       const walletResponse = await WalletService.getWallet();
       if (walletResponse.status === 200 && walletResponse.data) {
+        console.log('Wallet data received:', walletResponse.data);
         setWallet(walletResponse.data);
       } else {
         setWallet(null);
@@ -111,6 +155,83 @@ const WalletModal = ({ isOpen, onClose }) => {
             </p>
           </div>
 
+          {/* Blocked Amount */}
+          {wallet && parseFloat(wallet.blockedAmount || 0) > 0 && (
+            <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+              <h3 className="text-sm font-medium text-gray-700 mb-1">
+                Blocked Amount
+              </h3>
+              <p className="text-2xl font-bold text-orange-700">
+                {formatPriceUSD(parseFloat(wallet.blockedAmount || 0))}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Amount currently blocked for pending orders/bids
+              </p>
+            </div>
+          )}
+
+          {/* Leverage Amounts */}
+          {customerCategory && (customerCategory.readyStockAllowancePer || customerCategory.bidWalletAllowancePer) && (
+            <div className="mb-6 space-y-3">
+              {leverageAmounts.isSame ? (
+                // Show single leverage if both allowances are the same
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-medium text-gray-700">
+                      Remaining Amount (Leverage)
+                    </h3>
+                  </div>
+                  <p className="text-2xl font-bold text-green-700">
+                    {formatPriceUSD(leverageAmounts.availableReadyStockLeverage)}
+                  </p>
+                  <div className="mt-2 pt-2 border-t border-green-200">
+                    <p className="text-xs text-gray-500 mt-1">
+                      {customerCategory.readyStockAllowancePer}% leverage on wallet balance
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                // Show separate leverages if different
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {customerCategory.readyStockAllowancePer > 0 && (
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-sm font-medium text-gray-700">
+                          Ready Stock Remaining Amount
+                        </h3>
+                      </div>
+                      <p className="text-2xl font-bold text-blue-700">
+                        {formatPriceUSD(leverageAmounts.availableReadyStockLeverage)}
+                      </p>
+                      <div className="mt-2 pt-2 border-t border-blue-200">
+                        <p className="text-xs text-gray-500 mt-1">
+                          {customerCategory.readyStockAllowancePer}% leverage
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {customerCategory.bidWalletAllowancePer > 0 && (
+                    <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-sm font-medium text-gray-700">
+                          Bid Remaining Amount
+                        </h3>
+                      </div>
+                      <p className="text-2xl font-bold text-purple-700">
+                        {formatPriceUSD(leverageAmounts.availableBidLeverage)}
+                      </p>
+                      <div className="mt-2 pt-2 border-t border-purple-200">
+                        <p className="text-xs text-gray-500 mt-1">
+                          {customerCategory.bidWalletAllowancePer}% leverage
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Transaction History */}
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -129,7 +250,12 @@ const WalletModal = ({ isOpen, onClose }) => {
             ) : (
               <div className="space-y-4">
                 {transactions.map((transaction) => {
-                  const creatorName = typeof transaction.createdBy === 'string' ? 'Admin' : transaction.createdBy.name;
+                  const creatorName = 
+                    !transaction.createdBy 
+                      ? 'System' 
+                      : typeof transaction.createdBy === 'string' 
+                        ? 'Admin' 
+                        : transaction.createdBy?.name || 'Admin';
                   return (
                     <div
                       key={transaction._id}

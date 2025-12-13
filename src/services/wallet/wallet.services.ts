@@ -5,6 +5,7 @@ export interface Wallet {
   _id: string;
   customerId: string;
   balance: number;
+  blockedAmount?: number;
   createdAt: string;
   updatedAt: string;
 }
