@@ -56,6 +56,10 @@ export interface Order {
   totalAmount: number;
   otherCharges?: number | null;
   createdAt: string;
+  receiverDetails?: {
+    name?: string | null;
+    mobile?: string | null;
+  };
 }
 
 export interface OrderListResponse {
@@ -180,6 +184,34 @@ export class OrderService {
       const res = await api.post('/api/customer/order/get-payment-details', { orderId });
       return res.data;
     } catch (err: any) {
+      throw err;
+    }
+  }
+
+  static async confirmOrderModification(token: string): Promise<any> {
+    try {
+      const res = await api.get(`/api/customer/order/confirm-modification/${token}`);
+      return res.data;
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Failed to confirm order modification';
+      toastHelper.showTost(msg, 'error');
+      throw err;
+    }
+  }
+
+  static async addReceiverDetails(orderId: string, receiverName: string, receiverMobile: string): Promise<any> {
+    try {
+      const res = await api.post('/api/customer/order/add-receiver-details', {
+        orderId,
+        receiverName,
+        receiverMobile,
+      });
+      const ok = res.data?.success === true || res.data?.status === 200;
+      toastHelper.showTost(res.data?.message || (ok ? 'Receiver details added successfully' : 'Failed to add receiver details'), ok ? 'success' : 'error');
+      return res.data;
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Failed to add receiver details';
+      toastHelper.showTost(msg, 'error');
       throw err;
     }
   }

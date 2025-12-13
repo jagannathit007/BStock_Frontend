@@ -21,6 +21,7 @@ import SignUpForm from "./components/SignUpForm";
 import VerifyEmailPrompt from "./components/VerifyEmailPrompt";
 import VerifyEmail from "./components/VerifyEmail";
 import ResetPassword from "./components/ResetPassword";
+import ConfirmOrderModification from "./components/ConfirmOrderModification";
 import CartPage from "./components/ReadyStockPage/CartPage";
 import CheckoutPage from "./components/ReadyStockPage/CheckoutPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -67,8 +68,8 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Hide header only on login, signup, verify-email, and reset-password pages
-  const hideHeader = location.pathname === '/login' || location.pathname === '/signup' || location.pathname.startsWith('/verify-email') || location.pathname.startsWith('/reset-password');
+  // Hide header only on login, signup, verify-email, reset-password, and confirm-order-modification pages
+  const hideHeader = location.pathname === '/login' || location.pathname === '/signup' || location.pathname.startsWith('/verify-email') || location.pathname.startsWith('/reset-password') || location.pathname.startsWith('/confirm-order-modification');
 
   useEffect(() => {
     if (isLoggedIn && (location.pathname === "/login" || location.pathname === "/signup")) {
@@ -104,11 +105,15 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
 
       <main className="flex-1">
           <Routes>
-            {/* Public Routes */}
-            <Route path="/login" element={<LoginForm onLogin={handleLogin} />} />
-            <Route path="/signup" element={<SignUpForm />} />{" "}
+            {/* Public Routes - Order matters, more specific routes first */}
+            <Route 
+              path="/confirm-order-modification/:token" 
+              element={<ConfirmOrderModification />} 
+            />
             <Route path="/verify-email/:token" element={<VerifyEmail />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
+            <Route path="/login" element={<LoginForm onLogin={handleLogin} />} />
+            <Route path="/signup" element={<SignUpForm />} />{" "}
             {/* Public pages (browsable without login) */}
             <Route path="/home" element={<HomePage />} />
             <Route path="/ready-stock" element={<Layout><MainContent /></Layout>} />
@@ -177,7 +182,7 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
                 </ProtectedRoute>
               }
             />
-            {/* Fallback to Home for unknown routes */}
+            {/* Fallback to Home for unknown routes - but only if not a token route */}
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>
         </main>
