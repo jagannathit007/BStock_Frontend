@@ -13,7 +13,7 @@ import {
 import CartService from "../../services/cart/cart.services";
 import { AuthService } from "../../services/auth/auth.services";
 import iphoneImage from "../../assets/iphone.png";
-import { convertPrice } from "../../utils/currencyUtils";
+import { getCurrencySymbol } from "../../utils/currencyUtils";
 import { getSubSkuFamilyId } from "../../utils/productUtils";
 
 const AddToCartPopup = ({ product, onClose }) => {
@@ -76,6 +76,17 @@ const AddToCartPopup = ({ product, onClose }) => {
   
   // Ensure validPrice is a number
   validPrice = isNaN(validPrice) ? 0 : validPrice;
+
+  // Format price in original currency (no conversion - price is already in selected currency)
+  const formatPriceInCurrency = (priceValue) => {
+    const numericPrice = parseFloat(priceValue) || 0;
+    const currency = selectedCurrency || 'USD';
+    const symbol = getCurrencySymbol(currency);
+    return `${symbol}${numericPrice.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  };
 
   const handleQuantityChange = (value) => {
     if (isFullPurchase) {
@@ -213,7 +224,7 @@ const AddToCartPopup = ({ product, onClose }) => {
                   icon={faDollarSign}
                   className="w-4 h-4 text-green-600"
                 />
-                {convertPrice(validPrice)}
+                {formatPriceInCurrency(validPrice)}
               </div>
               <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
                 <FontAwesomeIcon icon={faBox} className="w-3 h-3" />
@@ -283,11 +294,11 @@ const AddToCartPopup = ({ product, onClose }) => {
                   icon={faDollarSign}
                   className="w-4 h-4 text-green-600"
                 />
-                {convertPrice(totalPrice)}
+                {formatPriceInCurrency(totalPrice)}
               </div>
             </div>
             <div className="text-xs text-gray-600 mt-1 font-apple">
-              {quantity} × {convertPrice(validPrice)} per unit
+              {quantity} × {formatPriceInCurrency(validPrice)} per unit
             </div>
           </div>
         </div>

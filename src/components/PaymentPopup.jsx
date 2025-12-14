@@ -2,9 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faCreditCard, faFileUpload, faCheck } from '@fortawesome/free-solid-svg-icons';
 import PaymentService from '../services/payment/payment.services';
-import { convertPrice } from '../utils/currencyUtils';
+import { getCurrencySymbol } from '../utils/currencyUtils';
 
 const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaymentMethod }) => {
+  // Format price in original currency (no conversion - price is already in order's currency)
+  const formatPriceInCurrency = (priceValue, currency = 'USD') => {
+    const numericPrice = parseFloat(priceValue) || 0;
+    const symbol = getCurrencySymbol(currency);
+    return `${symbol}${numericPrice.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  };
+
   const [paymentConfig, setPaymentConfig] = useState(null);
   const [selectedModule, setSelectedModule] = useState(adminSelectedPaymentMethod || '');
   const [selectedCurrency, setSelectedCurrency] = useState('');
@@ -419,7 +429,7 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Total Amount:</span>
                   <span className="text-xl font-bold text-gray-900">
-                    {convertPrice(orderData.totalAmount)}
+                    {formatPriceInCurrency(orderData.totalAmount, orderData.currency)}
                   </span>
                 </div>
               </div>

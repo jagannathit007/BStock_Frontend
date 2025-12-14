@@ -20,6 +20,7 @@ import Swal from "sweetalert2";
 import Countdown from "react-countdown";
 import { convertPrice } from "../../utils/currencyUtils";
 import { getSubSkuFamilyId } from "../../utils/productUtils";
+import { useCurrency } from "../../context/CurrencyContext";
 
 const ProductCard = ({
   product,
@@ -39,7 +40,12 @@ const ProductCard = ({
   const [selectedColor, setSelectedColor] = useState(product?.color || "");
   const [selectedPrice, setSelectedPrice] = useState(product?.price || 0);
   const [selectedCountry, setSelectedCountry] = useState("Hongkong");
-  const [selectedCurrency, setSelectedCurrency] = useState("USD");
+  // Use global currency context instead of local state
+  const { selectedCurrency: globalSelectedCurrency, setSelectedCurrency: setGlobalSelectedCurrency } = useCurrency();
+  const selectedCurrency = globalSelectedCurrency || "USD";
+  const setSelectedCurrency = (currency) => {
+    setGlobalSelectedCurrency(currency);
+  };
 
   // === LIST VIEW: QUANTITY STATE ===
   const [quantity, setQuantity] = useState(1);
@@ -59,14 +65,24 @@ const ProductCard = ({
   };
 
   useEffect(() => {
-    // Reset selection when product changes
+    // Reset country selection when product changes
     const firstDeliverable = deliverables[0];
     if (firstDeliverable) {
       setSelectedCountry(firstDeliverable.country || "Hongkong");
-      setSelectedCurrency(firstDeliverable.currency || "USD");
+      // Only set currency from deliverable if global context doesn't have a valid currency for this country
+      // This preserves user's currency selection
+      const validCurrencies = currencyOptionsByCountry[firstDeliverable.country || "Hongkong"] || [];
+      if (firstDeliverable.currency && (!globalSelectedCurrency || !validCurrencies.includes(globalSelectedCurrency))) {
+        // If global currency is not valid for this country, set it from deliverable
+        setSelectedCurrency(firstDeliverable.currency);
+      }
+      // If global currency is valid for this country, keep it (don't override user selection)
     } else {
       setSelectedCountry("Hongkong");
-      setSelectedCurrency("USD");
+      // Only reset to USD if no currency is set in global context
+      if (!globalSelectedCurrency) {
+        setSelectedCurrency("USD");
+      }
     }
   }, [product, deliverables]);
 
@@ -74,9 +90,10 @@ const ProductCard = ({
     // Ensure currency stays valid for the chosen country
     const validCurrencies = currencyOptionsByCountry[selectedCountry] || [];
     if (!validCurrencies.includes(selectedCurrency) && validCurrencies.length) {
+      // If current currency is not valid for selected country, switch to first valid currency
       setSelectedCurrency(validCurrencies[0]);
     }
-  }, [selectedCountry, selectedCurrency]);
+  }, [selectedCountry]);
 
   const normalize = (val) => (typeof val === "string" ? val.trim().toLowerCase() : "");
   const selectedDeliverable = deliverables.find(

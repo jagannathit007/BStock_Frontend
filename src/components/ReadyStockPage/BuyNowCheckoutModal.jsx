@@ -5,7 +5,7 @@ import OrderService from "../../services/order/order.services";
 import PaymentService from "../../services/payment/payment.services";
 import PaymentPopup from "../PaymentPopup";
 import iphoneImage from "../../assets/iphone.png";
-import { convertPrice } from "../../utils/currencyUtils";
+import { getCurrencySymbol } from "../../utils/currencyUtils";
 import { getSubSkuFamilyId } from "../../utils/productUtils";
 import { useCurrency } from "../../context/CurrencyContext";
 
@@ -17,6 +17,17 @@ const BuyNowCheckoutModal = ({
   onSuccess,
 }) => {
   const { selectedCurrency } = useCurrency();
+
+  // Format price in original currency (no conversion - price is already in selected currency)
+  const formatPriceInCurrency = (priceValue) => {
+    const numericPrice = parseFloat(priceValue) || 0;
+    const currency = selectedCurrency || 'USD';
+    const symbol = getCurrencySymbol(currency);
+    return `${symbol}${numericPrice.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  };
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [imageError, setImageError] = useState(false);
@@ -251,13 +262,13 @@ const BuyNowCheckoutModal = ({
                     Quantity: {quantity}
                   </span>
                   <span className="text-sm text-gray-600">
-                    Price: {convertPrice(product.price)}
+                    Price: {formatPriceInCurrency(product.price)}
                   </span>
                 </div>
               </div>
               <div className="text-right">
                 <div className="text-lg font-semibold text-gray-900">
-                  {convertPrice(totalPrice)}
+                  {formatPriceInCurrency(totalPrice)}
                 </div>
                 <div className="text-sm text-gray-600">Total</div>
               </div>

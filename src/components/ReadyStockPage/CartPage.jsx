@@ -10,13 +10,24 @@ import { useNavigate } from "react-router-dom";
 import CartService from "../../services/cart/cart.services";
 import OrderService from "../../services/order/order.services";
 import iphoneImage from "../../assets/iphone.png";
-import { convertPrice } from "../../utils/currencyUtils";
+import { getCurrencySymbol } from "../../utils/currencyUtils";
 import { getSubSkuFamily, getProductName, getProductImages, getSubSkuFamilyId } from "../../utils/productUtils";
 import { useCurrency } from "../../context/CurrencyContext";
 
 const CartPage = () => {
   const navigate = useNavigate();
   const { selectedCurrency } = useCurrency();
+
+  // Format price in original currency (no conversion - price is already in selected currency)
+  const formatPriceInCurrency = (priceValue) => {
+    const numericPrice = parseFloat(priceValue) || 0;
+    const currency = selectedCurrency || 'USD';
+    const symbol = getCurrencySymbol(currency);
+    return `${symbol}${numericPrice.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  };
   const [cartItems, setCartItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -221,7 +232,20 @@ const CartPage = () => {
       // Get current location (default to HK, can be from product or user profile)
       const currentLocation = 'HK'; // Default, can be enhanced to get from product
       const deliveryLocation = normalizeCountry(country);
-      const currency = selectedCurrency || 'USD'; // Get from currency context
+      // Use selectedCurrency from global context - ensure it's explicitly set
+      let currency = selectedCurrency;
+      if (!currency) {
+        // Infer currency from country as fallback
+        const countryUpper = country?.toUpperCase() || '';
+        if (countryUpper.includes('DUBAI') || countryUpper.includes('D')) {
+          currency = 'AED';
+        } else if (countryUpper.includes('HONG') || countryUpper.includes('HK')) {
+          currency = 'HKD';
+        } else {
+          currency = 'USD'; // Last resort default
+        }
+      }
+      console.log('Creating order from cart page with currency:', currency, 'from context:', selectedCurrency);
 
       // Create order with only this single product
       const orderData = {
@@ -386,7 +410,7 @@ const CartPage = () => {
                         <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-1">
                           <div>
                             <div className="text-base flex items-center font-semibold text-gray-900">
-                              {convertPrice(item.price)}
+                              {formatPriceInCurrency(item.price)}
                             <div className="text-xs text-gray-500 ms-2">Stock: {item.stockCount}</div>
                             </div>
                           </div>
@@ -450,7 +474,7 @@ const CartPage = () => {
                           <div className="ml-auto text-right">
                             <div className="text-xs text-gray-500 mb-0.5">Total</div>
                             <div className="text-lg font-bold text-gray-900">
-                              {convertPrice(item.price * item.quantity)}
+                              {formatPriceInCurrency(item.price * item.quantity)}
                             </div>
                           </div>
                         </div>

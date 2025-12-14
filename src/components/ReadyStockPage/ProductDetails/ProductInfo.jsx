@@ -43,7 +43,7 @@ import { getSubSkuFamily, getProductName, getProductCode, getProductImages, getS
 import 'flag-icons/css/flag-icons.min.css';
 
 const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
-  const { customerCountryCurrency } = useCurrency();
+  const { customerCountryCurrency, selectedCurrency: globalSelectedCurrency, setSelectedCurrency: setGlobalSelectedCurrency } = useCurrency();
   const [currentProduct, setCurrentProduct] = useState(initialProduct);
   const [quantity, setQuantity] = useState(initialProduct.moq || 5);
   const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
@@ -71,7 +71,11 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [selectedCountryRate, setSelectedCountryRate] = useState('AED');
   const [isCountryRateDropdownOpen, setIsCountryRateDropdownOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState("Hongkong");
-  const [selectedCurrency, setSelectedCurrency] = useState("USD");
+  // Use global currency context instead of local state
+  const selectedCurrency = globalSelectedCurrency || "USD";
+  const setSelectedCurrency = (currency) => {
+    setGlobalSelectedCurrency(currency);
+  };
 
   // Listen for currency changes to force re-render
   useEffect(() => {
@@ -220,24 +224,51 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   }, [deliverables, selectedCountry]);
 
   useEffect(() => {
-    // Reset selection when product/deliverables change
+    // Reset country selection when product/deliverables change
     const first = deliverables[0];
     if (first) {
-      setSelectedCountry(first.country || "Hongkong");
-      setSelectedCurrency(first.currency || "USD");
+      const countryToSet = first.country || "Hongkong";
+      setSelectedCountry(countryToSet);
+      
+      // Get valid currencies for this country
+      const validCurrencies = [];
+      deliverables.forEach((d) => {
+        if (normalize(d.country) === normalize(countryToSet) && d?.currency) {
+          const key = normalize(d.currency);
+          if (!validCurrencies.find((c) => normalize(c) === key)) {
+            validCurrencies.push(d.currency);
+          }
+        }
+      });
+      if (validCurrencies.length === 0) {
+        // Fallback to default currencies
+        validCurrencies.push(...(countryToSet.toLowerCase().includes("dubai") ? ["USD", "AED"] : ["USD", "HKD"]));
+      }
+      
+      // Only set currency from deliverable if global context doesn't have a valid currency for this country
+      // This preserves user's currency selection
+      if (first.currency && (!globalSelectedCurrency || !validCurrencies.includes(globalSelectedCurrency))) {
+        // If global currency is not valid for this country, set it from deliverable
+        setSelectedCurrency(first.currency);
+      }
+      // If global currency is valid for this country, keep it (don't override user selection)
     } else {
       setSelectedCountry("Hongkong");
-      setSelectedCurrency("USD");
+      // Only reset to USD if no currency is set in global context
+      if (!globalSelectedCurrency) {
+        setSelectedCurrency("USD");
+      }
     }
   }, [deliverables, currentProduct]);
 
   useEffect(() => {
     // Keep currency valid for selected country
     const valid = currencyOptionsForCountry;
-    if (!valid.includes(selectedCurrency) && valid.length) {
+    if (valid.length > 0 && !valid.includes(selectedCurrency)) {
+      // If current currency is not valid for selected country, switch to first valid currency
       setSelectedCurrency(valid[0]);
     }
-  }, [currencyOptionsForCountry, selectedCurrency]);
+  }, [currencyOptionsForCountry, selectedCountry, selectedCurrency]);
 
   const selectedDeliverable = deliverables.find(
     (d) =>
@@ -861,7 +892,9 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
 
       const currentLocation = 'HK'; // Default, can be enhanced to get from product
       const deliveryLocation = normalizeCountry(customerCountryCurrency?.country || 'HK');
-      const currency = selectedCurrency || 'USD';
+      // Use selectedCurrency from global context - it should be set when user selects currency on product page
+      const currency = selectedCurrency || (deliveryLocation === 'D' ? 'AED' : 'HKD') || 'USD';
+      console.log('Creating order from product page with currency:', currency, 'selectedCurrency:', selectedCurrency);
 
       const orderData = {
         cartItems: [

@@ -2,11 +2,21 @@ import React, { useState, useEffect, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faShoppingBag, faTimes, faSearch, faCreditCard, faEye, faMapMarkerAlt, faFileAlt, faDownload } from "@fortawesome/free-solid-svg-icons";
 import OrderService from "../services/order/order.services";
-import { convertPrice } from "../utils/currencyUtils";
+import { getCurrencySymbol } from "../utils/currencyUtils";
 import PaymentPopup from "./PaymentPopup";
 import { getProductName } from "../utils/productUtils";
 
 const Order = () => {
+  // Format price in original currency (no conversion - price is already in order's currency)
+  const formatPriceInCurrency = (priceValue, currency = 'USD') => {
+    const numericPrice = parseFloat(priceValue) || 0;
+    const symbol = getCurrencySymbol(currency);
+    return `${symbol}${numericPrice.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  };
+
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -276,7 +286,7 @@ const Order = () => {
                       <span>{order.cartItems?.length}</span>
                     </td>
                     <td className="px-6 py-5 text-sm font-bold text-gray-900">
-                      <span className="text-lg">{convertPrice(order.totalAmount)}</span>
+                      <span className="text-lg">{formatPriceInCurrency(order.totalAmount, order.currency)}</span>
                     </td>
                     <td className="px-6 py-5 text-sm">
                       {(() => {
@@ -443,6 +453,7 @@ const Order = () => {
           orderData={{
             orderId: selectedOrderForPayment._id,
             totalAmount: selectedOrderForPayment.totalAmount,
+            currency: selectedOrderForPayment.currency,
             adminSelectedPaymentMethod: selectedOrderForPayment.adminSelectedPaymentMethod,
             cartItems: selectedOrderForPayment.cartItems,
           }}
@@ -603,12 +614,12 @@ const Order = () => {
                               <p className="text-sm font-semibold text-gray-900">
                                 {getProductName(item) || item.productId?.name || 'Unknown Product'}
                               </p>
-                              <p className="text-xs text-gray-500">Quantity: {item.quantity} × {convertPrice(item.price || item.productId?.price || 0)}</p>
+                              <p className="text-xs text-gray-500">Quantity: {item.quantity} × {formatPriceInCurrency(item.price || item.productId?.price || 0, selectedOrderDetails.currency)}</p>
                             </div>
                           </div>
                           <div className="text-right">
                             <p className="text-sm font-bold text-gray-900">
-                              {convertPrice((item.price || item.productId?.price || 0) * item.quantity)}
+                              {formatPriceInCurrency((item.price || item.productId?.price || 0) * item.quantity, selectedOrderDetails.currency)}
                             </p>
                           </div>
                         </div>
@@ -618,12 +629,12 @@ const Order = () => {
                       {selectedOrderDetails.otherCharges && selectedOrderDetails.otherCharges > 0 && (
                         <div className="flex justify-between items-center text-sm">
                           <span className="text-gray-600">Other Charges:</span>
-                          <span className="font-semibold text-gray-900">{convertPrice(selectedOrderDetails.otherCharges)}</span>
+                          <span className="font-semibold text-gray-900">{formatPriceInCurrency(selectedOrderDetails.otherCharges, selectedOrderDetails.currency)}</span>
                         </div>
                       )}
                       <div className="flex justify-between items-center">
                         <span className="text-lg font-semibold text-gray-900">Total Amount</span>
-                        <span className="text-2xl font-bold text-blue-600">{convertPrice(selectedOrderDetails.totalAmount)}</span>
+                        <span className="text-2xl font-bold text-blue-600">{formatPriceInCurrency(selectedOrderDetails.totalAmount, selectedOrderDetails.currency)}</span>
                       </div>
                     </div>
                   </div>

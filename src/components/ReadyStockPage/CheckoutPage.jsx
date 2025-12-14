@@ -3,13 +3,24 @@ import { useNavigate } from "react-router-dom";
 import CartService from "../../services/cart/cart.services";
 import OrderService from "../../services/order/order.services";
 import iphoneImage from "../../assets/iphone.png";
-import { convertPrice } from "../../utils/currencyUtils";
+import { getCurrencySymbol } from "../../utils/currencyUtils";
 import { getSubSkuFamily, getProductName, getProductImages, getSubSkuFamilyId } from "../../utils/productUtils";
 import { useCurrency } from "../../context/CurrencyContext";
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const { selectedCurrency } = useCurrency();
+
+  // Format price in original currency (no conversion - price is already in selected currency)
+  const formatPriceInCurrency = (priceValue) => {
+    const numericPrice = parseFloat(priceValue) || 0;
+    const currency = selectedCurrency || 'USD';
+    const symbol = getCurrencySymbol(currency);
+    return `${symbol}${numericPrice.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  };
   const [cartItems, setCartItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -111,7 +122,27 @@ const CheckoutPage = () => {
       // Get current location (default to HK, can be from product or user profile)
       const currentLocation = 'HK'; // Default, can be enhanced to get from product
       const deliveryLocation = normalizeCountry(shippingCountry);
-      const currency = selectedCurrency || 'USD'; // Get from currency context
+      
+      // Get currency from context - ensure it's explicitly set
+      // If no currency in context, try to infer from shipping country or cart items
+      let currency = selectedCurrency;
+      if (!currency) {
+        // First, try to infer from shipping country
+        const countryUpper = shippingCountry?.toUpperCase() || '';
+        if (countryUpper.includes('DUBAI') || countryUpper.includes('D')) {
+          currency = 'AED';
+        } else if (countryUpper.includes('HONG') || countryUpper.includes('HK')) {
+          currency = 'HKD';
+        } else {
+          // Last resort: default based on delivery location
+          currency = deliveryLocation === 'D' ? 'AED' : 'HKD';
+        }
+      }
+      
+      // Ensure currency is set (should not be null/undefined at this point)
+      if (!currency) {
+        currency = 'USD'; // Absolute last resort
+      }
 
       // Create order with cartItems and shipping country
       const payload = {
@@ -127,8 +158,10 @@ const CheckoutPage = () => {
         },
         currentLocation: currentLocation,
         deliveryLocation: deliveryLocation,
-        currency: currency,
+        currency: currency, // Use explicitly determined currency
       };
+      
+      console.log('Creating order with currency:', currency, 'from context:', selectedCurrency);
       
       const res = await OrderService.createOrder(payload);
       if (res?.success || res?.status === 200) {
@@ -198,8 +231,8 @@ const CheckoutPage = () => {
                         <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-semibold text-gray-900">{convertPrice(item.price * item.quantity)}</p>
-                        <p className="text-xs text-gray-500">({convertPrice(item.price)} x {item.quantity})</p>
+                        <p className="text-sm font-semibold text-gray-900">{formatPriceInCurrency(item.price * item.quantity)}</p>
+                        <p className="text-xs text-gray-500">({formatPriceInCurrency(item.price)} x {item.quantity})</p>
                       </div>
                     </div>
                   ))}
@@ -211,7 +244,7 @@ const CheckoutPage = () => {
               <div className="h-max bg-white rounded-xl shadow-sm border border-gray-100 p-4">
                 <h3 className="text-base font-semibold text-gray-900 mb-3">Totals</h3>
                 <div className="space-y-3 text-sm">
-                  <div className="flex justify-between"><span className="text-gray-600">Subtotal</span><span className="font-medium text-gray-900">{convertPrice(totalPrice)}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-600">Subtotal</span><span className="font-medium text-gray-900">{formatPriceInCurrency(totalPrice)}</span></div>
                   
                   {/* Display applied charges */}
                   {costSummary.appliedCharges && costSummary.appliedCharges.length > 0 && (
@@ -222,7 +255,7 @@ const CheckoutPage = () => {
                             {charge.type === 'ExtraDelivery' ? 'Extra Delivery' : charge.type}
                             {charge.costType === 'Percentage' && ` (${charge.value}%)`}
                           </span>
-                          <span className="font-medium text-gray-900">{convertPrice(charge.calculatedAmount)}</span>
+                          <span className="font-medium text-gray-900">{formatPriceInCurrency(charge.calculatedAmount)}</span>
                         </div>
                       ))}
                     </>
@@ -230,7 +263,7 @@ const CheckoutPage = () => {
                   
                   <div className="pt-3 mt-1 border-t border-gray-100 flex justify-between text-base">
                     <span className="font-semibold text-gray-900">Total</span>
-                    <span className="font-bold text-gray-900">{convertPrice(finalTotal)}</span>
+                    <span className="font-bold text-gray-900">{formatPriceInCurrency(finalTotal)}</span>
                   </div>
                 </div>
                 <form onSubmit={handlePlaceOrder} className="mt-4 rounded-xl  space-y-6">
