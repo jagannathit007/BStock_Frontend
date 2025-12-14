@@ -23,18 +23,22 @@ const ConfirmOrderModification = () => {
     
     // Extract token from params or hash (fallback for HashRouter)
     let actualToken = token;
-    if (!actualToken) {
-      // Try to extract from hash
+    
+    // If token from params is undefined or empty, try to extract from hash
+    if (!actualToken || actualToken === 'undefined') {
+      // Try to extract from hash (HashRouter stores route in hash)
       if (window.location.hash) {
-        const hashMatch = window.location.hash.match(/\/confirm-order-modification\/([^\/\?]+)/);
+        // Remove # and extract token
+        const hashPath = window.location.hash.replace('#', '');
+        const hashMatch = hashPath.match(/\/confirm-order-modification\/(.+)$/);
         if (hashMatch && hashMatch[1]) {
           actualToken = hashMatch[1];
           console.log('Extracted token from hash:', actualToken);
         }
       }
-      // Try to extract from pathname
-      if (!actualToken && window.location.pathname) {
-        const pathMatch = window.location.pathname.match(/\/confirm-order-modification\/([^\/\?]+)/);
+      // Try to extract from pathname (fallback)
+      if ((!actualToken || actualToken === 'undefined') && window.location.pathname) {
+        const pathMatch = window.location.pathname.match(/\/confirm-order-modification\/(.+)$/);
         if (pathMatch && pathMatch[1]) {
           actualToken = pathMatch[1];
           console.log('Extracted token from pathname:', actualToken);
@@ -42,16 +46,28 @@ const ConfirmOrderModification = () => {
       }
     }
     
-    if (!actualToken) {
+    if (!actualToken || actualToken === 'undefined') {
       console.error('No token found in params, hash, or pathname');
       setError('No confirmation token provided');
       setIsLoading(false);
       return;
     }
+    
+    // Clean token (remove any query params or fragments)
+    actualToken = actualToken.split('?')[0].split('#')[0];
+    
+    // Decode token if it's URL encoded (it might be double-encoded)
+    try {
+      actualToken = decodeURIComponent(actualToken);
+    } catch (e) {
+      // Token might not be encoded, use as-is
+      console.log('Token is not URL encoded, using as-is');
+    }
 
     const confirmModification = async () => {
       try {
         console.log('Calling confirmOrderModification with token:', actualToken);
+        // The token should be sent as-is (not encoded again, axios will handle it)
         await OrderService.confirmOrderModification(actualToken);
         setIsConfirmed(true);
         toastHelper.showTost('Order modification confirmed successfully!', 'success');

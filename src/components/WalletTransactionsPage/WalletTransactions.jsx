@@ -29,7 +29,10 @@ const WalletModal = ({ isOpen, onClose }) => {
     const readyStockAllowance = customerCategory?.readyStockAllowancePer || 0;
     const bidWalletAllowance = customerCategory?.bidWalletAllowancePer || 0;
 
-    // Multiply directly: if wallet is 1000 and allowance is 10, max order = 10,000
+    // Calculate remaining wallet balance (wallet balance minus blocked amount)
+    const remainingWalletBalance = Math.max(0, walletBalance - blockedAmount);
+
+    // Calculate total leverage amounts (for display purposes)
     const readyStockLeverage = readyStockAllowance > 0 
       ? walletBalance * readyStockAllowance 
       : 0;
@@ -38,9 +41,15 @@ const WalletModal = ({ isOpen, onClose }) => {
       ? walletBalance * bidWalletAllowance 
       : 0;
 
-    // Calculate available leverage (total leverage minus blocked amount)
-    const availableReadyStockLeverage = Math.max(0, readyStockLeverage - blockedAmount);
-    const availableBidLeverage = Math.max(0, bidLeverage - blockedAmount);
+    // Calculate available leverage: (wallet balance - blocked amount) * leverage
+    // This is the remaining amount available for new orders/bids
+    const availableReadyStockLeverage = readyStockAllowance > 0
+      ? remainingWalletBalance * readyStockAllowance
+      : 0;
+    
+    const availableBidLeverage = bidWalletAllowance > 0
+      ? remainingWalletBalance * bidWalletAllowance
+      : 0;
 
     return {
       readyStockLeverage,
