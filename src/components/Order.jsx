@@ -35,6 +35,11 @@ const Order = () => {
   const [receiverName, setReceiverName] = useState('');
   const [receiverMobile, setReceiverMobile] = useState('');
   const [submittingReceiverDetails, setSubmittingReceiverDetails] = useState(false);
+  const [deliveryChargeModal, setDeliveryChargeModal] = useState({
+    open: false,
+    order: null,
+    preview: null,
+  });
   const itemsPerPage = 10;
 
   // Fetch orders
@@ -338,7 +343,34 @@ const Order = () => {
                         </button>
                       </td>
                     <td className="px-6 py-5 text-sm text-center">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-2 flex-wrap">
+                        {order.status === 'requested' && (!order.deliveryChargeOption || order.deliveryChargeOption === 'standard') && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                const option = order.currentLocation !== order.deliveryLocation ? 'express' : 'same_location';
+                                const preview = await OrderService.getDeliveryChargePreview(order._id, option);
+                                const data = preview.data || {};
+                                setDeliveryChargeModal({
+                                  open: true,
+                                  order,
+                                  preview: {
+                                    option,
+                                    extraCharge: data.extraCharge || 0,
+                                    currency: data.currency || order.currency || 'USD',
+                                    messages: Array.isArray(data.messages) ? data.messages : [],
+                                  },
+                                });
+                              } catch (e) {
+                                console.error('Delivery charge preview error:', e);
+                              }
+                            }}
+                            className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 underline-offset-2 hover:underline bg-transparent"
+                          >
+                            {order.currentLocation !== order.deliveryLocation ? 'View express delivery charge' : 'View same-location charge'}
+                          </button>
+                        )}
                         {(order.status === 'confirm') && order.adminSelectedPaymentMethod && !order.paymentDetails && (
                           <button
                             onClick={() => {
@@ -475,6 +507,79 @@ const Order = () => {
           }}
           adminSelectedPaymentMethod={selectedOrderForPayment.adminSelectedPaymentMethod}
         />
+      )}
+
+      {/* Delivery Charge Modal */}
+      {deliveryChargeModal.open && deliveryChargeModal.preview && deliveryChargeModal.order && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {deliveryChargeModal.preview.option === 'express'
+                  ? 'Express Delivery Charge'
+                  : 'Same-Location Delivery Charge'}
+              </h3>
+              <button
+                onClick={() =>
+                  setDeliveryChargeModal({ open: false, order: null, preview: null })
+                }
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <FontAwesomeIcon icon={faTimes} className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="px-6 py-4 space-y-3">
+              {deliveryChargeModal.preview.messages?.length > 0 && (
+                <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-xs text-blue-900 whitespace-pre-line">
+                  {deliveryChargeModal.preview.messages.join('\n')}
+                </div>
+              )}
+              <p className="text-sm text-gray-700">
+                This will add{' '}
+                <span className="font-semibold">
+                  {formatPriceInCurrency(
+                    deliveryChargeModal.preview.extraCharge,
+                    deliveryChargeModal.preview.currency
+                  )}
+                </span>{' '}
+                to your order total for order placed on{' '}
+                {new Date(deliveryChargeModal.order.createdAt).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                })}
+                .
+              </p>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                onClick={() =>
+                  setDeliveryChargeModal({ open: false, order: null, preview: null })
+                }
+                className="px-4 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    await OrderService.applyDeliveryCharge(
+                      deliveryChargeModal.order._id,
+                      deliveryChargeModal.preview.option
+                    );
+                    setDeliveryChargeModal({ open: false, order: null, preview: null });
+                    await fetchOrders();
+                  } catch (e) {
+                    console.error('Apply delivery charge error:', e);
+                  }
+                }}
+                className="px-4 py-2 text-sm rounded-lg bg-orange-600 text-white hover:bg-orange-700"
+              >
+                Apply Charge
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Order Details Modal */}

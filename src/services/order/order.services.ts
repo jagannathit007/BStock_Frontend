@@ -55,6 +55,8 @@ export interface Order {
   status: string;
   totalAmount: number;
   otherCharges?: number | null;
+  deliveryChargeOption?: 'standard' | 'express' | 'same_location';
+  extraDeliveryCharge?: number;
   createdAt: string;
   receiverDetails?: {
     name?: string | null;
@@ -194,6 +196,33 @@ export class OrderService {
       return res.data;
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Failed to confirm order modification';
+      toastHelper.showTost(msg, 'error');
+      throw err;
+    }
+  }
+
+  static async getDeliveryChargePreview(orderId: string, option: 'express' | 'same_location'): Promise<CreateOrderResponse> {
+    try {
+      const res = await api.post('/api/customer/order/apply-delivery-charge', { orderId, option, preview: true });
+      return res.data;
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Failed to preview delivery charge';
+      toastHelper.showTost(msg, 'error');
+      throw err;
+    }
+  }
+
+  static async applyDeliveryCharge(orderId: string, option: 'express' | 'same_location'): Promise<CreateOrderResponse> {
+    try {
+      const res = await api.post('/api/customer/order/apply-delivery-charge', { orderId, option });
+      const ok = res.data?.success === true || res.data?.status === 200;
+      toastHelper.showTost(
+        res.data?.message || (ok ? 'Delivery charge applied successfully' : 'Failed to apply delivery charge'),
+        ok ? 'success' : 'error'
+      );
+      return res.data;
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Failed to apply delivery charge';
       toastHelper.showTost(msg, 'error');
       throw err;
     }
