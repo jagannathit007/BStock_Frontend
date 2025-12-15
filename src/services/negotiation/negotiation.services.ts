@@ -31,6 +31,7 @@ export interface Negotiation {
   };
   toUserType?: 'Admin' | 'Customer';
   offerPrice: number;
+  quantity?: number;
   message?: string;
   status: 'negotiation' | 'accepted';
   isRead: boolean;
@@ -41,6 +42,7 @@ export interface Negotiation {
 export interface CreateBidRequest {
   productId: string;
   offerPrice: number;
+  quantity?: number;
   message?: string;
 }
 
@@ -77,6 +79,7 @@ export interface RespondToNegotiationRequest {
   negotiationId: string;
   action: 'accept' | 'counter';
   offerPrice?: number;
+  quantity?: number;
   message?: string;
 }
 

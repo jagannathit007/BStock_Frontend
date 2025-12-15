@@ -29,6 +29,7 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
   const [activeTab, setActiveTab] = useState("history");
   const [formData, setFormData] = useState({
     offerPrice: "",
+  quantity: 1,
     message: "",
   });
   const [loading, setLoading] = useState(false);
@@ -40,6 +41,7 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
   const [responseData, setResponseData] = useState({
     action: "counter",
     offerPrice: "",
+  quantity: "",
     message: "",
   });
   const [notifications, setNotifications] = useState([]);
@@ -236,16 +238,21 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
       alert("Please enter a valid offer price");
       return;
     }
+    if (!formData.quantity || parseInt(formData.quantity, 10) <= 0) {
+      alert("Please enter a valid quantity");
+      return;
+    }
 
     setLoading(true);
     try {
       await NegotiationService.createBid({
         productId: product.id,
         offerPrice: parseFloat(formData.offerPrice),
+        quantity: parseInt(formData.quantity, 10),
         message: formData.message,
       });
 
-      setFormData({ offerPrice: "", message: "" });
+      setFormData({ offerPrice: "", quantity: 1, message: "" });
       await fetchProductBids();
       onSuccess && onSuccess();
       setActiveTab("history");
@@ -257,11 +264,11 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
   };
 
   const handleClose = () => {
-    setFormData({ offerPrice: "", message: "" });
+    setFormData({ offerPrice: "", quantity: 1, message: "" });
     setActiveTab("history");
     setSelectedNegotiation(null);
     setShowResponseForm(false);
-    setResponseData({ action: "counter", offerPrice: "", message: "" });
+    setResponseData({ action: "counter", offerPrice: "", quantity: "", message: "" });
     onClose();
   };
 
@@ -276,6 +283,10 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
           responseData.action === "counter"
             ? parseFloat(responseData.offerPrice)
             : undefined,
+        quantity:
+          responseData.action === "counter" && responseData.quantity
+            ? parseInt(responseData.quantity, 10)
+            : undefined,
         message: responseData.message,
       };
 
@@ -288,7 +299,7 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
 
       setShowResponseForm(false);
       setSelectedNegotiation(null);
-      setResponseData({ action: "counter", offerPrice: "", message: "" });
+      setResponseData({ action: "counter", offerPrice: "", quantity: "", message: "" });
       await fetchProductBids();
     } catch (error) {
       console.error("Error responding to negotiation:", error);
@@ -718,6 +729,23 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
 
                   <div className=" rounded-xl p-4">
                     <label className="block text-sm font-bold text-gray-900 mb-3">
+                      Quantity *
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.quantity}
+                      onChange={(e) =>
+                        setFormData({ ...formData, quantity: e.target.value })
+                      }
+                      className="w-full px-4 py-2 text-sm font-base border-2 border-gray-300 rounded-lg"
+                      placeholder="Enter quantity"
+                      min="1"
+                      required
+                    />
+                  </div>
+
+                  <div className=" rounded-xl p-4">
+                    <label className="block text-sm font-bold text-gray-900 mb-3">
                       Add Message (Optional)
                     </label>
                     <div className="relative">
@@ -765,7 +793,7 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
                   <button
                     type="submit"
                     onClick={handleSubmit}
-                    disabled={loading || !formData.offerPrice}
+                    disabled={loading || !formData.offerPrice || !formData.quantity}
                     className="flex-1 px-6 py-3 bg-blue-600 cursor-pointer text-white font-semibold rounded-lg hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-lg"
                   >
                     {loading ? (

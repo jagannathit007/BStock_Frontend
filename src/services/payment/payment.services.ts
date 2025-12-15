@@ -39,7 +39,7 @@ export interface PaymentConfigResponse {
 }
 
 export interface PaymentDetailsData {
-  orderId: string;
+  orderNo: string;
   module: string;
   acceptedTerms: boolean;
   fields: Record<string, any>;
@@ -52,7 +52,7 @@ export interface PaymentDetailsResponse {
 }
 
 export interface PaymentSubmissionData {
-  orderId: string;
+  orderNo: string;
   amount: number;
   currency: string;
   module: string;
@@ -75,7 +75,7 @@ export class PaymentService {
   static async submitPaymentDetails(data: PaymentDetailsData, files?: File[]): Promise<PaymentDetailsResponse> {
     try {
       const formData = new FormData();
-      formData.append('orderId', data.orderId);
+      formData.append('orderId', data.orderNo);
       formData.append('module', data.module);
       formData.append('acceptedTerms', data.acceptedTerms.toString());
       formData.append('fields', JSON.stringify(data.fields));
@@ -111,7 +111,7 @@ export class PaymentService {
 
   static async submitPayment(data: PaymentSubmissionData): Promise<PaymentDetailsResponse> {
     try {
-      const res = await api.post('/api/customer/payment/submit', data);
+      const res = await api.post('/api/customer/payment/submit', { ...data, orderId: data.orderNo });
       const responseData = res.data;
       
       if (res.status === 200) {
@@ -128,9 +128,9 @@ export class PaymentService {
     }
   }
 
-  static async getMyPaymentDetails(orderId: string): Promise<PaymentDetailsResponse> {
+  static async getMyPaymentDetails(orderNo: string): Promise<PaymentDetailsResponse> {
     try {
-      const res = await api.post('/api/customer/payment/get', { orderId });
+      const res = await api.post('/api/customer/payment/get', { orderId: orderNo });
       return res.data;
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Failed to fetch payment details';

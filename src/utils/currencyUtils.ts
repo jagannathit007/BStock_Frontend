@@ -88,33 +88,15 @@ export const formatPriceUSD = (priceInUSD: any): string => {
  * @param priceInUSD - Price in USD (can be number, string, or other)
  * @returns Formatted price string in user's currency
  */
-export const convertPrice = (priceInUSD: any): string => {
-  // Convert input to number and validate
-  const numericPrice = typeof priceInUSD === 'string' ? parseFloat(priceInUSD) : Number(priceInUSD);
-  
+export const convertPrice = (price: any): string => {
+  // Treat incoming price as already in the selected currency; no extra conversion
+  const numericPrice = typeof price === 'string' ? parseFloat(price) : Number(price);
   if (isNaN(numericPrice) || numericPrice < 0) {
-    // Return $0.00 for invalid prices
     return '$0.00';
   }
-  
-  // Check for selected currency from localStorage (set by toggle)
-  try {
-    const selectedCurrency = localStorage.getItem('selectedCurrency');
-    if (selectedCurrency && selectedCurrency !== 'USD') {
-      const rates = getCurrencyRates();
-      if (rates) {
-        const currencyCode = selectedCurrency as 'AED' | 'SGD' | 'HKD';
-        if (rates[currencyCode]) {
-          return formatPriceForCurrency(numericPrice, currencyCode, rates);
-        }
-      }
-    }
-  } catch (_) {
-    // Fallback silently
-  }
-
-  // Default to USD pricing (if no currency selected or no rates available)
-  return `$${numericPrice.toLocaleString('en-US', {
+  const selectedCurrency = localStorage.getItem('selectedCurrency') || 'USD';
+  const symbol = getCurrencySymbol(selectedCurrency);
+  return `${symbol}${numericPrice.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;

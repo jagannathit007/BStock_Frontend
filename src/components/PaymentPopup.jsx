@@ -168,7 +168,7 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
       }
 
       // If order doesn't exist yet, upload files first, then store payment details
-      if (!orderData.orderId) {
+      if (!orderData.orderNo) {
         let uploadedFiles = [];
         
         // Upload files if any
@@ -206,7 +206,7 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
       }
 
       // If order exists and adminSelectedPaymentMethod is provided, use submitPayment endpoint
-      if (orderData.orderId && adminSelectedPaymentMethod) {
+      if (orderData.orderNo && adminSelectedPaymentMethod) {
         const fileList = Object.values(files).filter(Boolean);
         const paymentDetails = {
           module: selectedModule,
@@ -229,7 +229,7 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
       // If order exists, proceed with normal payment flow
       const fileList = Object.values(files).filter(Boolean);
       const response = await PaymentService.submitPaymentDetails({
-        orderId: orderData.orderId,
+        orderId: orderData.orderNo,
         module: selectedModule,
         acceptedTerms,
         fields: fieldsData
@@ -238,7 +238,7 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
       if (response.status === 200) {
         // Now submit the actual payment
         const paymentResponse = await PaymentService.submitPayment({
-          orderId: orderData.orderId,
+          orderId: orderData.orderNo,
           amount: orderData.totalAmount,
           currency: selectedCurrency || 'USD',
           module: selectedModule,
