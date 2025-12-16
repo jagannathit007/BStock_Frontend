@@ -14,6 +14,7 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
   const [activeTab, setActiveTab] = useState('active');
   const [negotiations, setNegotiations] = useState([]);
   const [acceptedNegotiations, setAcceptedNegotiations] = useState([]);
+  const [rejectedNegotiations, setRejectedNegotiations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedNegotiation, setSelectedNegotiation] = useState(null);
   const [showResponseForm, setShowResponseForm] = useState(false);
@@ -50,6 +51,9 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
         acc[bidId].status = 'accepted';
         acc[bidId].acceptedBy = negotiation.toUserType || 'Admin';
         acc[bidId].acceptedAt = negotiation.updatedAt;
+      } else if (negotiation.status === 'rejected' && acc[bidId].status !== 'accepted') {
+        // If no accepted negotiation, but we have a rejected one, mark group as rejected
+        acc[bidId].status = 'rejected';
       }
       
       return acc;
@@ -118,7 +122,12 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
       toastHelper.showTost(data.message || '📬 New negotiation update', toastType);
       
       // Refresh negotiations if it's a relevant update
-      if (data.type === 'new_bid' || data.type === 'counter_offer' || data.type === 'bid_accepted') {
+      if (
+        data.type === 'new_bid' ||
+        data.type === 'counter_offer' ||
+        data.type === 'bid_accepted' ||
+        data.type === 'bid_rejected'
+      ) {
         fetchNegotiations();
         fetchAcceptedNegotiations();
       }
@@ -131,7 +140,7 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
       
       // Determine toast type based on event type
       let toastType = 'info';
-      if (data.type === 'bid_accepted') {
+      if (data.type === 'bid_accepted' || data.type === 'bid_rejected') {
         toastType = 'success';
       }
       
@@ -150,7 +159,7 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
       
       // Determine toast type based on event type
       let toastType = 'info';
-      if (data.type === 'bid_accepted') {
+      if (data.type === 'bid_accepted' || data.type === 'bid_rejected') {
         toastType = 'success';
       }
       
@@ -205,7 +214,8 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
       const [activeResponse, acceptedResponse] = await Promise.all([
         userType === 'admin' 
           ? NegotiationService.getAllNegotiations(1, 50, 'negotiation')
-          : NegotiationService.getCustomerNegotiations(1, 50, 'negotiation'),
+          // For customers, fetch all statuses (negotiation, accepted, rejected)
+          : NegotiationService.getCustomerNegotiations(1, 50),
         userType === 'admin' 
           ? NegotiationService.getAcceptedNegotiationsAdmin(1, 50)
           : NegotiationService.getAcceptedNegotiations(1, 50)
@@ -220,6 +230,10 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
       // Group negotiations by bidId to show complete flow
       const groupedNegotiations = groupNegotiationsByBidId(allNegotiations);
       setNegotiations(groupedNegotiations);
+
+      // Derive rejected negotiation groups for separate tab
+      const rejectedGroups = groupedNegotiations.filter(group => group.status === 'rejected');
+      setRejectedNegotiations(rejectedGroups);
     } catch (error) {
       console.error('Error fetching negotiations:', error);
       // If error is due to unauthorized, redirect to login
@@ -461,6 +475,20 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600"></div>
             )}
           </button>
+          <button
+            onClick={() => setActiveTab('rejected')}
+            className={`flex-1 px-4 py-3 cursor-pointer font-semibold text-sm transition-all flex items-center justify-center space-x-2 relative ${
+              activeTab === 'rejected'
+                ? 'text-blue-600 bg-blue-50'
+                : 'text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            <FileX className="w-4 h-4" />
+            <span>Rejected Negotiations</span>
+            {activeTab === 'rejected' && (
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600"></div>
+            )}
+          </button>
         </div>
 
         {/* Content */}
@@ -504,11 +532,36 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
                 </div>
               )}
 
+              {/* Empty State for Rejected Negotiations */}
+              {activeTab === 'rejected' && rejectedNegotiations.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-xl border-2 border-dashed border-gray-300">
+                  <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-5">
+                    <FileX className="w-10 h-10 text-gray-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">No Rejected Negotiations</h3>
+                  <p className="text-gray-500 max-w-md">
+                    {userType === 'admin' 
+                      ? "No negotiations have been rejected yet. Rejected negotiations will appear here."
+                      : "You don't have any rejected negotiations yet. When an offer is rejected, it will appear here."
+                    }
+                  </p>
+                </div>
+              )}
+
               {/* Negotiations List */}
-              {(activeTab === 'active' ? negotiations : acceptedNegotiations).length > 0 && (activeTab === 'active' ? negotiations : acceptedNegotiations).map((item) => {
-                // Handle both grouped negotiations and individual accepted negotiations
-                const negotiationGroup = activeTab === 'active' ? item : null;
-                const individualNegotiation = activeTab === 'accepted' ? item : null;
+              {(() => {
+                const currentList = activeTab === 'active'
+                  ? negotiations
+                  : activeTab === 'accepted'
+                  ? acceptedNegotiations
+                  : rejectedNegotiations;
+                
+                if (currentList.length === 0) return null;
+                
+                return currentList.map((item) => {
+                  // Handle grouped negotiations (with bidId) and individual accepted negotiations
+                  const negotiationGroup = item && item.bidId ? item : null;
+                  const individualNegotiation = !negotiationGroup ? item : null;
                 
                 if (negotiationGroup) {
                   return (
@@ -536,12 +589,20 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
                                 <span className="text-xs font-semibold text-gray-700">
                                   ID: {negotiationGroup?.bidId?.slice(0, 12)}
                                 </span>
-                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                                  negotiationGroup.status === 'accepted' 
-                                    ? 'bg-green-100 text-green-700 border border-green-300' 
-                                    : 'bg-yellow-100 text-yellow-700 border border-yellow-300'
-                                }`}>
-                                  {negotiationGroup.status === 'accepted' ? '✓ Accepted' : '⏳ In Progress'}
+                                <span
+                                  className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                    negotiationGroup.status === 'accepted'
+                                      ? 'bg-green-100 text-green-700 border border-green-300'
+                                      : negotiationGroup.status === 'rejected'
+                                      ? 'bg-red-100 text-red-700 border border-red-300'
+                                      : 'bg-yellow-100 text-yellow-700 border border-yellow-300'
+                                  }`}
+                                >
+                                  {negotiationGroup.status === 'accepted'
+                                    ? '✓ Accepted'
+                                    : negotiationGroup.status === 'rejected'
+                                    ? '✖ Rejected'
+                                    : '⏳ In Progress'}
                                 </span>
                               </div>
                               {negotiationGroup.status === 'accepted' && negotiationGroup.acceptedBy && (
@@ -618,13 +679,19 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
                                       <Clock className="w-3.5 h-3.5 mr-1" />
                                       {formatDate(negotiation.createdAt)}
                                     </div>
-                                    <span className={`px-2.5 py-1 rounded-md text-xs font-semibold ${
-                                      negotiation.status === 'accepted'
-                                        ? 'bg-green-100 text-green-700'
-                                        : 'bg-gray-100 text-gray-600'
-                                    }`}>
+                                    <span
+                                      className={`px-2.5 py-1 rounded-md text-xs font-semibold ${
+                                        negotiation.status === 'accepted'
+                                          ? 'bg-green-100 text-green-700'
+                                          : negotiation.status === 'rejected'
+                                          ? 'bg-red-100 text-red-700'
+                                          : 'bg-gray-100 text-gray-600'
+                                      }`}
+                                    >
                                       {negotiation.status === 'accepted'
                                         ? 'Accepted'
+                                        : negotiation.status === 'rejected'
+                                        ? 'Rejected'
                                         : hasAcceptedNegotiation(negotiationGroup)
                                         ? 'Superseded'
                                         : 'Pending'}
@@ -754,7 +821,8 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
                   );
                 }
                 return null;
-              })}
+                });
+              })()}
             </div>
           )}
         </div>

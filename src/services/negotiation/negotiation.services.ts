@@ -33,7 +33,7 @@ export interface Negotiation {
   offerPrice: number;
   quantity?: number;
   message?: string;
-  status: 'negotiation' | 'accepted';
+  status: 'negotiation' | 'accepted' | 'rejected';
   isRead: boolean;
   createdAt: string;
   updatedAt: string;
