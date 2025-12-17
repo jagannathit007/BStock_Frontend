@@ -103,6 +103,7 @@ const ProductDetails = () => {
         isShowTimer: Boolean(p.isShowTimer),
         verifiedBy: p.verifiedBy || "",
         approvedBy: p.approvedBy || "",
+        groupCode: p.groupCode || "",
       };
     };
 

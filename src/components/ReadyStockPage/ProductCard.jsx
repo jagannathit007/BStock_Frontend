@@ -30,6 +30,7 @@ const ProductCard = ({
   isInModal = false,
   onOpenBiddingForm,
   isFlashDeal = false,
+  onGroupCodeClick,
 }) => {
   const navigate = useNavigate();
   const [isAddToCartPopupOpen, setIsAddToCartPopupOpen] = useState(false);
@@ -254,6 +255,12 @@ const ProductCard = ({
     e.stopPropagation();
     if (effectiveOutOfStock || isExpired) return;
 
+    // If product has groupCode, show bulk add modal instead
+    if (product?.groupCode && onGroupCodeClick) {
+      onGroupCodeClick(product.groupCode, product);
+      return;
+    }
+
     try {
       const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
       if (!isLoggedIn) {
@@ -353,6 +360,12 @@ const ProductCard = ({
   const handleAddToCart = async (e) => {
     e.stopPropagation();
     if (effectiveOutOfStock || isExpired) return;
+
+    // If product has groupCode, show bulk add modal instead
+    if (product?.groupCode && onGroupCodeClick) {
+      onGroupCodeClick(product.groupCode, product);
+      return;
+    }
 
     try {
       const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
@@ -599,6 +612,20 @@ if (viewMode === "table") {
             <h3 className="font-semibold text-sm text-gray-900 hover:text-[#0071e3] transition-colors">
               {name}
             </h3>
+            {product?.groupCode && (
+              <p 
+                className="text-xs text-blue-600 mt-0.5 font-medium cursor-pointer hover:text-blue-800 hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onGroupCodeClick) {
+                    onGroupCodeClick(product.groupCode, product);
+                  }
+                }}
+                title="Click to view all products in this group"
+              >
+                Group: {product.groupCode} (Click to view all)
+              </p>
+            )}
             <p className="text-xs text-gray-500 mt-1 line-clamp-1">
               {[product?.storage, product?.ram, product?.color, product?.simType, product?.countryName].filter(Boolean).join(' • ') || '-'}
             </p>
@@ -808,6 +835,20 @@ if (viewMode === "list") {
                   <h3 className="text-sm sm:text-base flex font-semibold text-gray-900 group-hover:text-[#0071e3] transition-colors duration-200 mb-1 leading-tight">
                     {name} <span className="hidden sm:flex text-xs font-normal text-gray-500"> - {description}</span>
                   </h3>
+                  {product?.groupCode && (
+                    <p 
+                      className="text-xs text-blue-600 mt-0.5 font-medium cursor-pointer hover:text-blue-800 hover:underline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onGroupCodeClick) {
+                          onGroupCodeClick(product.groupCode, product);
+                        }
+                      }}
+                      title="Click to view all products in this group"
+                    >
+                      Group: {product.groupCode} (Click to view all)
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex items-center space-x-1.5 ml-3">
@@ -1115,6 +1156,20 @@ if (viewMode === "list") {
           <h3 className="font-semibold text-sm leading-tight tracking-normal text-[#364153] line-clamp-2">
             {name} <span className="text-xs font-normal text-gray-500"> - {description}</span>
           </h3>
+          {product?.groupCode && (
+            <p 
+              className="text-xs text-blue-600 font-medium cursor-pointer hover:text-blue-800 hover:underline"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onGroupCodeClick) {
+                  onGroupCodeClick(product.groupCode, product);
+                }
+              }}
+              title="Click to view all products in this group"
+            >
+              Group: {product.groupCode} (Click to view all)
+            </p>
+          )}
 
           {/* Country Selector */}
           <div className="flex items-center gap-2">

@@ -180,6 +180,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       if (stock <= 10) return "Low Stock";
       return "In Stock";
     })(),
+    groupCode: currentProduct?.groupCode || currentProduct?.groupCode || "",
   };
 
   // Country/Currency derived from countryDeliverables (supports nested raw product)
@@ -1578,6 +1579,14 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                     {effectiveStockCount} Units
                   </p>
                 </div>
+
+                {/* Card 7: Group Code (if exists) */}
+                {processedProduct.groupCode && (
+                  <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <p className="text-xs text-gray-500 font-medium mb-1">Group Code</p>
+                    <p className="text-sm font-bold text-gray-900">{processedProduct.groupCode}</p>
+                  </div>
+                )}
               </div>
             </div>
             {processedProduct.description && (
@@ -2180,6 +2189,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
                   { icon: faGlobe, label: "Country", value: processedProduct.country, color: "primary" },
                   { icon: faTruck, label: "Purchase Type", value: processedProduct.purchaseType, color: "amber" },
                   { icon: faHandshake, label: "Negotiable", value: processedProduct.isNegotiable ? "Yes" : "No", color: "green" },
+                  { icon: faTag, label: "Group Code", value: processedProduct.groupCode, color: "indigo" },
                 ]
                   .filter((item) => item.value)
                   .map((item, index) => {

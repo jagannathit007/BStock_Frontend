@@ -159,10 +159,14 @@ const AddToCartPopup = ({ product, onClose }) => {
         localStorage.setItem('cartUpdated', Date.now().toString());
         onClose();
       } else {
-        setError(res?.message || "Failed to add to cart");
+        // Show detailed error including MOQ validation
+        const errorMessage = res?.message || res?.data?.message || "Failed to add to cart";
+        setError(errorMessage);
       }
     } catch (error) {
-      setError(error.response?.data?.message || error.message || "An error occurred");
+      // Show detailed error including MOQ validation
+      const errorMessage = error.response?.data?.message || error.message || "An error occurred";
+      setError(errorMessage);
       console.error("Add to cart error:", error);
     }
   };
@@ -232,6 +236,16 @@ const AddToCartPopup = ({ product, onClose }) => {
                 <span className="mx-1">•</span>
                 <span>MOQ: {validMoq}</span>
               </div>
+              {product?.groupCode && (
+                <div className="text-xs text-gray-600 mt-1">
+                  Group: {product.groupCode}
+                  {product?.totalMoq && (
+                    <span className="ml-2 text-yellow-700">
+                      (Group MOQ: {product.totalMoq})
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

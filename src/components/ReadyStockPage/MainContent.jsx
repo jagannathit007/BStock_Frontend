@@ -4,6 +4,7 @@ import ProductCardSkeleton from "./ProductCardSkeleton";
 import SideFilter from "../SideFilter";
 import ViewControls from "./ViewControls";
 import BiddingForm from "../negotiation/BiddingForm"; // Import BiddingForm
+import BulkAddToCartModal from "./BulkAddToCartModal"; // Import BulkAddToCartModal
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChevronLeft,
@@ -46,6 +47,9 @@ const MainContent = () => {
   const [selectedProduct, setSelectedProduct] = useState(null); // Track selected product for bidding
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('');
+  const [selectedGroupCode, setSelectedGroupCode] = useState(null); // Filter by groupCode
+  const [isBulkAddModalOpen, setIsBulkAddModalOpen] = useState(false); // Bulk add modal state
+  const [groupProducts, setGroupProducts] = useState([]); // Products in the selected group
   const { selectedCurrency } = useCurrency();
   const previousViewModeRef = useRef(viewMode);
   const previousItemsPerPageRef = useRef(itemsPerPage);
@@ -122,6 +126,8 @@ const MainContent = () => {
       subSkuFamilyId: getSubSkuFamilyId(p),
       // Preserve full product object for reference
       _product: p,
+      // Include groupCode if available
+      groupCode: p.groupCode || null,
     };
   };
 
@@ -172,6 +178,7 @@ const MainContent = () => {
             search: searchQuery,
             sort: getSortObject(sortOption),
             custId: custId,
+            groupCode: selectedGroupCode,
             ...filters,
           },
           {
@@ -210,7 +217,7 @@ const MainContent = () => {
     };
     fetchData();
     return () => controller.abort();
-  }, [currentPage, itemsPerPage, filters, refreshTick, searchQuery, sortOption]);
+  }, [currentPage, itemsPerPage, filters, refreshTick, searchQuery, sortOption, selectedGroupCode]);
 
   // Reset to page 1 when view mode changes and trigger fetch
   useEffect(() => {
@@ -409,6 +416,55 @@ const MainContent = () => {
     );
   };
 
+  // Handle groupCode filter - when clicking on a product with groupCode
+  const handleGroupCodeFilter = async (groupCode, product) => {
+    if (!groupCode) return;
+    
+    setSelectedGroupCode(groupCode);
+    setCurrentPage(1);
+    
+    // Fetch all products with this groupCode for bulk add modal
+    try {
+      const baseUrl = import.meta.env.VITE_BASE_URL || "http://localhost:3200";
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const custId = user?._id || null;
+      
+      const response = await axios.post(
+        `${baseUrl}/api/customer/get-product-list`,
+        {
+          page: 1,
+          limit: 100, // Get all products in the group
+          groupCode: groupCode,
+          custId: custId,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: localStorage.getItem("token")
+              ? `Bearer ${localStorage.getItem("token")}`
+              : "",
+          },
+        }
+      );
+
+      if (response.data.status === 200) {
+        const payload = response.data.data;
+        const docs = payload?.docs || [];
+        const mapped = docs.map(mapApiProductToUi);
+        setGroupProducts(mapped);
+        setIsBulkAddModalOpen(true);
+      }
+    } catch (error) {
+      console.error("Error fetching group products:", error);
+    }
+  };
+
+  // Clear groupCode filter
+  const handleClearGroupCodeFilter = () => {
+    setSelectedGroupCode(null);
+    setCurrentPage(1);
+  };
+
   // Handle successful bid submission
   const handleBidSuccess = () => {
     Swal.fire({
@@ -477,6 +533,20 @@ const MainContent = () => {
             </div>
           )}
 
+          {/* Group Code Filter Badge */}
+          {selectedGroupCode && (
+            <div className="mb-4 flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <span className="text-sm text-gray-700">Filtered by Group:</span>
+              <span className="text-sm font-semibold text-blue-700">{selectedGroupCode}</span>
+              <button
+                onClick={handleClearGroupCodeFilter}
+                className="ml-auto text-sm text-blue-600 hover:text-blue-800 underline"
+              >
+                Clear Filter
+              </button>
+            </div>
+          )}
+
           <ViewControls
             viewMode={viewMode}
             setViewMode={setViewMode}
@@ -538,6 +608,7 @@ const MainContent = () => {
                           onRefresh={handleRefresh}
                           onWishlistChange={handleWishlistChange}
                           onOpenBiddingForm={handleOpenBiddingForm}
+                          onGroupCodeClick={handleGroupCodeFilter}
                         />
                       ))
                     )}
@@ -657,6 +728,7 @@ const MainContent = () => {
                         onRefresh={handleRefresh}
                         onOpenBiddingForm={handleOpenBiddingForm} // Pass handler
                         onWishlistChange={handleWishlistChange}
+                        onGroupCodeClick={handleGroupCodeFilter}
                       />
                     </div>
                   ))
@@ -775,6 +847,7 @@ const MainContent = () => {
                         onRefresh={handleRefresh}
                         onWishlistChange={handleWishlistChange}
                         onOpenBiddingForm={handleOpenBiddingForm} // Pass handler
+                        onGroupCodeClick={handleGroupCodeFilter}
                       />
                     </div>
                   ))
@@ -847,6 +920,16 @@ const MainContent = () => {
           isOpen={isBiddingFormOpen}
           onClose={handleBiddingFormClose}
           onSuccess={handleBidSuccess}
+        />
+      )}
+
+      {isBulkAddModalOpen && groupProducts.length > 0 && (
+        <BulkAddToCartModal
+          products={groupProducts}
+          groupCode={selectedGroupCode}
+          totalMoq={groupProducts[0]?._product?.totalMoq || groupProducts[0]?.totalMoq || null}
+          onClose={() => setIsBulkAddModalOpen(false)}
+          onSuccess={handleRefresh}
         />
       )}
     </div>

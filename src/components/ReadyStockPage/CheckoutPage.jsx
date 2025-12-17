@@ -57,7 +57,20 @@ const CheckoutPage = () => {
     const price = Number(item.price) || 0;
     const stockCount = Number(item.stock) || 0;
     const moq = Number(item.moq) || 1;
-    return { id, skuFamilyId, subSkuFamilyId, name, description, price, stockCount, moq, imageUrl, quantity: Number(item.quantity) || Math.max(moq, 1) };
+    return { 
+      id, 
+      skuFamilyId, 
+      subSkuFamilyId, 
+      name, 
+      description, 
+      price, 
+      stockCount, 
+      moq, 
+      groupCode: item.groupCode || null,
+      totalMoq: item.totalMoq || null,
+      imageUrl, 
+      quantity: Number(item.quantity) || Math.max(moq, 1) 
+    };
   };
 
   const fetchCart = useCallback(async (shippingCountry = null) => {
@@ -170,10 +183,17 @@ const CheckoutPage = () => {
         localStorage.setItem('cartUpdated', Date.now().toString());
         navigate("/order", { state: { order: res.data } });
       } else {
-        setError(res?.message || "Failed to create order");
+        // Show detailed error message including MOQ validation errors
+        const errorMessage = res?.message || res?.data?.message || "Failed to create order";
+        setError(errorMessage);
       }
     } catch (e) {
-      setError(e.response?.data?.message || e.message || "An error occurred while creating order");
+      // Show detailed error message including MOQ validation errors
+      const errorMessage = e.response?.data?.message || 
+                          e.response?.data?.errors?.map((err) => err.message).join(", ") ||
+                          e.message || 
+                          "An error occurred while creating order";
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

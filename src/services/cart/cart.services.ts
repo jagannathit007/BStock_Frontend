@@ -138,6 +138,27 @@ export class CartService {
       return 0;
     }
   }
+
+  static async bulkAdd(
+    items: Array<{ productId: string; quantity: number; subSkuFamilyId?: string | null; price?: number | null }>,
+    country: string,
+    currency: string
+  ): Promise<GenericResponse> {
+    try {
+      const res = await api.post('/api/customer/cart/bulk-add', {
+        items,
+        country,
+        currency
+      });
+      const ok = res.data?.success === true || res.data?.status === 200;
+      toastHelper.showTost(res.data?.message || (ok ? 'Products added to cart' : 'Failed to add products'), ok ? 'success' : 'error');
+      return res.data;
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Failed to add products to cart';
+      toastHelper.showTost(msg, 'error');
+      throw err;
+    }
+  }
 }
 
 export default CartService;

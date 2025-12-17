@@ -5,6 +5,7 @@ import {
   faPlus,
   faMinus,
   faTrash,
+  faLayerGroup,
 } from "@fortawesome/free-solid-svg-icons"; // Corrected import
 import { useNavigate } from "react-router-dom";
 import CartService from "../../services/cart/cart.services";
@@ -33,7 +34,9 @@ const CartPage = () => {
   const [error, setError] = useState(null);
   const [imageErrors, setImageErrors] = useState({});
   const [itemCountries, setItemCountries] = useState({}); // Track country selection per item
+  const [groupCountries, setGroupCountries] = useState({}); // Track country selection per group
   const [itemLoading, setItemLoading] = useState({}); // Track loading state per item
+  const [groupLoading, setGroupLoading] = useState({}); // Track loading state per group
   const [successMessage, setSuccessMessage] = useState(null); // Track success messages
 
   const handleImageError = (itemId) => {
@@ -80,6 +83,8 @@ const CartPage = () => {
       description,
       price,
       moq,
+      groupCode: item.groupCode || null,
+      totalMoq: item.totalMoq || null,
       stockCount,
       stockStatus,
       imageUrl,
@@ -116,6 +121,172 @@ const CartPage = () => {
     fetchCart();
   }, [fetchCart]);
 
+  // Calculate group MOQ status for items with groupCode
+  const getGroupMOQStatus = (item) => {
+    if (!item.groupCode || !item.totalMoq) return null;
+    
+    const itemsInGroup = cartItems.filter(ci => ci.groupCode === item.groupCode);
+    const totalGroupQuantity = itemsInGroup.reduce((sum, ci) => sum + ci.quantity, 0);
+    const remaining = item.totalMoq - totalGroupQuantity;
+    
+    return {
+      groupCode: item.groupCode,
+      totalMoq: item.totalMoq,
+      currentTotal: totalGroupQuantity,
+      remaining: remaining,
+      isValid: remaining <= 0,
+      itemsInGroup: itemsInGroup.length
+    };
+  };
+
+  // Group cart items by groupCode
+  const groupCartItemsByGroupCode = () => {
+    const grouped = {};
+    const ungrouped = [];
+
+    cartItems.forEach(item => {
+      if (item.groupCode) {
+        if (!grouped[item.groupCode]) {
+          grouped[item.groupCode] = {
+            groupCode: item.groupCode,
+            totalMoq: item.totalMoq,
+            items: []
+          };
+        }
+        grouped[item.groupCode].items.push(item);
+      } else {
+        ungrouped.push(item);
+      }
+    });
+
+    return { grouped, ungrouped };
+  };
+
+  // Handle country change for a group
+  const handleGroupCountryChange = (groupCode, country) => {
+    setGroupCountries((prev) => ({ ...prev, [groupCode]: country }));
+    // Also set country for all items in the group
+    const itemsInGroup = cartItems.filter(ci => ci.groupCode === groupCode);
+    const updatedCountries = { ...itemCountries };
+    itemsInGroup.forEach(item => {
+      updatedCountries[item.id] = country;
+    });
+    setItemCountries(updatedCountries);
+  };
+
+  // Handle place order for all items in a group
+  const handlePlaceOrderForGroup = async (groupCode) => {
+    const country = groupCountries[groupCode];
+    
+    if (!country) {
+      setError("Please select a billing country for this group");
+      return;
+    }
+
+    const itemsInGroup = cartItems.filter(ci => ci.groupCode === groupCode);
+    
+    if (itemsInGroup.length === 0) {
+      setError("No items found in this group");
+      return;
+    }
+
+    try {
+      setError(null);
+      setGroupLoading((prev) => ({ ...prev, [groupCode]: true }));
+
+      // Normalize country to location code
+      const normalizeCountry = (countryStr) => {
+        if (!countryStr) return 'HK';
+        const upper = countryStr.toUpperCase();
+        if (upper === 'HONG KONG' || upper === 'HONGKONG' || upper === 'HK') return 'HK';
+        if (upper === 'DUBAI' || upper === 'DBI' || upper === 'D') return 'D';
+        return 'HK';
+      };
+
+      const currentLocation = 'HK';
+      const deliveryLocation = normalizeCountry(country);
+      let currency = selectedCurrency;
+      if (!currency) {
+        const countryUpper = country?.toUpperCase() || '';
+        if (countryUpper.includes('DUBAI') || countryUpper.includes('D')) {
+          currency = 'AED';
+        } else if (countryUpper.includes('HONG') || countryUpper.includes('HK')) {
+          currency = 'HKD';
+        } else {
+          currency = 'USD';
+        }
+      }
+
+      // Create order with all items in the group
+      const orderData = {
+        cartItems: itemsInGroup.map(item => ({
+          productId: item.id,
+          skuFamilyId: item.skuFamilyId || null,
+          subSkuFamilyId: item.subSkuFamilyId || null,
+          quantity: Number(item.quantity),
+          price: Number(item.price),
+        })),
+        shippingAddress: {
+          country: country
+        },
+        currentLocation: currentLocation,
+        deliveryLocation: deliveryLocation,
+        currency: currency,
+      };
+
+      const response = await OrderService.createOrder(orderData);
+
+      if (response?.success || response?.status === 200) {
+        // Remove all items in the group from cart
+        for (const item of itemsInGroup) {
+          await CartService.remove(item.id);
+        }
+        
+        // Remove from local state
+        const remainingItems = cartItems.filter((cartItem) => !itemsInGroup.find(gi => gi.id === cartItem.id));
+        setCartItems(remainingItems);
+        
+        // Clear country selections for the group
+        setGroupCountries((prev) => {
+          const updated = { ...prev };
+          delete updated[groupCode];
+          return updated;
+        });
+        setItemCountries((prev) => {
+          const updated = { ...prev };
+          itemsInGroup.forEach(item => {
+            delete updated[item.id];
+          });
+          return updated;
+        });
+        
+        // Trigger cart count update event
+        window.dispatchEvent(new Event('cartUpdated'));
+        localStorage.setItem('cartUpdated', Date.now().toString());
+        
+        // Show success message
+        setSuccessMessage(`Order placed successfully for group ${groupCode} (${itemsInGroup.length} items)!`);
+        setTimeout(() => setSuccessMessage(null), 5000);
+        
+        // If cart is now empty, navigate to order page
+        if (remainingItems.length === 0) {
+          navigate("/order", { state: { order: response.data } });
+        }
+      } else {
+        const errorMessage = response?.message || response?.data?.message || "Failed to create order";
+        setError(errorMessage);
+      }
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.errors?.map((e) => e.message).join(", ") ||
+        error.response?.data?.message ||
+        "An error occurred while creating order";
+      setError(errorMessage);
+    } finally {
+      setGroupLoading((prev) => ({ ...prev, [groupCode]: false }));
+    }
+  };
+
   // Handle quantity change
   const handleQuantityChange = async (id, newQuantity) => {
     try {
@@ -123,7 +294,7 @@ const CartPage = () => {
       const item = cartItems.find((item) => item.id === id);
       if (!item) return;
 
-      const minQty = 1;
+      const minQty = Math.max(item.moq, 1);
       const maxQty = Number(item.stockCount) || Infinity;
       const clampedQty = Math.min(
         Math.max(Number(newQuantity) || minQty, minQty),
@@ -144,14 +315,17 @@ const CartPage = () => {
         window.dispatchEvent(new Event('cartUpdated'));
         localStorage.setItem('cartUpdated', Date.now().toString());
       } else {
-        setError(response?.message || "Failed to update quantity");
+        // Show MOQ validation error if present
+        const errorMessage = response?.message || response?.data?.message || "Failed to update quantity";
+        setError(errorMessage);
+        // Refresh cart to get updated data
+        fetchCart();
       }
     } catch (error) {
-      setError(
-        error.response?.data?.message ||
-          error.message ||
-          "An error occurred while updating quantity"
-      );
+      const errorMessage = error.response?.data?.message || error.message || "An error occurred while updating quantity";
+      setError(errorMessage);
+      // Refresh cart to get updated data
+      fetchCart();
       console.error("Update quantity error:", error);
     }
   };
@@ -206,6 +380,193 @@ const CartPage = () => {
   const handleCountryChange = (itemId, country) => {
     setItemCountries((prev) => ({ ...prev, [itemId]: country }));
   };
+
+  // Render a single cart item (reusable component)
+  const renderCartItem = (item) => (
+    <>
+      <div className="flex gap-4">
+        {/* Product Image */}
+        <div className="flex-shrink-0">
+          <img
+            className="w-20 h-20 sm:w-32 sm:h-32 object-cover rounded-lg border border-gray-200"
+            src={
+              imageErrors[item.id]
+                ? iphoneImage
+                : item.imageUrl
+            }
+            alt={item.name}
+            onError={() => handleImageError(item.id)}
+          />
+        </div>
+        
+        {/* Product Details */}
+        <div className="flex-1 min-w-0">
+          <div className="flex justify-between items-start mb-2">
+            <div className="flex-1 min-w-0 pr-2">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">
+                {item.name}
+              </h3>
+              <p className="text-sm text-gray-600 line-clamp-1">
+                {item.description}
+              </p>
+            </div>
+            <button
+              onClick={() => handleRemoveItem(item.id)}
+              className="text-gray-400 hover:text-red-600 p-1.5 rounded-md hover:bg-red-50 transition-colors duration-200 flex-shrink-0"
+              title="Remove item"
+            >
+              <FontAwesomeIcon
+                icon={faTrash}
+                className="w-4 h-4"
+              />
+            </button>
+          </div>
+
+          {/* Price, Stock, Quantity and Total */}
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-1">
+            <div>
+              <div className="text-base flex items-center font-semibold text-gray-900">
+                {formatPriceInCurrency(item.price)}
+                <div className="text-xs text-gray-500 ms-2">Stock: {item.stockCount}</div>
+              </div>
+              {item.groupCode && (
+                <div className="text-xs text-gray-600 mt-1">
+                  Group: {item.groupCode}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Group MOQ Status (only show if not already shown in group header) */}
+          {!item.groupCode && (() => {
+            const groupStatus = getGroupMOQStatus(item);
+            if (!groupStatus) return null;
+            return (
+              <div className={`mb-2 p-2 rounded-md text-xs ${
+                groupStatus.isValid 
+                  ? 'bg-green-50 text-green-800 border border-green-200' 
+                  : 'bg-yellow-50 text-yellow-800 border border-yellow-200'
+              }`}>
+                {groupStatus.isValid ? (
+                  <span>✓ Group MOQ met ({groupStatus.currentTotal}/{groupStatus.totalMoq})</span>
+                ) : (
+                  <span>⚠ Need {groupStatus.remaining} more item(s) to meet group MOQ ({groupStatus.currentTotal}/{groupStatus.totalMoq})</span>
+                )}
+              </div>
+            );
+          })()}
+          
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-1">
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() =>
+                  handleQuantityChange(item.id, item.quantity - 1)
+                }
+                disabled={item.quantity <= item.moq}
+                className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-md hover:border-blue-600 hover:bg-blue-50 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                title="Decrease"
+              >
+                <FontAwesomeIcon
+                  icon={faMinus}
+                  className="w-3 h-3 text-gray-700"
+                />
+              </button>
+              <input
+                type="text"
+                value={item.quantity}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (!/^\d*$/.test(value)) return;
+                  if (value === "") {
+                    handleQuantityChange(item.id, "");
+                    return;
+                  }
+                  let num = parseInt(value, 10);
+                  if (isNaN(num) || num < item.moq) {
+                    num = item.moq;
+                  } else if (num > item.stockCount) {
+                    num = item.stockCount;
+                  }
+                  handleQuantityChange(item.id, num);
+                }}
+                onBlur={(e) => {
+                  let num = parseInt(e.target.value, 10);
+                  if (isNaN(num) || num < item.moq) num = item.moq;
+                  if (num > item.stockCount) num = item.stockCount;
+                  handleQuantityChange(item.id, num);
+                }}
+                className="w-14 text-center text-sm font-semibold py-1.5 px-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <button
+                onClick={() =>
+                  handleQuantityChange(item.id, item.quantity + 1)
+                }
+                disabled={item.quantity >= item.stockCount}
+                className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-md hover:border-blue-600 hover:bg-blue-50 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                title="Increase"
+              >
+                <FontAwesomeIcon
+                  icon={faPlus}
+                  className="w-3 h-3 text-gray-700"
+                />
+              </button>
+            </div>
+
+            <div className="ml-auto text-right">
+              <div className="text-xs text-gray-500 mb-0.5">Total</div>
+              <div className="text-lg font-bold text-gray-900">
+                {formatPriceInCurrency(item.price * item.quantity)}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Country Selection and Place Order (only for ungrouped items) */}
+      {!item.groupCode && (
+        <div className="pt-3 border-t border-gray-200 mt-3">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1">
+              <label 
+                htmlFor={`billingCountry-${item.id}`} 
+                className="block text-sm font-medium text-gray-700 mb-1.5"
+              >
+                Billing Country <span className="text-red-500">*</span>
+              </label>
+              <select
+                id={`billingCountry-${item.id}`}
+                value={itemCountries[item.id] || ""}
+                onChange={(e) => handleCountryChange(item.id, e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                required
+              >
+                <option value="">Select country</option>
+                <option value="hongkong">Hong Kong</option>
+                <option value="dubai">Dubai</option>
+              </select>
+            </div>
+            <div className="flex items-end w-full sm:w-[50%]">
+              <button
+                type="button"
+                onClick={() => handlePlaceOrderForItem(item)}
+                disabled={!itemCountries[item.id] || itemLoading[item.id]}
+                className="w-full sm:min-w-[140px] px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors duration-200 shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600"
+              >
+                {itemLoading[item.id] ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Processing...
+                  </span>
+                ) : (
+                  'Place Order'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 
   // Handle place order for a single product
   const handlePlaceOrderForItem = async (item) => {
@@ -290,9 +651,12 @@ const CartPage = () => {
           navigate("/order", { state: { order: response.data } });
         }
       } else {
-        setError(response?.message || "Failed to create order");
+        // Show detailed error including MOQ validation
+        const errorMessage = response?.message || response?.data?.message || "Failed to create order";
+        setError(errorMessage);
       }
     } catch (error) {
+      // Show detailed error including MOQ validation
       const errorMessage =
         error.response?.data?.errors?.map((e) => e.message).join(", ") ||
         error.response?.data?.message ||
@@ -348,187 +712,124 @@ const CartPage = () => {
             </button>
           </div>
         ) : (
-          <div className="lg:flex justify-between gap-6">
-            {cartItems.map((item) => (
-              <div key={item.id} className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200 lg:w-[50%] mb-4 lg:mb-0">
-                <div className="p-4 sm:p-5">
-                  <div className="flex gap-4">
-                    {/* Product Image */}
-                    {/* <div className="flex-shrink-0">
-                      <img
-                        className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-lg border border-gray-200"
-                        src={
-                          imageErrors[item.id]
-                            ? iphoneImage
-                            : item.imageUrl
-                        }
-                        alt={item.name}
-                        onError={() => handleImageError(item.id)}
-                      />
-                    </div> */}
-
-                    {/* Product Details */}
-                    <div className="flex-1 min-w-0">
-                      {/* Product Name and Remove */}
-                      <div className="flex">
-                                            {/* Product Image */}
-                    <div className="flex-shrink-0">
-                      <img
-                        className="w-20 h-20 sm:w-32 sm:h-32 object-cover rounded-lg border border-gray-200"
-                        src={
-                          imageErrors[item.id]
-                            ? iphoneImage
-                            : item.imageUrl
-                        }
-                        alt={item.name}
-                        onError={() => handleImageError(item.id)}
-                      />
-                    </div>
-                      <div className="w-[100%] ps-3">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex-1 min-w-0 pr-2">
-                            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">
-                              {item.name}
-                            </h3>
-                            <p className="text-sm text-gray-600 line-clamp-1">
-                              {item.description}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => handleRemoveItem(item.id)}
-                            className="text-gray-400 hover:text-red-600 p-1.5 rounded-md hover:bg-red-50 transition-colors duration-200 flex-shrink-0"
-                            title="Remove item"
-                          >
-                            <FontAwesomeIcon
-                              icon={faTrash}
-                              className="w-4 h-4"
-                            />
-                          </button>
-                        </div>
-
-                        {/* Price, Stock, Quantity and Total */}
-                        <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-1">
-                          <div>
-                            <div className="text-base flex items-center font-semibold text-gray-900">
-                              {formatPriceInCurrency(item.price)}
-                            <div className="text-xs text-gray-500 ms-2">Stock: {item.stockCount}</div>
+          <div className="space-y-6">
+            {/* Group items by groupCode */}
+            {(() => {
+              const { grouped, ungrouped } = groupCartItemsByGroupCode();
+              const groups = Object.values(grouped);
+              
+              return (
+                <>
+                  {/* Render grouped items */}
+                  {groups.map((group) => {
+                    const groupStatus = getGroupMOQStatus(group.items[0]);
+                    const groupTotalPrice = group.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                    const groupCountry = groupCountries[group.groupCode] || itemCountries[group.items[0]?.id] || "";
+                    
+                    return (
+                      <div key={group.groupCode} className="bg-white rounded-lg shadow-sm border-2 border-blue-200">
+                        {/* Group Header */}
+                        <div className="p-4 bg-blue-50 border-b border-blue-200 rounded-t-lg">
+                          <div className="flex items-center justify-between flex-wrap gap-3">
+                            <div className="flex items-center gap-3">
+                              <FontAwesomeIcon icon={faLayerGroup} className="w-5 h-5 text-blue-600" />
+                              <div>
+                                <h3 className="text-lg font-bold text-gray-900">Group: {group.groupCode}</h3>
+                                <p className="text-sm text-gray-600">
+                                  {group.items.length} product{group.items.length > 1 ? 's' : ''} in this group
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-xs text-gray-600 mb-1">Group Total</div>
+                              <div className="text-xl font-bold text-gray-900">
+                                {formatPriceInCurrency(groupTotalPrice)}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-1">
-                                                  <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={() =>
-                                handleQuantityChange(item.id, item.quantity - 1)
-                              }
-                              disabled={item.quantity <= item.moq}
-                              className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-md hover:border-blue-600 hover:bg-blue-50 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-                              title="Decrease"
-                            >
-                              <FontAwesomeIcon
-                                icon={faMinus}
-                                className="w-3 h-3 text-gray-700"
-                              />
-                            </button>
-                            <input
-                              type="text"
-                              value={item.quantity}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                if (!/^\d*$/.test(value)) return;
-                                if (value === "") {
-                                  handleQuantityChange(item.id, "");
-                                  return;
-                                }
-                                let num = parseInt(value, 10);
-                                if (isNaN(num) || num < item.moq) {
-                                  num = item.moq;
-                                } else if (num > item.stockCount) {
-                                  num = item.stockCount;
-                                }
-                                handleQuantityChange(item.id, num);
-                              }}
-                              onBlur={(e) => {
-                                let num = parseInt(e.target.value, 10);
-                                if (isNaN(num) || num < item.moq) num = item.moq;
-                                if (num > item.stockCount) num = item.stockCount;
-                                handleQuantityChange(item.id, num);
-                              }}
-                              className="w-14 text-center text-sm font-semibold py-1.5 px-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                            <button
-                              onClick={() =>
-                                handleQuantityChange(item.id, item.quantity + 1)
-                              }
-                              disabled={item.quantity >= item.stockCount}
-                              className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-md hover:border-blue-600 hover:bg-blue-50 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-                              title="Increase"
-                            >
-                              <FontAwesomeIcon
-                                icon={faPlus}
-                                className="w-3 h-3 text-gray-700"
-                              />
-                            </button>
-                          </div>
-
-                          <div className="ml-auto text-right">
-                            <div className="text-xs text-gray-500 mb-0.5">Total</div>
-                            <div className="text-lg font-bold text-gray-900">
-                              {formatPriceInCurrency(item.price * item.quantity)}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      </div>
-
-                      {/* Country Selection and Place Order */}
-                      <div className="pt-3 border-t border-gray-200">
-                        <div className="flex flex-col sm:flex-row gap-3">
-                          <div className="flex-1">
-                            <label 
-                              htmlFor={`billingCountry-${item.id}`} 
-                              className="block text-sm font-medium text-gray-700 mb-1.5"
-                            >
-                              Billing Country <span className="text-red-500">*</span>
-                            </label>
-                            <select
-                              id={`billingCountry-${item.id}`}
-                              value={itemCountries[item.id] || ""}
-                              onChange={(e) => handleCountryChange(item.id, e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                              required
-                            >
-                              <option value="">Select country</option>
-                              <option value="hongkong">Hong Kong</option>
-                              <option value="dubai">Dubai</option>
-                            </select>
-                          </div>
-                          <div className="flex items-end w-full sm:w-[50%]">
-                            <button
-                              type="button"
-                              onClick={() => handlePlaceOrderForItem(item)}
-                              disabled={!itemCountries[item.id] || itemLoading[item.id]}
-                              className="w-full sm:min-w-[140px] px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors duration-200 shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600"
-                            >
-                              {itemLoading[item.id] ? (
-                                <span className="flex items-center justify-center gap-2">
-                                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                  Processing...
-                                </span>
+                          
+                          {/* Group MOQ Status */}
+                          {groupStatus && (
+                            <div className={`mt-3 p-2 rounded-md text-sm ${
+                              groupStatus.isValid 
+                                ? 'bg-green-100 text-green-800 border border-green-300' 
+                                : 'bg-yellow-100 text-yellow-800 border border-yellow-300'
+                            }`}>
+                              {groupStatus.isValid ? (
+                                <span>✓ Group MOQ met ({groupStatus.currentTotal}/{groupStatus.totalMoq})</span>
                               ) : (
-                                'Place Order'
+                                <span>⚠ Need {groupStatus.remaining} more item(s) to meet group MOQ ({groupStatus.currentTotal}/{groupStatus.totalMoq})</span>
                               )}
-                            </button>
+                            </div>
+                          )}
+                          
+                          {/* Group Country Selection and Place Order Button */}
+                          <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                            <div className="flex-1">
+                              <label 
+                                htmlFor={`groupCountry-${group.groupCode}`} 
+                                className="block text-sm font-medium text-gray-700 mb-1.5"
+                              >
+                                Billing Country for Group <span className="text-red-500">*</span>
+                              </label>
+                              <select
+                                id={`groupCountry-${group.groupCode}`}
+                                value={groupCountry}
+                                onChange={(e) => handleGroupCountryChange(group.groupCode, e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                required
+                              >
+                                <option value="">Select country</option>
+                                <option value="hongkong">Hong Kong</option>
+                                <option value="dubai">Dubai</option>
+                              </select>
+                            </div>
+                            <div className="flex items-end">
+                              <button
+                                type="button"
+                                onClick={() => handlePlaceOrderForGroup(group.groupCode)}
+                                disabled={!groupCountry || groupLoading[group.groupCode]}
+                                className="w-full sm:min-w-[200px] px-5 py-2.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors duration-200 shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600 flex items-center justify-center gap-2"
+                              >
+                                {groupLoading[group.groupCode] ? (
+                                  <>
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    Processing...
+                                  </>
+                                ) : (
+                                  <>
+                                    <FontAwesomeIcon icon={faLayerGroup} className="w-4 h-4" />
+                                    Place Order for Group
+                                  </>
+                                )}
+                              </button>
+                            </div>
                           </div>
                         </div>
+                        
+                        {/* Group Items */}
+                        <div className="p-4 space-y-4">
+                          {group.items.map((item) => (
+                            <div key={item.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                              {renderCartItem(item)}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  
+                  {/* Render ungrouped items */}
+                  {ungrouped.map((item) => (
+                    <div key={item.id} className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200">
+                      <div className="p-4 sm:p-5">
+                        {renderCartItem(item)}
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-            
-
+                  ))}
+                </>
+              );
+            })()}
           </div>
         )}
             {/* Clear Cart Button */}
