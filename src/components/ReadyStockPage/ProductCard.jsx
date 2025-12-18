@@ -641,7 +641,7 @@ if (viewMode === "table") {
             <span className="text-sm font-semibold text-green-600">
               {convertPrice(price)}
             </span>
-            {!isExpired && !effectiveOutOfStock && isFlashDeal && shouldShowTimer && (
+            {!isExpired && !effectiveOutOfStock && shouldShowTimer && product.expiryTime && (
               <div className="mt-1">
                 <div className="inline-flex items-center bg-gradient-to-r from-red-50 to-pink-50 text-red-700 px-2 py-0.5 rounded text-[9px] font-semibold border border-red-200">
                   <FontAwesomeIcon icon={faClock} className="w-2 h-2 mr-1" />
@@ -991,7 +991,7 @@ if (viewMode === "list") {
                 <button className="px-2 py-0.5 bg-gray-100 rounded-md text-[10px] font-medium">Stock: {stockCount}</button>
               </div>
 
-              {!isExpired && !effectiveOutOfStock && isFlashDeal && shouldShowTimer && (
+              {!isExpired && !effectiveOutOfStock && shouldShowTimer && product.expiryTime && (
                 <div className="mb-2 flex justify-center">
                   <div className="inline-flex items-center bg-gradient-to-r from-red-50 to-pink-50 text-red-700 px-3 py-1.5 rounded-full text-[10px] font-semibold shadow-sm border border-red-200 w-full justify-center">
                     <FontAwesomeIcon icon={faClock} className="w-2.5 h-2.5 mr-1.5" />
@@ -1000,7 +1000,7 @@ if (viewMode === "list") {
                       renderer={({ days, hours, minutes, seconds, completed }) => {
                         if (completed) {
                           return (
-                            <span className="font-semibold">Flash Deal Ended</span>
+                            <span className="font-semibold">Ended</span>
                           );
                         }
                         return (
@@ -1278,7 +1278,7 @@ if (viewMode === "list") {
           </div>
         </div> */}
 
-          {!isExpired && !effectiveOutOfStock && isFlashDeal && shouldShowTimer && (
+          {!isExpired && !effectiveOutOfStock && shouldShowTimer && product.expiryTime && (
             <div className="mb-2 flex justify-center">
               <div className="inline-flex items-center bg-gradient-to-r from-red-50 to-pink-50 text-red-700 px-3 py-1.5 rounded-full text-[10px] font-semibold shadow-sm border border-red-200 w-full justify-center">
                 <FontAwesomeIcon icon={faClock} className="w-2.5 h-2.5 mr-1.5" />
@@ -1287,7 +1287,7 @@ if (viewMode === "list") {
                   renderer={({ days, hours, minutes, seconds, completed }) => {
                     if (completed) {
                       return (
-                        <span className="font-semibold">Flash Deal Ended</span>
+                        <span className="font-semibold">Ended</span>
                       );
                     }
                     return (

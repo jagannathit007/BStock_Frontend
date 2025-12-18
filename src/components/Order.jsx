@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faShoppingBag, faTimes, faSearch, faCreditCard, faEye, faMapMarkerAlt, faFileAlt, faDownload } from "@fortawesome/free-solid-svg-icons";
 import OrderService from "../services/order/order.services";
@@ -24,6 +24,8 @@ const Order = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [statusFilter, setStatusFilter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [allOrdersForTotals, setAllOrdersForTotals] = useState([]);
+  const [paymentPendingOrders, setPaymentPendingOrders] = useState([]);
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
   const [selectedOrderForPayment, setSelectedOrderForPayment] = useState(null);
@@ -41,6 +43,40 @@ const Order = () => {
     preview: null,
   });
   const itemsPerPage = 10;
+
+  // Fetch all orders for totals calculation (when status filter changes)
+  const fetchAllOrdersForTotals = useCallback(async () => {
+    if (!statusFilter) {
+      setAllOrdersForTotals([]);
+      return;
+    }
+    try {
+      // Fetch orders for the selected status with max allowed limit (100)
+      // If there are more orders, we'll calculate totals from what we can fetch
+      const response = await OrderService.listOrders(1, 100, statusFilter || undefined, searchQuery || undefined);
+      if (response.status === 200) {
+        setAllOrdersForTotals(response.data?.docs || []);
+      }
+    } catch (error) {
+      console.error("Error fetching orders for totals:", error);
+      setAllOrdersForTotals([]);
+    }
+  }, [statusFilter, searchQuery]);
+
+  // Calculate currency-wise totals for current status from all orders
+  const currencyTotals = useMemo(() => {
+    const totals = {};
+    const ordersToUse = allOrdersForTotals.length > 0 ? allOrdersForTotals : orders;
+    ordersToUse.forEach((order) => {
+      const currency = order.currency || 'USD';
+      const amount = parseFloat(order.totalAmount) || 0;
+      if (!totals[currency]) {
+        totals[currency] = 0;
+      }
+      totals[currency] += amount;
+    });
+    return totals;
+  }, [allOrdersForTotals, orders]);
 
   // Fetch orders
   const fetchOrders = useCallback(async () => {
@@ -81,6 +117,47 @@ const Order = () => {
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
+
+  // Fetch all orders for totals when status filter or search changes
+  useEffect(() => {
+    fetchAllOrdersForTotals();
+  }, [fetchAllOrdersForTotals]);
+
+  // Fetch payment pending orders (confirm status without payment)
+  const fetchPaymentPendingOrders = useCallback(async () => {
+    try {
+      // Fetch all orders with confirm status
+      const response = await OrderService.listOrders(1, 100, 'confirm', undefined);
+      if (response.status === 200) {
+        const allConfirmOrders = response.data?.docs || [];
+        // Filter orders that don't have paymentDetails
+        const pendingOrders = allConfirmOrders.filter(order => !order.paymentDetails);
+        setPaymentPendingOrders(pendingOrders);
+      }
+    } catch (error) {
+      console.error("Error fetching payment pending orders:", error);
+      setPaymentPendingOrders([]);
+    }
+  }, []);
+
+  // Calculate currency-wise totals for payment pending orders
+  const paymentPendingTotals = useMemo(() => {
+    const totals = {};
+    paymentPendingOrders.forEach((order) => {
+      const currency = order.currency || 'USD';
+      const amount = parseFloat(order.totalAmount) || 0;
+      if (!totals[currency]) {
+        totals[currency] = 0;
+      }
+      totals[currency] += amount;
+    });
+    return totals;
+  }, [paymentPendingOrders]);
+
+  // Fetch payment pending orders on mount
+  useEffect(() => {
+    fetchPaymentPendingOrders();
+  }, [fetchPaymentPendingOrders]);
 
   // Handle page change
   const handlePageChange = (newPage) => {
@@ -136,6 +213,35 @@ const Order = () => {
 
   return (
     <div>
+      {/* Payment Pending Totals Header */}
+      {Object.keys(paymentPendingTotals).length > 0 && (
+        <div className="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border-l-4 border-orange-500 rounded-lg shadow-md">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+                <FontAwesomeIcon icon={faCreditCard} className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Payment Pending</h2>
+                <p className="text-sm text-gray-600">Orders awaiting payment</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 flex-wrap">
+              {Object.entries(paymentPendingTotals)
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([currency, total]) => (
+                  <div key={currency} className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-orange-200 shadow-sm">
+                    <span className="text-xs font-medium text-gray-600 uppercase">{currency}:</span>
+                    <span className="text-base font-bold text-orange-700">
+                      {formatPriceInCurrency(total, currency)}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Title */}
       <div className="flex items-center gap-4 mb-8">
         <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -150,8 +256,8 @@ const Order = () => {
       {/* Table Container */}
       <div className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
         {/* Table Header with Controls */}
-        <div className="flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
-          <div className="flex items-center gap-4 flex-1">
+        <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+          <div className="flex items-center gap-4 flex-1 flex-wrap">
             {/* Search Input */}
             <div className="relative flex-1 max-w-md">
               <FontAwesomeIcon
@@ -192,6 +298,27 @@ const Order = () => {
                 <option value="cancelled">Cancelled</option>
               </select>
             </div>
+
+            {/* Currency-wise Totals */}
+            {Object.keys(currencyTotals).length > 0 && (
+              <div className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg shadow-sm flex-wrap">
+                <span className="text-xs font-semibold text-blue-800 uppercase tracking-wide whitespace-nowrap">
+                  {statusFilter ? `${statusFilter.replace(/_/g, ' ').toUpperCase()} Total:` : 'TOTAL:'}
+                </span>
+                <div className="flex items-center gap-4 flex-wrap">
+                  {Object.entries(currencyTotals)
+                    .sort(([a], [b]) => a.localeCompare(b))
+                    .map(([currency, total]) => (
+                      <div key={currency} className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-blue-700 uppercase">{currency}:</span>
+                        <span className="text-sm font-bold text-blue-900">
+                          {formatPriceInCurrency(total, currency)}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -501,6 +628,7 @@ const Order = () => {
               setShowPaymentPopup(false);
               setSelectedOrderForPayment(null);
               await fetchOrders();
+              await fetchPaymentPendingOrders(); // Refresh payment pending totals
             } catch (error) {
               console.error('Payment submission error:', error);
             }
