@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
+import { getProductName, getSubSkuFamily } from "../../utils/productUtils";
 
 const WTBPanel = () => {
   const [open, setOpen] = useState(false);
@@ -39,6 +40,7 @@ const WTBPanel = () => {
       setRows(
         docs.map((p) => {
           const skuFamily = p.skuFamilyId && typeof p.skuFamilyId === 'object' ? p.skuFamilyId : null;
+          const subSkuFamily = getSubSkuFamily(p);
           
           // Extract brand name
           let brandName = "";
@@ -50,36 +52,35 @@ const WTBPanel = () => {
             }
           }
           
-          // Extract product category name
-          let categoryName = "";
-          if (skuFamily?.productcategoriesId) {
-            if (typeof skuFamily.productcategoriesId === 'object') {
-              categoryName = skuFamily.productcategoriesId.title || skuFamily.productcategoriesId.name || "";
+          // Build Phone Name: Use getProductName (which handles subSkuFamily.subName > skuFamily.name > specification)
+          // Then append specification if it's different from the name
+          const baseName = getProductName(p); // This returns subSkuFamily.subName || skuFamily.name || specification
+          const productSpec = p.specification || "";
+          
+          // If baseName already includes the spec or is the spec, use it as-is
+          // Otherwise combine them
+          let phoneName = baseName;
+          if (productSpec && productSpec !== baseName && !baseName.includes(productSpec)) {
+            // If we have a subSkuFamily name, combine it with spec
+            // Otherwise combine skuFamily name with spec
+            if (subSkuFamily?.subName) {
+              phoneName = `${subSkuFamily.subName} ${productSpec}`.trim();
+            } else if (skuFamily?.name) {
+              phoneName = `${skuFamily.name} ${productSpec}`.trim();
             } else {
-              categoryName = String(skuFamily.productcategoriesId);
+              phoneName = productSpec;
             }
           }
           
-          // Extract condition category name
-          let conditionName = "";
-          if (skuFamily?.conditionCategoryId) {
-            if (typeof skuFamily.conditionCategoryId === 'object') {
-              conditionName = skuFamily.conditionCategoryId.title || skuFamily.conditionCategoryId.name || "";
-            } else {
-              conditionName = String(skuFamily.conditionCategoryId);
-            }
+          // Fallback if still empty
+          if (!phoneName || phoneName === "Product") {
+            phoneName = productSpec || p.model || p.modelFull || "Product";
           }
           
           return {
             id: p._id,
-            spec: p.specification || "",
-            // SKU Family details
-            skuFamilyCode: skuFamily?.code || "",
-            skuFamilyName: skuFamily?.name || "",
+            phoneName: phoneName,
             brand: brandName,
-            productCategory: categoryName,
-            conditionCategory: conditionName,
-            subSkuFamilies: skuFamily?.subSkuFamilies || [],
           };
         })
       );
@@ -185,7 +186,7 @@ const WTBPanel = () => {
             <input
               type="text"
               className="flex-1 border rounded-lg px-3 py-2 text-sm"
-              placeholder="Search SKU code, name, brand, category, or spec…"
+              placeholder="Search phone name or brand…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -206,24 +207,16 @@ const WTBPanel = () => {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b">
                   <tr>
-                    <th className="px-3 py-2 text-left">SKU Code</th>
-                    <th className="px-3 py-2 text-left">SKU Name</th>
+                    <th className="px-3 py-2 text-left">Phone Name</th>
                     <th className="px-3 py-2 text-left">Brand</th>
-                    <th className="px-3 py-2 text-left">Category</th>
-                    <th className="px-3 py-2 text-left">Condition</th>
-                    <th className="px-3 py-2 text-left">Product Spec</th>
                     <th className="px-3 py-2 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
                   {rows.map((r) => (
                     <tr key={r.id} className="hover:bg-gray-50">
-                      <td className="px-3 py-2 font-medium">{r.skuFamilyCode || "-"}</td>
-                      <td className="px-3 py-2">{r.skuFamilyName || "-"}</td>
+                      <td className="px-3 py-2 font-medium">{r.phoneName}</td>
                       <td className="px-3 py-2">{r.brand || "-"}</td>
-                      <td className="px-3 py-2">{r.productCategory || "-"}</td>
-                      <td className="px-3 py-2">{r.conditionCategory || "-"}</td>
-                      <td className="px-3 py-2">{r.spec || "-"}</td>
                       <td className="px-3 py-2 text-right">
                         <button
                           type="button"
@@ -246,3 +239,4 @@ const WTBPanel = () => {
 };
 
 export default WTBPanel;
+
