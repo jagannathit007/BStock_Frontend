@@ -37,9 +37,41 @@ const businessSchema = yup.object({
     .min(2, "Business name must be at least 2 characters")
     .trim(),
   country: yup.string().required("Country is required"),
-  address: yup.string().optional(),
+  address: yup
+    .string()
+    .required("Business address is required")
+    .min(5, "Business address must be at least 5 characters")
+    .trim(),
   currency: yup.string().required("Currency is required"),
   currencyCode: yup.string().optional(),
+  businessLogo: yup
+    .mixed()
+    .required("Business logo is required")
+    .test("fileOrString", "Business logo is required", (value) => {
+      // Allow if it's a File object
+      if (value instanceof File) {
+        return true;
+      }
+      // Allow if it's a non-empty string (existing file path)
+      if (typeof value === "string" && value.trim() !== "") {
+        return true;
+      }
+      return false;
+    }),
+  certificate: yup
+    .mixed()
+    .required("Business certificate is required")
+    .test("fileOrString", "Business certificate is required", (value) => {
+      // Allow if it's a File object
+      if (value instanceof File) {
+        return true;
+      }
+      // Allow if it's a non-empty string (existing file path)
+      if (typeof value === "string" && value.trim() !== "") {
+        return true;
+      }
+      return false;
+    }),
 });
 
 const passwordSchema = yup.object({
@@ -786,17 +818,26 @@ const BusinessProfile = ({
               className="fas fa-map-marker-alt w-4 h-4 mr-2"
               style={{ color: "#0071E0" }}
             ></i>
-            Business Address{" "}
-            <span className="text-gray-400 ml-1">(Optional)</span>
+            Business Address <span className="text-red-500">*</span>
           </label>
           <textarea
             {...register("address")}
             value={watch("address")}
             onChange={(e) => handleFieldChange("address", e.target.value)}
             rows="3"
-            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-[#0071E0] focus:ring-2 focus:ring-[#0071E0]/20 transition-colors duration-200 text-sm"
+            className={`w-full px-4 py-2 rounded-lg border transition-colors duration-200 text-sm focus:ring-2 focus:ring-[#0071E0]/20 ${
+              errors.address
+                ? "border-red-500 focus:border-red-500"
+                : "border-gray-300 focus:border-[#0071E0]"
+            }`}
             placeholder="Enter your business address"
           />
+          {errors.address && (
+            <p className="text-red-500 text-xs mt-1 flex items-center">
+              <i className="fas fa-exclamation-circle mr-1"></i>
+              {errors.address.message}
+            </p>
+          )}
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700 flex items-center">
@@ -804,17 +845,30 @@ const BusinessProfile = ({
               className="fas fa-image w-4 h-4 mr-2"
               style={{ color: "#0071E0" }}
             ></i>
-            Business Logo <span className="text-gray-400 ml-1">(Optional)</span>
+            Business Logo <span className="text-red-500">*</span>
           </label>
+          {errors.businessLogo && (
+            <p className="text-red-500 text-xs mb-1 flex items-center">
+              <i className="fas fa-exclamation-circle mr-1"></i>
+              {errors.businessLogo.message}
+            </p>
+          )}
           <div className="space-y-3">
             <div className="flex items-center space-x-3">
-              <label className="cursor-pointer px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-sm">
+              <label className={`cursor-pointer px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-sm ${
+                errors.businessLogo
+                  ? "bg-red-50 border-2 border-red-300"
+                  : "bg-gray-50 border border-gray-300"
+              }`}>
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) =>
-                    onChangeFile("businessLogo", e.target.files[0])
-                  }
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    onChangeFile("businessLogo", file);
+                    setValue("businessLogo", file);
+                    trigger("businessLogo");
+                  }}
                   className="hidden"
                 />
                 <i className="fas fa-upload mr-2"></i>
@@ -838,9 +892,12 @@ const BusinessProfile = ({
                     onError={handleLogoImageError}
                   />
                   <button
+                    type="button"
                     onClick={() => {
                       onChangeField("businessLogo", null);
                       onChangeFile("businessLogo", null);
+                      setValue("businessLogo", null);
+                      trigger("businessLogo");
                     }}
                     className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors duration-200 text-xs"
                   >
@@ -857,18 +914,30 @@ const BusinessProfile = ({
               className="fas fa-certificate w-4 h-4 mr-2"
               style={{ color: "#0071E0" }}
             ></i>
-            Business Certificate{" "}
-            <span className="text-gray-400 ml-1">(Optional)</span>
+            Business Certificate <span className="text-red-500">*</span>
           </label>
+          {errors.certificate && (
+            <p className="text-red-500 text-xs mb-1 flex items-center">
+              <i className="fas fa-exclamation-circle mr-1"></i>
+              {errors.certificate.message}
+            </p>
+          )}
           <div className="space-y-3">
             <div className="flex items-center space-x-3">
-              <label className="cursor-pointer px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-sm">
+              <label className={`cursor-pointer px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-sm ${
+                errors.certificate
+                  ? "bg-red-50 border-2 border-red-300"
+                  : "bg-gray-50 border border-gray-300"
+              }`}>
                 <input
                   type="file"
                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                  onChange={(e) =>
-                    onChangeFile("certificate", e.target.files[0])
-                  }
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    onChangeFile("certificate", file);
+                    setValue("certificate", file);
+                    trigger("certificate");
+                  }}
                   className="hidden"
                 />
                 <i className="fas fa-upload mr-2"></i>
@@ -910,9 +979,12 @@ const BusinessProfile = ({
                     )}
                   </a>
                   <button
+                    type="button"
                     onClick={() => {
                       onChangeField("certificate", null);
                       onChangeFile("certificate", null);
+                      setValue("certificate", null);
+                      trigger("certificate");
                     }}
                     className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors duration-200 text-xs"
                   >
