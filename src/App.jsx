@@ -10,6 +10,7 @@ import {
 import Header from "./components/Header";
 import NavTabs from "./components/NavTabs";
 import Footer from "./components/Footer";
+import WTBPanel from "./components/WTB/WTBPanel";
 import Layout from "./components/Layout";
 import MainContent from "./components/ReadyStockPage/MainContent";
 import "./App.css";
@@ -187,7 +188,12 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
           </Routes>
         </main>
         
-        {!hideHeader && <Footer />}
+        {!hideHeader && (
+          <>
+            <Footer />
+            <WTBPanel />
+          </>
+        )}
       </div>
     );
   };
