@@ -219,6 +219,21 @@ export class NegotiationService {
       throw new Error(errorMessage);
     }
   }
+
+  // Confirm negotiation (via token from email)
+  static async confirmNegotiation(token: string): Promise<any> {
+    try {
+      const res = await api.get(`/api/customer/negotiation/confirm/${token}`);
+      if (res.data?.status === 200) {
+        return res.data.data;
+      } else {
+        throw new Error(res.data?.message || 'Failed to confirm negotiation');
+      }
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to confirm negotiation';
+      throw new Error(errorMessage);
+    }
+  }
 }
 
 export default NegotiationService;

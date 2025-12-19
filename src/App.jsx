@@ -23,6 +23,7 @@ import VerifyEmailPrompt from "./components/VerifyEmailPrompt";
 import VerifyEmail from "./components/VerifyEmail";
 import ResetPassword from "./components/ResetPassword";
 import ConfirmOrderModification from "./components/ConfirmOrderModification";
+import ConfirmNegotiation from "./components/ConfirmNegotiation";
 import CartPage from "./components/ReadyStockPage/CartPage";
 import CheckoutPage from "./components/ReadyStockPage/CheckoutPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -110,6 +111,10 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
             <Route 
               path="/confirm-order-modification/:token" 
               element={<ConfirmOrderModification />} 
+            />
+            <Route 
+              path="/confirm-negotiation/:token" 
+              element={<ConfirmNegotiation />} 
             />
             <Route path="/verify-email/:token" element={<VerifyEmail />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
