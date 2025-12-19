@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faCreditCard, faFileUpload, faCheck } from '@fortawesome/free-solid-svg-icons';
 import PaymentService from '../services/payment/payment.services';
+import OrderPaymentService from '../services/orderPayment/orderPayment.services';
 import { getCurrencySymbol } from '../utils/currencyUtils';
 
 const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaymentMethod }) => {
@@ -33,8 +34,36 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
         setSelectedModule(adminSelectedPaymentMethod);
       }
       fetchPaymentConfig();
+      fetchExistingPayments();
+      // Set default payment amount to order total
+      setPaymentAmount(orderData?.totalAmount || '');
     }
-  }, [isOpen, adminSelectedPaymentMethod]);
+  }, [isOpen, adminSelectedPaymentMethod, orderData]);
+
+  const fetchExistingPayments = async () => {
+    if (!orderData?._id) return;
+    try {
+      const response = await OrderPaymentService.getPaymentDetails(orderData._id);
+      if (response.status === 200 && response.data) {
+        const payments = Array.isArray(response.data) ? response.data : [response.data];
+        setExistingPayments(payments);
+        
+        // Calculate remaining balance
+        const totalPaid = payments.reduce((sum, p) => {
+          const pAmount = p.calculatedAmount || p.amount || 0;
+          return sum + pAmount;
+        }, 0);
+        
+        const remaining = (orderData.totalAmount || 0) - totalPaid;
+        // Set payment amount to remaining balance if not already set
+        if (!paymentAmount && remaining > 0) {
+          setPaymentAmount(remaining);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching existing payments:', error);
+    }
+  };
 
   const fetchPaymentConfig = async () => {
     try {
@@ -205,8 +234,54 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
         return;
       }
 
+      // Check if this is for the new order payment module (waiting_for_payment status)
+      // This check MUST come first to ensure we use the new endpoint for waiting_for_payment orders
+      const isWaitingForPayment = orderData.status === 'waiting_for_payment' || 
+                                   orderData.status === 'waiting for payment' ||
+                                   (orderData.status && orderData.status.toLowerCase().includes('waiting'));
+      
+      if (isWaitingForPayment && orderData._id && adminSelectedPaymentMethod) {
+        // Use new order payment service
+        const fileList = Object.values(files).filter(Boolean);
+        const paymentDetails = {
+          ...fieldsData,
+          transactionRef: formData.transactionRef || formData.referenceNumber || '',
+        };
+        
+        // Validate payment amount
+        const amountValue = parseFloat(paymentAmount);
+        if (!amountValue || amountValue <= 0) {
+          setError('Please enter a valid payment amount');
+          return;
+        }
+        
+        // Check if amount exceeds remaining balance
+        const totalPaid = existingPayments.reduce((sum, p) => sum + (p.calculatedAmount || p.amount || 0), 0);
+        const remaining = (orderData.totalAmount || 0) - totalPaid;
+        if (amountValue > remaining) {
+          setError(`Payment amount cannot exceed remaining balance of ${formatPriceInCurrency(remaining, orderData.currency)}`);
+          return;
+        }
+        
+        const response = await OrderPaymentService.submitPayment({
+          orderId: orderData._id,
+          paymentMethod: adminSelectedPaymentMethod,
+          paymentDetails: paymentDetails,
+          transactionRef: formData.transactionRef || formData.referenceNumber || '',
+          amount: amountValue
+        }, fileList.length > 0 ? fileList : undefined);
+
+        if (response.status === 200) {
+          onSuccess && onSuccess();
+          onClose();
+        }
+        return;
+      }
+
       // If order exists and adminSelectedPaymentMethod is provided, use submitPayment endpoint
-      if (orderData.orderNo && adminSelectedPaymentMethod) {
+      // BUT only if status is NOT waiting_for_payment (for backward compatibility with older orders)
+      const isNotWaitingForPayment = !isWaitingForPayment;
+      if (orderData.orderNo && adminSelectedPaymentMethod && isNotWaitingForPayment) {
         const fileList = Object.values(files).filter(Boolean);
         const paymentDetails = {
           module: selectedModule,
@@ -424,13 +499,63 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Order Summary */}
-              <div className="bg-gray-50 rounded-lg p-4">
+              <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Order Summary</h3>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Total Amount:</span>
                   <span className="text-xl font-bold text-gray-900">
                     {formatPriceInCurrency(orderData.totalAmount, orderData.currency)}
                   </span>
+                </div>
+                
+                {/* Show existing payments if any */}
+                {existingPayments.length > 0 && (
+                  <div className="pt-3 border-t border-gray-300">
+                    <div className="text-sm text-gray-600 mb-2">
+                      Already Paid: {formatPriceInCurrency(
+                        existingPayments.reduce((sum, p) => sum + (p.calculatedAmount || p.amount || 0), 0),
+                        orderData.currency
+                      )}
+                    </div>
+                    <div className="text-sm font-semibold text-gray-900">
+                      Remaining Balance: {formatPriceInCurrency(
+                        (orderData.totalAmount || 0) - existingPayments.reduce((sum, p) => sum + (p.calculatedAmount || p.amount || 0), 0),
+                        orderData.currency
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Payment Amount Input */}
+                <div className="pt-3 border-t border-gray-300">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Payment Amount <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={paymentAmount}
+                    onChange={(e) => {
+                      const value = parseFloat(e.target.value) || '';
+                      setPaymentAmount(value);
+                    }}
+                    step="0.01"
+                    min="0"
+                    max={orderData.totalAmount}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter payment amount"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Maximum: {formatPriceInCurrency(orderData.totalAmount, orderData.currency)}
+                    {existingPayments.length > 0 && (
+                      <span className="ml-2">
+                        (Remaining: {formatPriceInCurrency(
+                          (orderData.totalAmount || 0) - existingPayments.reduce((sum, p) => sum + (p.calculatedAmount || p.amount || 0), 0),
+                          orderData.currency
+                        )})
+                      </span>
+                    )}
+                  </p>
                 </div>
               </div>
 

@@ -498,6 +498,21 @@ const Order = () => {
                             {order.currentLocation !== order.deliveryLocation ? 'View express delivery charge' : 'View same-location charge'}
                           </button>
                         )}
+                        {/* Payment button for new payment module - waiting_for_payment status */}
+                        {(order.status === 'waiting_for_payment') && order.adminSelectedPaymentMethod && (
+                          <button
+                            onClick={() => {
+                              setSelectedOrderForPayment(order);
+                              setShowPaymentPopup(true);
+                            }}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-all duration-200 font-medium"
+                            title="Submit Payment"
+                          >
+                            <FontAwesomeIcon icon={faCreditCard} className="w-4 h-4" />
+                            Payment
+                          </button>
+                        )}
+                        {/* Legacy payment button for confirm status */}
                         {(order.status === 'confirm') && order.adminSelectedPaymentMethod && !order.paymentDetails && (
                           <button
                             onClick={() => {
@@ -610,7 +625,10 @@ const Order = () => {
             setSelectedOrderForPayment(null);
           }}
           orderData={{
+            _id: selectedOrderForPayment._id,
             orderId: selectedOrderForPayment._id,
+            orderNo: selectedOrderForPayment.orderNo,
+            status: selectedOrderForPayment.status,
             totalAmount: selectedOrderForPayment.totalAmount,
             currency: selectedOrderForPayment.currency,
             adminSelectedPaymentMethod: selectedOrderForPayment.adminSelectedPaymentMethod,
@@ -618,13 +636,27 @@ const Order = () => {
           }}
           onSuccess={async (paymentData) => {
             try {
-              await OrderService.submitPayment(
-                selectedOrderForPayment._id,
-                paymentData.billingAddress,
-                paymentData.shippingAddress,
-                paymentData.paymentDetails,
-                paymentData.files
-              );
+              // If paymentData is undefined/null, payment was already submitted via new endpoint
+              if (!paymentData) {
+                // Payment already submitted via OrderPaymentService in PaymentPopup
+                setShowPaymentPopup(false);
+                setSelectedOrderForPayment(null);
+                await fetchOrders();
+                await fetchPaymentPendingOrders(); // Refresh payment pending totals
+                return;
+              }
+              
+              // Only call old endpoint if paymentData is provided (for backward compatibility)
+              if (paymentData && paymentData.billingAddress && paymentData.shippingAddress && paymentData.paymentDetails) {
+                await OrderService.submitPayment(
+                  selectedOrderForPayment._id,
+                  paymentData.billingAddress,
+                  paymentData.shippingAddress,
+                  paymentData.paymentDetails,
+                  paymentData.files
+                );
+              }
+              
               setShowPaymentPopup(false);
               setSelectedOrderForPayment(null);
               await fetchOrders();
