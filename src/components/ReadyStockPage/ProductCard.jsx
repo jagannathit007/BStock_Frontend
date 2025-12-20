@@ -41,16 +41,15 @@ const ProductCard = ({
   const [selectedColor, setSelectedColor] = useState(product?.color || "");
   const [selectedPrice, setSelectedPrice] = useState(product?.price || 0);
   const [selectedCountry, setSelectedCountry] = useState("Hongkong");
-  // Use global currency context instead of local state
-  const { selectedCurrency: globalSelectedCurrency, setSelectedCurrency: setGlobalSelectedCurrency } = useCurrency();
-  const selectedCurrency = globalSelectedCurrency || "USD";
-  const setSelectedCurrency = (currency) => {
-    setGlobalSelectedCurrency(currency);
-  };
+  // Use local state for currency per product card to avoid affecting other cards
+  const { selectedCurrency: globalSelectedCurrency } = useCurrency();
+  const [selectedCurrency, setSelectedCurrency] = useState(() => {
+    // Initialize from global context or default to USD
+    return globalSelectedCurrency || "USD";
+  });
 
   // === LIST VIEW: QUANTITY STATE ===
   const [quantity, setQuantity] = useState(1);
-  const [currencyUpdateKey, setCurrencyUpdateKey] = useState(0);
 
   const deliverables = useMemo(() => {
     const direct = product?.countryDeliverables;
@@ -66,24 +65,26 @@ const ProductCard = ({
   };
 
   useEffect(() => {
-    // Reset country selection when product changes
+    // Reset country and currency selection when product changes
     const firstDeliverable = deliverables[0];
     if (firstDeliverable) {
-      setSelectedCountry(firstDeliverable.country || "Hongkong");
-      // Only set currency from deliverable if global context doesn't have a valid currency for this country
-      // This preserves user's currency selection
-      const validCurrencies = currencyOptionsByCountry[firstDeliverable.country || "Hongkong"] || [];
-      if (firstDeliverable.currency && (!globalSelectedCurrency || !validCurrencies.includes(globalSelectedCurrency))) {
-        // If global currency is not valid for this country, set it from deliverable
+      const countryToSet = firstDeliverable.country || "Hongkong";
+      setSelectedCountry(countryToSet);
+      
+      // Set currency from deliverable, or use a valid currency for the country
+      const validCurrencies = currencyOptionsByCountry[countryToSet] || [];
+      if (firstDeliverable.currency && validCurrencies.includes(firstDeliverable.currency)) {
         setSelectedCurrency(firstDeliverable.currency);
-      }
-      // If global currency is valid for this country, keep it (don't override user selection)
-    } else {
-      setSelectedCountry("Hongkong");
-      // Only reset to USD if no currency is set in global context
-      if (!globalSelectedCurrency) {
+      } else if (validCurrencies.length > 0) {
+        // If deliverable currency is not valid, use first valid currency for the country
+        setSelectedCurrency(validCurrencies[0]);
+      } else {
+        // Fallback to USD if no valid currencies
         setSelectedCurrency("USD");
       }
+    } else {
+      setSelectedCountry("Hongkong");
+      setSelectedCurrency("USD");
     }
   }, [product, deliverables]);
 
@@ -94,6 +95,7 @@ const ProductCard = ({
       // If current currency is not valid for selected country, switch to first valid currency
       setSelectedCurrency(validCurrencies[0]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCountry]);
 
   const normalize = (val) => (typeof val === "string" ? val.trim().toLowerCase() : "");
@@ -125,14 +127,8 @@ const ProductCard = ({
     setSelectedPrice(product?.price || 0);
   }, [product]);
 
-  // Listen for currency changes to force re-render
-  useEffect(() => {
-    const handleCurrencyChange = () => {
-      setCurrencyUpdateKey(prev => prev + 1);
-    };
-    window.addEventListener('currencyChanged', handleCurrencyChange);
-    return () => window.removeEventListener('currencyChanged', handleCurrencyChange);
-  }, []);
+  // Remove global currency change listener since we're using local state now
+  // Each product card manages its own currency independently
 
   useEffect(() => {
     const handleWishlistUpdate = (event) => {
