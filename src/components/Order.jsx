@@ -130,8 +130,8 @@ const Order = () => {
       const response = await OrderService.listOrders(1, 100, 'confirm', undefined);
       if (response.status === 200) {
         const allConfirmOrders = response.data?.docs || [];
-        // Filter orders that don't have paymentDetails
-        const pendingOrders = allConfirmOrders.filter(order => !order.paymentDetails);
+        // Filter orders that don't have paymentIds
+        const pendingOrders = allConfirmOrders.filter(order => !order.paymentIds || order.paymentIds.length === 0);
         setPaymentPendingOrders(pendingOrders);
       }
     } catch (error) {
@@ -182,6 +182,62 @@ const Order = () => {
     setIsLoading(true);
   };
 
+  // Helper function to check if payment button should be shown
+  const shouldShowPaymentButton = useCallback((order) => {
+    // Show button only when order status is waiting_for_payment
+    if (order.status !== 'waiting_for_payment') {
+      return false;
+    }
+    
+    // If no adminSelectedPaymentMethod, payment button shouldn't show
+    if (!order.adminSelectedPaymentMethod) {
+      return false;
+    }
+    
+    // If order status is payment_received, payment is done, don't show button
+    if (order.status === 'payment_received') {
+      return false;
+    }
+    
+    // Check pendingAmount first (most reliable)
+    if (order.pendingAmount !== undefined && order.pendingAmount !== null) {
+      return order.pendingAmount > 0;
+    }
+    
+    // Check remaining balance - use remainingBalance from API if available
+    if (order.remainingBalance !== undefined && order.remainingBalance !== null) {
+      return order.remainingBalance > 0;
+    }
+    
+    // If we have payments array, calculate remaining balance
+    if (order.payments && Array.isArray(order.payments) && order.payments.length > 0) {
+      const totalPaid = order.payments
+        .filter(p => ['requested', 'verify', 'approved', 'paid'].includes(p.status))
+        .reduce((sum, p) => sum + (p.amount || 0), 0);
+      const remainingBalance = (order.totalAmount || 0) - totalPaid;
+      return remainingBalance > 0;
+    }
+    
+    // If paymentIds exists (array of IDs), assume payment needed (will fetch details when clicked)
+    // This handles the case where paymentIds exists but payments aren't populated yet
+    if (order.paymentIds && Array.isArray(order.paymentIds) && order.paymentIds.length > 0) {
+      // If paymentIds contains objects (populated), calculate
+      const payments = order.paymentIds.filter(p => p && typeof p === 'object' && p.amount !== undefined);
+      if (payments.length > 0) {
+        const totalPaid = payments
+          .filter(p => ['requested', 'verify', 'approved', 'paid'].includes(p.status))
+          .reduce((sum, p) => sum + (p.amount || 0), 0);
+        const remainingBalance = (order.totalAmount || 0) - totalPaid;
+        return remainingBalance > 0;
+      }
+      // If just IDs, assume payment needed (backend will calculate when fetching details)
+      return true;
+    }
+    
+    // No payments yet, so payment is needed
+    return true;
+  }, []);
+
   // Handle view order details
   const handleViewOrderDetails = async (order) => {
     try {
@@ -196,6 +252,9 @@ const Order = () => {
           setSelectedOrderDetails(prev => ({
             ...prev,
             paymentDetails: paymentResponse.data.paymentDetails,
+            payments: paymentResponse.data.payments,
+            remainingBalance: paymentResponse.data.remainingBalance,
+            totalPaid: paymentResponse.data.totalPaid,
             billingAddress: paymentResponse.data.billingAddress || prev.billingAddress,
             shippingAddress: paymentResponse.data.shippingAddress || prev.shippingAddress,
           }));
@@ -498,10 +557,28 @@ const Order = () => {
                             {order.currentLocation !== order.deliveryLocation ? 'View express delivery charge' : 'View same-location charge'}
                           </button>
                         )}
-                        {(order.status === 'confirm') && order.adminSelectedPaymentMethod && !order.paymentDetails && (
+                        {/* Payment button - show when order status is waiting_for_payment and has remaining balance */}
+                        {shouldShowPaymentButton(order) && (
                           <button
-                            onClick={() => {
-                              setSelectedOrderForPayment(order);
+                            onClick={async () => {
+                              // Fetch order details to get accurate remaining balance and payment info
+                              try {
+                                const orderDetails = await OrderService.getOrderWithPaymentDetails(order._id);
+                                if (orderDetails?.data) {
+                                  setSelectedOrderForPayment({
+                                    ...order,
+                                    ...orderDetails.data,
+                                    _id: order._id,
+                                    orderNo: order.orderNo || order._id
+                                  });
+                                } else {
+                                  setSelectedOrderForPayment(order);
+                                }
+                              } catch (error) {
+                                console.error('Error fetching order details:', error);
+                                // Use order data we already have
+                                setSelectedOrderForPayment(order);
+                              }
                               setShowPaymentPopup(true);
                             }}
                             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-all duration-200 font-medium"
@@ -610,6 +687,8 @@ const Order = () => {
             setSelectedOrderForPayment(null);
           }}
           orderData={{
+            _id: selectedOrderForPayment._id,
+            orderNo: selectedOrderForPayment.orderNo || selectedOrderForPayment._id,
             orderId: selectedOrderForPayment._id,
             totalAmount: selectedOrderForPayment.totalAmount,
             currency: selectedOrderForPayment.currency,
@@ -618,13 +697,18 @@ const Order = () => {
           }}
           onSuccess={async (paymentData) => {
             try {
-              await OrderService.submitPayment(
-                selectedOrderForPayment._id,
-                paymentData.billingAddress,
-                paymentData.shippingAddress,
-                paymentData.paymentDetails,
-                paymentData.files
-              );
+              // If paymentData is provided, it means payment was submitted through OrderService.submitPayment
+              // If paymentData is not provided (undefined), PaymentPopup already submitted payment via PaymentService
+              if (paymentData) {
+                await OrderService.submitPayment(
+                  selectedOrderForPayment._id,
+                  paymentData.billingAddress,
+                  paymentData.shippingAddress,
+                  paymentData.paymentDetails,
+                  paymentData.files
+                );
+              }
+              // Close popup and refresh orders list (payment button will disappear if fully paid)
               setShowPaymentPopup(false);
               setSelectedOrderForPayment(null);
               await fetchOrders();

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { handleNumericInput } from '../utils/numericInput';
+import { roundToTwoDecimals } from '../utils/numberPrecision';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faCreditCard, faFileUpload, faCheck } from '@fortawesome/free-solid-svg-icons';
 import PaymentService from '../services/payment/payment.services';
@@ -26,6 +28,9 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
   const [files, setFiles] = useState({});
   const [billingAddress, setBillingAddress] = useState({ address: "", city: "", postalCode: "", country: "" });
   const [shippingAddress, setShippingAddress] = useState({ address: "", city: "", postalCode: "", country: "" });
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [existingPayments, setExistingPayments] = useState([]);
+  const [remainingBalance, setRemainingBalance] = useState(0);
 
   useEffect(() => {
     if (isOpen) {
@@ -33,8 +38,55 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
         setSelectedModule(adminSelectedPaymentMethod);
       }
       fetchPaymentConfig();
+      fetchExistingPayments();
+      // Set default payment amount to remaining balance (will be calculated after fetching existing payments)
     }
-  }, [isOpen, adminSelectedPaymentMethod]);
+  }, [isOpen, adminSelectedPaymentMethod, orderData]);
+
+  const fetchExistingPayments = async () => {
+    if (!orderData?._id && !orderData?.orderNo && !orderData?.orderId) return;
+    
+    try {
+      // Fetch order details which should include payments
+      const OrderService = (await import('../services/order/order.services')).OrderService;
+      const orderId = orderData._id || orderData.orderNo || orderData.orderId;
+      const orderResponse = await OrderService.getOrderWithPaymentDetails(orderId);
+      
+      if (orderResponse.status === 200 && orderResponse.data) {
+        const payments = orderResponse.data.payments || orderResponse.data.paymentDetails || [];
+        setExistingPayments(Array.isArray(payments) ? payments : []);
+        
+        // Calculate remaining balance
+        const totalPaid = payments
+          .filter(p => ['requested', 'verify', 'approved', 'paid'].includes(p.status))
+          .reduce((sum, p) => sum + (p.amount || p.calculatedAmount || 0), 0);
+        
+        const orderTotal = orderResponse.data.totalAmount || orderData.totalAmount || 0;
+        const remaining = orderTotal - totalPaid;
+        setRemainingBalance(Math.max(0, remaining));
+        
+        // Set default payment amount to remaining balance if not set
+        if (!paymentAmount && remaining > 0) {
+          setPaymentAmount(remaining.toString());
+        } else if (!paymentAmount) {
+          setPaymentAmount(orderTotal.toString());
+        }
+      } else if (orderResponse.data?.remainingBalance !== undefined) {
+        // Use remaining balance from API if available
+        setRemainingBalance(orderResponse.data.remainingBalance);
+        if (!paymentAmount && orderResponse.data.remainingBalance > 0) {
+          setPaymentAmount(orderResponse.data.remainingBalance.toString());
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching existing payments:', error);
+      // If fetch fails, assume no payments yet
+      setRemainingBalance(orderData?.totalAmount || 0);
+      if (!paymentAmount) {
+        setPaymentAmount((orderData?.totalAmount || 0).toString());
+      }
+    }
+  };
 
   const fetchPaymentConfig = async () => {
     try {
@@ -124,6 +176,18 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
       }
     }
 
+    // Validate payment amount
+    const amount = roundToTwoDecimals(parseFloat(paymentAmount));
+    if (isNaN(amount) || amount <= 0) {
+      setError('Please enter a valid payment amount greater than 0');
+      return false;
+    }
+    
+    if (amount > remainingBalance) {
+      setError(`Payment amount (${roundToTwoDecimals(amount).toFixed(2)}) exceeds remaining balance (${roundToTwoDecimals(remainingBalance).toFixed(2)})`);
+      return false;
+    }
+
     // Check required module-specific fields
     for (const field of module.specificFields) {
       if (field.mandatory && !field.providedByAdmin) {
@@ -159,12 +223,58 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
       setIsSubmitting(true);
       setError(null);
 
-      // Prepare fields data
+      // Prepare fields data - include all form fields, addresses, and module-specific fields
       const fieldsData = { ...formData };
       
-      // Add currency if selected
+      // Add currency if selected - use the exact field name from config
+      const currencyField = paymentConfig?.sharedFields?.find(field => 
+        field.name.toLowerCase().includes('currency') || 
+        field.name.toLowerCase().includes('you will pay in')
+      );
+      if (selectedCurrency && currencyField) {
+        fieldsData[currencyField.name] = selectedCurrency; // Use exact field name from config
+        fieldsData.currency = selectedCurrency; // Also add as 'currency' for backward compatibility
+      }
+      // Also ensure currency is added even if field name doesn't match exactly
       if (selectedCurrency) {
+        // Check if there's a field with "You will Pay In" or similar
+        const youWillPayInField = paymentConfig?.sharedFields?.find(field => 
+          field.name === 'You will Pay In' || 
+          field.name === 'Currency Selection' ||
+          field.name.toLowerCase().includes('you will pay')
+        );
+        if (youWillPayInField) {
+          fieldsData[youWillPayInField.name] = selectedCurrency;
+        }
+        // Always add to currency key for backward compatibility
         fieldsData.currency = selectedCurrency;
+      }
+
+      // Add billing address to fields
+      if (billingAddress && Object.keys(billingAddress).length > 0) {
+        fieldsData['Billing Address'] = billingAddress.address || '';
+        fieldsData['Billing City'] = billingAddress.city || '';
+        fieldsData['Billing Postal Code'] = billingAddress.postalCode || '';
+        fieldsData['Billing Country'] = billingAddress.country || '';
+        // Also add as nested object for easier access
+        fieldsData.billingAddress = billingAddress;
+      }
+
+      // Add shipping address to fields
+      if (shippingAddress && Object.keys(shippingAddress).length > 0) {
+        fieldsData['Shipping Address'] = shippingAddress.address || '';
+        fieldsData['Shipping City'] = shippingAddress.city || '';
+        fieldsData['Shipping Postal Code'] = shippingAddress.postalCode || '';
+        fieldsData['Shipping Country'] = shippingAddress.country || '';
+        // Also add as nested object for easier access
+        fieldsData.shippingAddress = shippingAddress;
+      }
+
+      // Add payment amount to fields
+      if (paymentAmount) {
+        const roundedAmount = roundToTwoDecimals(parseFloat(paymentAmount) || paymentAmount);
+        fieldsData['Payment Amount'] = roundedAmount;
+        fieldsData.paymentAmount = roundedAmount;
       }
 
       // If order doesn't exist yet, upload files first, then store payment details
@@ -195,6 +305,7 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
             uploadedFiles: uploadedFiles,
             currency: selectedCurrency || 'USD',
             transactionRef: formData.transactionRef || formData.referenceNumber || '',
+            paymentAmount: parseFloat(paymentAmount) || undefined, // Include payment amount for partial payments
             files: files // Keep original files for upload
           }
         };
@@ -206,7 +317,9 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
       }
 
       // If order exists and adminSelectedPaymentMethod is provided, use submitPayment endpoint
-      if (orderData.orderNo && adminSelectedPaymentMethod) {
+      // This path is for checkout flow (order creation with payment), not for existing orders
+      // For existing orders, we should use the PaymentService flow below
+      if (orderData.orderNo && adminSelectedPaymentMethod && !orderData._id) {
         const fileList = Object.values(files).filter(Boolean);
         const paymentDetails = {
           module: selectedModule,
@@ -214,6 +327,7 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
           fields: fieldsData,
           currency: selectedCurrency || 'USD',
           transactionRef: formData.transactionRef || formData.referenceNumber || '',
+          paymentAmount: parseFloat(paymentAmount) || undefined, // Include payment amount for partial payments
         };
         
         onSuccess && onSuccess({
@@ -227,27 +341,92 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
       }
 
       // If order exists, proceed with normal payment flow
+      const orderId = orderData.orderNo || orderData.orderId || orderData._id;
+      if (!orderId) {
+        setError('Order ID is required');
+        setIsSubmitting(false);
+        return;
+      }
+
       const fileList = Object.values(files).filter(Boolean);
+      
+      // Ensure fields object has content - merge all form data properly
+      // Start with fieldsData (which already includes addresses, currency, payment amount)
+      const finalFieldsData = { ...fieldsData };
+      
+      // Add all formData fields (shared and module-specific fields that were filled)
+      Object.keys(formData).forEach(key => {
+        const value = formData[key];
+        // Only add non-empty values
+        if (value !== '' && value !== null && value !== undefined) {
+          finalFieldsData[key] = value;
+        }
+      });
+
+      // Ensure acceptedTerms is properly set based on module requirements
+      const module = paymentConfig?.modules?.find(m => m.name === selectedModule);
+      // If module requires terms, acceptedTerms must be true
+      // If module doesn't require terms, acceptedTerms can be false
+      const finalAcceptedTerms = module?.termsAndConditions 
+        ? (acceptedTerms === true) 
+        : (module?.termsAndConditions === false ? false : (acceptedTerms || false));
+
       const response = await PaymentService.submitPaymentDetails({
-        orderId: orderData.orderNo,
+        orderId: orderId,
+        orderNo: orderId, // PaymentService expects orderNo field
         module: selectedModule,
-        acceptedTerms,
-        fields: fieldsData
+        acceptedTerms: finalAcceptedTerms,
+        fields: finalFieldsData,
       }, fileList.length > 0 ? fileList : undefined);
 
       if (response.status === 200) {
-        // Now submit the actual payment
+        // Now submit the actual payment with partial payment amount
+        const amountValue = roundToTwoDecimals(parseFloat(paymentAmount));
+        if (isNaN(amountValue) || amountValue <= 0) {
+          setError('Please enter a valid payment amount');
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Extract currency from fieldsData or selectedCurrency
+        // Priority: selectedCurrency > fieldsData currency field > "You will Pay In" field > orderData.currency > 'USD'
+        const currencyField = paymentConfig?.sharedFields?.find(field => 
+          field.name.toLowerCase().includes('currency')
+        );
+        const currencyFromFields = currencyField ? finalFieldsData[currencyField.name] || finalFieldsData.currency : null;
+        // Also check for "You will Pay In" field name (common in payment forms)
+        const youWillPayInCurrency = finalFieldsData['You will Pay In'] || finalFieldsData['Currency Selection'];
+        
+        // Determine final currency - prioritize selectedCurrency if it's not empty
+        let paymentCurrency = selectedCurrency && selectedCurrency.trim() ? selectedCurrency.trim() : null;
+        if (!paymentCurrency) {
+          paymentCurrency = currencyFromFields || youWillPayInCurrency || orderData.currency || 'USD';
+        }
+        
+        console.log('Currency extraction in frontend:', {
+          selectedCurrency,
+          currencyFromFields,
+          youWillPayInCurrency,
+          orderCurrency: orderData.currency,
+          finalCurrency: paymentCurrency,
+          finalFieldsDataKeys: Object.keys(finalFieldsData),
+          finalFieldsDataSample: Object.keys(finalFieldsData).slice(0, 5).reduce((acc, key) => {
+            acc[key] = finalFieldsData[key];
+            return acc;
+          }, {})
+        });
+
         const paymentResponse = await PaymentService.submitPayment({
-          orderId: orderData.orderNo,
-          amount: orderData.totalAmount,
-          currency: selectedCurrency || 'USD',
+          orderNo: orderId, // PaymentService expects orderNo
+          amount: amountValue, // Use partial payment amount
+          currency: paymentCurrency,
           module: selectedModule,
           paymentDetailsId: response.data._id,
-          transactionRef: formData.transactionRef || formData.referenceNumber || ''
+          transactionRef: formData.transactionRef || formData.referenceNumber || formData['Payment Reference'] || ''
         });
 
         if (paymentResponse.status === 200) {
-          onSuccess && onSuccess();
+          onSuccess && onSuccess(); // Payment already submitted, just refresh orders
           onClose();
         }
       }
@@ -426,11 +605,63 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
               {/* Order Summary */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Order Summary</h3>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Total Amount:</span>
-                  <span className="text-xl font-bold text-gray-900">
-                    {formatPriceInCurrency(orderData.totalAmount, orderData.currency)}
-                  </span>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Total Amount:</span>
+                    <span className="text-lg font-bold text-gray-900">
+                      {formatPriceInCurrency(orderData.totalAmount || 0, orderData.currency)}
+                    </span>
+                  </div>
+                  {existingPayments.length > 0 && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-600">Already Paid:</span>
+                      <span className="font-semibold text-green-600">
+                        {formatPriceInCurrency(
+                          existingPayments
+                            .filter(p => ['requested', 'verify', 'approved', 'paid'].includes(p.status))
+                            .reduce((sum, p) => sum + (p.amount || p.calculatedAmount || 0), 0),
+                          orderData.currency
+                        )}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center border-t pt-2">
+                    <span className="text-gray-600 font-semibold">Remaining Balance:</span>
+                    <span className="text-lg font-bold text-blue-600">
+                      {formatPriceInCurrency(remainingBalance, orderData.currency)}
+                    </span>
+                  </div>
+                  <div className="mt-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Payment Amount <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={paymentAmount}
+                      onChange={(e) => {
+                        const filteredValue = handleNumericInput(e.target.value, true, false);
+                        setPaymentAmount(filteredValue);
+                        const numValue = roundToTwoDecimals(parseFloat(filteredValue));
+                        if (!isNaN(numValue) && numValue > remainingBalance) {
+                          setError(`Payment amount cannot exceed remaining balance of ${roundToTwoDecimals(remainingBalance).toFixed(2)}`);
+                        } else {
+                          setError(null);
+                        }
+                      }}
+                      max={remainingBalance}
+                      step="0.01"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder={`Enter amount (max: ${roundToTwoDecimals(remainingBalance).toFixed(2)})`}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPaymentAmount(remainingBalance.toString())}
+                      className="mt-1 text-xs text-blue-600 hover:text-blue-800"
+                    >
+                      Pay full remaining balance
+                    </button>
+                  </div>
                 </div>
               </div>
 

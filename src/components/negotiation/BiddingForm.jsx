@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import iphoneImage from "../../assets/iphone.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHandshake } from "@fortawesome/free-solid-svg-icons";
+import { handleNumericInput } from "../../utils/numericInput";
 import { convertPrice } from "../../utils/currencyUtils";
 import { useSocket } from "../../context/SocketContext";
 import toastHelper from "../../utils/toastHelper";
@@ -709,15 +710,14 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
                         <FontAwesomeIcon icon={faHandshake} className="w-5 h-5 text-gray-400" />
                       </div>
                       <input
-                        type="number"
+                        type="text"
                         value={formData.offerPrice}
-                        onChange={(e) =>
-                          setFormData({ ...formData, offerPrice: e.target.value })
-                        }
+                        onChange={(e) => {
+                          const filteredValue = handleNumericInput(e.target.value, true, false);
+                          setFormData({ ...formData, offerPrice: filteredValue });
+                        }}
                         className="w-full pl-12 pr-4 py-2 text-sm font-base border-2 border-gray-300 rounded-lg"
                         placeholder="Enter amount"
-                        step="0.01"
-                        min="0"
                         required
                       />
                     </div>
@@ -732,14 +732,14 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
                       Quantity *
                     </label>
                     <input
-                      type="number"
+                      type="text"
                       value={formData.quantity}
-                      onChange={(e) =>
-                        setFormData({ ...formData, quantity: e.target.value })
-                      }
+                      onChange={(e) => {
+                        const filteredValue = handleNumericInput(e.target.value, false, false);
+                        setFormData({ ...formData, quantity: filteredValue });
+                      }}
                       className="w-full px-4 py-2 text-sm font-base border-2 border-gray-300 rounded-lg"
                       placeholder="Enter quantity"
-                      min="1"
                       required
                     />
                   </div>
@@ -882,16 +882,15 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
                       {/* <DollarSign className="w-5 h-5 text-gray-400" /> */}
                     </div>
                     <input
-                      type="number"
-                      step="0.01"
-                      min="0"
+                      type="text"
                       value={responseData.offerPrice}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const filteredValue = handleNumericInput(e.target.value, true, false);
                         setResponseData({
                           ...responseData,
-                          offerPrice: e.target.value,
-                        })
-                      }
+                          offerPrice: filteredValue,
+                        });
+                      }}
                       className="w-full pl-12 pr-4 py-3 text-lg font-semibold border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                       placeholder="Enter counter amount"
                       required

@@ -33,7 +33,7 @@ export interface CreateOrderRequest {
   deliveryLocation?: string;
   currency?: string;
   otherCharges?: number | null;
-  paymentDetails?: PaymentDetails;
+  paymentIds?: string | string[]; // Can be single ObjectId or array of ObjectIds
 }
 
 export interface Order {
@@ -50,7 +50,8 @@ export interface Order {
   currentLocation?: string;
   deliveryLocation?: string;
   currency?: string;
-  paymentDetails?: PaymentDetails;
+  paymentIds?: string | string[]; // Can be single ObjectId or array of ObjectIds
+  pendingAmount?: number; // Remaining amount to be paid
   adminSelectedPaymentMethod?: string;
   status: string;
   totalAmount: number;
