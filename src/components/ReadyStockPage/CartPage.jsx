@@ -19,10 +19,11 @@ const CartPage = () => {
   const navigate = useNavigate();
   const { selectedCurrency } = useCurrency();
 
-  // Format price in original currency (no conversion - price is already in selected currency)
-  const formatPriceInCurrency = (priceValue) => {
+  // ✅ Format price using currency from cart item (or fallback to context)
+  const formatPriceInCurrency = (priceValue, itemCurrency = null) => {
     const numericPrice = parseFloat(priceValue) || 0;
-    const currency = selectedCurrency || 'USD';
+    // ✅ Use currency from cart item if available, otherwise use context
+    const currency = itemCurrency || selectedCurrency || 'USD';
     const symbol = getCurrencySymbol(currency);
     return `${symbol}${numericPrice.toLocaleString('en-US', {
       minimumFractionDigits: 2,
@@ -65,6 +66,8 @@ const CartPage = () => {
     const description =
       [storage, color].filter(Boolean).join(" • ") || item.specification || "";
     const price = Number(item.price) || 0;
+    // ✅ Get currency from cart item (stored when adding to cart)
+    const currency = item.currency || selectedCurrency || 'USD';
     const stockCount = Number(item.stock) || 0;
     const moq = Number(item.moq) || 1;
     const stockStatus =
@@ -82,6 +85,7 @@ const CartPage = () => {
       name,
       description,
       price,
+      currency, // ✅ Include currency from cart item
       moq,
       groupCode: item.groupCode || null,
       totalMoq: item.totalMoq || null,
@@ -205,7 +209,8 @@ const CartPage = () => {
 
       const currentLocation = 'HK';
       const deliveryLocation = normalizeCountry(country);
-      let currency = selectedCurrency;
+      // ✅ Use currency from cart items (stored when adding to cart) - use first item's currency
+      let currency = itemsInGroup[0]?.currency || selectedCurrency;
       if (!currency) {
         const countryUpper = country?.toUpperCase() || '';
         if (countryUpper.includes('DUBAI') || countryUpper.includes('D')) {
@@ -426,7 +431,7 @@ const CartPage = () => {
           <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-1">
             <div>
               <div className="text-base flex items-center font-semibold text-gray-900">
-                {formatPriceInCurrency(item.price)}
+                {formatPriceInCurrency(item.price, item.currency)}
                 <div className="text-xs text-gray-500 ms-2">Stock: {item.stockCount}</div>
               </div>
               {item.groupCode && (
@@ -515,7 +520,7 @@ const CartPage = () => {
             <div className="ml-auto text-right">
               <div className="text-xs text-gray-500 mb-0.5">Total</div>
               <div className="text-lg font-bold text-gray-900">
-                {formatPriceInCurrency(item.price * item.quantity)}
+                {formatPriceInCurrency(item.price * item.quantity, item.currency)}
               </div>
             </div>
           </div>
@@ -725,6 +730,8 @@ const CartPage = () => {
                     const groupStatus = getGroupMOQStatus(group.items[0]);
                     const groupTotalPrice = group.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
                     const groupCountry = groupCountries[group.groupCode] || itemCountries[group.items[0]?.id] || "";
+                    // ✅ Get currency from first item in group (all items in group should have same currency)
+                    const groupCurrency = group.items[0]?.currency || selectedCurrency || 'USD';
                     
                     return (
                       <div key={group.groupCode} className="bg-white rounded-lg shadow-sm border-2 border-blue-200">
@@ -743,7 +750,7 @@ const CartPage = () => {
                             <div className="text-right">
                               <div className="text-xs text-gray-600 mb-1">Group Total</div>
                               <div className="text-xl font-bold text-gray-900">
-                                {formatPriceInCurrency(groupTotalPrice)}
+                                {formatPriceInCurrency(groupTotalPrice, groupCurrency)}
                               </div>
                             </div>
                           </div>
