@@ -533,19 +533,22 @@ const Order = () => {
                       </td>
                     <td className="px-6 py-5 text-sm text-center">
                       <div className="flex items-center justify-end gap-2 flex-wrap">
-                        {order.status === 'requested' && (!order.deliveryChargeOption || order.deliveryChargeOption === 'standard') && (
+                        {/* ✅ Show express delivery charge button only if product has express delivery charge configured */}
+                        {order.status === 'requested' && 
+                         (!order.deliveryChargeOption || order.deliveryChargeOption === 'standard') && 
+                         order.currentLocation !== order.deliveryLocation && 
+                         order.hasExpressDeliveryCharge && (
                           <button
                             type="button"
                             onClick={async () => {
                               try {
-                                const option = order.currentLocation !== order.deliveryLocation ? 'express' : 'same_location';
-                                const preview = await OrderService.getDeliveryChargePreview(order._id, option);
+                                const preview = await OrderService.getDeliveryChargePreview(order._id, 'express');
                                 const data = preview.data || {};
                                 setDeliveryChargeModal({
                                   open: true,
                                   order,
                                   preview: {
-                                    option,
+                                    option: 'express',
                                     extraCharge: data.extraCharge || 0,
                                     currency: data.currency || order.currency || 'USD',
                                     messages: Array.isArray(data.messages) ? data.messages : [],
@@ -557,7 +560,37 @@ const Order = () => {
                             }}
                             className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 underline-offset-2 hover:underline bg-transparent"
                           >
-                            {order.currentLocation !== order.deliveryLocation ? 'View express delivery charge' : 'View same-location charge'}
+                            View express delivery charge
+                          </button>
+                        )}
+                        {/* ✅ Show same-location charge button only if product has same location charge configured */}
+                        {order.status === 'requested' && 
+                         (!order.deliveryChargeOption || order.deliveryChargeOption === 'standard') && 
+                         order.currentLocation === order.deliveryLocation && 
+                         order.hasSameLocationCharge && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                const preview = await OrderService.getDeliveryChargePreview(order._id, 'same_location');
+                                const data = preview.data || {};
+                                setDeliveryChargeModal({
+                                  open: true,
+                                  order,
+                                  preview: {
+                                    option: 'same_location',
+                                    extraCharge: data.extraCharge || 0,
+                                    currency: data.currency || order.currency || 'USD',
+                                    messages: Array.isArray(data.messages) ? data.messages : [],
+                                  },
+                                });
+                              } catch (e) {
+                                console.error('Delivery charge preview error:', e);
+                              }
+                            }}
+                            className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 underline-offset-2 hover:underline bg-transparent"
+                          >
+                            View same-location charge
                           </button>
                         )}
                         {/* Payment button - show when order status is waiting_for_payment and has remaining balance */}
