@@ -238,6 +238,7 @@ const CartPage = () => {
       }
 
       // ✅ Create order with full billing and shipping addresses
+      // Since itemsInGroup are filtered by groupCode, this is a grouped order
       const orderData = {
         cartItems: itemsInGroup.map(item => ({
           productId: item.id,
@@ -259,6 +260,7 @@ const CartPage = () => {
         currentLocation: currentLocation,
         deliveryLocation: deliveryLocation,
         currency: currency,
+        isGroupedOrder: true, // This order contains groupCode products
       };
 
       const response = await OrderService.createOrder(orderData);
@@ -808,6 +810,8 @@ const CartPage = () => {
       console.log('Creating order from cart page with currency:', currency, 'from context:', selectedCurrency);
 
       // ✅ Create order with full billing and shipping addresses
+      // Check if this item has a groupCode to determine if it's a grouped order
+      const isGroupedOrder = item.groupCode && item.groupCode.trim() !== '';
       const orderData = {
         cartItems: [{
           productId: item.id,
@@ -829,6 +833,7 @@ const CartPage = () => {
         currentLocation: currentLocation,
         deliveryLocation: deliveryLocation,
         currency: currency,
+        isGroupedOrder: isGroupedOrder, // Set flag if product has groupCode
       };
 
       const response = await OrderService.createOrder(orderData);

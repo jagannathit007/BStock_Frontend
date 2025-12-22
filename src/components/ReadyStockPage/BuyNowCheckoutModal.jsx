@@ -120,6 +120,9 @@ const BuyNowCheckoutModal = ({
       const deliveryLocation = normalizeCountry(currentOrder.shippingAddress?.country);
       const currency = selectedCurrency || 'USD';
 
+      // Check if product has groupCode to determine if it's a grouped order
+      const isGroupedOrder = product?.groupCode && product.groupCode.trim() !== '';
+      
       // Create order with payment details included
       const orderData = {
         cartItems: currentOrder.cartItems,
@@ -129,6 +132,7 @@ const BuyNowCheckoutModal = ({
         currentLocation: currentLocation,
         deliveryLocation: deliveryLocation,
         currency: currency,
+        isGroupedOrder: isGroupedOrder, // Set flag if product has groupCode
       };
 
       const response = await OrderService.createOrder(orderData);
@@ -170,6 +174,9 @@ const BuyNowCheckoutModal = ({
       const deliveryLocation = normalizeCountry(orderDataWithPayment.shippingAddress?.country);
       const currency = selectedCurrency || 'USD';
 
+      // Check if product has groupCode to determine if it's a grouped order
+      const isGroupedOrder = product?.groupCode && product.groupCode.trim() !== '';
+      
       // Create order with payment details included
       const orderData = {
         cartItems: orderDataWithPayment.cartItems,
@@ -179,6 +186,7 @@ const BuyNowCheckoutModal = ({
         currentLocation: currentLocation,
         deliveryLocation: deliveryLocation,
         currency: currency,
+        isGroupedOrder: isGroupedOrder, // Set flag if product has groupCode
       };
 
       const response = await OrderService.createOrder(orderData);

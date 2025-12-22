@@ -166,6 +166,9 @@ const CheckoutPage = () => {
         currency = 'USD'; // Absolute last resort
       }
 
+      // ✅ Check if any cart items have groupCode to determine if it's a grouped order
+      const hasGroupCodeProducts = cartItems.some(item => item.groupCode && item.groupCode.trim() !== '');
+      
       // ✅ Create order with full billing and shipping addresses
       const payload = {
         cartItems: cartItems.map((it) => ({ 
@@ -188,6 +191,7 @@ const CheckoutPage = () => {
         currentLocation: currentLocation,
         deliveryLocation: deliveryLocation,
         currency: currency, // Use explicitly determined currency
+        isGroupedOrder: hasGroupCodeProducts, // Set flag if any product has groupCode
       };
       
       console.log('Creating order with currency:', currency, 'from context:', selectedCurrency);

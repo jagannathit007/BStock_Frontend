@@ -34,6 +34,7 @@ export interface CreateOrderRequest {
   currency?: string;
   otherCharges?: number | null;
   paymentIds?: string | string[]; // Can be single ObjectId or array of ObjectIds
+  isGroupedOrder?: boolean; // Flag to indicate if order contains groupCode products (for totalMoq validation)
 }
 
 export interface Order {
