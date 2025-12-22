@@ -245,6 +245,9 @@ const Order = () => {
       setSelectedOrderDetails(order);
       setShowOrderDetailsModal(true);
       
+      // ✅ Addresses come from order itself, not from payment
+      // Order already has billingAddress and shippingAddress from checkout
+      
       // Fetch payment details if available
       try {
         const paymentResponse = await OrderService.getOrderWithPaymentDetails(order._id);
@@ -255,8 +258,8 @@ const Order = () => {
             payments: paymentResponse.data.payments,
             remainingBalance: paymentResponse.data.remainingBalance,
             totalPaid: paymentResponse.data.totalPaid,
-            billingAddress: paymentResponse.data.billingAddress || prev.billingAddress,
-            shippingAddress: paymentResponse.data.shippingAddress || prev.shippingAddress,
+            // ✅ Keep addresses from order (order.billingAddress, order.shippingAddress)
+            // Don't override with payment response addresses
           }));
         }
       } catch (paymentError) {
@@ -699,11 +702,12 @@ const Order = () => {
             try {
               // If paymentData is provided, it means payment was submitted through OrderService.submitPayment
               // If paymentData is not provided (undefined), PaymentPopup already submitted payment via PaymentService
+              // ✅ Addresses are not needed from payment popup - order already has addresses from checkout
               if (paymentData) {
                 await OrderService.submitPayment(
                   selectedOrderForPayment._id,
-                  paymentData.billingAddress,
-                  paymentData.shippingAddress,
+                  null, // billingAddress - not needed, order has it
+                  null, // shippingAddress - not needed, order has it
                   paymentData.paymentDetails,
                   paymentData.files
                 );

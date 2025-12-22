@@ -34,8 +34,14 @@ const CartPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [imageErrors, setImageErrors] = useState({});
-  const [itemCountries, setItemCountries] = useState({}); // Track country selection per item
-  const [groupCountries, setGroupCountries] = useState({}); // Track country selection per group
+  const [itemCountries, setItemCountries] = useState({}); // Track country selection per item (deprecated - use addresses)
+  const [groupCountries, setGroupCountries] = useState({}); // Track country selection per group (deprecated - use addresses)
+  // ✅ Track billing and shipping addresses per item
+  const [itemBillingAddresses, setItemBillingAddresses] = useState({}); // { itemId: { address, city, country } }
+  const [itemShippingAddresses, setItemShippingAddresses] = useState({}); // { itemId: { address, city, country } }
+  // ✅ Track billing and shipping addresses per group
+  const [groupBillingAddresses, setGroupBillingAddresses] = useState({}); // { groupCode: { address, city, country } }
+  const [groupShippingAddresses, setGroupShippingAddresses] = useState({}); // { groupCode: { address, city, country } }
   const [itemLoading, setItemLoading] = useState({}); // Track loading state per item
   const [groupLoading, setGroupLoading] = useState({}); // Track loading state per group
   const [successMessage, setSuccessMessage] = useState(null); // Track success messages
@@ -176,14 +182,23 @@ const CartPage = () => {
       updatedCountries[item.id] = country;
     });
     setItemCountries(updatedCountries);
+    // ✅ Also update shipping address country for the group
+    handleGroupShippingAddressChange(groupCode, 'country', country);
   };
 
   // Handle place order for all items in a group
   const handlePlaceOrderForGroup = async (groupCode) => {
-    const country = groupCountries[groupCode];
+    // ✅ Get full billing and shipping addresses for the group
+    const billingAddress = groupBillingAddresses[groupCode];
+    const shippingAddress = groupShippingAddresses[groupCode];
     
-    if (!country) {
-      setError("Please select a billing country for this group");
+    // Validate addresses
+    if (!billingAddress || !billingAddress.address || !billingAddress.city || !billingAddress.country) {
+      setError("Please fill in all billing address fields for this group");
+      return;
+    }
+    if (!shippingAddress || !shippingAddress.address || !shippingAddress.city || !shippingAddress.country) {
+      setError("Please fill in all shipping address fields for this group");
       return;
     }
 
@@ -208,11 +223,11 @@ const CartPage = () => {
       };
 
       const currentLocation = 'HK';
-      const deliveryLocation = normalizeCountry(country);
+      const deliveryLocation = normalizeCountry(shippingAddress.country);
       // ✅ Use currency from cart items (stored when adding to cart) - use first item's currency
       let currency = itemsInGroup[0]?.currency || selectedCurrency;
       if (!currency) {
-        const countryUpper = country?.toUpperCase() || '';
+        const countryUpper = shippingAddress.country?.toUpperCase() || '';
         if (countryUpper.includes('DUBAI') || countryUpper.includes('D')) {
           currency = 'AED';
         } else if (countryUpper.includes('HONG') || countryUpper.includes('HK')) {
@@ -222,7 +237,7 @@ const CartPage = () => {
         }
       }
 
-      // Create order with all items in the group
+      // ✅ Create order with full billing and shipping addresses
       const orderData = {
         cartItems: itemsInGroup.map(item => ({
           productId: item.id,
@@ -231,8 +246,15 @@ const CartPage = () => {
           quantity: Number(item.quantity),
           price: Number(item.price),
         })),
+        billingAddress: {
+          address: billingAddress.address,
+          city: billingAddress.city,
+          country: billingAddress.country.toLowerCase(),
+        },
         shippingAddress: {
-          country: country
+          address: shippingAddress.address,
+          city: shippingAddress.city,
+          country: shippingAddress.country.toLowerCase(),
         },
         currentLocation: currentLocation,
         deliveryLocation: deliveryLocation,
@@ -251,13 +273,37 @@ const CartPage = () => {
         const remainingItems = cartItems.filter((cartItem) => !itemsInGroup.find(gi => gi.id === cartItem.id));
         setCartItems(remainingItems);
         
-        // Clear country selections for the group
+        // Clear country selections and addresses for the group
         setGroupCountries((prev) => {
           const updated = { ...prev };
           delete updated[groupCode];
           return updated;
         });
         setItemCountries((prev) => {
+          const updated = { ...prev };
+          itemsInGroup.forEach(item => {
+            delete updated[item.id];
+          });
+          return updated;
+        });
+        setGroupBillingAddresses((prev) => {
+          const updated = { ...prev };
+          delete updated[groupCode];
+          return updated;
+        });
+        setGroupShippingAddresses((prev) => {
+          const updated = { ...prev };
+          delete updated[groupCode];
+          return updated;
+        });
+        setItemBillingAddresses((prev) => {
+          const updated = { ...prev };
+          itemsInGroup.forEach(item => {
+            delete updated[item.id];
+          });
+          return updated;
+        });
+        setItemShippingAddresses((prev) => {
           const updated = { ...prev };
           itemsInGroup.forEach(item => {
             delete updated[item.id];
@@ -384,6 +430,57 @@ const CartPage = () => {
   // Handle country change for a specific item
   const handleCountryChange = (itemId, country) => {
     setItemCountries((prev) => ({ ...prev, [itemId]: country }));
+    // ✅ Also update shipping address country when country changes
+    setItemShippingAddresses((prev) => ({
+      ...prev,
+      [itemId]: { ...(prev[itemId] || {}), country: country }
+    }));
+  };
+
+  // ✅ Handle billing address field changes for individual items
+  const handleBillingAddressChange = (itemId, field, value) => {
+    setItemBillingAddresses((prev) => ({
+      ...prev,
+      [itemId]: { ...(prev[itemId] || {}), [field]: value }
+    }));
+  };
+
+  // ✅ Handle shipping address field changes for individual items
+  const handleShippingAddressChange = (itemId, field, value) => {
+    setItemShippingAddresses((prev) => ({
+      ...prev,
+      [itemId]: { ...(prev[itemId] || {}), [field]: value }
+    }));
+  };
+
+  // ✅ Handle billing address field changes for groups
+  const handleGroupBillingAddressChange = (groupCode, field, value) => {
+    setGroupBillingAddresses((prev) => ({
+      ...prev,
+      [groupCode]: { ...(prev[groupCode] || {}), [field]: value }
+    }));
+    // Also update billing addresses for all items in the group
+    const itemsInGroup = cartItems.filter(ci => ci.groupCode === groupCode);
+    const updatedAddresses = { ...itemBillingAddresses };
+    itemsInGroup.forEach(item => {
+      updatedAddresses[item.id] = { ...(updatedAddresses[item.id] || {}), [field]: value };
+    });
+    setItemBillingAddresses(updatedAddresses);
+  };
+
+  // ✅ Handle shipping address field changes for groups
+  const handleGroupShippingAddressChange = (groupCode, field, value) => {
+    setGroupShippingAddresses((prev) => ({
+      ...prev,
+      [groupCode]: { ...(prev[groupCode] || {}), [field]: value }
+    }));
+    // Also update shipping addresses for all items in the group
+    const itemsInGroup = cartItems.filter(ci => ci.groupCode === groupCode);
+    const updatedAddresses = { ...itemShippingAddresses };
+    itemsInGroup.forEach(item => {
+      updatedAddresses[item.id] = { ...(updatedAddresses[item.id] || {}), [field]: value };
+    });
+    setItemShippingAddresses(updatedAddresses);
   };
 
   // Render a single cart item (reusable component)
@@ -527,46 +624,136 @@ const CartPage = () => {
         </div>
       </div>
 
-      {/* Country Selection and Place Order (only for ungrouped items) */}
+      {/* ✅ Billing and Shipping Address Forms and Place Order (only for ungrouped items) */}
       {!item.groupCode && (
-        <div className="pt-3 border-t border-gray-200 mt-3">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1">
-              <label 
-                htmlFor={`billingCountry-${item.id}`} 
-                className="block text-sm font-medium text-gray-700 mb-1.5"
-              >
-                Billing Country <span className="text-red-500">*</span>
-              </label>
-              <select
-                id={`billingCountry-${item.id}`}
-                value={itemCountries[item.id] || ""}
-                onChange={(e) => handleCountryChange(item.id, e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                required
-              >
-                <option value="">Select country</option>
-                <option value="hongkong">Hong Kong</option>
-                <option value="dubai">Dubai</option>
-              </select>
+        <div className="pt-4 border-t border-gray-200 mt-4 space-y-4">
+          {/* Billing Address */}
+          <div>
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Billing Address</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Address <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={itemBillingAddresses[item.id]?.address || ""}
+                  onChange={(e) => handleBillingAddressChange(item.id, 'address', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter billing address"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  City <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={itemBillingAddresses[item.id]?.city || ""}
+                  onChange={(e) => handleBillingAddressChange(item.id, 'city', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter city"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Country <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={itemBillingAddresses[item.id]?.country || itemCountries[item.id] || ""}
+                  onChange={(e) => {
+                    handleBillingAddressChange(item.id, 'country', e.target.value);
+                    handleCountryChange(item.id, e.target.value);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                  required
+                >
+                  <option value="">Select country</option>
+                  <option value="hongkong">Hong Kong</option>
+                  <option value="dubai">Dubai</option>
+                </select>
+              </div>
             </div>
-            <div className="flex items-end w-full sm:w-[50%]">
-              <button
-                type="button"
-                onClick={() => handlePlaceOrderForItem(item)}
-                disabled={!itemCountries[item.id] || itemLoading[item.id]}
-                className="w-full sm:min-w-[140px] px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors duration-200 shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600"
-              >
-                {itemLoading[item.id] ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Processing...
-                  </span>
-                ) : (
-                  'Place Order'
-                )}
-              </button>
+          </div>
+
+          {/* Shipping Address */}
+          <div>
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Shipping Address</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Address <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={itemShippingAddresses[item.id]?.address || ""}
+                  onChange={(e) => handleShippingAddressChange(item.id, 'address', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter shipping address"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  City <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={itemShippingAddresses[item.id]?.city || ""}
+                  onChange={(e) => handleShippingAddressChange(item.id, 'city', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter city"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Country <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={itemShippingAddresses[item.id]?.country || itemCountries[item.id] || ""}
+                  onChange={(e) => {
+                    handleShippingAddressChange(item.id, 'country', e.target.value);
+                    handleCountryChange(item.id, e.target.value);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                  required
+                >
+                  <option value="">Select country</option>
+                  <option value="hongkong">Hong Kong</option>
+                  <option value="dubai">Dubai</option>
+                </select>
+              </div>
             </div>
+          </div>
+
+          {/* Place Order Button */}
+          <div className="flex justify-end pt-2">
+            <button
+              type="button"
+              onClick={() => handlePlaceOrderForItem(item)}
+              disabled={
+                !itemBillingAddresses[item.id]?.address ||
+                !itemBillingAddresses[item.id]?.city ||
+                !itemBillingAddresses[item.id]?.country ||
+                !itemShippingAddresses[item.id]?.address ||
+                !itemShippingAddresses[item.id]?.city ||
+                !itemShippingAddresses[item.id]?.country ||
+                itemLoading[item.id]
+              }
+              className="px-6 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors duration-200 shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600"
+            >
+              {itemLoading[item.id] ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Processing...
+                </span>
+              ) : (
+                'Place Order'
+              )}
+            </button>
           </div>
         </div>
       )}
@@ -575,10 +762,17 @@ const CartPage = () => {
 
   // Handle place order for a single product
   const handlePlaceOrderForItem = async (item) => {
-    const country = itemCountries[item.id];
+    // ✅ Get full billing and shipping addresses
+    const billingAddress = itemBillingAddresses[item.id];
+    const shippingAddress = itemShippingAddresses[item.id];
     
-    if (!country) {
-      setError("Please select a billing country for this product");
+    // Validate addresses
+    if (!billingAddress || !billingAddress.address || !billingAddress.city || !billingAddress.country) {
+      setError("Please fill in all billing address fields");
+      return;
+    }
+    if (!shippingAddress || !shippingAddress.address || !shippingAddress.city || !shippingAddress.country) {
+      setError("Please fill in all shipping address fields");
       return;
     }
 
@@ -597,12 +791,12 @@ const CartPage = () => {
 
       // Get current location (default to HK, can be from product or user profile)
       const currentLocation = 'HK'; // Default, can be enhanced to get from product
-      const deliveryLocation = normalizeCountry(country);
+      const deliveryLocation = normalizeCountry(shippingAddress.country);
       // Use selectedCurrency from global context - ensure it's explicitly set
       let currency = selectedCurrency;
       if (!currency) {
         // Infer currency from country as fallback
-        const countryUpper = country?.toUpperCase() || '';
+        const countryUpper = shippingAddress.country?.toUpperCase() || '';
         if (countryUpper.includes('DUBAI') || countryUpper.includes('D')) {
           currency = 'AED';
         } else if (countryUpper.includes('HONG') || countryUpper.includes('HK')) {
@@ -613,7 +807,7 @@ const CartPage = () => {
       }
       console.log('Creating order from cart page with currency:', currency, 'from context:', selectedCurrency);
 
-      // Create order with only this single product
+      // ✅ Create order with full billing and shipping addresses
       const orderData = {
         cartItems: [{
           productId: item.id,
@@ -622,8 +816,15 @@ const CartPage = () => {
           quantity: Number(item.quantity),
           price: Number(item.price),
         }],
+        billingAddress: {
+          address: billingAddress.address,
+          city: billingAddress.city,
+          country: billingAddress.country.toLowerCase(),
+        },
         shippingAddress: {
-          country: country
+          address: shippingAddress.address,
+          city: shippingAddress.city,
+          country: shippingAddress.country.toLowerCase(),
         },
         currentLocation: currentLocation,
         deliveryLocation: deliveryLocation,
@@ -639,8 +840,18 @@ const CartPage = () => {
         const remainingItems = cartItems.filter((cartItem) => cartItem.id !== item.id);
         // Remove from local state
         setCartItems((prevItems) => prevItems.filter((cartItem) => cartItem.id !== item.id));
-        // Clear country selection for this item
+        // Clear country selection and addresses for this item
         setItemCountries((prev) => {
+          const updated = { ...prev };
+          delete updated[item.id];
+          return updated;
+        });
+        setItemBillingAddresses((prev) => {
+          const updated = { ...prev };
+          delete updated[item.id];
+          return updated;
+        });
+        setItemShippingAddresses((prev) => {
           const updated = { ...prev };
           delete updated[item.id];
           return updated;
@@ -770,33 +981,125 @@ const CartPage = () => {
                             </div>
                           )}
                           
-                          {/* Group Country Selection and Place Order Button */}
-                          <div className="mt-4 flex flex-col sm:flex-row gap-3">
-                            <div className="flex-1">
-                              <label 
-                                htmlFor={`groupCountry-${group.groupCode}`} 
-                                className="block text-sm font-medium text-gray-700 mb-1.5"
-                              >
-                                Billing Country for Group <span className="text-red-500">*</span>
-                              </label>
-                              <select
-                                id={`groupCountry-${group.groupCode}`}
-                                value={groupCountry}
-                                onChange={(e) => handleGroupCountryChange(group.groupCode, e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                                required
-                              >
-                                <option value="">Select country</option>
-                                <option value="hongkong">Hong Kong</option>
-                                <option value="dubai">Dubai</option>
-                              </select>
+                          {/* ✅ Group Billing and Shipping Address Forms and Place Order Button */}
+                          <div className="mt-4 space-y-4">
+                            {/* Billing Address */}
+                            <div>
+                              <h4 className="text-sm font-semibold text-gray-900 mb-3">Billing Address</h4>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="sm:col-span-2">
+                                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                                    Address <span className="text-red-500">*</span>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={groupBillingAddresses[group.groupCode]?.address || ""}
+                                    onChange={(e) => handleGroupBillingAddressChange(group.groupCode, 'address', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Enter billing address"
+                                    required
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                                    City <span className="text-red-500">*</span>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={groupBillingAddresses[group.groupCode]?.city || ""}
+                                    onChange={(e) => handleGroupBillingAddressChange(group.groupCode, 'city', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Enter city"
+                                    required
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                                    Country <span className="text-red-500">*</span>
+                                  </label>
+                                  <select
+                                    value={groupBillingAddresses[group.groupCode]?.country || groupCountry || ""}
+                                    onChange={(e) => {
+                                      handleGroupBillingAddressChange(group.groupCode, 'country', e.target.value);
+                                      handleGroupCountryChange(group.groupCode, e.target.value);
+                                    }}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                    required
+                                  >
+                                    <option value="">Select country</option>
+                                    <option value="hongkong">Hong Kong</option>
+                                    <option value="dubai">Dubai</option>
+                                  </select>
+                                </div>
+                              </div>
                             </div>
-                            <div className="flex items-end">
+
+                            {/* Shipping Address */}
+                            <div>
+                              <h4 className="text-sm font-semibold text-gray-900 mb-3">Shipping Address</h4>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="sm:col-span-2">
+                                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                                    Address <span className="text-red-500">*</span>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={groupShippingAddresses[group.groupCode]?.address || ""}
+                                    onChange={(e) => handleGroupShippingAddressChange(group.groupCode, 'address', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Enter shipping address"
+                                    required
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                                    City <span className="text-red-500">*</span>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={groupShippingAddresses[group.groupCode]?.city || ""}
+                                    onChange={(e) => handleGroupShippingAddressChange(group.groupCode, 'city', e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Enter city"
+                                    required
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                                    Country <span className="text-red-500">*</span>
+                                  </label>
+                                  <select
+                                    value={groupShippingAddresses[group.groupCode]?.country || groupCountry || ""}
+                                    onChange={(e) => {
+                                      handleGroupShippingAddressChange(group.groupCode, 'country', e.target.value);
+                                      handleGroupCountryChange(group.groupCode, e.target.value);
+                                    }}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                    required
+                                  >
+                                    <option value="">Select country</option>
+                                    <option value="hongkong">Hong Kong</option>
+                                    <option value="dubai">Dubai</option>
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Place Order Button */}
+                            <div className="flex justify-end pt-2">
                               <button
                                 type="button"
                                 onClick={() => handlePlaceOrderForGroup(group.groupCode)}
-                                disabled={!groupCountry || groupLoading[group.groupCode]}
-                                className="w-full sm:min-w-[200px] px-5 py-2.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors duration-200 shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600 flex items-center justify-center gap-2"
+                                disabled={
+                                  !groupBillingAddresses[group.groupCode]?.address ||
+                                  !groupBillingAddresses[group.groupCode]?.city ||
+                                  !groupBillingAddresses[group.groupCode]?.country ||
+                                  !groupShippingAddresses[group.groupCode]?.address ||
+                                  !groupShippingAddresses[group.groupCode]?.city ||
+                                  !groupShippingAddresses[group.groupCode]?.country ||
+                                  groupLoading[group.groupCode]
+                                }
+                                className="px-6 py-2.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors duration-200 shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600 flex items-center justify-center gap-2"
                               >
                                 {groupLoading[group.groupCode] ? (
                                   <>

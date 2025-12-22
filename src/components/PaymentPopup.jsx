@@ -26,8 +26,6 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [files, setFiles] = useState({});
-  const [billingAddress, setBillingAddress] = useState({ address: "", city: "", postalCode: "", country: "" });
-  const [shippingAddress, setShippingAddress] = useState({ address: "", city: "", postalCode: "", country: "" });
   const [paymentAmount, setPaymentAmount] = useState('');
   const [existingPayments, setExistingPayments] = useState([]);
   const [remainingBalance, setRemainingBalance] = useState(0);
@@ -134,19 +132,6 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
   };
 
   const validateForm = () => {
-    // Validate addresses
-    const addressFields = ["address", "city", "postalCode", "country"];
-    for (const field of addressFields) {
-      if (!billingAddress[field]) {
-        setError(`Please fill in billing ${field}`);
-        return false;
-      }
-      if (!shippingAddress[field]) {
-        setError(`Please fill in shipping ${field}`);
-        return false;
-      }
-    }
-
     if (!selectedModule) {
       setError('Please select a payment method');
       return false;
@@ -250,26 +235,6 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
         fieldsData.currency = selectedCurrency;
       }
 
-      // Add billing address to fields
-      if (billingAddress && Object.keys(billingAddress).length > 0) {
-        fieldsData['Billing Address'] = billingAddress.address || '';
-        fieldsData['Billing City'] = billingAddress.city || '';
-        fieldsData['Billing Postal Code'] = billingAddress.postalCode || '';
-        fieldsData['Billing Country'] = billingAddress.country || '';
-        // Also add as nested object for easier access
-        fieldsData.billingAddress = billingAddress;
-      }
-
-      // Add shipping address to fields
-      if (shippingAddress && Object.keys(shippingAddress).length > 0) {
-        fieldsData['Shipping Address'] = shippingAddress.address || '';
-        fieldsData['Shipping City'] = shippingAddress.city || '';
-        fieldsData['Shipping Postal Code'] = shippingAddress.postalCode || '';
-        fieldsData['Shipping Country'] = shippingAddress.country || '';
-        // Also add as nested object for easier access
-        fieldsData.shippingAddress = shippingAddress;
-      }
-
       // Add payment amount to fields
       if (paymentAmount) {
         const roundedAmount = roundToTwoDecimals(parseFloat(paymentAmount) || paymentAmount);
@@ -296,8 +261,6 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
         // Store payment details in the order data for later use
         const updatedOrderData = {
           ...orderData,
-          billingAddress,
-          shippingAddress,
           paymentDetails: {
             module: selectedModule,
             acceptedTerms,
@@ -331,8 +294,6 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
         };
         
         onSuccess && onSuccess({
-          billingAddress,
-          shippingAddress,
           paymentDetails,
           files: fileList
         });
@@ -661,130 +622,6 @@ const PaymentPopup = ({ isOpen, onClose, orderData, onSuccess, adminSelectedPaym
                     >
                       Pay full remaining balance
                     </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Billing Address */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Billing Address</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Address <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={billingAddress.address}
-                      onChange={(e) => setBillingAddress(prev => ({ ...prev, address: e.target.value }))}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter billing address"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      City <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={billingAddress.city}
-                      onChange={(e) => setBillingAddress(prev => ({ ...prev, city: e.target.value }))}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter city"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Postal Code <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={billingAddress.postalCode}
-                      onChange={(e) => setBillingAddress(prev => ({ ...prev, postalCode: e.target.value }))}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter postal code"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Country <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={billingAddress.country}
-                      onChange={(e) => setBillingAddress(prev => ({ ...prev, country: e.target.value }))}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    >
-                      <option value="">Select Country</option>
-                      <option value="Hongkong">Hongkong</option>
-                      <option value="Dubai">Dubai</option>
-        
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Shipping Address */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Shipping Address</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Address <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={shippingAddress.address}
-                      onChange={(e) => setShippingAddress(prev => ({ ...prev, address: e.target.value }))}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter shipping address"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      City <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={shippingAddress.city}
-                      onChange={(e) => setShippingAddress(prev => ({ ...prev, city: e.target.value }))}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter city"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Postal Code <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={shippingAddress.postalCode}
-                      onChange={(e) => setShippingAddress(prev => ({ ...prev, postalCode: e.target.value }))}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter postal code"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Country <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={shippingAddress.country}
-                      onChange={(e) => setShippingAddress(prev => ({ ...prev, country: e.target.value }))}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    >
-                      <option value="">Select Country</option>
-                      <option value="Hongkong">Hongkong</option>
-                      <option value="Dubai">Dubai</option>
-          
-                    </select>
                   </div>
                 </div>
               </div>

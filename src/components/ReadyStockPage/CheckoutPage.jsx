@@ -25,7 +25,9 @@ const CheckoutPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [imageErrors, setImageErrors] = useState({});
-  const [shippingCountry, setShippingCountry] = useState("");
+  // ✅ Billing and shipping addresses
+  const [billingAddress, setBillingAddress] = useState({ address: "", city: "", country: "" });
+  const [shippingAddress, setShippingAddress] = useState({ address: "", city: "", country: "" });
   const [costSummary, setCostSummary] = useState({
     totalCartValue: 0,
     totalAmount: 0,
@@ -114,8 +116,15 @@ const CheckoutPage = () => {
       return; 
     }
     
-    if (!shippingCountry) {
-      setError("Please select a shipping country");
+    // ✅ Validate billing address
+    if (!billingAddress.address || !billingAddress.city || !billingAddress.country) {
+      setError("Please fill in all billing address fields");
+      return;
+    }
+    
+    // ✅ Validate shipping address
+    if (!shippingAddress.address || !shippingAddress.city || !shippingAddress.country) {
+      setError("Please fill in all shipping address fields");
       return;
     }
     
@@ -134,14 +143,14 @@ const CheckoutPage = () => {
 
       // Get current location (default to HK, can be from product or user profile)
       const currentLocation = 'HK'; // Default, can be enhanced to get from product
-      const deliveryLocation = normalizeCountry(shippingCountry);
+      const deliveryLocation = normalizeCountry(shippingAddress.country);
       
       // Get currency from context - ensure it's explicitly set
       // If no currency in context, try to infer from shipping country or cart items
       let currency = selectedCurrency;
       if (!currency) {
         // First, try to infer from shipping country
-        const countryUpper = shippingCountry?.toUpperCase() || '';
+        const countryUpper = shippingAddress.country?.toUpperCase() || '';
         if (countryUpper.includes('DUBAI') || countryUpper.includes('D')) {
           currency = 'AED';
         } else if (countryUpper.includes('HONG') || countryUpper.includes('HK')) {
@@ -157,7 +166,7 @@ const CheckoutPage = () => {
         currency = 'USD'; // Absolute last resort
       }
 
-      // Create order with cartItems and shipping country
+      // ✅ Create order with full billing and shipping addresses
       const payload = {
         cartItems: cartItems.map((it) => ({ 
           productId: it.id, 
@@ -166,8 +175,15 @@ const CheckoutPage = () => {
           quantity: Number(it.quantity), 
           price: Number(it.price) 
         })),
+        billingAddress: {
+          address: billingAddress.address,
+          city: billingAddress.city,
+          country: billingAddress.country.toLowerCase(),
+        },
         shippingAddress: {
-          country: shippingCountry
+          address: shippingAddress.address,
+          city: shippingAddress.city,
+          country: shippingAddress.country.toLowerCase(),
         },
         currentLocation: currentLocation,
         deliveryLocation: deliveryLocation,
@@ -286,29 +302,108 @@ const CheckoutPage = () => {
                     <span className="font-bold text-gray-900">{formatPriceInCurrency(finalTotal)}</span>
                   </div>
                 </div>
-                <form onSubmit={handlePlaceOrder} className="mt-4 rounded-xl  space-y-6">
+                <form onSubmit={handlePlaceOrder} className="mt-4 rounded-xl space-y-6">
                   <div className="text-sm text-gray-600 mb-4">
-                    <p className="mb-2">Review your order and place it. You'll be able to add payment and shipping details after admin approval.</p>
+                    <p className="mb-2">Review your order and place it. You'll be able to add payment details after admin approval.</p>
                   </div>
                   
-                  <div className="mb-4">
-                    <label htmlFor="shippingCountry" className="block text-sm font-medium text-gray-700 mb-2">
-                      Shipping Country <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      id="shippingCountry"
-                      value={shippingCountry}
-                      onChange={(e) => setShippingCountry(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#0071E0] focus:border-[#0071E0] outline-none text-sm"
-                      required
-                    >
-                      <option value="">Select Shipping Country</option>
-                      <option value="hongkong">Hong Kong</option>
-                      <option value="dubai">Dubai</option>
-                    </select>
+                  {/* ✅ Billing Address */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Billing Address</h4>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          Address <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={billingAddress.address}
+                          onChange={(e) => setBillingAddress(prev => ({ ...prev, address: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0071E0] focus:border-[#0071E0]"
+                          placeholder="Enter billing address"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          City <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={billingAddress.city}
+                          onChange={(e) => setBillingAddress(prev => ({ ...prev, city: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0071E0] focus:border-[#0071E0]"
+                          placeholder="Enter city"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          Country <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          value={billingAddress.country}
+                          onChange={(e) => setBillingAddress(prev => ({ ...prev, country: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0071E0] focus:border-[#0071E0] bg-white"
+                          required
+                        >
+                          <option value="">Select country</option>
+                          <option value="hongkong">Hong Kong</option>
+                          <option value="dubai">Dubai</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ✅ Shipping Address */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Shipping Address</h4>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          Address <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={shippingAddress.address}
+                          onChange={(e) => setShippingAddress(prev => ({ ...prev, address: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0071E0] focus:border-[#0071E0]"
+                          placeholder="Enter shipping address"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          City <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={shippingAddress.city}
+                          onChange={(e) => setShippingAddress(prev => ({ ...prev, city: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0071E0] focus:border-[#0071E0]"
+                          placeholder="Enter city"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          Country <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          value={shippingAddress.country}
+                          onChange={(e) => setShippingAddress(prev => ({ ...prev, country: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0071E0] focus:border-[#0071E0] bg-white"
+                          required
+                        >
+                          <option value="">Select country</option>
+                          <option value="hongkong">Hong Kong</option>
+                          <option value="dubai">Dubai</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
                   
-                  <div className="flex flex-col sm:flex-row gap-3 justify-end">
+                  <div className="flex flex-col sm:flex-row gap-3 justify-end pt-2">
                     <button type="button" className="w-full px-5 py-3 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50" onClick={()=>navigate('/cart')}>Back to Cart</button>
                     <button type="submit" disabled={isLoading} className="w-full px-6 py-3 rounded-lg bg-[#0071E0] text-white hover:bg-[#005bb5] disabled:opacity-50">{isLoading? 'Processing...' : 'Place Order'}</button>
                   </div>

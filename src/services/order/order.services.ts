@@ -246,14 +246,20 @@ export class OrderService {
     }
   }
 
+  // ✅ Addresses are optional - backend will use order's addresses if not provided
   static async submitPayment(orderId: string, billingAddress: any, shippingAddress: any, paymentDetails: any, files?: File[]): Promise<CreateOrderResponse> {
     try {
       let res;
       if (files && files.length > 0) {
         const formData = new FormData();
         formData.append('orderId', orderId);
-        formData.append('billingAddress', JSON.stringify(billingAddress));
-        formData.append('shippingAddress', JSON.stringify(shippingAddress));
+        // ✅ Only append addresses if they are provided (not null/undefined)
+        if (billingAddress) {
+          formData.append('billingAddress', JSON.stringify(billingAddress));
+        }
+        if (shippingAddress) {
+          formData.append('shippingAddress', JSON.stringify(shippingAddress));
+        }
         formData.append('paymentDetails', JSON.stringify(paymentDetails));
         files.forEach((file) => {
           formData.append('images', file);
@@ -264,12 +270,18 @@ export class OrderService {
           },
         });
       } else {
-        res = await api.post('/api/customer/order/submit-payment', {
+        const requestBody: any = {
           orderId,
-          billingAddress,
-          shippingAddress,
           paymentDetails,
-        });
+        };
+        // ✅ Only include addresses if they are provided
+        if (billingAddress) {
+          requestBody.billingAddress = billingAddress;
+        }
+        if (shippingAddress) {
+          requestBody.shippingAddress = shippingAddress;
+        }
+        res = await api.post('/api/customer/order/submit-payment', requestBody);
       }
       const ok = res.data?.success === true || res.data?.status === 200;
       toastHelper.showTost(res.data?.message || (ok ? 'Payment submitted successfully' : 'Failed to submit payment'), ok ? 'success' : 'error');
