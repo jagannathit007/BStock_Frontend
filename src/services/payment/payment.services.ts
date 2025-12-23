@@ -149,6 +149,17 @@ export class PaymentService {
       throw err;
     }
   }
+
+  static async listMyPayments(page = 1, limit = 10): Promise<PaymentDetailsResponse> {
+    try {
+      const res = await api.post('/api/customer/payment/list-payments', { page, limit });
+      return res.data;
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Failed to fetch payments list';
+      toastHelper.showTost(msg, 'error');
+      throw err;
+    }
+  }
 }
 
 export default PaymentService;

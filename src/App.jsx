@@ -28,6 +28,7 @@ import CartPage from "./components/ReadyStockPage/CartPage";
 import CheckoutPage from "./components/ReadyStockPage/CheckoutPage";
 import ProfilePage from "./pages/ProfilePage";
 import HomePage from "./pages/HomePage";
+import PaymentHistoryPage from "./pages/PaymentHistoryPage";
 import Order from "./components/Order";
 import { AuthService } from "./services/auth/auth.services";
 import FlashDeals from "./components/ReadyStockPage/FlashDeals";
@@ -177,6 +178,14 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
               element={
                 <ProtectedRoute isLoggedIn={isLoggedIn}>
                   <Layout><Order /></Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/payment-history"
+              element={
+                <ProtectedRoute isLoggedIn={isLoggedIn}>
+                  <Layout><PaymentHistoryPage /></Layout>
                 </ProtectedRoute>
               }
             />
