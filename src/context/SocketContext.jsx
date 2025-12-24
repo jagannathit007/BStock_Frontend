@@ -31,7 +31,11 @@ export function SocketProvider({ children }) {
       }
     };
     window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      // Cleanup force logout listener on unmount
+      SocketService.removeForceLogoutListener();
+    };
   }, []);
 
   const value = useMemo(() => ({ socket, socketService }), [socket, socketService]);

@@ -121,6 +121,14 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
       // Show toast notification with user-friendly message
       toastHelper.showTost(data.message || '📬 New negotiation update', toastType);
       
+      // Redirect if redirectTo is provided and it's from admin
+      const fromUserType = data?.FromUserType || data?.fromUserType || data?.userType;
+      if (data.redirectTo && (fromUserType === 'Admin' || data.type === 'counter_offer' || data.type === 'bid_accepted' || data.type === 'bid_rejected')) {
+        // Redirect to negotiations page
+        const redirectPath = data.redirectTo || '/bidding';
+        window.location.hash = `#${redirectPath}`;
+      }
+      
       // Refresh negotiations if it's a relevant update
       if (
         data.type === 'new_bid' ||

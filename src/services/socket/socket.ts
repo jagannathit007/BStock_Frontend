@@ -1,4 +1,5 @@
 import { io } from 'socket.io-client';
+import { env } from '../../utils/env';
 
 type UserType = 'admin' | 'customer' | 'seller';
 
@@ -12,10 +13,20 @@ class SocketServiceClass {
 
   connect(baseUrl?: string) {
     const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!token) {
+      console.warn('No token found, cannot connect socket');
+      return;
+    }
 
-    const url = baseUrl || (import.meta.env.VITE_BASE_URL as string);
-    if (!url) return;
+    // Use provided baseUrl or get from env utility (same as API service)
+    const url = baseUrl || env.baseUrl || 'http://localhost:3000';
+    
+    if (!url) {
+      console.error('Socket connection URL not found');
+      return;
+    }
+    
+    console.log('Connecting socket to:', url);
 
     if (this.socket) {
       if (this.socket.connected) return;
@@ -36,6 +47,10 @@ class SocketServiceClass {
       console.log('User panel socket connected:', this.socket?.id);
       // Auto-join room when connected
       this.joinRoom();
+      // Set up force logout listener when socket is connected
+      this.setupForceLogoutListener();
+      // Set up order confirmed listener when socket is connected
+      this.setupOrderConfirmedListener();
     });
 
     this.socket.on('disconnect', () => {
@@ -44,6 +59,11 @@ class SocketServiceClass {
 
     // Updated message listener for new backend structure
     this.socket.on('userMessage', (_payload: any) => { void _payload; });
+    
+    // Set up force logout listener immediately (in case socket is already connected)
+    this.setupForceLogoutListener();
+    // Set up order confirmed listener immediately (in case socket is already connected)
+    this.setupOrderConfirmedListener();
   }
 
   disconnect() {
@@ -316,6 +336,88 @@ class SocketServiceClass {
     this.socket.off('bidNotification');
     this.socket.off('bidUpdate');
     this.socket.off('userJoinedBid');
+  }
+
+  // Store the force logout callback
+  private forceLogoutCallback: ((data: any) => void) | null = null;
+
+  // Store callback for order confirmation handling
+  private orderConfirmedCallback: ((data: any) => void) | null = null;
+
+  // Set up order confirmation listener (called when socket connects)
+  private setupOrderConfirmedListener() {
+    if (!this.socket) {
+      return;
+    }
+    
+    // Remove existing listener if any
+    this.socket.off('orderConfirmed');
+    
+    // Set up new listener if callback is registered
+    if (this.orderConfirmedCallback) {
+      console.log('Setting up order confirmed listener');
+      this.socket.on('orderConfirmed', (data) => {
+        console.log('Received order confirmed event:', data);
+        if (this.orderConfirmedCallback) {
+          this.orderConfirmedCallback(data);
+        }
+      });
+    }
+  }
+
+  // Register callback for order confirmed event
+  onOrderConfirmed(callback: (data: any) => void) {
+    this.orderConfirmedCallback = callback;
+    
+    // If socket is already connected, set up the listener immediately
+    if (this.socket && this.socket.connected) {
+      this.setupOrderConfirmedListener();
+    }
+  }
+
+  // Remove order confirmed listener
+  removeOrderConfirmedListener() {
+    if (!this.socket) return;
+    this.socket.off('orderConfirmed');
+    this.orderConfirmedCallback = null;
+  }
+
+  // Set up force logout listener (called when socket connects)
+  private setupForceLogoutListener() {
+    if (!this.socket) {
+      return;
+    }
+    
+    // Remove existing listener if any
+    this.socket.off('forceLogout');
+    
+    // Set up new listener if callback is registered
+    if (this.forceLogoutCallback) {
+      console.log('Setting up force logout listener');
+      this.socket.on('forceLogout', (data) => {
+        console.log('Received force logout event:', data);
+        if (this.forceLogoutCallback) {
+          this.forceLogoutCallback(data);
+        }
+      });
+    }
+  }
+
+  // Register callback for force logout event (e.g., when margins change)
+  onForceLogout(callback: (data: any) => void) {
+    this.forceLogoutCallback = callback;
+    
+    // If socket is already connected, set up the listener immediately
+    if (this.socket && this.socket.connected) {
+      this.setupForceLogoutListener();
+    }
+  }
+
+  // Remove force logout listener
+  removeForceLogoutListener() {
+    if (!this.socket) return;
+    this.socket.off('forceLogout');
+    this.forceLogoutCallback = null;
   }
 }
 

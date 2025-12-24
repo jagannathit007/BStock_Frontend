@@ -34,6 +34,8 @@ import { AuthService } from "./services/auth/auth.services";
 import FlashDeals from "./components/ReadyStockPage/FlashDeals";
 import WishlistPage from "./pages/WishlistPage";
 import { CurrencyProvider } from "./context/CurrencyContext";
+import { SocketService } from "./services/socket/socket";
+import Swal from "sweetalert2";
 
 // Route guard: redirects unauthenticated users to login with returnTo
 const ProtectedRoute = ({ children, isLoggedIn }) => {
@@ -222,15 +224,146 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
       setIsLoggedIn(true);
     };
 
-    const handleLogout = () => {
+    const handleLogout = (reason = null) => {
       // Clear entire localStorage
       localStorage.clear();
       setIsLoggedIn(false);
+      // Disconnect socket
+      SocketService.disconnect();
       // Dispatch event to notify other components of logout
       window.dispatchEvent(new Event('loginStateChanged'));
-      // Redirect to home page after logout
-      window.location.hash = '#/home';
+      
+      // Show message if reason is provided (from force logout)
+      if (reason) {
+        Swal.fire({
+          title: 'Session Ended',
+          text: reason,
+          icon: 'info',
+          confirmButtonText: 'OK',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+        }).then(() => {
+          // Redirect to home page after logout
+          window.location.hash = '#/home';
+        });
+      } else {
+        // Redirect to home page after logout
+        window.location.hash = '#/home';
+      }
     };
+
+    // Listen for force logout events (e.g., when margins change)
+    useEffect(() => {
+      if (isLoggedIn) {
+        const handleForceLogout = (data) => {
+          console.log('Force logout received:', data);
+          // Clear entire localStorage
+          localStorage.clear();
+          setIsLoggedIn(false);
+          // Disconnect socket
+          SocketService.disconnect();
+          // Dispatch event to notify other components of logout
+          window.dispatchEvent(new Event('loginStateChanged'));
+          
+          // Show message with reason
+          Swal.fire({
+            title: 'Session Ended',
+            text: data.reason || 'Your session has been ended. Please login again.',
+            icon: 'info',
+            confirmButtonText: 'OK',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+          }).then(() => {
+            // Redirect to home page after logout
+            window.location.hash = '#/home';
+          });
+        };
+
+        SocketService.onForceLogout(handleForceLogout);
+
+        // Cleanup listener on unmount or when logged out
+        return () => {
+          SocketService.removeForceLogoutListener();
+        };
+      }
+    }, [isLoggedIn]);
+
+    // Listen for order confirmation events (when admin confirms order)
+    useEffect(() => {
+      if (isLoggedIn) {
+        const handleOrderConfirmed = (data) => {
+          console.log('Order confirmed received:', data);
+          const orderData = data.order || {};
+          const message = data.message || `Your order ${orderData.orderNo || orderData.orderId} has been confirmed. You can now submit payment.`;
+          
+          // Show success notification
+          Swal.fire({
+            title: 'Order Confirmed!',
+            text: message,
+            icon: 'success',
+            confirmButtonText: 'View Orders',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+          }).then(() => {
+            // Redirect to orders page
+            const redirectPath = data.redirectTo || '/order';
+            window.location.hash = `#${redirectPath}`;
+          });
+        };
+
+        SocketService.onOrderConfirmed(handleOrderConfirmed);
+
+        // Cleanup listener on unmount or when logged out
+        return () => {
+          SocketService.removeOrderConfirmedListener();
+        };
+      }
+    }, [isLoggedIn]);
+
+    // Listen for negotiation events (when admin responds to negotiation)
+    useEffect(() => {
+      if (isLoggedIn) {
+        const handleNegotiationEvent = (data) => {
+          console.log('Negotiation event received:', data);
+          
+          // Check if this is an admin-initiated event (admin responding to customer)
+          const fromUserType = data?.FromUserType || data?.fromUserType || data?.userType;
+          const type = data?.type || data?.eventType;
+          
+          // Only redirect if it's from admin (counter_offer, bid_accepted, bid_rejected)
+          if (fromUserType === 'Admin' || type === 'counter_offer' || type === 'bid_accepted' || type === 'bid_rejected') {
+            // Show notification
+            const message = data.message || '📬 New negotiation update';
+            let icon = 'info';
+            if (type === 'bid_accepted') icon = 'success';
+            else if (type === 'bid_rejected') icon = 'error';
+            
+            Swal.fire({
+              title: 'Negotiation Update',
+              text: message,
+              icon: icon,
+              confirmButtonText: 'View Negotiations',
+              allowOutsideClick: false,
+              allowEscapeKey: false,
+            }).then(() => {
+              // Redirect to negotiations page
+              const redirectPath = data.redirectTo || '/bidding';
+              window.location.hash = `#${redirectPath}`;
+            });
+          }
+        };
+
+        SocketService.onNegotiationNotification(handleNegotiationEvent);
+        SocketService.onNegotiationBroadcast(handleNegotiationEvent);
+        SocketService.onNegotiationUpdate(handleNegotiationEvent);
+
+        // Cleanup listeners on unmount or when logged out
+        return () => {
+          // Note: SocketService doesn't have remove methods for negotiation listeners
+          // They will be cleaned up when socket disconnects
+        };
+      }
+    }, [isLoggedIn]);
 
     return (
       <HashRouter>
