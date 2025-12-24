@@ -19,7 +19,7 @@ import iphoneImage from "../../assets/iphone.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHandshake } from "@fortawesome/free-solid-svg-icons";
 import { handleNumericInput } from "../../utils/numericInput";
-import { convertPrice } from "../../utils/currencyUtils";
+import { convertPrice, getCurrencySymbol } from "../../utils/currencyUtils";
 import { useSocket } from "../../context/SocketContext";
 import toastHelper from "../../utils/toastHelper";
 import { getProductImages, getProductName } from "../../utils/productUtils";
@@ -354,6 +354,20 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
     return convertPrice(price);
   };
 
+  // Format price with specific currency (for listed price display)
+  const formatPriceWithCurrency = (price, currency) => {
+    if (!price || isNaN(price)) return '$0.00';
+    const numericPrice = typeof price === 'string' ? parseFloat(price) : Number(price);
+    if (isNaN(numericPrice) || numericPrice < 0) return '$0.00';
+    
+    const currencyCode = currency || 'USD';
+    const symbol = getCurrencySymbol(currencyCode);
+    return `${symbol}${numericPrice.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
@@ -477,8 +491,15 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
               <div className="flex items-center space-x-2 mt-1">
                 <span className="text-xs text-gray-600">Listed Price:</span>
                 <span className="text-lg font-bold text-green-600">
-                  {convertPrice(product.price)}
+                  {product.calculatedPrice !== undefined 
+                    ? formatPriceWithCurrency(product.calculatedPrice, product.selectedCurrency)
+                    : convertPrice(product.price)}
                 </span>
+                {product.selectedCountry && product.selectedCurrency && (
+                  <span className="text-xs text-gray-500">
+                    ({product.selectedCountry} - {product.selectedCurrency})
+                  </span>
+                )}
               </div>
             </div>
           </div>

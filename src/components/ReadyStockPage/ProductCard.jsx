@@ -798,7 +798,13 @@ if (viewMode === "table") {
                         const returnTo = encodeURIComponent(window.location.hash?.slice(1) || "/home");
                         return navigate(`/login?returnTo=${returnTo}`);
                       }
-                      onOpenBiddingForm(product);
+                      // Pass product with selected country, currency, and calculated price
+                      onOpenBiddingForm({
+                        ...product,
+                        selectedCountry,
+                        selectedCurrency,
+                        calculatedPrice: (derivedPrice != null && derivedPrice > 0) ? derivedPrice : (product?.price ?? 0),
+                      });
                     }}
                     title="Make offer"
                   >
@@ -1068,7 +1074,13 @@ if (viewMode === "list") {
                           const returnTo = encodeURIComponent(window.location.hash?.slice(1) || "/home");
                           return navigate(`/login?returnTo=${returnTo}`);
                         }
-                        onOpenBiddingForm(product);
+                        // Pass product with selected country, currency, and calculated price
+                        onOpenBiddingForm({
+                          ...product,
+                          selectedCountry,
+                          selectedCurrency,
+                          calculatedPrice: (derivedPrice != null && derivedPrice > 0) ? derivedPrice : (product?.price ?? 0),
+                        });
                       }}
                     >
                       Make Offer
@@ -1356,7 +1368,13 @@ if (viewMode === "list") {
                   const returnTo = encodeURIComponent(hashPath);
                   return navigate(`/login?returnTo=${returnTo}`);
                 }
-                onOpenBiddingForm(product); // Call handler with product
+                // Pass product with selected country, currency, and calculated price
+                onOpenBiddingForm({
+                  ...product,
+                  selectedCountry,
+                  selectedCurrency,
+                  calculatedPrice: (derivedPrice != null && derivedPrice > 0) ? derivedPrice : (product?.price ?? 0),
+                });
               }}
             >
               Make Offer

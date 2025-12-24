@@ -2244,7 +2244,12 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
 
       {isBiddingFormOpen && (
         <BiddingForm
-          product={processedProduct}
+          product={{
+            ...processedProduct,
+            selectedCountry,
+            selectedCurrency,
+            calculatedPrice: (derivedPrice != null && derivedPrice > 0) ? derivedPrice : (processedProduct?.price ?? 0),
+          }}
           isOpen={isBiddingFormOpen}
           onClose={() => setIsBiddingFormOpen(false)}
           onSuccess={handleBiddingSuccess}
