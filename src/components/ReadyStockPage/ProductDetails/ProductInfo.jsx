@@ -147,6 +147,14 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const subSkuFamily = getSubSkuFamily(currentProduct);
   const skuFamily = currentProduct.skuFamilyId && typeof currentProduct.skuFamilyId === 'object' ? currentProduct.skuFamilyId : null;
   
+  // Helper function to get display value for group products
+  const getDisplayValue = (value, fieldName) => {
+    if (currentProduct?.groupCode) {
+      return "Mixed";
+    }
+    return value || "-";
+  };
+
   const processedProduct = {
     ...currentProduct,
     name: getProductName(currentProduct),
@@ -181,6 +189,10 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       return "In Stock";
     })(),
     groupCode: currentProduct?.groupCode || currentProduct?.groupCode || "",
+    // Override color, storage, and RAM with "Mixed" if groupCode exists
+    color: getDisplayValue(currentProduct?.color, 'color'),
+    storage: getDisplayValue(currentProduct?.storage, 'storage'),
+    ram: getDisplayValue(currentProduct?.ram, 'ram'),
   };
 
   // Country/Currency derived from countryDeliverables (supports nested raw product)

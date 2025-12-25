@@ -556,6 +556,14 @@ const ProductCard = ({
 
   const availableColors = getAvailableColors();
 
+  // Helper function to get display value for group products
+  const getDisplayValue = (value, fieldName) => {
+    if (product?.groupCode) {
+      return "Mixed";
+    }
+    return value || "-";
+  };
+
   // Handle color selection and update price
   const handleColorSelect = (e, colorValue) => {
     e.stopPropagation();
@@ -623,7 +631,13 @@ if (viewMode === "table") {
               </p>
             )}
             <p className="text-xs text-gray-500 mt-1 line-clamp-1">
-              {[product?.storage, product?.ram, product?.color, product?.simType, product?.countryName].filter(Boolean).join(' • ') || '-'}
+              {[
+                getDisplayValue(product?.storage, 'storage'),
+                getDisplayValue(product?.ram, 'ram'),
+                getDisplayValue(product?.color, 'color'),
+                product?.simType,
+                product?.countryName
+              ].filter(Boolean).join(' • ') || '-'}
             </p>
             <p className="text-xs text-gray-500 mt-1 line-clamp-1">
               {description}
@@ -914,9 +928,9 @@ if (viewMode === "list") {
                 <div className="hidden sm:block w-px h-3 bg-gray-300" />
                   <div className="hidden sm:block text-xs flex font-medium text-gray-900">
                     {[
-                      product?.storage,
-                      product?.ram,
-                      product?.color,
+                      getDisplayValue(product?.storage, 'storage'),
+                      getDisplayValue(product?.ram, 'ram'),
+                      getDisplayValue(product?.color, 'color'),
                       product?.simType,
                     ].filter(Boolean).join(' • ') || '-'}
                   </div>
@@ -951,9 +965,9 @@ if (viewMode === "list") {
 
               <div className="sm:hidden text-xs flex font-medium text-gray-900">
                     {[
-                      product?.storage,
-                      product?.ram,
-                      product?.color,
+                      getDisplayValue(product?.storage, 'storage'),
+                      getDisplayValue(product?.ram, 'ram'),
+                      getDisplayValue(product?.color, 'color'),
                       product?.simType,
                     ].filter(Boolean).join(' • ') || '-'}
                   </div>
@@ -1230,7 +1244,7 @@ if (viewMode === "list") {
             <div>
               {/* product color  */}
               <div className="text-xs flex font-medium text-gray-900 bg-gray-100 px-1 py-0.5 rounded-md">
-                {product?.color}
+                {getDisplayValue(product?.color, 'color')}
               </div>
             </div>
           </div>

@@ -19,8 +19,9 @@ const WTBPanel = () => {
         `${baseUrl}/api/customer/get-product-list`,
         {
           page: 1,
-          limit: 50,
+          limit: 100,
           search: searchValue || undefined,
+          forWTB: true, // Request unique SKU families and sub-SKU families
         },
         {
           headers: {
@@ -33,65 +34,16 @@ const WTBPanel = () => {
       );
       const docs = res.data?.data?.docs || [];
       
-      // Debug: log first product to see structure
-      if (docs.length > 0) {
-        console.log("Sample product data:", docs[0]);
-        console.log("Sample SKU Family:", docs[0]?.skuFamilyId);
-      }
-      
+      // For WTB mode, API returns simplified structure with phoneName and brand already set
       setRows(
         docs.map((p) => {
-          const skuFamily = p.skuFamilyId && typeof p.skuFamilyId === 'object' ? p.skuFamilyId : null;
-          const subSkuFamily = getSubSkuFamily(p);
-          
-          // Extract brand name - check multiple possible locations
-          let brandName = "";
-          
-          // First, try to get brand from product's brandId (populated in aggregation pipeline)
-          if (p.brandId && typeof p.brandId === 'object' && p.brandId.title) {
-            brandName = p.brandId.title;
-          }
-          // Second, try to get brand from skuFamily.brand (if populated as object)
-          else if (skuFamily?.brand) {
-            if (typeof skuFamily.brand === 'object' && skuFamily.brand.title) {
-              brandName = skuFamily.brand.title;
-            } else if (typeof skuFamily.brand === 'object' && skuFamily.brand.name) {
-              brandName = skuFamily.brand.name;
-            }
-            // If brand is just an ID string, we can't get the name here
-            // It would need to be populated in the API
-          }
-          
-          // Build Phone Name: Use getProductName (which handles subSkuFamily.subName > skuFamily.name > specification)
-          // Then append specification if it's different from the name
-          const baseName = getProductName(p); // This returns subSkuFamily.subName || skuFamily.name || specification
-          const productSpec = p.specification || "";
-          
-          // If baseName already includes the spec or is the spec, use it as-is
-          // Otherwise combine them
-          let phoneName = baseName;
-          if (productSpec && productSpec !== baseName && !baseName.includes(productSpec)) {
-            // If we have a subSkuFamily name, combine it with spec
-            // Otherwise combine skuFamily name with spec
-            if (subSkuFamily?.subName) {
-              phoneName = `${subSkuFamily.subName} ${productSpec}`.trim();
-            } else if (skuFamily?.name) {
-              phoneName = `${skuFamily.name} ${productSpec}`.trim();
-            } else {
-              phoneName = productSpec;
-            }
-          }
-          
-          // Fallback if still empty
-          if (!phoneName || phoneName === "Product") {
-            phoneName = productSpec || p.model || p.modelFull || "Product";
-          }
-          
           return {
-            id: p._id,
-            phoneName: phoneName,
-            brand: brandName || "-",
-            brandId: p.brandId?._id || skuFamily?.brand || null, // Store brandId for potential fetching
+            id: p._id || p.skuFamilyId || p.subSkuFamilyId, // Use first available ID
+            phoneName: p.phoneName || 'Product',
+            brand: p.brand || '-',
+            brandId: p.brandId || null,
+            skuFamilyId: p.skuFamilyId || null,
+            subSkuFamilyId: p.subSkuFamilyId || null,
           };
         })
       );
@@ -257,5 +209,6 @@ const WTBPanel = () => {
 };
 
 export default WTBPanel;
+
 
 
