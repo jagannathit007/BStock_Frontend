@@ -367,10 +367,10 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
     }
   };
 
-  const formatPrice = (price) => {
+  const formatPrice = (price, currency = 'USD') => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: currency || 'USD'
     }).format(price);
   };
 
@@ -680,7 +680,7 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
                                     </div>
                                     <div className="flex items-center space-x-1 bg-white px-3 py-1.5 rounded-lg shadow-sm">
                                       <span className="font-bold text-green-600 text-base">
-                                        {formatPrice(negotiation.offerPrice)}
+                                        {formatPrice(negotiation.offerPrice, negotiation.currency)}
                                       </span>
                                     </div>
                                     <div className="flex items-center text-gray-500 text-xs">
@@ -802,7 +802,7 @@ const NegotiationModal = ({ isOpen, onClose, userType = 'customer' }) => {
                           <DollarSign className="w-4 h-4 text-green-600" />
                           <span className="text-sm text-gray-600">Offer Price:</span>
                           <span className="font-bold text-green-600">
-                            {formatPrice(individualNegotiation.offerPrice)}
+                            {formatPrice(individualNegotiation.offerPrice, individualNegotiation.currency)}
                           </span>
                         </div>
                         <div className="flex items-center space-x-2 bg-white p-3 rounded-lg border border-gray-200">

@@ -247,9 +247,32 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
 
     setLoading(true);
     try {
+      // Get currency from product or default to USD
+      const currency = product?.selectedCurrency || 'USD';
+      
+      // Normalize country to location code
+      const normalizeCountry = (countryStr) => {
+        if (!countryStr) return 'HK';
+        const upper = countryStr.toUpperCase();
+        if (upper === 'HONG KONG' || upper === 'HONGKONG' || upper === 'HK') return 'HK';
+        if (upper === 'DUBAI' || upper === 'D' || upper === 'DBI') return 'D';
+        return 'HK';
+      };
+      
+      // Get current location (default to HK)
+      const currentLocation = 'HK';
+      
+      // Get delivery location and country from product or customer profile
+      const deliveryCountry = product?.selectedCountry || 'Hongkong';
+      const deliveryLocation = normalizeCountry(deliveryCountry);
+      
       await NegotiationService.createBid({
         productId: product.id,
         offerPrice: parseFloat(formData.offerPrice),
+        currency: currency,
+        currentLocation: currentLocation,
+        deliveryLocation: deliveryLocation,
+        deliveryCountry: deliveryCountry,
         quantity: parseInt(formData.quantity, 10),
         message: formData.message,
       });
@@ -278,6 +301,23 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
     if (!selectedNegotiation) return;
 
     try {
+      // Get currency from negotiation or product, default to USD
+      const currency = selectedNegotiation?.currency || product?.selectedCurrency || 'USD';
+      
+      // Normalize country to location code
+      const normalizeCountry = (countryStr) => {
+        if (!countryStr) return 'HK';
+        const upper = countryStr.toUpperCase();
+        if (upper === 'HONG KONG' || upper === 'HONGKONG' || upper === 'HK') return 'HK';
+        if (upper === 'DUBAI' || upper === 'D' || upper === 'DBI') return 'D';
+        return 'HK';
+      };
+      
+      // Get location fields from negotiation or product
+      const currentLocation = selectedNegotiation?.currentLocation || 'HK';
+      const deliveryCountry = selectedNegotiation?.deliveryCountry || product?.selectedCountry || 'Hongkong';
+      const deliveryLocation = selectedNegotiation?.deliveryLocation || normalizeCountry(deliveryCountry);
+      
       const data = {
         negotiationId: selectedNegotiation._id,
         action: responseData.action,
@@ -285,6 +325,10 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
           responseData.action === "counter"
             ? parseFloat(responseData.offerPrice)
             : undefined,
+        currency: responseData.action === "counter" ? currency : undefined,
+        currentLocation: responseData.action === "counter" ? currentLocation : undefined,
+        deliveryLocation: responseData.action === "counter" ? deliveryLocation : undefined,
+        deliveryCountry: responseData.action === "counter" ? deliveryCountry : undefined,
         quantity:
           responseData.action === "counter" && responseData.quantity
             ? parseInt(responseData.quantity, 10)
