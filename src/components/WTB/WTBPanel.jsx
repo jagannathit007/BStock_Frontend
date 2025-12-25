@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import { getProductName, getSubSkuFamily } from "../../utils/productUtils";
 
 const WTBPanel = () => {
@@ -42,14 +44,22 @@ const WTBPanel = () => {
           const skuFamily = p.skuFamilyId && typeof p.skuFamilyId === 'object' ? p.skuFamilyId : null;
           const subSkuFamily = getSubSkuFamily(p);
           
-          // Extract brand name
+          // Extract brand name - check multiple possible locations
           let brandName = "";
-          if (skuFamily?.brand) {
-            if (typeof skuFamily.brand === 'object') {
-              brandName = skuFamily.brand.title || skuFamily.brand.name || "";
-            } else {
-              brandName = String(skuFamily.brand);
+          
+          // First, try to get brand from product's brandId (populated in aggregation pipeline)
+          if (p.brandId && typeof p.brandId === 'object' && p.brandId.title) {
+            brandName = p.brandId.title;
+          }
+          // Second, try to get brand from skuFamily.brand (if populated as object)
+          else if (skuFamily?.brand) {
+            if (typeof skuFamily.brand === 'object' && skuFamily.brand.title) {
+              brandName = skuFamily.brand.title;
+            } else if (typeof skuFamily.brand === 'object' && skuFamily.brand.name) {
+              brandName = skuFamily.brand.name;
             }
+            // If brand is just an ID string, we can't get the name here
+            // It would need to be populated in the API
           }
           
           // Build Phone Name: Use getProductName (which handles subSkuFamily.subName > skuFamily.name > specification)
@@ -80,7 +90,8 @@ const WTBPanel = () => {
           return {
             id: p._id,
             phoneName: phoneName,
-            brand: brandName,
+            brand: brandName || "-",
+            brandId: p.brandId?._id || skuFamily?.brand || null, // Store brandId for potential fetching
           };
         })
       );
@@ -180,6 +191,13 @@ const WTBPanel = () => {
         <div className="bg-white rounded-t-2xl md:rounded-2xl shadow-xl w-full max-w-5xl max-h-[80vh] flex flex-col overflow-hidden">
           <div className="p-4 border-b flex items-center justify-between">
             <h2 className="text-lg font-semibold">Want To Buy (WTB)</h2>
+            <button
+              onClick={() => setOpen(false)}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              aria-label="Close modal"
+            >
+              <FontAwesomeIcon icon={faTimes} className="text-gray-600 text-lg" />
+            </button>
           </div>
 
           <form onSubmit={handleSearch} className="p-4 border-b flex gap-2">
@@ -239,4 +257,5 @@ const WTBPanel = () => {
 };
 
 export default WTBPanel;
+
 
