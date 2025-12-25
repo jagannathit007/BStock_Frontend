@@ -11,6 +11,7 @@ import {
   History,
   Bell,
   BellRing,
+  Strikethrough,
 } from "lucide-react";
 import NegotiationService from "../../services/negotiation/negotiation.services";
 import { AuthService } from "../../services/auth/auth.services";
@@ -642,8 +643,12 @@ const BiddingForm = ({ product, isOpen, onClose, onSuccess }) => {
                                   }`}>
                                     {bid.FromUserType}
                                   </div>
+                                    <del> <span className="font-bold  text-base">
+                                      {formatPrice(bid.previousOfferPrice)}
+                                    </span></del>
                                   <div className="flex items-center space-x-1 bg-white px-3 py-1.5 rounded-lg shadow-sm">
                                     {/* <DollarSign className="w-4 h-4 text-green-600" /> */}
+                               
                                     <span className="font-bold text-green-600 text-base">
                                       {formatPrice(bid.offerPrice)}
                                     </span>
