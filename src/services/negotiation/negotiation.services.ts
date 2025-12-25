@@ -220,10 +220,21 @@ export class NegotiationService {
     }
   }
 
-  // Confirm negotiation (via token from email)
-  static async confirmNegotiation(token: string): Promise<any> {
+  // Confirm negotiation (via token from email) with addresses
+  static async confirmNegotiation(
+    token: string, 
+    shippingAddress?: { address: string; country: string; city: string },
+    billingAddress?: { address: string; country: string; city: string }
+  ): Promise<any> {
     try {
-      const res = await api.get(`/api/customer/negotiation/confirm/${token}`);
+      const body: any = { token };
+      if (shippingAddress) {
+        body.shippingAddress = shippingAddress;
+      }
+      if (billingAddress) {
+        body.billingAddress = billingAddress;
+      }
+      const res = await api.post(`/api/customer/negotiation/confirm`, body);
       if (res.data?.status === 200) {
         return res.data.data;
       } else {

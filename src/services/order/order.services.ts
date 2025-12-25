@@ -64,6 +64,14 @@ export interface Order {
     name?: string | null;
     mobile?: string | null;
   };
+  negotiationId?: string | {
+    _id: string;
+    bidId: string;
+    offerPrice: number;
+    quantity: number;
+    status: string;
+    FromUserType: string;
+  } | null; // Link to negotiation if order was created from a negotiation
 }
 
 export interface OrderListResponse {
