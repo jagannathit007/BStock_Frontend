@@ -74,12 +74,14 @@ export function getSubSkuFamily(product: Product): SubSkuFamily | null {
  * Gets the effective name from product (subSkuFamily > skuFamily > specification)
  */
 export function getProductName(product: Product): string {
-  const subSkuFamily = getSubSkuFamily(product);
-  if (subSkuFamily?.subName) return subSkuFamily.subName;
+  // const subSkuFamily = getSubSkuFamily(product);
+  // if (subSkuFamily?.subName) return subSkuFamily.subName;
 
   const skuFamily = product.skuFamilyId;
   if (skuFamily && typeof skuFamily === 'object' && (skuFamily as SkuFamily).name) {
-    return (skuFamily as SkuFamily).name;
+    const spec = product.specification.toString() !==skuFamily.name?.toString() ? product.specification.toString(): "";
+    const name = (skuFamily as SkuFamily).name +" "+ spec;
+    return name;
   }
 
   return product.specification || 'Product';
@@ -94,7 +96,7 @@ export function getProductCode(product: Product): string {
 
   const skuFamily = product.skuFamilyId;
   if (skuFamily && typeof skuFamily === 'object' && (skuFamily as SkuFamily).code) {
-    return (skuFamily as SkuFamily).code;
+    return (skuFamily as SkuFamily).code as string;
   }
 
   return product.code || '';
