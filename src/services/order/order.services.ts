@@ -238,22 +238,49 @@ export class OrderService {
     }
   }
 
-  static async addReceiverDetails(orderId: string, receiverName: string, receiverMobile: string): Promise<any> {
-    try {
-      const res = await api.post('/api/customer/order/add-receiver-details', {
-        orderId,
-        receiverName,
-        receiverMobile,
+static async addReceiverDetails(
+  orderId: string, 
+  receiverName: string, 
+  receiverMobile: string, 
+  remark: string, 
+  images: File[]
+): Promise<any> {
+  try {
+    // Create FormData object
+    const formData = new FormData();
+    
+    // Append text fields
+    formData.append('orderId', orderId);
+    formData.append('receiverName', receiverName);
+    formData.append('receiverMobile', receiverMobile);
+    formData.append('remark', remark);
+    
+    // Append image files
+    if (images && images.length > 0) {
+      images.forEach((file, index) => {
+        formData.append('images', file);
       });
-      const ok = res.data?.success === true || res.data?.status === 200;
-      toastHelper.showTost(res.data?.message || (ok ? 'Receiver details added successfully' : 'Failed to add receiver details'), ok ? 'success' : 'error');
-      return res.data;
-    } catch (err: any) {
-      const msg = err.response?.data?.message || 'Failed to add receiver details';
-      toastHelper.showTost(msg, 'error');
-      throw err;
     }
+
+    // Make API call with FormData
+    const res = await api.post('/api/customer/order/add-receiver-details', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    const ok = res.data?.success === true || res.data?.status === 200;
+    toastHelper.showTost(
+      res.data?.message || (ok ? 'Receiver details added successfully' : 'Failed to add receiver details'), 
+      ok ? 'success' : 'error'
+    );
+    return res.data;
+  } catch (err: any) {
+    const msg = err.response?.data?.message || 'Failed to add receiver details';
+    toastHelper.showTost(msg, 'error');
+    throw err;
   }
+}
 
   // ✅ Addresses are optional - backend will use order's addresses if not provided
   static async submitPayment(orderId: string, billingAddress: any, shippingAddress: any, paymentDetails: any, files?: File[]): Promise<CreateOrderResponse> {

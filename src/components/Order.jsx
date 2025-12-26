@@ -36,6 +36,8 @@ const Order = () => {
   const [selectedOrderForReceiver, setSelectedOrderForReceiver] = useState(null);
   const [receiverName, setReceiverName] = useState('');
   const [receiverMobile, setReceiverMobile] = useState('');
+  const [remark, setRemark] = useState('');
+  const [images ,setImages] = useState([]);
   const [submittingReceiverDetails, setSubmittingReceiverDetails] = useState(false);
   const [deliveryChargeModal, setDeliveryChargeModal] = useState({
     open: false,
@@ -630,6 +632,8 @@ const Order = () => {
                               setSelectedOrderForReceiver(order);
                               setReceiverName('');
                               setReceiverMobile('');
+                              setRemark('');
+                              setImages([]);
                               setShowReceiverDetailsModal(true);
                             }}
                             className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-all duration-200 font-medium"
@@ -1111,104 +1115,146 @@ const Order = () => {
 
       {/* Receiver Details Modal */}
       {showReceiverDetailsModal && selectedOrderForReceiver && (
-        <div className="fixed inset-0 bg-black/60 bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Add Receiver Details</h2>
-              <button
-                onClick={() => {
-                  setShowReceiverDetailsModal(false);
-                  setSelectedOrderForReceiver(null);
-                  setReceiverName('');
-                  setReceiverMobile('');
-                }}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <FontAwesomeIcon icon={faTimes} className="w-5 h-5" />
-              </button>
-            </div>
+  <div className="fixed inset-0 bg-black/60 bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">Add Receiver Details</h2>
+        <button
+          onClick={() => {
+            setShowReceiverDetailsModal(false);
+            setSelectedOrderForReceiver(null);
+            setReceiverName('');
+            setReceiverMobile('');
+            setRemark('');
+            setImages([]);
+          }}
+          className="text-gray-400 hover:text-gray-600"
+        >
+          <FontAwesomeIcon icon={faTimes} className="w-5 h-5" />
+        </button>
+      </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Receiver Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={receiverName}
-                  onChange={(e) => setReceiverName(e.target.value)}
-                  placeholder="Enter receiver name"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Receiver Mobile Number <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="tel"
-                  value={receiverMobile}
-                  onChange={(e) => setReceiverMobile(e.target.value.replace(/\D/g, ''))}
-                  placeholder="Enter mobile number (10-15 digits)"
-                  maxLength={15}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">Required for delivery verification</p>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  onClick={async () => {
-                    if (!receiverName.trim() || !receiverMobile.trim()) {
-                      alert('Please fill in all required fields');
-                      return;
-                    }
-
-                    if (receiverMobile.length < 10 || receiverMobile.length > 15) {
-                      alert('Mobile number must be 10-15 digits');
-                      return;
-                    }
-
-                    try {
-                      setSubmittingReceiverDetails(true);
-                      await OrderService.addReceiverDetails(
-                        selectedOrderForReceiver._id,
-                        receiverName.trim(),
-                        receiverMobile.trim()
-                      );
-                      setShowReceiverDetailsModal(false);
-                      setSelectedOrderForReceiver(null);
-                      setReceiverName('');
-                      setReceiverMobile('');
-                      fetchOrders();
-                    } catch (error) {
-                      console.error('Error adding receiver details:', error);
-                    } finally {
-                      setSubmittingReceiverDetails(false);
-                    }
-                  }}
-                  disabled={submittingReceiverDetails}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                >
-                  {submittingReceiverDetails ? 'Submitting...' : 'Submit'}
-                </button>
-                <button
-                  onClick={() => {
-                    setShowReceiverDetailsModal(false);
-                    setSelectedOrderForReceiver(null);
-                    setReceiverName('');
-                    setReceiverMobile('');
-                  }}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Receiver Name <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            value={receiverName}
+            onChange={(e) => setReceiverName(e.target.value)}
+            placeholder="Enter receiver name"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
-      )}
+          
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Receiver Mobile Number <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="tel"
+            value={receiverMobile}
+            onChange={(e) => setReceiverMobile(e.target.value.replace(/\D/g, ''))}
+            placeholder="Enter mobile number (10-15 digits)"
+            maxLength={15}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <p className="text-xs text-gray-500 mt-1">Required for delivery verification</p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Remark (Optional)
+          </label>
+          <input
+            type="text"
+            value={remark}
+            onChange={(e) => setRemark(e.target.value)}
+            placeholder="Enter remark"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="imagesInput" className="block text-sm font-medium text-gray-700 mb-2">
+            Upload Images (Optional)
+          </label>
+          <input
+            type="file"
+            id="imagesInput"
+            multiple
+            accept="image/*"
+            onChange={(e) => {
+              if (e.target.files) {
+                setImages(Array.from(e.target.files));
+              }
+            }}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          {images.length > 0 && (
+            <p className="text-xs text-gray-500 mt-1">{images.length} file(s) selected</p>
+          )}
+        </div>
+
+        <div className="flex gap-3 pt-4">
+          <button
+            onClick={async () => {
+              if (!receiverName.trim() || !receiverMobile.trim()) {
+                alert('Please fill in all required fields');
+                return;
+              }
+
+              if (receiverMobile.length < 10 || receiverMobile.length > 15) {
+                alert('Mobile number must be 10-15 digits');
+                return;
+              }
+
+              try {
+                setSubmittingReceiverDetails(true);
+                await OrderService.addReceiverDetails(
+                  selectedOrderForReceiver._id,
+                  receiverName.trim(),
+                  receiverMobile.trim(),
+                  remark.trim(),
+                  images
+                );
+                setShowReceiverDetailsModal(false);
+                setSelectedOrderForReceiver(null);
+                setReceiverName('');
+                setReceiverMobile('');
+                setRemark('');
+                setImages([]);
+                fetchOrders();
+              } catch (error) {
+                console.error('Error adding receiver details:', error);
+              } finally {
+                setSubmittingReceiverDetails(false);
+              }
+            }}
+            disabled={submittingReceiverDetails}
+            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+          >
+            {submittingReceiverDetails ? 'Submitting...' : 'Submit'}
+          </button>
+          <button
+            onClick={() => {
+              setShowReceiverDetailsModal(false);
+              setSelectedOrderForReceiver(null);
+              setReceiverName('');
+              setReceiverMobile('');
+              setRemark('');
+              setImages([]);
+            }}
+            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 };

@@ -19,7 +19,7 @@ class SocketServiceClass {
     }
 
     // Use provided baseUrl or get from env utility (same as API service)
-    const url = baseUrl || env.baseUrl || 'http://localhost:3000';
+    const url = baseUrl || import.meta.env.VITE_BASE_URL || 'http://localhost:3200';
     
     if (!url) {
       console.error('Socket connection URL not found');

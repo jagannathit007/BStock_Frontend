@@ -156,9 +156,9 @@ const ProductCard = ({
     imageUrl,
     isOutOfStock,
     isExpired,
+    customerListingNumber
   } = product;
   const shouldShowTimer = Boolean(product?.isShowTimer);
-
   const purchaseType = product?.purchaseType;
   const purchaseTypeLabel = purchaseType
     ? purchaseType.toLowerCase() === "partial"
@@ -604,6 +604,7 @@ if (viewMode === "table") {
                   ? iphoneImage
                   : `${import.meta.env.VITE_BASE_URL}/${imageUrl}`
               }
+              
               alt={name}
               onError={handleImageError}
             />
@@ -612,6 +613,7 @@ if (viewMode === "table") {
 
         {/* Product Name & Description */}
         <td className="px-4 py-3 max-w-[280px]">
+          <div className="font-semibold text-sm text-gray-900 hover:text-[#0071e3] transition-colors">{customerListingNumber}</div>
           <div className="flex flex-col">
             <h3 className="font-semibold text-sm text-gray-900 hover:text-[#0071e3] transition-colors">
               {name}
@@ -848,6 +850,7 @@ if (viewMode === "list") {
               {/* Header */}
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm text-gray-900 hover:text-[#0071e3] transition-colors">{customerListingNumber}</div>
                   <h3 className="text-sm sm:text-base flex font-semibold text-gray-900 group-hover:text-[#0071e3] transition-colors duration-200 mb-1 leading-tight">
                     {name} <span className="hidden sm:flex text-xs font-normal text-gray-500"> - {description}</span>
                   </h3>
@@ -1133,6 +1136,7 @@ if (viewMode === "list") {
             <span
               className={`inline-flex items-center px-1.5 py-1 rounded-full text-[10px] font-semibold ${getStatusBadgeClass()}`}
             >
+              
               {isExpired ? (
                 <FontAwesomeIcon
                   icon={faCalendarXmark}
@@ -1154,6 +1158,8 @@ if (viewMode === "list") {
                 </svg>
               )}
               {getDisplayStatus()}
+              
+              
             </span>
           </div>
           
@@ -1174,6 +1180,8 @@ if (viewMode === "list") {
 
         {/* Content Section */}
         <div className="flex flex-col flex-1 w-full gap-2 min-h-0">
+          <div className="font-semibold text-sm text-gray-900 hover:text-[#0071e3] transition-colors">{customerListingNumber}</div>
+
           {/* Product Title */}
           <h3 className="font-semibold text-sm leading-tight tracking-normal text-[#364153] line-clamp-2">
             {name} <span className="text-xs font-normal text-gray-500"> - {description}</span>

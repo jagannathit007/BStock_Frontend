@@ -91,7 +91,7 @@ const MainContent = () => {
       stock <= 0 ? "Out of Stock" : stock <= 10 ? "Low Stock" : "In Stock";
     const expiryTime = p.expiryTime;
     const isExpired = expiryTime ? new Date(expiryTime) < new Date() : false;
-
+    const customerListingNumber = p?.customerListingNumber;
     return {
       id,
       name: getProductName(p),
@@ -128,6 +128,7 @@ const MainContent = () => {
       _product: p,
       // Include groupCode if available
       groupCode: p.groupCode || null,
+      customerListingNumber:customerListingNumber
     };
   };
 
@@ -197,6 +198,7 @@ const MainContent = () => {
           const docs = payload?.docs || [];
           const totalDocs = Number(payload?.totalDocs) || 0;
           const mapped = docs.map(mapApiProductToUi);
+          console.log(mapped);
           setFetchedProducts(mapped);
           setTotalProductsCount(totalDocs);
         } else {
