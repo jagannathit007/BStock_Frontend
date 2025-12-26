@@ -36,10 +36,11 @@ import BiddingForm from "../../negotiation/BiddingForm";
 import AddToCartPopup from "../AddToCartPopup";
 import iphoneImage from "../../../assets/iphone.png";
 import Swal from "sweetalert2";
+import axios from "axios";
 import { convertPrice, getCurrencyRates, formatPriceForCurrency } from "../../../utils/currencyUtils";
 import { useCurrency } from "../../../context/CurrencyContext";
 import { PRIMARY_COLOR, PRIMARY_COLOR_LIGHT, PRIMARY_COLOR_DARK } from "../../../utils/colors";
-import { getSubSkuFamily, getProductName, getProductCode, getProductImages, getSubSkuFamilyId } from "../../../utils/productUtils";
+import { getSubSkuFamily, getProductName, getProductCode, getProductImages, getProductVideos, getSubSkuFamilyId } from "../../../utils/productUtils";
 import 'flag-icons/css/flag-icons.min.css';
 
 const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
@@ -71,6 +72,7 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   const [selectedCountryRate, setSelectedCountryRate] = useState('AED');
   const [isCountryRateDropdownOpen, setIsCountryRateDropdownOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState("Hongkong");
+  const [groupProducts, setGroupProducts] = useState([]); // Store all products in the group (for multi-variant)
   // Use global currency context instead of local state
   const selectedCurrency = globalSelectedCurrency || "USD";
   const setSelectedCurrency = (currency) => {
@@ -101,6 +103,42 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     setImageError(true);
   };
 
+  // Helper function to get the first image for a product with priority:
+  // 1. Product images (product.images[0])
+  // 2. SubSkuFamily images (from skuFamily.subSkuFamilies filtered by subSkuFamilyId)
+  // 3. SkuFamily images (fallback)
+  const getFirstImageForProduct = (product) => {
+    if (!product) return null;
+
+    // Priority 1: Product's own images
+    if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+      const firstImage = product.images[0];
+      if (firstImage && String(firstImage).trim() !== '') {
+        return firstImage;
+      }
+    }
+
+    // Priority 2: SubSkuFamily images (filtered by subSkuFamilyId)
+    const subSkuFamily = getSubSkuFamily(product);
+    if (subSkuFamily?.images && Array.isArray(subSkuFamily.images) && subSkuFamily.images.length > 0) {
+      const firstImage = subSkuFamily.images[0];
+      if (firstImage && String(firstImage).trim() !== '') {
+        return firstImage;
+      }
+    }
+
+    // Priority 3: SkuFamily images (fallback)
+    const skuFamily = product.skuFamilyId && typeof product.skuFamilyId === 'object' ? product.skuFamilyId : null;
+    if (skuFamily?.images && Array.isArray(skuFamily.images) && skuFamily.images.length > 0) {
+      const firstImage = skuFamily.images[0];
+      if (firstImage && String(firstImage).trim() !== '') {
+        return firstImage;
+      }
+    }
+
+    return null;
+  };
+
   const getAllProductImages = () => {
     const images = [];
     const toAbsolute = (path) => {
@@ -111,6 +149,29 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
       return `${base}/${String(path).replace(/^\/+/, "")}`;
     };
 
+    // Get groupCode from current product (handle both direct and nested structure)
+    const groupCode = currentProduct?.groupCode || currentProduct?._product?.groupCode;
+
+    // For multi-variant products (with groupCode), collect images from all products in the group
+    if (groupCode && groupProducts.length > 0) {
+      // Collect first image from each product in the group
+      groupProducts.forEach((groupProduct) => {
+        const firstImage = getFirstImageForProduct(groupProduct);
+        if (firstImage) {
+          const abs = toAbsolute(firstImage);
+          if (abs && !images.includes(abs)) {
+            images.push(abs);
+          }
+        }
+      });
+
+      // If we have images from group products, return them
+      if (images.length > 0) {
+        return images;
+      }
+    }
+
+    // For single products or if group products don't have images, use current product images
     if (currentProduct.mainImage) {
       const abs = toAbsolute(currentProduct.mainImage);
       if (abs) images.push(abs);
@@ -131,6 +192,11 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
   };
 
   const productImages = getAllProductImages();
+
+  useEffect(() => {
+    // Reset image index when product images change (e.g., when group products load)
+    setSelectedImageIndex(0);
+  }, [groupProducts.length, currentProduct?._id, currentProduct?.id]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -423,6 +489,55 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
     setUnavailableVariant(false);
     setIsVariantChanging(false);
   }, [currentProduct]);
+
+  // Fetch all products with the same groupCode for multi-variant products
+  useEffect(() => {
+    const fetchGroupProducts = async () => {
+      const groupCode = currentProduct?.groupCode || currentProduct?._product?.groupCode;
+      
+      // Only fetch if groupCode exists (multi-variant product)
+      if (!groupCode) {
+        setGroupProducts([]);
+        return;
+      }
+
+      try {
+        const baseUrl = import.meta.env.VITE_BASE_URL || "http://localhost:3200";
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        const custId = user?._id || null;
+
+        const response = await axios.post(
+          `${baseUrl}/api/customer/get-product-list`,
+          {
+            page: 1,
+            limit: 100, // Get all products in the group
+            groupCode: groupCode,
+            custId: custId,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: localStorage.getItem("token")
+                ? `Bearer ${localStorage.getItem("token")}`
+                : "",
+            },
+          }
+        );
+
+        if (response.data.status === 200) {
+          const payload = response.data.data;
+          const docs = payload?.docs || [];
+          // Store all products in the group (including current product)
+          setGroupProducts(docs);
+        }
+      } catch (error) {
+        console.error("Error fetching group products:", error);
+        setGroupProducts([]);
+      }
+    };
+
+    fetchGroupProducts();
+  }, [currentProduct?.groupCode, currentProduct?._product?.groupCode]);
 
   // Build variant options (Color, RAM, Storage, SIM Type) from current product and related products
   useEffect(() => {

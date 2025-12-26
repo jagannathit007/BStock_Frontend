@@ -15,7 +15,7 @@ import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { AuthService } from "../../services/auth/auth.services";
 import { useCurrency } from "../../context/CurrencyContext";
-import { getSubSkuFamily, getProductName, getProductCode, getProductImages, getSubSkuFamilyId } from "../../utils/productUtils";
+import { getSubSkuFamily, getProductName, getProductCode, getProductImages, getProductVideos, getSubSkuFamilyId } from "../../utils/productUtils";
 // import HeroSlider from "./HeroSlider";
 
 const MainContent = () => {
@@ -73,7 +73,10 @@ const MainContent = () => {
     const skuFamily = p.skuFamilyId && typeof p.skuFamilyId === 'object' ? p.skuFamilyId : null;
     
     const productImages = getProductImages(p);
-    const imageUrl = productImages[0] || "https://via.placeholder.com/400x300.png?text=Product";
+    // Use first product image, or subSkuFamily first image, or skuFamily first image, or dummy image
+    const imageUrl = productImages.length > 0 
+      ? productImages[0] 
+      : "https://via.placeholder.com/400x300.png?text=Product";
     
     const storage = p.storage || "";
     const color = p.color || "";
@@ -128,7 +131,9 @@ const MainContent = () => {
       _product: p,
       // Include groupCode if available
       groupCode: p.groupCode || null,
-      customerListingNumber:customerListingNumber
+      customerListingNumber:customerListingNumber,
+      // Include videos for product details
+      videos: getProductVideos(p),
     };
   };
 

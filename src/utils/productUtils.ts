@@ -20,6 +20,7 @@ export interface SkuFamily {
   name?: string;
   code?: string;
   images?: string[];
+  videos?: string[];
   description?: string;
   subSkuFamilies?: SubSkuFamily[];
   [key: string]: any;
@@ -103,25 +104,84 @@ export function getProductCode(product: Product): string {
 }
 
 /**
- * Gets images from product (subSkuFamily > skuFamily)
+ * Gets images from product with priority:
+ * 1. Product images (product.images) - first preference
+ * 2. SubSkuFamily images (filtered by subSkuFamilyId) - second preference
+ * 3. SkuFamily images - fallback
+ * 4. Dummy image - if none available
  */
 export function getProductImages(product: Product): string[] {
-  const images: string[] = [];
-
-  const subSkuFamily = getSubSkuFamily(product);
-  if (subSkuFamily?.images && Array.isArray(subSkuFamily.images)) {
-    images.push(...subSkuFamily.images);
-  }
-
-  const skuFamily = product.skuFamilyId;
-  if (skuFamily && typeof skuFamily === 'object') {
-    const skuImages = (skuFamily as SkuFamily).images;
-    if (Array.isArray(skuImages)) {
-      images.push(...skuImages);
+  // Priority 1: Product's own images
+  if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+    const validImages = product.images.filter((img: string) => img && String(img).trim() !== '');
+    if (validImages.length > 0) {
+      return validImages;
     }
   }
 
-  return images;
+  // Priority 2: SubSkuFamily images (filtered by subSkuFamilyId matching product.subSkuFamilyId)
+  const subSkuFamily = getSubSkuFamily(product);
+  if (subSkuFamily?.images && Array.isArray(subSkuFamily.images) && subSkuFamily.images.length > 0) {
+    const validImages = subSkuFamily.images.filter((img: string) => img && String(img).trim() !== '');
+    if (validImages.length > 0) {
+      return validImages;
+    }
+  }
+
+  // Priority 3: SkuFamily images (fallback)
+  const skuFamily = product.skuFamilyId;
+  if (skuFamily && typeof skuFamily === 'object') {
+    const skuImages = (skuFamily as SkuFamily).images;
+    if (Array.isArray(skuImages) && skuImages.length > 0) {
+      const validImages = skuImages.filter((img: string) => img && String(img).trim() !== '');
+      if (validImages.length > 0) {
+        return validImages;
+      }
+    }
+  }
+
+  // Priority 4: Return empty array (dummy image will be handled by component)
+  return [];
+}
+
+/**
+ * Gets videos from product with priority:
+ * 1. Product videos (product.videos) - first preference
+ * 2. SubSkuFamily videos (filtered by subSkuFamilyId) - second preference
+ * 3. SkuFamily videos - fallback
+ */
+export function getProductVideos(product: Product): string[] {
+  // Priority 1: Product's own videos
+  if ((product as any).videos && Array.isArray((product as any).videos) && (product as any).videos.length > 0) {
+    const validVideos = (product as any).videos.filter((vid: string) => vid && String(vid).trim() !== '');
+    if (validVideos.length > 0) {
+      return validVideos;
+    }
+  }
+
+  // Priority 2: SubSkuFamily videos (filtered by subSkuFamilyId matching product.subSkuFamilyId)
+  const subSkuFamily = getSubSkuFamily(product);
+  if (subSkuFamily?.videos && Array.isArray(subSkuFamily.videos) && subSkuFamily.videos.length > 0) {
+    const validVideos = subSkuFamily.videos.filter((vid: string) => vid && String(vid).trim() !== '');
+    if (validVideos.length > 0) {
+      return validVideos;
+    }
+  }
+
+  // Priority 3: SkuFamily videos (fallback)
+  const skuFamily = product.skuFamilyId;
+  if (skuFamily && typeof skuFamily === 'object') {
+    const skuVideos = (skuFamily as SkuFamily).videos;
+    if (Array.isArray(skuVideos) && skuVideos.length > 0) {
+      const validVideos = skuVideos.filter((vid: string) => vid && String(vid).trim() !== '');
+      if (validVideos.length > 0) {
+        return validVideos;
+      }
+    }
+  }
+
+  // Return empty array if no videos found
+  return [];
 }
 
 /**
