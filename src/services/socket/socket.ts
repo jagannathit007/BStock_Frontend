@@ -51,6 +51,8 @@ class SocketServiceClass {
       this.setupForceLogoutListener();
       // Set up order confirmed listener when socket is connected
       this.setupOrderConfirmedListener();
+      // Set up business approval listener when socket is connected
+      this.setupBusinessApprovalListener();
     });
 
     this.socket.on('disconnect', () => {
@@ -64,6 +66,8 @@ class SocketServiceClass {
     this.setupForceLogoutListener();
     // Set up order confirmed listener immediately (in case socket is already connected)
     this.setupOrderConfirmedListener();
+    // Set up business approval listener immediately (in case socket is already connected)
+    this.setupBusinessApprovalListener();
   }
 
   disconnect() {
@@ -344,6 +348,9 @@ class SocketServiceClass {
   // Store callback for order confirmation handling
   private orderConfirmedCallback: ((data: any) => void) | null = null;
 
+  // Store callback for business approval handling
+  private businessApprovedCallback: ((data: any) => void) | null = null;
+
   // Set up order confirmation listener (called when socket connects)
   private setupOrderConfirmedListener() {
     if (!this.socket) {
@@ -418,6 +425,44 @@ class SocketServiceClass {
     if (!this.socket) return;
     this.socket.off('forceLogout');
     this.forceLogoutCallback = null;
+  }
+
+  // Set up business approval listener (called when socket connects)
+  private setupBusinessApprovalListener() {
+    if (!this.socket) {
+      return;
+    }
+    
+    // Remove existing listener if any
+    this.socket.off('businessApproved');
+    
+    // Set up new listener if callback is registered
+    if (this.businessApprovedCallback) {
+      console.log('Setting up business approval listener');
+      this.socket.on('businessApproved', (data) => {
+        console.log('Received business approval event:', data);
+        if (this.businessApprovedCallback) {
+          this.businessApprovedCallback(data);
+        }
+      });
+    }
+  }
+
+  // Register callback for business approval event
+  onBusinessApproved(callback: (data: any) => void) {
+    this.businessApprovedCallback = callback;
+    
+    // If socket is already connected, set up the listener immediately
+    if (this.socket && this.socket.connected) {
+      this.setupBusinessApprovalListener();
+    }
+  }
+
+  // Remove business approval listener
+  removeBusinessApprovalListener() {
+    if (!this.socket) return;
+    this.socket.off('businessApproved');
+    this.businessApprovedCallback = null;
   }
 }
 

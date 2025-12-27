@@ -288,6 +288,42 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
       }
     }, [isLoggedIn]);
 
+    // Listen for business approval events (when admin approves business request)
+    useEffect(() => {
+      if (isLoggedIn) {
+        const handleBusinessApproved = (data) => {
+          console.log('Business approval received:', data);
+          // Clear entire localStorage
+          localStorage.clear();
+          setIsLoggedIn(false);
+          // Disconnect socket
+          SocketService.disconnect();
+          // Dispatch event to notify other components of logout
+          window.dispatchEvent(new Event('loginStateChanged'));
+          
+          // Show message
+          Swal.fire({
+            title: 'Business Request Approved',
+            text: data.message || 'Your business request has been approved. Please login again to continue.',
+            icon: 'success',
+            confirmButtonText: 'OK',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+          }).then(() => {
+            // Redirect to login page
+            window.location.hash = '#/login';
+          });
+        };
+
+        SocketService.onBusinessApproved(handleBusinessApproved);
+
+        // Cleanup listener on unmount or when logged out
+        return () => {
+          SocketService.removeBusinessApprovalListener();
+        };
+      }
+    }, [isLoggedIn]);
+
     // Listen for order confirmation events (when admin confirms order)
     useEffect(() => {
       if (isLoggedIn) {
