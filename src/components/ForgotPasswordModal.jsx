@@ -63,7 +63,7 @@ const ForgotPasswordModal = ({ isOpen, onClose, onEmailSubmit }) => {
           </button>
 
           <div className="space-y-3 sm:space-y-4 lg:space-y-5">
-            <p className="text-xs sm:text-sm text-gray-600 text-center">
+            <p className="text-xs sm:text-sm text-gray-600 text-center pr-8 sm:pr-10">
               {isSubmitted
                 ? "We've sent a password reset link to your email. Please check your inbox."
                 : "Enter your email address and we'll send you a link to reset your password."}

@@ -1066,10 +1066,60 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
         if (typeof onRefresh === "function") {
           onRefresh();
         }
+      } else {
+        const errorMessage = response?.message || response?.data?.message || "Failed to create order";
+        // Check if error is about delivery location and currency combination
+        if (errorMessage.includes("does not support the selected delivery location") || 
+            (errorMessage.includes("delivery location") && errorMessage.includes("currency"))) {
+          // Show as confirmation box instead of error
+          await Swal.fire({
+            icon: "info",
+            title: "Location & Currency Mismatch",
+            html: `<p style="text-align: left; margin: 10px 0;">does not support the selected delivery location</p>`,
+            confirmButtonText: "OK",
+            confirmButtonColor: PRIMARY_COLOR,
+            width: "500px",
+          });
+        } else {
+          // Show other errors as toast
+          await Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: errorMessage,
+            confirmButtonText: "OK",
+            confirmButtonColor: PRIMARY_COLOR,
+          });
+        }
       }
     } catch (error) {
       console.error("Failed to place order:", error);
-      // Error is already handled by OrderService with toast
+      const errorMessage =
+        error.response?.data?.errors?.map((e) => e.message).join(", ") ||
+        error.response?.data?.message ||
+        "An error occurred while creating order";
+      
+      // Check if error is about delivery location and currency combination
+      if (errorMessage.includes("does not support the selected delivery location") || 
+          (errorMessage.includes("delivery location") && errorMessage.includes("currency"))) {
+        // Show as confirmation box instead of error
+        await Swal.fire({
+          icon: "info",
+          title: "Location & Currency Mismatch",
+          html: `<p style="text-align: left; margin: 10px 0;">does not support the selected delivery location</p>`,
+          confirmButtonText: "OK",
+          confirmButtonColor: PRIMARY_COLOR,
+          width: "500px",
+        });
+      } else {
+        // Show other errors as toast
+        await Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: errorMessage,
+          confirmButtonText: "OK",
+          confirmButtonColor: PRIMARY_COLOR,
+        });
+      }
     } finally {
       setIsPlacingOrder(false);
     }

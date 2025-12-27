@@ -99,7 +99,7 @@ const ResetPassword = () => {
                 New Password
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                   <FontAwesomeIcon icon={faLock} className="text-gray-400 text-sm" />
                 </div>
                 <input
@@ -114,10 +114,19 @@ const ResetPassword = () => {
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowPassword(!showPassword);
+                  }}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors z-20 cursor-pointer"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  tabIndex={0}
                 >
-                  <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} className="text-sm" />
+                  <FontAwesomeIcon 
+                    icon={showPassword ? faEyeSlash : faEye} 
+                    className="text-sm" 
+                  />
                 </button>
               </div>
             </div>
@@ -128,7 +137,7 @@ const ResetPassword = () => {
                 Confirm Password
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                   <FontAwesomeIcon icon={faLock} className="text-gray-400 text-sm" />
                 </div>
                 <input
@@ -143,10 +152,19 @@ const ResetPassword = () => {
                 />
                 <button
                   type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowConfirmPassword(!showConfirmPassword);
+                  }}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors z-20 cursor-pointer"
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  tabIndex={0}
                 >
-                  <FontAwesomeIcon icon={showConfirmPassword ? faEyeSlash : faEye} className="text-sm" />
+                  <FontAwesomeIcon 
+                    icon={showConfirmPassword ? faEyeSlash : faEye} 
+                    className="text-sm" 
+                  />
                 </button>
               </div>
             </div>

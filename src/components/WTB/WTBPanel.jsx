@@ -15,13 +15,13 @@ const WTBPanel = () => {
     try {
       setLoading(true);
       const baseUrl = import.meta.env.VITE_BASE_URL || "http://localhost:3200";
+      // Use new API endpoint that returns all unique sub-SKU families (even without products)
       const res = await axios.post(
-        `${baseUrl}/api/customer/get-product-list`,
+        `${baseUrl}/api/customer/wtb/get-all-sub-sku-families`,
         {
           page: 1,
           limit: 100,
-          search: searchValue || undefined,
-          forWTB: true, // Request unique SKU families and sub-SKU families
+          search: searchValue || '',
         },
         {
           headers: {
@@ -34,11 +34,11 @@ const WTBPanel = () => {
       );
       const docs = res.data?.data?.docs || [];
       
-      // For WTB mode, API returns simplified structure with phoneName and brand already set
+      // Map the response to the expected format
       setRows(
         docs.map((p) => {
           return {
-            id: p._id || p.skuFamilyId || p.subSkuFamilyId, // Use first available ID
+            id: p.subSkuFamilyId || p._id || p.skuFamilyId, // Use sub-SKU family ID as primary identifier
             phoneName: p.phoneName || 'Product',
             brand: p.brand || '-',
             brandId: p.brandId || null,
@@ -90,10 +90,13 @@ const WTBPanel = () => {
       }
 
       const baseUrl = import.meta.env.VITE_BASE_URL || "http://localhost:3200";
+      // Send subSkuFamilyId and skuFamilyId since we're now showing all sub-SKU families (even without products)
       await axios.post(
         `${baseUrl}/api/customer/wtb/create`,
         {
-          productId: row.id,
+          productId: row.id, // May be null if no product exists
+          subSkuFamilyId: row.subSkuFamilyId || row.id, // Use sub-SKU family ID
+          skuFamilyId: row.skuFamilyId || null,
           quantity: Number(qty),
         },
         {

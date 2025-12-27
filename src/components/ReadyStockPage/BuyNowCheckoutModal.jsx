@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes, faCheck } from "@fortawesome/free-solid-svg-icons";
+import Swal from "sweetalert2";
 import OrderService from "../../services/order/order.services";
 import PaymentService from "../../services/payment/payment.services";
 import PaymentPopup from "../PaymentPopup";
@@ -142,14 +143,44 @@ const BuyNowCheckoutModal = ({
         setCurrentOrder(null);
         onSuccess && onSuccess();
       } else {
-        setError(response?.message || "Failed to create order");
+        const errorMessage = response?.message || "Failed to create order";
+        // Check if error is about delivery location and currency combination
+        if (errorMessage.includes("does not support the selected delivery location") || 
+            (errorMessage.includes("delivery location") && errorMessage.includes("currency"))) {
+          // Show as confirmation box instead of error
+          await Swal.fire({
+            icon: "info",
+            title: "Location & Currency Mismatch",
+            html: `<p style="text-align: left; margin: 10px 0;">does not support the selected delivery location</p>`,
+            confirmButtonText: "OK",
+            confirmButtonColor: "#0071E0",
+            width: "500px",
+          });
+        } else {
+          setError(errorMessage);
+        }
       }
     } catch (error) {
       const errorMessage =
         error.response?.data?.errors?.map((e) => e.message).join(", ") ||
         error.response?.data?.message ||
         "An error occurred while creating order";
-      setError(errorMessage);
+      
+      // Check if error is about delivery location and currency combination
+      if (errorMessage.includes("does not support the selected delivery location") || 
+          (errorMessage.includes("delivery location") && errorMessage.includes("currency"))) {
+        // Show as confirmation box instead of error
+        await Swal.fire({
+          icon: "info",
+          title: "Location & Currency Mismatch",
+          html: `<p style="text-align: left; margin: 10px 0;">does not support the selected delivery location</p>`,
+          confirmButtonText: "OK",
+          confirmButtonColor: "#0071E0",
+          width: "500px",
+        });
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -196,14 +227,44 @@ const BuyNowCheckoutModal = ({
         setCurrentOrder(null);
         onSuccess && onSuccess();
       } else {
-        setError(response?.message || "Failed to create order");
+        const errorMessage = response?.message || "Failed to create order";
+        // Check if error is about delivery location and currency combination
+        if (errorMessage.includes("does not support the selected delivery location") || 
+            (errorMessage.includes("delivery location") && errorMessage.includes("currency"))) {
+          // Show as confirmation box instead of error
+          await Swal.fire({
+            icon: "info",
+            title: "Location & Currency Mismatch",
+            html: `<p style="text-align: left; margin: 10px 0;">does not support the selected delivery location</p>`,
+            confirmButtonText: "OK",
+            confirmButtonColor: "#0071E0",
+            width: "500px",
+          });
+        } else {
+          setError(errorMessage);
+        }
       }
     } catch (error) {
       const errorMessage =
         error.response?.data?.errors?.map((e) => e.message).join(", ") ||
         error.response?.data?.message ||
         "An error occurred while creating order";
-      setError(errorMessage);
+      
+      // Check if error is about delivery location and currency combination
+      if (errorMessage.includes("does not support the selected delivery location") || 
+          (errorMessage.includes("delivery location") && errorMessage.includes("currency"))) {
+        // Show as confirmation box instead of error
+        await Swal.fire({
+          icon: "info",
+          title: "Location & Currency Mismatch",
+          html: `<p style="text-align: left; margin: 10px 0;">does not support the selected delivery location</p>`,
+          confirmButtonText: "OK",
+          confirmButtonColor: "#0071E0",
+          width: "500px",
+        });
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }

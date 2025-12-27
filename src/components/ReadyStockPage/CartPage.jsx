@@ -8,6 +8,7 @@ import {
   faLayerGroup,
 } from "@fortawesome/free-solid-svg-icons"; // Corrected import
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import CartService from "../../services/cart/cart.services";
 import OrderService from "../../services/order/order.services";
 import iphoneImage from "../../assets/iphone.png";
@@ -327,14 +328,43 @@ const CartPage = () => {
         }
       } else {
         const errorMessage = response?.message || response?.data?.message || "Failed to create order";
-        setError(errorMessage);
+        // Check if error is about delivery location and currency combination
+        if (errorMessage.includes("does not support the selected delivery location") || 
+            errorMessage.includes("delivery location") && errorMessage.includes("currency")) {
+          // Show as confirmation box instead of error
+          await Swal.fire({
+            icon: "info",
+            title: "Location & Currency Mismatch",
+            html: `<p style="text-align: left; margin: 10px 0;">does not support the selected delivery location</p>`,
+            confirmButtonText: "OK",
+            confirmButtonColor: "#0071E0",
+            width: "500px",
+          });
+        } else {
+          setError(errorMessage);
+        }
       }
     } catch (error) {
       const errorMessage =
         error.response?.data?.errors?.map((e) => e.message).join(", ") ||
         error.response?.data?.message ||
         "An error occurred while creating order";
-      setError(errorMessage);
+      
+      // Check if error is about delivery location and currency combination
+      if (errorMessage.includes("does not support the selected delivery location") || 
+          (errorMessage.includes("delivery location") && errorMessage.includes("currency"))) {
+        // Show as confirmation box instead of error
+        await Swal.fire({
+          icon: "info",
+          title: "Location & Currency Mismatch",
+          html: `<p style="text-align: left; margin: 10px 0;">${errorMessage}</p>`,
+          confirmButtonText: "OK",
+          confirmButtonColor: "#0071E0",
+          width: "500px",
+        });
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setGroupLoading((prev) => ({ ...prev, [groupCode]: false }));
     }

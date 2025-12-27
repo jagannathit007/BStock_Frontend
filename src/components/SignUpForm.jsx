@@ -702,7 +702,7 @@ const SignUpForm = () => {
                       Password
                     </label>
                     <div className="relative group">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                         <FontAwesomeIcon
                           icon={faLock}
                           style={{ color: 'inherit' }}
@@ -729,11 +729,17 @@ const SignUpForm = () => {
                       />
                       <button
                         type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center hover:bg-gray-100 rounded-r-lg transition-colors"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setShowPassword(!showPassword);
+                        }}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center hover:bg-gray-100 rounded-r-lg transition-colors z-20 cursor-pointer"
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        tabIndex={0}
                       >
                         <FontAwesomeIcon
-                          icon={showPassword ? faEye : faEyeSlash}
+                          icon={showPassword ? faEyeSlash : faEye}
                           className="text-gray-400 transition-colors text-sm"
                           style={{ color: 'inherit' }}
                           onMouseEnter={(e) => e.target.style.color = PRIMARY_COLOR}
