@@ -36,10 +36,51 @@ const BulkAddToCartModal = ({ products, groupCode, totalMoq, onClose, onSuccess 
     });
     setQuantities(initialQuantities);
     
+    // Get available countries and currencies and set defaults
+    const countriesSet = new Set();
+    const currenciesSet = new Set();
+    
+    products.forEach(product => {
+      const rawProduct = product?._product || product;
+      if (rawProduct.countryDeliverables && Array.isArray(rawProduct.countryDeliverables)) {
+        rawProduct.countryDeliverables.forEach(d => {
+          if (d.country) countriesSet.add(d.country);
+          if (d.currency) currenciesSet.add(d.currency);
+        });
+      }
+    });
+    
+    const availableCountries = Array.from(countriesSet);
+    const availableCurrencies = Array.from(currenciesSet);
+    
+    // Set default country to Hongkong if available (only set if not already set)
+    if (availableCountries.length > 0 && !selectedCountry) {
+      const hongkongCountry = availableCountries.find(c => {
+        const countryLower = c.toLowerCase();
+        return countryLower === 'hongkong' || 
+               countryLower === 'hong kong' ||
+               c === 'Hongkong';
+      });
+      setSelectedCountry(hongkongCountry || availableCountries[0]);
+    }
+    
+    // Set default currency to USD if available (always prefer USD if available)
+    if (availableCurrencies.length > 0) {
+      const usdCurrency = availableCurrencies.find(c => c.toUpperCase() === 'USD');
+      if (usdCurrency) {
+        // Always set to USD if available, regardless of current selection
+        setSelectedCurrencyState(usdCurrency);
+      } else if (!selectedCurrencyState || !availableCurrencies.some(c => c.toUpperCase() === selectedCurrencyState.toUpperCase())) {
+        // If USD not available and current currency not in list, use first available
+        setSelectedCurrencyState(availableCurrencies[0]);
+      }
+    }
+    
     return () => {
       setMounted(false);
       document.body.style.overflow = 'unset';
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [products]);
 
   // Get available countries and currencies from products
@@ -64,16 +105,6 @@ const BulkAddToCartModal = ({ products, groupCode, totalMoq, onClose, onSuccess 
   };
 
   const { countries, currencies } = getAvailableOptions();
-
-  // Auto-select country and currency if only one option
-  useEffect(() => {
-    if (countries.length === 1 && !selectedCountry) {
-      setSelectedCountry(countries[0]);
-    }
-    if (currencies.length === 1 && !selectedCurrencyState) {
-      setSelectedCurrencyState(currencies[0]);
-    }
-  }, [countries, currencies, selectedCountry, selectedCurrencyState]);
 
   const formatPriceInCurrency = (priceValue) => {
     const numericPrice = parseFloat(priceValue) || 0;
