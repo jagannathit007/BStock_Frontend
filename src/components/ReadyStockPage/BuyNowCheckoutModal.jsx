@@ -151,7 +151,19 @@ const BuyNowCheckoutModal = ({
           await Swal.fire({
             icon: "info",
             title: "Location & Currency Mismatch",
-            html: `<p style="text-align: left; margin: 10px 0;">does not support the selected delivery location</p>`,
+            html: `<p style="text-align: left; margin: 10px 0;">${errorMessage}</p>`,
+            confirmButtonText: "OK",
+            confirmButtonColor: "#0071E0",
+            width: "500px",
+          });
+        } else if (errorMessage.includes("exceeds your available leverage") || 
+                   errorMessage.includes("leverage amount") || 
+                   errorMessage.includes("Maximum order amount")) {
+          // Show leverage error as alert box instead of error
+          await Swal.fire({
+            icon: "warning",
+            title: "Insufficient Leverage",
+            html: `<p style="text-align: left; margin: 10px 0;">${errorMessage}</p>`,
             confirmButtonText: "OK",
             confirmButtonColor: "#0071E0",
             width: "500px",
@@ -173,7 +185,19 @@ const BuyNowCheckoutModal = ({
         await Swal.fire({
           icon: "info",
           title: "Location & Currency Mismatch",
-          html: `<p style="text-align: left; margin: 10px 0;">does not support the selected delivery location</p>`,
+          html: `<p style="text-align: left; margin: 10px 0;">${errorMessage}</p>`,
+          confirmButtonText: "OK",
+          confirmButtonColor: "#0071E0",
+          width: "500px",
+        });
+      } else if (errorMessage.includes("exceeds your available leverage") || 
+                 errorMessage.includes("leverage amount") || 
+                 errorMessage.includes("Maximum order amount")) {
+        // Show leverage error as alert box instead of error
+        await Swal.fire({
+          icon: "warning",
+          title: "Insufficient Leverage",
+          html: `<p style="text-align: left; margin: 10px 0;">${errorMessage}</p>`,
           confirmButtonText: "OK",
           confirmButtonColor: "#0071E0",
           width: "500px",
@@ -235,7 +259,19 @@ const BuyNowCheckoutModal = ({
           await Swal.fire({
             icon: "info",
             title: "Location & Currency Mismatch",
-            html: `<p style="text-align: left; margin: 10px 0;">does not support the selected delivery location</p>`,
+            html: `<p style="text-align: left; margin: 10px 0;">${errorMessage}</p>`,
+            confirmButtonText: "OK",
+            confirmButtonColor: "#0071E0",
+            width: "500px",
+          });
+        } else if (errorMessage.includes("exceeds your available leverage") || 
+                   errorMessage.includes("leverage amount") || 
+                   errorMessage.includes("Maximum order amount")) {
+          // Show leverage error as alert box instead of error
+          await Swal.fire({
+            icon: "warning",
+            title: "Insufficient Leverage",
+            html: `<p style="text-align: left; margin: 10px 0;">${errorMessage}</p>`,
             confirmButtonText: "OK",
             confirmButtonColor: "#0071E0",
             width: "500px",
@@ -257,7 +293,19 @@ const BuyNowCheckoutModal = ({
         await Swal.fire({
           icon: "info",
           title: "Location & Currency Mismatch",
-          html: `<p style="text-align: left; margin: 10px 0;">does not support the selected delivery location</p>`,
+          html: `<p style="text-align: left; margin: 10px 0;">${errorMessage}</p>`,
+          confirmButtonText: "OK",
+          confirmButtonColor: "#0071E0",
+          width: "500px",
+        });
+      } else if (errorMessage.includes("exceeds your available leverage") || 
+                 errorMessage.includes("leverage amount") || 
+                 errorMessage.includes("Maximum order amount")) {
+        // Show leverage error as alert box instead of error
+        await Swal.fire({
+          icon: "warning",
+          title: "Insufficient Leverage",
+          html: `<p style="text-align: left; margin: 10px 0;">${errorMessage}</p>`,
           confirmButtonText: "OK",
           confirmButtonColor: "#0071E0",
           width: "500px",
