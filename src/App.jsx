@@ -356,6 +356,69 @@ const AppContent = ({ isLoggedIn, handleLogout, handleLogin }) => {
       }
     }, [isLoggedIn]);
 
+    // Listen for wallet update events (when admin credits or debits wallet)
+    useEffect(() => {
+      if (isLoggedIn) {
+        const handleWalletUpdated = (data) => {
+          console.log('Wallet update received:', data);
+          const transactionType = data.transactionType || 'updated'; // 'credit' or 'debit'
+          const amount = data.amount || 0;
+          const newBalance = data.newBalance || 0;
+          const remark = data.remark || '';
+          
+          // Update wallet balance in localStorage if user data exists
+          try {
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+              const user = JSON.parse(userStr);
+              user.walletBalance = newBalance;
+              localStorage.setItem('user', JSON.stringify(user));
+              
+              // Dispatch event to notify other components of wallet update
+              window.dispatchEvent(new CustomEvent('walletUpdated', { 
+                detail: { newBalance, transactionType, amount } 
+              }));
+            }
+          } catch (error) {
+            console.error('Error updating wallet balance in localStorage:', error);
+          }
+          
+          // Show alert box
+          const title = transactionType === 'credit' ? 'Amount Credited!' : 'Amount Debited!';
+          const icon = transactionType === 'credit' ? 'success' : 'info';
+          const message = transactionType === 'credit' 
+            ? `Amount ${amount} has been credited to your wallet.`
+            : `Amount ${amount} has been debited from your wallet.`;
+          
+          Swal.fire({
+            title: title,
+            html: `
+              <div style="text-align: left;">
+                <p style="margin: 10px 0;"><strong>Transaction Type:</strong> ${transactionType === 'credit' ? 'Credit' : 'Debit'}</p>
+                <p style="margin: 10px 0;"><strong>Amount:</strong> ${amount}</p>
+                ${remark ? `<p style="margin: 10px 0;"><strong>Remark:</strong> ${remark}</p>` : ''}
+                <p style="margin: 10px 0;"><strong>New Balance:</strong> ${newBalance}</p>
+              </div>
+            `,
+            icon: icon,
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#0071E0',
+            width: '500px',
+          }).then(() => {
+            // Reload the page to update wallet balance display in header and other components
+            window.location.reload();
+          });
+        };
+
+        SocketService.onWalletUpdated(handleWalletUpdated);
+        
+        // Cleanup listener on unmount or when logged out
+        return () => {
+          SocketService.removeWalletUpdateListener();
+        };
+      }
+    }, [isLoggedIn]);
+
     // Listen for negotiation events (when admin responds to negotiation)
     useEffect(() => {
       if (isLoggedIn) {

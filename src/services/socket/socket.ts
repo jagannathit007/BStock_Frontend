@@ -53,6 +53,8 @@ class SocketServiceClass {
       this.setupOrderConfirmedListener();
       // Set up business approval listener when socket is connected
       this.setupBusinessApprovalListener();
+      // Set up wallet update listener when socket is connected
+      this.setupWalletUpdateListener();
     });
 
     this.socket.on('disconnect', () => {
@@ -68,6 +70,8 @@ class SocketServiceClass {
     this.setupOrderConfirmedListener();
     // Set up business approval listener immediately (in case socket is already connected)
     this.setupBusinessApprovalListener();
+    // Set up wallet update listener immediately (in case socket is already connected)
+    this.setupWalletUpdateListener();
   }
 
   disconnect() {
@@ -351,6 +355,9 @@ class SocketServiceClass {
   // Store callback for business approval handling
   private businessApprovedCallback: ((data: any) => void) | null = null;
 
+  // Store callback for wallet update handling
+  private walletUpdatedCallback: ((data: any) => void) | null = null;
+
   // Set up order confirmation listener (called when socket connects)
   private setupOrderConfirmedListener() {
     if (!this.socket) {
@@ -463,6 +470,44 @@ class SocketServiceClass {
     if (!this.socket) return;
     this.socket.off('businessApproved');
     this.businessApprovedCallback = null;
+  }
+
+  // Set up wallet update listener (called when socket connects)
+  private setupWalletUpdateListener() {
+    if (!this.socket) {
+      return;
+    }
+    
+    // Remove existing listener if any
+    this.socket.off('walletUpdated');
+    
+    // Set up new listener if callback is registered
+    if (this.walletUpdatedCallback) {
+      console.log('Setting up wallet update listener');
+      this.socket.on('walletUpdated', (data) => {
+        console.log('Received wallet update event:', data);
+        if (this.walletUpdatedCallback) {
+          this.walletUpdatedCallback(data);
+        }
+      });
+    }
+  }
+
+  // Register callback for wallet update event
+  onWalletUpdated(callback: (data: any) => void) {
+    this.walletUpdatedCallback = callback;
+    
+    // If socket is already connected, set up the listener immediately
+    if (this.socket && this.socket.connected) {
+      this.setupWalletUpdateListener();
+    }
+  }
+
+  // Remove wallet update listener
+  removeWalletUpdateListener() {
+    if (!this.socket) return;
+    this.socket.off('walletUpdated');
+    this.walletUpdatedCallback = null;
   }
 }
 
