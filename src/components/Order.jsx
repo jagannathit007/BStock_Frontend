@@ -554,6 +554,7 @@ const Order = () => {
                                     extraCharge: data.extraCharge || 0,
                                     currency: data.currency || order.currency || 'USD',
                                     messages: Array.isArray(data.messages) ? data.messages : [],
+                                    costDetails: Array.isArray(data.costDetails) ? data.costDetails : [],
                                   },
                                 });
                               } catch (e) {
@@ -584,6 +585,7 @@ const Order = () => {
                                     extraCharge: data.extraCharge || 0,
                                     currency: data.currency || order.currency || 'USD',
                                     messages: Array.isArray(data.messages) ? data.messages : [],
+                                    costDetails: Array.isArray(data.costDetails) ? data.costDetails : [],
                                   },
                                 });
                               } catch (e) {
@@ -782,7 +784,24 @@ const Order = () => {
               </button>
             </div>
             <div className="px-6 py-4 space-y-3">
-              {deliveryChargeModal.preview.messages?.length > 0 && (
+              {/* Display cost message if available */}
+              {deliveryChargeModal.preview.costDetails?.length > 0 && 
+               deliveryChargeModal.preview.costDetails.some(c => c.message) && (
+                <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+                  {deliveryChargeModal.preview.costDetails
+                    .filter(c => c.message)
+                    .map((cost, index) => (
+                      <div key={index} className="text-sm text-blue-900">
+                        {cost.message}
+                      </div>
+                    ))}
+                </div>
+              )}
+              {/* Fallback to messages array if costDetails not available */}
+              {(!deliveryChargeModal.preview.costDetails || 
+                deliveryChargeModal.preview.costDetails.length === 0 ||
+                !deliveryChargeModal.preview.costDetails.some(c => c.message)) &&
+               deliveryChargeModal.preview.messages?.length > 0 && (
                 <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-xs text-blue-900 whitespace-pre-line">
                   {deliveryChargeModal.preview.messages.join('\n')}
                 </div>
