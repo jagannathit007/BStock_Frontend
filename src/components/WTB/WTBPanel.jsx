@@ -3,7 +3,6 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
-import { getProductName, getSubSkuFamily } from "../../utils/productUtils";
 
 const WTBPanel = () => {
   const [open, setOpen] = useState(false);
@@ -90,11 +89,10 @@ const WTBPanel = () => {
       }
 
       const baseUrl = import.meta.env.VITE_BASE_URL || "http://localhost:3200";
-      // Send subSkuFamilyId and skuFamilyId since we're now showing all sub-SKU families (even without products)
+      // Send subSkuFamilyId and skuFamilyId (no productId needed)
       await axios.post(
         `${baseUrl}/api/customer/wtb/create`,
         {
-          productId: row.id, // May be null if no product exists
           subSkuFamilyId: row.subSkuFamilyId || row.id, // Use sub-SKU family ID
           skuFamilyId: row.skuFamilyId || null,
           quantity: Number(qty),
