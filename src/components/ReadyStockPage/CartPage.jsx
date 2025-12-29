@@ -47,6 +47,26 @@ const CartPage = () => {
   const [groupLoading, setGroupLoading] = useState({}); // Track loading state per group
   const [successMessage, setSuccessMessage] = useState(null); // Track success messages
 
+  // Convert leverage errors to alert boxes
+  useEffect(() => {
+    if (error && (
+      error.includes("exceeds your available leverage") || 
+      error.includes("leverage amount") || 
+      error.includes("Maximum order amount")
+    )) {
+      Swal.fire({
+        icon: "warning",
+        title: "Insufficient Leverage",
+        html: `<p style="text-align: left; margin: 10px 0;">${error}</p>`,
+        confirmButtonText: "OK",
+        confirmButtonColor: "#0071E0",
+        width: "500px",
+      }).then(() => {
+        setError(null); // Clear error after showing alert
+      });
+    }
+  }, [error]);
+
   const handleImageError = (itemId) => {
     setImageErrors((prev) => ({ ...prev, [itemId]: true }));
   };
@@ -928,7 +948,33 @@ const CartPage = () => {
       } else {
         // Show detailed error including MOQ validation
         const errorMessage = response?.message || response?.data?.message || "Failed to create order";
-        setError(errorMessage);
+        // Check if error is about delivery location and currency combination
+        if (errorMessage.includes("does not support the selected delivery location") || 
+            (errorMessage.includes("delivery location") && errorMessage.includes("currency"))) {
+          // Show as confirmation box instead of error
+          await Swal.fire({
+            icon: "info",
+            title: "Location & Currency Mismatch",
+            html: `<p style="text-align: left; margin: 10px 0;">${errorMessage}</p>`,
+            confirmButtonText: "OK",
+            confirmButtonColor: "#0071E0",
+            width: "500px",
+          });
+        } else if (errorMessage.includes("exceeds your available leverage") || 
+                   errorMessage.includes("leverage amount") || 
+                   errorMessage.includes("Maximum order amount")) {
+          // Show leverage error as alert box instead of error
+          await Swal.fire({
+            icon: "warning",
+            title: "Insufficient Leverage",
+            html: `<p style="text-align: left; margin: 10px 0;">${errorMessage}</p>`,
+            confirmButtonText: "OK",
+            confirmButtonColor: "#0071E0",
+            width: "500px",
+          });
+        } else {
+          setError(errorMessage);
+        }
       }
     } catch (error) {
       // Show detailed error including MOQ validation
@@ -936,7 +982,34 @@ const CartPage = () => {
         error.response?.data?.errors?.map((e) => e.message).join(", ") ||
         error.response?.data?.message ||
         "An error occurred while creating order";
-      setError(errorMessage);
+      
+      // Check if error is about delivery location and currency combination
+      if (errorMessage.includes("does not support the selected delivery location") || 
+          (errorMessage.includes("delivery location") && errorMessage.includes("currency"))) {
+        // Show as confirmation box instead of error
+        await Swal.fire({
+          icon: "info",
+          title: "Location & Currency Mismatch",
+          html: `<p style="text-align: left; margin: 10px 0;">${errorMessage}</p>`,
+          confirmButtonText: "OK",
+          confirmButtonColor: "#0071E0",
+          width: "500px",
+        });
+      } else if (errorMessage.includes("exceeds your available leverage") || 
+                 errorMessage.includes("leverage amount") || 
+                 errorMessage.includes("Maximum order amount")) {
+        // Show leverage error as alert box instead of error
+        await Swal.fire({
+          icon: "warning",
+          title: "Insufficient Leverage",
+          html: `<p style="text-align: left; margin: 10px 0;">${errorMessage}</p>`,
+          confirmButtonText: "OK",
+          confirmButtonColor: "#0071E0",
+          width: "500px",
+        });
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setItemLoading((prev) => ({ ...prev, [item.id]: false }));
     }
@@ -952,7 +1025,9 @@ const CartPage = () => {
         </div>
 
         {/* Alert Messages */}
-        {error && (
+        {error && !error.includes("exceeds your available leverage") && 
+         !error.includes("leverage amount") && 
+         !error.includes("Maximum order amount") && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
             {error}
           </div>

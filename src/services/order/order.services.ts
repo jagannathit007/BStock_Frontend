@@ -111,11 +111,31 @@ export class OrderService {
       const res = await api.post('/api/customer/order/create', orderData);
       
       const ok = res.data?.success === true || res.data?.status === 200;
-      toastHelper.showTost(res.data?.message || (ok ? 'Order created successfully' : 'Failed to create order'), ok ? 'success' : 'error');
+      if (ok) {
+        toastHelper.showTost(res.data?.message || 'Order created successfully', 'success');
+      } else {
+        // Don't show error toast here - let component handle it with Swal.fire
+        // Check if it's a leverage or location/currency error - component will handle these
+        const errorMsg = res.data?.message || res.data?.data?.message || '';
+        if (!errorMsg.includes("exceeds your available leverage") && 
+            !errorMsg.includes("leverage amount") && 
+            !errorMsg.includes("Maximum order amount") &&
+            !errorMsg.includes("does not support the selected delivery location")) {
+          // Only show toast for unexpected errors
+          toastHelper.showTost(errorMsg || 'Failed to create order', 'error');
+        }
+      }
       return res.data;
     } catch (err: any) {
       const msg = err.response?.data?.errors?.map((e: any) => e.message).join(', ') || err.response?.data?.message || 'Failed to create order';
-      toastHelper.showTost(msg, 'error');
+      // Don't show toast for leverage/location errors - component will handle with Swal.fire
+      if (!msg.includes("exceeds your available leverage") && 
+          !msg.includes("leverage amount") && 
+          !msg.includes("Maximum order amount") &&
+          !msg.includes("does not support the selected delivery location")) {
+        // Only show toast for unexpected errors
+        toastHelper.showTost(msg, 'error');
+      }
       throw err;
     }
   }
@@ -144,11 +164,31 @@ export class OrderService {
       });
 
       const ok = res.data?.success === true || res.data?.status === 200;
-      toastHelper.showTost(res.data?.message || (ok ? 'Order created successfully' : 'Failed to create order'), ok ? 'success' : 'error');
+      if (ok) {
+        toastHelper.showTost(res.data?.message || 'Order created successfully', 'success');
+      } else {
+        // Don't show error toast here - let component handle it with Swal.fire
+        // Check if it's a leverage or location/currency error - component will handle these
+        const errorMsg = res.data?.message || res.data?.data?.message || '';
+        if (!errorMsg.includes("exceeds your available leverage") && 
+            !errorMsg.includes("leverage amount") && 
+            !errorMsg.includes("Maximum order amount") &&
+            !errorMsg.includes("does not support the selected delivery location")) {
+          // Only show toast for unexpected errors
+          toastHelper.showTost(errorMsg || 'Failed to create order', 'error');
+        }
+      }
       return res.data;
     } catch (err: any) {
       const msg = err.response?.data?.errors?.map((e: any) => e.message).join(', ') || err.response?.data?.message || 'Failed to create order';
-      toastHelper.showTost(msg, 'error');
+      // Don't show toast for leverage/location errors - component will handle with Swal.fire
+      if (!msg.includes("exceeds your available leverage") && 
+          !msg.includes("leverage amount") && 
+          !msg.includes("Maximum order amount") &&
+          !msg.includes("does not support the selected delivery location")) {
+        // Only show toast for unexpected errors
+        toastHelper.showTost(msg, 'error');
+      }
       throw err;
     }
   }
