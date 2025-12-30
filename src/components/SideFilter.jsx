@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes, faChevronDown, faCheckCircle } from "@fortawesome/free-solid-svg-icons";
 import { ProductService } from "../services/products/products.services"; // Adjust the import path to your ProductService
 import { convertPrice } from "../utils/currencyUtils";
+import { PRIMARY_COLOR } from "../utils/colors";
 
 const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
   const [minPrice, setMinPrice] = useState(currentFilters.minPrice);
@@ -249,26 +250,92 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
     });
   };
 
-  const colorMap = {
-    Black: "bg-gray-800",
-    Blue: "bg-blue-600",
-    Purple: "bg-purple-600",
-    Pink: "bg-pink-400",
-    White: "bg-white border-2 border-gray-300",
-    Gold: "bg-yellow-400",
-    Red: "bg-red-500",
-    Graphite: "bg-gray-600",
-    Silver: "bg-gray-300",
-    Gray: "bg-gray-500",
-    Grey: "bg-gray-500",
-    Green: "bg-green-500",
-    Orange: "bg-orange-500",
+  // Case-insensitive color mapping function
+  const getColorClass = (colorName) => {
+    if (!colorName) return { className: "bg-gray-400", style: {} };
+    
+    const color = colorName.toLowerCase().trim();
+    
+    // Handle blue colors (including primary color)
+    if (color.includes("blue")) {
+      return { className: "", style: { backgroundColor: PRIMARY_COLOR } };
+    }
+    
+    // Handle black colors
+    if (color.includes("black")) {
+      return { className: "bg-gray-900", style: {} };
+    }
+    
+    // Handle white colors
+    if (color.includes("white")) {
+      return { className: "bg-white border-2 border-gray-300", style: {} };
+    }
+    
+    // Handle gold colors
+    if (color.includes("gold")) {
+      return { className: "bg-gradient-to-br from-yellow-300 to-yellow-600", style: {} };
+    }
+    
+    // Handle silver colors
+    if (color.includes("silver")) {
+      return { className: "bg-gradient-to-br from-gray-300 to-gray-500", style: {} };
+    }
+    
+    // Handle red colors
+    if (color.includes("red")) {
+      return { className: "bg-red-500", style: {} };
+    }
+    
+    // Handle green colors
+    if (color.includes("green")) {
+      return { className: "bg-green-500", style: {} };
+    }
+    
+    // Handle purple colors
+    if (color.includes("purple")) {
+      return { className: "bg-purple-600", style: {} };
+    }
+    
+    // Handle pink colors
+    if (color.includes("pink")) {
+      return { className: "bg-pink-400", style: {} };
+    }
+    
+    // Handle orange colors
+    if (color.includes("orange")) {
+      return { className: "bg-orange-500", style: {} };
+    }
+    
+    // Handle gray/grey colors
+    if (color.includes("gray") || color.includes("grey")) {
+      // Check for specific gray shades
+      if (color.includes("graphite") || color.includes("dark")) {
+        return { className: "bg-gray-600", style: {} };
+      }
+      if (color.includes("light")) {
+        return { className: "bg-gray-300", style: {} };
+      }
+      return { className: "bg-gray-500", style: {} };
+    }
+    
+    // Handle yellow colors
+    if (color.includes("yellow")) {
+      return { className: "bg-yellow-400", style: {} };
+    }
+    
+    // Fallback for unknown colors
+    return { className: "bg-gray-400", style: {} };
   };
 
-  const colors = (filtersData?.colors || []).map((name) => ({
-    name,
-    class: colorMap[name] || "bg-gray-400", // Fallback for unknown colors
-  }));
+  const colors = (filtersData?.colors || [])
+    .filter((name) => name && name.trim()) // Filter out empty/null colors
+    .map((name) => {
+      const colorStyle = getColorClass(name);
+      return {
+        name,
+        ...colorStyle,
+      };
+    });
   const simTypes = filtersData?.simTypes || [];
   const storages = filtersData?.storages || [];
   const grades = filtersData?.conditions || [];
@@ -1336,11 +1403,12 @@ const SideFilter = ({ onClose, onFilterChange, currentFilters = {} }) => {
                     <button
                       key={color.name}
                       onClick={() => handleColorChange(color.name)}
-                      className={`w-8 h-8 rounded-full ${color.class} border-2 transition-all relative ${
+                      className={`w-8 h-8 rounded-full ${color.className} border-2 transition-all relative ${
                         isSelected
                           ? "border-blue-600 ring-2 ring-blue-200"
                           : "border-gray-300 hover:border-gray-400"
                       }`}
+                      style={color.style || {}}
                       title={color.name}
                     >
                       {isSelected && (
