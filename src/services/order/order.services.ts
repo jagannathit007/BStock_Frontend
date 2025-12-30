@@ -278,7 +278,7 @@ export class OrderService {
     }
   }
 
-static async addReceiverDetails(
+  static async addReceiverDetails(
   orderId: string, 
   receiverName: string, 
   receiverMobile: string, 
@@ -321,6 +321,18 @@ static async addReceiverDetails(
     throw err;
   }
 }
+
+  static async getPendingAmounts(): Promise<{ status?: number; success?: boolean; message?: string; data?: { pendingAmount: Record<string, number> } }> {
+    try {
+      const res = await api.post('/api/customer/order/pending-amounts', {});
+      return res.data;
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Failed to fetch pending amounts';
+      // Don't show toast for this - it's a background fetch
+      console.error('Error fetching pending amounts:', msg);
+      throw err;
+    }
+  }
 
   // ✅ Addresses are optional - backend will use order's addresses if not provided
   static async submitPayment(orderId: string, billingAddress: any, shippingAddress: any, paymentDetails: any, files?: File[]): Promise<CreateOrderResponse> {

@@ -25,7 +25,7 @@ const Order = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [allOrdersForTotals, setAllOrdersForTotals] = useState([]);
-  const [paymentPendingOrders, setPaymentPendingOrders] = useState([]);
+  const [paymentPendingTotals, setPaymentPendingTotals] = useState({});
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
   const [selectedOrderForPayment, setSelectedOrderForPayment] = useState(null);
@@ -125,41 +125,25 @@ const Order = () => {
     fetchAllOrdersForTotals();
   }, [fetchAllOrdersForTotals]);
 
-  // Fetch payment pending orders (confirm status without payment)
-  const fetchPaymentPendingOrders = useCallback(async () => {
+  // Fetch pending amounts grouped by currency
+  const fetchPendingAmounts = useCallback(async () => {
     try {
-      // Fetch all orders with confirm status
-      const response = await OrderService.listOrders(1, 100, 'confirm', undefined);
-      if (response.status === 200) {
-        const allConfirmOrders = response.data?.docs || [];
-        // Filter orders that don't have paymentIds
-        const pendingOrders = allConfirmOrders.filter(order => !order.paymentIds || order.paymentIds.length === 0);
-        setPaymentPendingOrders(pendingOrders);
+      const response = await OrderService.getPendingAmounts();
+      if (response.status === 200 && response.data?.pendingAmount) {
+        setPaymentPendingTotals(response.data.pendingAmount);
+      } else {
+        setPaymentPendingTotals({});
       }
     } catch (error) {
-      console.error("Error fetching payment pending orders:", error);
-      setPaymentPendingOrders([]);
+      console.error("Error fetching pending amounts:", error);
+      setPaymentPendingTotals({});
     }
   }, []);
 
-  // Calculate currency-wise totals for payment pending orders
-  const paymentPendingTotals = useMemo(() => {
-    const totals = {};
-    paymentPendingOrders.forEach((order) => {
-      const currency = order.currency || 'USD';
-      const amount = parseFloat(order.totalAmount) || 0;
-      if (!totals[currency]) {
-        totals[currency] = 0;
-      }
-      totals[currency] += amount;
-    });
-    return totals;
-  }, [paymentPendingOrders]);
-
-  // Fetch payment pending orders on mount
+  // Fetch pending amounts on mount and when orders change
   useEffect(() => {
-    fetchPaymentPendingOrders();
-  }, [fetchPaymentPendingOrders]);
+    fetchPendingAmounts();
+  }, [fetchPendingAmounts]);
 
   // Handle page change
   const handlePageChange = (newPage) => {
@@ -755,7 +739,7 @@ const Order = () => {
               setShowPaymentPopup(false);
               setSelectedOrderForPayment(null);
               await fetchOrders();
-              await fetchPaymentPendingOrders(); // Refresh payment pending totals
+              await fetchPendingAmounts(); // Refresh payment pending totals
             } catch (error) {
               console.error('Payment submission error:', error);
             }
