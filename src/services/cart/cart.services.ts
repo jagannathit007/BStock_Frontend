@@ -32,7 +32,8 @@ export class CartService {
     subSkuFamilyId?: string | null,
     price?: number | null,
     country?: string | null,
-    currency?: string | null
+    currency?: string | null,
+    currentLocation?: string | null
   ): Promise<GenericResponse> {
     try {
       const requestBody: any = { productId, quantity };
@@ -47,6 +48,9 @@ export class CartService {
       }
       if (currency) {
         requestBody.currency = currency;
+      }
+      if (currentLocation) {
+        requestBody.currentLocation = currentLocation;
       }
       const res = await api.post('/api/customer/cart/add', requestBody);
       const ok = res.data?.success === true || res.data?.status === 200;
@@ -79,7 +83,8 @@ export class CartService {
     quantity: number,
     price?: number | null,
     country?: string | null,
-    currency?: string | null
+    currency?: string | null,
+    currentLocation?: string | null
   ): Promise<GenericResponse> {
     try {
       const requestBody: any = { productId, quantity };
@@ -91,6 +96,9 @@ export class CartService {
       }
       if (currency) {
         requestBody.currency = currency;
+      }
+      if (currentLocation) {
+        requestBody.currentLocation = currentLocation;
       }
       const res = await api.post('/api/customer/cart/update-quantity', requestBody);
       const ok = res.data?.success === true || res.data?.status === 200;

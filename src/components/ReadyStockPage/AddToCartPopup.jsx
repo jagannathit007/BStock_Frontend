@@ -150,8 +150,10 @@ const AddToCartPopup = ({ product, onClose }) => {
       const priceToSend = validPrice;
       const countryToSend = product?.selectedCountry || null;
       const currencyToSend = product?.selectedCurrency || null;
+      // Get currentLocation from product (from _product if nested, or directly from product)
+      const currentLocationToSend = rawProduct?.currentLocation || product?.currentLocation || null;
       
-      const res = await CartService.add(id, quantity, subSkuFamilyId, priceToSend, countryToSend, currencyToSend);
+      const res = await CartService.add(id, quantity, subSkuFamilyId, priceToSend, countryToSend, currencyToSend, currentLocationToSend);
       const ok = res?.success === true || res?.status === 200;
       if (ok) {
         // Trigger cart count update event

@@ -142,8 +142,9 @@ const CheckoutPage = () => {
         return 'HK'; // Default
       };
 
-      // Get current location (default to HK, can be from product or user profile)
-      const currentLocation = 'HK'; // Default, can be enhanced to get from product
+      // ✅ Get currentLocation from cart items (stored when adding to cart) - use first item's currentLocation
+      // All items in an order should have the same currentLocation
+      const currentLocation = cartItems[0]?.currentLocation || 'HK';
       const deliveryLocation = normalizeCountry(shippingAddress.country);
       
       // Get currency from context - ensure it's explicitly set

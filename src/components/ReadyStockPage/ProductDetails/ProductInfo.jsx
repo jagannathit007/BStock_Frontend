@@ -1018,7 +1018,8 @@ const ProductInfo = ({ product: initialProduct, navigate, onRefresh }) => {
         return 'HK';
       };
 
-      const currentLocation = 'HK'; // Default, can be enhanced to get from product
+      // ✅ Get currentLocation from product (should be available in processedProduct or currentProduct)
+      const currentLocation = processedProduct?.currentLocation || currentProduct?.currentLocation || 'HK';
       const deliveryLocation = normalizeCountry(customerCountryCurrency?.country || 'HK');
       // Use selectedCurrency from global context - it should be set when user selects currency on product page
       const currency = selectedCurrency || (deliveryLocation === 'D' ? 'AED' : 'HKD') || 'USD';

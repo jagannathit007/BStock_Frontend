@@ -117,7 +117,8 @@ const BuyNowCheckoutModal = ({
         return 'HK';
       };
 
-      const currentLocation = 'HK'; // Default, can be enhanced
+      // ✅ Get currentLocation from product (should be available in product object)
+      const currentLocation = product?.currentLocation || product?._product?.currentLocation || 'HK';
       const deliveryLocation = normalizeCountry(currentOrder.shippingAddress?.country);
       const currency = selectedCurrency || 'USD';
 
@@ -225,7 +226,8 @@ const BuyNowCheckoutModal = ({
         return 'HK';
       };
 
-      const currentLocation = 'HK'; // Default, can be enhanced
+      // ✅ Get currentLocation from product (should be available in product object)
+      const currentLocation = product?.currentLocation || product?._product?.currentLocation || 'HK';
       const deliveryLocation = normalizeCountry(orderDataWithPayment.shippingAddress?.country);
       const currency = selectedCurrency || 'USD';
 

@@ -105,6 +105,8 @@ const CartPage = () => {
         : "In Stock";
 
     const subSkuFamilyId = getSubSkuFamilyId(item);
+    // ✅ Get currentLocation from cart item (stored when adding to cart)
+    const currentLocation = item.currentLocation || null;
     return {
       id,
       skuFamilyId,
@@ -113,6 +115,7 @@ const CartPage = () => {
       description,
       price,
       currency, // ✅ Include currency from cart item
+      currentLocation, // ✅ Include currentLocation from cart item
       moq,
       groupCode: item.groupCode || null,
       totalMoq: item.totalMoq || null,
@@ -243,7 +246,9 @@ const CartPage = () => {
         return 'HK';
       };
 
-      const currentLocation = 'HK';
+      // ✅ Get currentLocation from cart items (stored when adding to cart) - use first item's currentLocation
+      // All items in a group should have the same currentLocation
+      const currentLocation = itemsInGroup[0]?.currentLocation || 'HK';
       const deliveryLocation = normalizeCountry(shippingAddress.country);
       // ✅ Use currency from cart items (stored when adding to cart) - use first item's currency
       let currency = itemsInGroup[0]?.currency || selectedCurrency;
@@ -865,8 +870,8 @@ const CartPage = () => {
         return 'HK'; // Default
       };
 
-      // Get current location (default to HK, can be from product or user profile)
-      const currentLocation = 'HK'; // Default, can be enhanced to get from product
+      // ✅ Get currentLocation from cart item (stored when adding to cart)
+      const currentLocation = item.currentLocation || 'HK';
       const deliveryLocation = normalizeCountry(shippingAddress.country);
       // Use selectedCurrency from global context - ensure it's explicitly set
       let currency = selectedCurrency;

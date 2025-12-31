@@ -322,8 +322,10 @@ const ProductCard = ({
       const priceToSend = (derivedPrice != null && derivedPrice > 0) ? derivedPrice : (product?.price ?? null);
       const countryToSend = selectedCountry || null;
       const currencyToSend = selectedCurrency || null;
+      // Get currentLocation from product (from _product if nested, or directly from product)
+      const currentLocationToSend = rawProduct?.currentLocation || product?.currentLocation || null;
       
-      const res = await CartService.add(productId, quantity, subSkuFamilyId, priceToSend, countryToSend, currencyToSend);
+      const res = await CartService.add(productId, quantity, subSkuFamilyId, priceToSend, countryToSend, currencyToSend, currentLocationToSend);
       const ok = res?.success === true || res?.status === 200;
 
       if (ok) {
