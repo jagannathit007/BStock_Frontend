@@ -570,6 +570,10 @@ const BusinessProfile = ({
 
   const isInitial = useRef(true);
 
+  // Store initial business profile values to track changes
+  const [initialBusinessProfile, setInitialBusinessProfile] = useState(null);
+  const isInitialLoadRef = useRef(true);
+
   const {
     register,
     handleSubmit,
@@ -577,7 +581,6 @@ const BusinessProfile = ({
     setValue,
     trigger,
     watch,
-    control,
   } = useForm({
     resolver: yupResolver(businessSchema),
     defaultValues: formData,
@@ -628,6 +631,106 @@ const BusinessProfile = ({
       setValue(key, formData[key]);
     });
   }, [formData, setValue]);
+
+  // Set initial business profile values when formData is first loaded
+  useEffect(() => {
+    if (isInitialLoadRef.current && formData) {
+      // Check if we have meaningful data (not just empty strings)
+      const hasData = 
+        formData.businessName || 
+        formData.country || 
+        formData.address || 
+        formData.currency ||
+        formData.businessLogo ||
+        formData.certificate;
+      
+      if (hasData) {
+        setInitialBusinessProfile({
+          businessName: formData.businessName || "",
+          country: formData.country || "",
+          address: formData.address || "",
+          currency: formData.currency || "",
+          currencyCode: formData.currencyCode || "",
+          businessLogo: formData.businessLogo || null,
+          certificate: formData.certificate || null,
+        });
+        isInitialLoadRef.current = false;
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData]);
+
+  // Reset initial values after successful save (when formData updates from server)
+  // Detect when formData has no File objects (meaning it came from server after save)
+  useEffect(() => {
+    if (initialBusinessProfile && formData && !isInitialLoadRef.current) {
+      const hasFileObjects = 
+        formData.businessLogo instanceof File ||
+        formData.certificate instanceof File;
+      
+      // If no File objects and formData has values, it means data came from server after save
+      if (!hasFileObjects && (formData.businessName || formData.country || formData.address)) {
+        // Check if values match what we would have after save (all strings, no File objects)
+        const allValuesAreStrings = 
+          (typeof formData.businessLogo === "string" || !formData.businessLogo) &&
+          (typeof formData.certificate === "string" || !formData.certificate);
+        
+        if (allValuesAreStrings) {
+          // Reset initial values to current server values
+          setInitialBusinessProfile({
+            businessName: formData.businessName || "",
+            country: formData.country || "",
+            address: formData.address || "",
+            currency: formData.currency || "",
+            currencyCode: formData.currencyCode || "",
+            businessLogo: formData.businessLogo || null,
+            certificate: formData.certificate || null,
+          });
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData]);
+
+  // Check if business profile has been modified
+  const hasBusinessProfileChanged = () => {
+    if (!initialBusinessProfile) {
+      // If no initial values set yet, allow save (for first time setup)
+      return true;
+    }
+
+    // Check if any text fields have changed (normalize by trimming)
+    const currentName = (formData.businessName?.trim() || "");
+    const initialName = (initialBusinessProfile.businessName?.trim() || "");
+    const currentCountry = (formData.country?.trim() || "");
+    const initialCountry = (initialBusinessProfile.country?.trim() || "");
+    const currentAddress = (formData.address?.trim() || "");
+    const initialAddress = (initialBusinessProfile.address?.trim() || "");
+    const currentCurrency = (formData.currency?.trim() || "");
+    const initialCurrency = (initialBusinessProfile.currency?.trim() || "");
+
+    const textFieldsChanged = 
+      currentName !== initialName ||
+      currentCountry !== initialCountry ||
+      currentAddress !== initialAddress ||
+      currentCurrency !== initialCurrency;
+
+    // Check if files have been added (new file selected - File object)
+    const logoFileAdded = formData.businessLogo instanceof File;
+    const certificateFileAdded = formData.certificate instanceof File;
+    
+    // Check if existing files/images were removed
+    // If initial had a file (string URL) but current is null or empty
+    const hadLogo = typeof initialBusinessProfile.businessLogo === "string" && initialBusinessProfile.businessLogo;
+    const hasLogo = typeof formData.businessLogo === "string" && formData.businessLogo;
+    const logoRemoved = hadLogo && !hasLogo && !logoFileAdded;
+    
+    const hadCertificate = typeof initialBusinessProfile.certificate === "string" && initialBusinessProfile.certificate;
+    const hasCertificate = typeof formData.certificate === "string" && formData.certificate;
+    const certificateRemoved = hadCertificate && !hasCertificate && !certificateFileAdded;
+
+    return textFieldsChanged || logoFileAdded || certificateFileAdded || logoRemoved || certificateRemoved;
+  };
 
   const onSubmit = async (data) => {
     try {
@@ -999,9 +1102,9 @@ const BusinessProfile = ({
       <div className="flex justify-end pt-4">
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || !hasBusinessProfileChanged()}
           className={`min-w-[200px] px-6 py-2 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200 shadow-sm hover:shadow-md ${
-            isSubmitting
+            isSubmitting || !hasBusinessProfileChanged()
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-[#0071E0] text-white cursor-pointer hover:bg-[#005BB5]"
           }`}
