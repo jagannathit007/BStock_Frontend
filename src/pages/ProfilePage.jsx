@@ -1102,14 +1102,16 @@ const BusinessProfile = ({
       <div className="flex justify-end pt-4">
         <button
           type="submit"
-          disabled={isSubmitting || !hasBusinessProfileChanged()}
-          className={`min-w-[200px] px-6 py-2 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200 shadow-sm hover:shadow-md ${
-            isSubmitting || !hasBusinessProfileChanged()
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-[#0071E0] text-white cursor-pointer hover:bg-[#005BB5]"
-          }`}
+          // disabled={isSubmitting || !hasBusinessProfileChanged()}
+          // className={`min-w-[200px] px-6 py-2 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200 shadow-sm hover:shadow-md ${
+          //   isSubmitting || !hasBusinessProfileChanged()
+          //     ? "bg-gray-400 cursor-not-allowed"
+          //     : "bg-[#0071E0] text-white cursor-pointer hover:bg-[#005BB5]"
+          // }`}
+          className={`min-w-[200px] px-6 py-2 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200 shadow-sm hover:shadow-md 
+              bg-[#0071E0] text-white cursor-pointer hover:bg-[#005BB5]`}
         >
-          {isSubmitting ? (
+          {/* {isSubmitting ? (
             <svg
               className="animate-spin h-5 w-5 text-white"
               xmlns="http://www.w3.org/2000/svg"
@@ -1134,11 +1136,11 @@ const BusinessProfile = ({
               ></path>
             </svg>
           ) : (
-            <>
+            <> */}
               <i className="fas fa-save"></i>
               <span>Save Business Profile</span>
-            </>
-          )}
+            {/* </>
+          )} */}
         </button>
       </div>
     </form>
